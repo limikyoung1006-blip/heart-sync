@@ -1,0 +1,1975 @@
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Noto+Sans+KR:wght@300;400;700&family=Noto+Serif+KR:wght@700&display=swap');
+
+/* Basic Utilities for Layout */
+.flex { display: flex; }
+.flex-col { flex-direction: column; }
+.items-center { align-items: center; }
+.justify-center { justify-content: center; }
+.justify-between { justify-content: space-between; }
+.flex-1 { flex: 1; }
+.w-full { width: 100%; }
+.h-full { height: 100%; }
+.gap-2 { gap: 8px; }
+.gap-4 { gap: 16px; }
+.gap-6 { gap: 24px; }
+.text-center { text-align: center; }
+
+:root {
+  --gold: #C8860A;
+  --gold-glow: rgba(200, 134, 10, 0.5);
+  --glass-bg: rgba(255, 255, 255, 0.35);
+  --glass-border: rgba(200, 160, 60, 0.4);
+  --deep-dark: #2A1F0D;
+  --text-white: rgba(40, 28, 10, 0.9);
+  --text-muted: rgba(80, 60, 30, 0.65);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  font-family: 'Noto Sans KR', sans-serif;
+  /* 유리 뒤에서 비쳐나올 밝은 배경 */
+  background:
+    radial-gradient(ellipse at 20% 15%, rgba(255, 230, 180, 0.9) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 85%, rgba(255, 180, 200, 0.7) 0%, transparent 50%),
+    radial-gradient(ellipse at 60% 30%, rgba(200, 220, 255, 0.6) 0%, transparent 45%),
+    linear-gradient(135deg, #FFF5EC 0%, #FFE4F0 50%, #EEF0FF 100%);
+  background-attachment: fixed;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* ── App Shell ── */
+#root {
+  width: 100%;
+  max-width: 390px;
+  height: 94vh;
+  max-height: 844px;
+  position: relative;
+  overflow: hidden;
+  border-radius: 46px;
+
+  /* 반투명 배경 - 테마 반영을 위해 투명도 조절 */
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(25px) saturate(160%) brightness(1.05);
+  -webkit-backdrop-filter: blur(25px) saturate(160%) brightness(1.05);
+
+  display: flex;
+  flex-direction: column;
+
+  /* Gold foil border */
+  border: 1.5px solid transparent;
+  background-clip: padding-box;
+  box-shadow:
+    0 0 0 1.5px rgba(255, 220, 120, 0.6),
+    0 0 0 3px   rgba(255, 200, 80, 0.2),
+    0 0 30px    rgba(255, 190, 60, 0.2),
+    0 0 70px    rgba(255, 170, 30, 0.08),
+    inset 0 0 60px rgba(255, 255, 255, 0.4),
+    inset 0 1px 0  rgba(255, 255, 255, 0.8);
+}
+
+/* Background image layer */
+.app-bg {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  opacity: 1; /* 테마 색상이 잘 보이도록 1로 설정 */
+  border-radius: inherit;
+  z-index: 0;
+}
+
+/* Frosted inner haze */
+.app-bg::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: inherit;
+}
+
+/* Animated gold foil shimmer on outer edge */
+#root::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 47px;
+  z-index: 0;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    rgba(255, 240, 160, 0.6) 30deg,
+    rgba(255, 210, 80, 0.3) 60deg,
+    transparent 90deg,
+    transparent 180deg,
+    rgba(255, 240, 160, 0.5) 210deg,
+    rgba(255, 210, 80, 0.25) 240deg,
+    transparent 270deg,
+    transparent 360deg
+  );
+  animation: gold-spin 6s linear infinite;
+  pointer-events: none;
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  -webkit-mask-composite: xor;
+  padding: 2px;
+}
+
+@keyframes gold-spin {
+  0%   { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Subtle top glow */
+#root::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 200px;
+  background: radial-gradient(ellipse at 50% 0%, rgba(255, 255, 255, 0.6) 0%, transparent 70%);
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* ── Header Bar ── */
+.top-bar {
+  position: relative;
+  z-index: 5;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 54px 28px 0;
+}
+
+.top-bar-icons {
+  display: flex;
+  gap: 18px;
+  color: rgba(255,255,255,0.55);
+}
+
+/* ── Brand Logo Section ── */
+.brand-section {
+  position: relative;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 10px;
+  gap: 0;
+}
+
+.brand-logo {
+  height: 55px;
+  object-fit: contain;
+  mix-blend-mode: screen;
+  opacity: 0.9;
+}
+
+.brand-title {
+  height: 90px; /* 공간 확보를 위해 크기 조정 */
+  object-fit: contain;
+  mix-blend-mode: screen;
+  opacity: 0.92;
+  margin-top: -10px;
+}
+
+/* Fallback text brand — Luxury Gold Foil */
+.brand-text {
+  font-family: 'Cinzel', serif;
+  font-size: 32px;
+  font-weight: 700;
+  letter-spacing: 5px;
+  position: relative;
+
+  /* Gold foil gradient */
+  background: linear-gradient(
+    105deg,
+    #7D5A00  0%,
+    #C8970A  15%,
+    #F5D060  30%,
+    #FFF3A3  42%,
+    #E8B830  50%,
+    #FFF0A0  60%,
+    #D4960A  75%,
+    #F0C940  88%,
+    #7D5A00  100%
+  );
+  background-size: 250% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+
+  /* Depth & emboss */
+  filter: drop-shadow(0 1px 0 rgba(255,255,200,0.7))
+          drop-shadow(0 2px 6px rgba(160,110,0,0.5));
+
+  /* Shimmer sweep animation */
+  animation: gold-shimmer 10s ease-in-out infinite;
+}
+
+@keyframes gold-shimmer {
+  0%   { background-position: 200% center; }
+  40%  { background-position: -50% center; }
+  100% { background-position: 200% center; }
+}
+
+@keyframes gold-shimmer-sweep {
+  0%   { left: -100%; opacity: 0; }
+  10%  { opacity: 1; }
+  40%  { left: 200%; opacity: 1; }
+  41%  { opacity: 0; }
+  100% { left: 200%; opacity: 0; }
+}
+
+/* Sub headline under brand */
+.brand-sub {
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 4px;
+  color: rgba(160, 120, 30, 0.65);
+  margin-top: 4px;
+}
+
+/* ── Main Scroll Area ── */
+.main-content {
+  position: relative;
+  z-index: 4;
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 22px;
+  padding-bottom: 120px; /* 네비게이션 공간 확보 */
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ── Central Glass Card Stack ── */
+.card-stack {
+  position: relative;
+  margin-top: 16px;
+  margin-bottom: 22px;
+}
+
+/* Under-layers */
+.card-layer {
+  position: absolute;
+  left: 8px; right: 8px;
+  border-radius: 28px;
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(255, 200, 80, 0.15);
+}
+.card-layer-1 { top: 10px; bottom: -10px; }
+.card-layer-2 { top: 18px; bottom: -18px; left: 16px; right: 16px; opacity: 0.5; }
+
+/* Main card */
+/* ── Glass Card Wrapper (solid gold border) ── */
+.glass-card-wrap {
+  position: relative;
+  z-index: 5;
+  border-radius: 28px;
+  /* Frosted Glass + User Background Image (More Visible) */
+  background-color: rgba(255, 255, 255, 0.05);
+  background-image: url('/secret_card_bg.png');
+  background-size: cover;
+  background-position: center;
+  backdrop-filter: blur(8px) saturate(120%);
+  -webkit-backdrop-filter: blur(8px) saturate(120%);
+  border-radius: 32px;
+  /* overflow: hidden; -> Removed to show full badge circle */
+  
+  /* 3D Deep Gold Foil Effect */
+  box-shadow:
+    0 20px 40px rgba(0, 0, 0, 0.12),
+    inset 0 0 0 1.5px rgba(245, 208, 96, 0.4),
+    inset 0 2px 15px rgba(255, 255, 255, 0.3);
+  transform: perspective(1000px) rotateX(1deg);
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.glass-card-wrap:hover {
+  transform: perspective(1000px) rotateX(0deg) translateY(-5px);
+  box-shadow:
+    0 25px 45px rgba(0, 0, 0, 0.2),
+    0 8px 20px rgba(0, 0, 0, 0.1),
+    inset 0 0 0 2px #FFD700,
+    inset 0 4px 15px rgba(255, 255, 255, 0.6);
+}
+
+@keyframes foil-border {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* Diagonal stripe and conic shimmer — removed for solid border */
+.glass-card-wrap::before,
+.glass-card-wrap::after {
+  display: none;
+}
+
+@keyframes card-foil-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* ── Inner Glass Card — Semi-transparent Gold Foil ── */
+.glass-card {
+  position: relative;
+  z-index: 2;
+  min-height: 120px; /* 블라인드 상태 유지용 */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  
+  /* 배경 이미지가 선명하게 보이도록 블러 제거 */
+  background: transparent; 
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  
+  border-radius: 24px;
+  /* 배지(BADGE_SIZE/2) + 여유 공간만큼 상단 패딩 확보 */
+  padding: 48px 24px 22px;
+  text-align: center;
+  border: none;
+  
+  /* Gold Foil highlights */
+  box-shadow:
+    inset 0 1.5px 2px rgba(255, 255, 255, 0.5),
+    inset 0 -1px 2px rgba(200, 160, 80, 0.2),
+    0 12px 40px rgba(0, 0, 0, 0.05);
+  
+  transition: transform 0.2s ease;
+}
+
+.glass-card:active {
+  transform: scale(0.98);
+}
+
+.secret-lock-icon {
+  margin-bottom: 8px;
+  animation: lock-float 3s ease-in-out infinite;
+}
+
+@keyframes lock-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+.send-to-spouse-btn {
+  margin-top: 20px;
+  background: rgba(45, 31, 8, 0.9);
+  color: #F5D060;
+  border: 1px solid #F5D060;
+  padding: 10px 18px;
+  border-radius: 100px;
+  font-size: 13px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(200, 150, 30, 0.3);
+  transition: all 0.3s ease;
+}
+
+.send-to-spouse-btn:hover {
+  background: #F5D060;
+  color: #2D1F08;
+  box-shadow: 0 6px 20px rgba(200, 150, 30, 0.5);
+}
+
+
+/* Neon badge on top of card */
+.card-badge {
+  position: absolute;
+  top: -42px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  
+  /* IMAGE 1: Frosted Glass + Neon Glow Style */
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(15px) saturate(120%);
+  -webkit-backdrop-filter: blur(15px) saturate(120%);
+  border: 1.5px solid rgba(255, 255, 255, 0.6);
+  
+  box-shadow:
+    0 10px 20px rgba(160, 110, 0, 0.25),
+    inset 0 1px 2px rgba(255, 255, 255, 0.5);
+  
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding: 12px;
+  z-index: 10;
+}
+
+.card-badge img {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+}
+
+.card-subtitle {
+  color: var(--text-muted);
+  font-size: 12px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 18px;
+}
+
+.card-question {
+  color: var(--text-white);
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.6;
+  letter-spacing: -0.2px;
+}
+
+/* ── Feature Buttons Grid ── */
+.features-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.feat-btn {
+  /* Premium Frosted Glass Background */
+  background: rgba(255, 255, 255, 0.32);
+  backdrop-filter: blur(20px) saturate(170%) brightness(1.1);
+  -webkit-backdrop-filter: blur(20px) saturate(170%) brightness(1.1);
+  border-radius: 22px;
+  padding: 22px 14px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  border: none;
+  background-clip: padding-box;
+  
+  /* Luxury Neon Theme Border */
+  box-shadow:
+    0 0 0 1.5px var(--gold),
+    0 10px 25px rgba(200, 150, 30, 0.08),
+    inset 0 1.5px 1.5px rgba(255, 255, 255, 0.6);
+}
+
+.feat-btn:hover, .feat-btn:active {
+  background: rgba(255, 255, 255, 0.6);
+  transform: translateY(-3px);
+  box-shadow:
+    0 0 0 2px var(--gold),
+    0 0 18px var(--gold-glow),
+    0 0 35px rgba(0, 0, 0, 0.05);
+}
+
+.feat-btn span {
+  color: #3D2A0A;
+  font-size: 13px;
+  font-weight: 700;
+  text-align: center;
+  line-height: 1.3;
+}
+
+.feat-icon-wrap {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Signal light dots */
+.signal-dots {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+.dot-red   { background: #FF5E5E; box-shadow: 0 0 8px #FF5E5E; }
+.dot-amber { background: #FFBE61; box-shadow: 0 0 8px #FFBE61; }
+.dot-green { background: #4BD991; box-shadow: 0 0 8px #4BD991; }
+
+/* ── Bottom Nav Bar ── */
+.bottom-nav {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  z-index: 10;
+  height: 94px;
+  padding-bottom: 28px;
+  /* 🍶 Light Beige Warm Glass */
+  background: rgba(255, 252, 242, 0.85);
+  backdrop-filter: blur(30px) saturate(160%);
+  -webkit-backdrop-filter: blur(30px) saturate(160%);
+  border-top: 1px solid rgba(212, 175, 55, 0.2);
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  border-radius: 35px 35px 0 0;
+  box-shadow: 0 -10px 30px rgba(125, 90, 0, 0.08);
+}
+
+.nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  width: 20%;
+}
+
+.nav-icon-wrapper {
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+/* 🎨 Premium Pastel Tone Layered Gradients (Inactive) */
+/* 🎨 Premium Pastel Tone Layered Gradients (Inactive) */
+.nav-item:nth-child(1) .nav-icon-wrapper { 
+  background: linear-gradient(135deg, rgba(225, 245, 254, 0.9), rgba(179, 229, 252, 0.8)); 
+  color: #0288D1; 
+  box-shadow: inset 0 1px 2px rgba(255,255,255,0.6);
+}
+.nav-item:nth-child(2) .nav-icon-wrapper { 
+  background: linear-gradient(135deg, rgba(243, 229, 245, 0.9), rgba(225, 190, 231, 0.8)); 
+  color: #7B1FA2; 
+  box-shadow: inset 0 1px 2px rgba(255,255,255,0.6);
+}
+.nav-item:nth-child(3) .nav-icon-wrapper { 
+  background: linear-gradient(135deg, rgba(255, 248, 225, 0.9), rgba(255, 236, 179, 0.8)); 
+  color: #B08D3E; 
+  box-shadow: inset 0 1px 2px rgba(255,255,255,0.6);
+}
+.nav-item:nth-child(4) .nav-icon-wrapper { 
+  background: linear-gradient(135deg, rgba(232, 245, 233, 0.9), rgba(200, 230, 201, 0.8)); 
+  color: #388E3C; 
+  box-shadow: inset 0 1px 2px rgba(255,255,255,0.6);
+}
+.nav-item:nth-child(5) .nav-icon-wrapper { 
+  background: linear-gradient(135deg, rgba(255, 240, 243, 0.9), rgba(255, 205, 210, 0.8)); 
+  color: #D32F2F; 
+  box-shadow: inset 0 1px 2px rgba(255,255,255,0.6);
+}
+
+/* ✨ Premium Active State Styling */
+.nav-item.active .nav-icon-wrapper {
+  background: linear-gradient(135deg, #F5D060, #C8970A, #F5D060) !important;
+  background-size: 200% 200%;
+  animation: bg-shine 3s ease infinite;
+  color: white !important;
+  box-shadow: 
+    0 8px 20px rgba(212, 175, 55, 0.35),
+    inset 0 1.5px 2px rgba(255,255,255,0.8);
+  transform: translateY(-8px) scale(1.15);
+}
+
+@keyframes bg-shine {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.nav-item.active span {
+  color: #8B6500;
+  font-weight: 900;
+  transform: translateY(-2px);
+}
+
+.nav-item span { 
+  font-size: 11px; 
+  font-weight: 700;
+  color: #8B7355;
+  transition: all 0.3s ease;
+}
+
+/* ── Emotional Traffic Light (Home) ── */
+.status-section {
+  margin-top: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.signal-status-card {
+  background: rgba(255, 255, 255, 0.45);
+  backdrop-filter: blur(25px);
+  border-radius: 22px;
+  padding: 18px;
+  box-shadow: 0 0 0 1.5px rgba(245, 208, 96, 0.4);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.traffic-light-grid {
+  display: flex;
+  gap: 12px;
+}
+
+.light-btn {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  border: 2px solid rgba(245, 208, 96, 0.3);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  background: white;
+  position: relative;
+  box-shadow: 
+    0 4px 10px rgba(0,0,0,0.05),
+    inset 0 2px 3px rgba(255,255,255,1);
+}
+
+.light-btn::after {
+  content: '';
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #E0E0E0;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+  transition: 0.4s;
+}
+
+/* Default inactive state with faint color */
+.light-btn.red::after { background: #FFDADA; }
+.light-btn.amber::after { background: #FFF5D1; }
+.light-btn.green::after { background: #E2F9EE; }
+
+/* Red Light Jewel Active */
+.light-btn.red.active { border-color: #FF5E5E; background: rgba(255, 94, 94, 0.1); }
+.light-btn.red.active::after { 
+  background: radial-gradient(circle at 30% 30%, #FF8A8A, #FF0000);
+  box-shadow: 0 0 15px rgba(255, 0, 0, 0.6), inset 0 -2px 5px rgba(0,0,0,0.3);
+}
+
+/* Amber Light Jewel Active */
+.light-btn.amber.active { border-color: #FFBE61; background: rgba(255, 190, 97, 0.1); }
+.light-btn.amber.active::after { 
+  background: radial-gradient(circle at 30% 30%, #FFDBA3, #FF9900);
+  box-shadow: 0 0 15px rgba(255, 153, 0, 0.6), inset 0 -2px 5px rgba(0,0,0,0.3);
+}
+
+/* Green Light Jewel Active */
+.light-btn.green.active { border-color: #4BD991; background: rgba(75, 217, 145, 0.1); }
+.light-btn.green.active::after { 
+  background: radial-gradient(circle at 30% 30%, #A2F5CC, #00C853);
+  box-shadow: 0 0 15px rgba(0, 200, 83, 0.6), inset 0 -2px 5px rgba(0,0,0,0.3);
+}
+
+.light-btn:active {
+  transform: scale(0.9);
+}
+
+/* ── Family Worship Page ── */
+.worship-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding-bottom: 40px;
+}
+
+.worship-section-card {
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(20px);
+  border-radius: 30px;
+  padding: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.worship-label-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.worship-icon-circle {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.worship-label-text {
+  font-size: 14px;
+  font-weight: 900;
+  color: #8B6500;
+  letter-spacing: 1px;
+}
+
+.worship-content-box {
+  background: rgba(255, 255, 255, 0.4);
+  border-radius: 20px;
+  padding: 18px;
+  border: 1px dashed rgba(212, 175, 55, 0.3);
+}
+
+.video-player-container {
+  width: 100%;
+  position: relative;
+  padding-bottom: 56.25%; /* 16:9 Aspect Ratio */
+  height: 0;
+  overflow: hidden;
+  border-radius: 20px;
+  background: #000;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+  margin-top: 15px;
+  border: 4px solid rgba(255,255,255,0.8);
+}
+
+.video-player-container iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+.praise-input-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.praise-input {
+  flex: 1;
+  padding: 12px 16px;
+  border-radius: 15px;
+  border: 1.5px solid #F5E6CC;
+  background: rgba(255,255,255,0.6);
+  font-size: 14px;
+  font-weight: 600;
+  outline: none;
+  transition: all 0.3s ease;
+}
+
+.praise-input:focus {
+  border-color: #D4AF37;
+  background: white;
+  box-shadow: 0 0 10px rgba(212, 175, 55, 0.1);
+}
+
+.praise-btn {
+  width: 50px;
+  height: 50px;
+  border-radius: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: #2D1F08;
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.praise-btn:hover {
+  background: #000;
+  transform: translateY(-2px);
+}
+
+.scripture-text {
+  font-size: 16px;
+  line-height: 1.7;
+  color: #2D1F08;
+  font-weight: 700;
+  border-left: 4px solid #F5D060;
+  padding-left: 15px;
+  margin: 10px 0;
+}
+
+.sharing-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sharing-item {
+  background: white;
+  padding: 14px 18px;
+  border-radius: 18px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #2D1F08;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.02);
+  border: 1px solid #FDFCF0;
+}
+
+.generate-btn {
+  background: linear-gradient(135deg, #FF9966, #FF5E62);
+  color: white;
+  border: none;
+  padding: 16px;
+  border-radius: 20px;
+  font-size: 15px;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  box-shadow: 0 10px 25px rgba(255, 94, 98, 0.3);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  width: 100%;
+  margin-bottom: 10px;
+}
+
+.generate-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 15px 30px rgba(255, 94, 98, 0.4);
+}
+
+.generate-btn:active {
+  transform: scale(0.98);
+}
+
+/* ── Hatti AI Chat View ── */
+.chat-window {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 280px);
+  gap: 20px;
+  padding: 10px 16px;
+  overflow-y: auto;
+}
+
+.chat-line {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+}
+
+.line-hatti {
+  justify-content: flex-start;
+}
+
+.line-user {
+  justify-content: flex-end;
+}
+
+.counselor-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+  border: 2px solid #F5D060;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  background: white;
+}
+
+.counselor-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.chat-bubble {
+  max-width: 75%;
+  padding: 12px 16px;
+  border-radius: 20px;
+  font-size: 14px;
+  line-height: 1.5;
+  position: relative;
+  word-break: break-all;
+}
+
+.bubble-hatti {
+  align-self: flex-start;
+  background: white;
+  color: #3D2A0A!important;
+  border-bottom-left-radius: 4px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+}
+
+.bubble-user {
+  align-self: flex-end;
+  background: #F5D060;
+  color: #2D1F08!important;
+  border-bottom-right-radius: 4px;
+  box-shadow: 0 4px 15px rgba(245, 208, 96, 0.2);
+}
+
+.chat-input-area {
+  position: absolute;
+  bottom: 100px;
+  left: 20px;
+  right: 20px;
+  background: rgba(255,255,255,0.8);
+  backdrop-filter: blur(20px);
+  border-radius: 30px;
+  padding: 8px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+  border: 1px solid rgba(245, 208, 96, 0.3);
+  z-index: 20;
+}
+
+.chat-input-area input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  padding: 10px 0;
+  outline: none;
+  color: #2D1F08;
+  font-size: 15px;
+}
+
+/* ── Compatibility Gauge ── */
+.compat-card {
+  background: rgba(255,255,255,0.4);
+  backdrop-filter: blur(20px);
+  border-radius: 24px;
+  padding: 24px;
+  margin-top: 10px;
+  border: 1px solid rgba(245, 208, 96, 0.3);
+}
+
+.stat-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 14px 0;
+}
+
+.stat-bar-bg {
+  flex: 1;
+  height: 8px;
+  background: rgba(255,255,255,0.5);
+  border-radius: 4px;
+  margin-left: 14px;
+  overflow: hidden;
+}
+
+.stat-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #F5D060, #C8970A);
+  border-radius: 4px;
+}
+/* ── Chat Profile Bar (Upper context) ── */
+.chat-profile-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+  background: rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(15px);
+  padding: 10px;
+  border-radius: 100px;
+  margin: 10px 16px 20px;
+  border: 1px solid rgba(245, 208, 96, 0.3);
+  box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+}
+
+.profile-chip {
+  display: flex;
+  align-items: center;
+  background: white;
+  padding: 4px 10px;
+  border-radius: 50px;
+  gap: 6px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+.chip-label {
+  font-size: 10px;
+  font-weight: 800;
+  color: #8B6500;
+  opacity: 0.6;
+}
+
+.chip-val {
+  font-size: 11px;
+  font-weight: 900;
+  color: #2D1F08;
+}
+
+.compat-badge {
+  background: #F5D060;
+  color: #2D1F08;
+  font-size: 10px;
+  font-weight: 900;
+  padding: 2px 8px;
+  border-radius: 50px;
+  box-shadow: 0 2px 8px rgba(245, 208, 96, 0.4);
+}
+
+/* ── Main Action Buttons (Home) ── */
+.main-actions-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.premium-action-btn {
+  /* 💧 Crystal 'Water Drop' Glass Effect - COMPLETELY CLEAR */
+  background: transparent !important;
+  backdrop-filter: blur(35px) saturate(180%);
+  -webkit-backdrop-filter: blur(35px) saturate(180%);
+  border-radius: 32px;
+  padding: 24px 16px;
+  
+  /* ✨ Thin Reflective Gold Foil Border */
+  border: 1.5px solid transparent;
+  background-image: linear-gradient(transparent, transparent), 
+                    linear-gradient(135deg, 
+                      #7D5A00 0%, 
+                      #F5D060 25%, 
+                      #FFF3A3 50%, 
+                      #D4960A 75%, 
+                      #7D5A00 100%);
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+  
+  /* 🏔️ Deep Liquid 3D Effect - Enhanced with Border Shadows */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  box-shadow: 
+    0 20px 40px rgba(0, 0, 0, 0.08),   /* 깊은 외부 그림자 */
+    0 0 0 1.5px rgba(212, 175, 55, 0.1), /* 테두리 주변 은은한 금빛 라인 */
+    inset 0 4px 15px rgba(255, 255, 255, 0.6), 
+    inset 0 -4px 12px rgba(0, 0, 0, 0.04), 
+    inset 2px 0 12px rgba(255, 255, 255, 0.2);
+  transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+  outline: none;
+}
+
+.premium-action-btn:active {
+  transform: scale(0.95) translateY(2px);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+.action-icon-bg {
+  width: 56px;
+  height: 56px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.action-text-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: center;
+}
+
+.action-title {
+  font-size: 14px;
+  font-weight: 800;
+  color: #2D1F08;
+}
+
+.action-desc {
+  font-size: 10px;
+  font-weight: 600;
+  color: #8B6500;
+  opacity: 0.7;
+}
+
+.stats-quick-view {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 24px;
+}
+
+.stat-chip {
+  background: rgba(255,255,255,0.3);
+  padding: 6px 12px;
+  border-radius: 50px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #4D3A1A;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid rgba(255,255,255,0.2);
+}
+
+/* ── Couple Talking Card Game (Image 7 Concept) ── */
+.game-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  align-items: center;
+  padding-top: 10px;
+  height: calc(100vh - 250px);
+}
+
+.category-row {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+  justify-content: center;
+  margin-bottom: 5px;
+}
+
+.category-chip {
+  padding: 8px 16px;
+  border-radius: 50px;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  background: rgba(255,255,255,0.4);
+  color: rgba(45,31,8,0.5);
+  border: 1px solid rgba(255,255,255,0.4);
+  transition: all 0.3s;
+}
+
+.category-chip.active {
+  background: #F5D060;
+  color: #2D1F08;
+  box-shadow: 0 4px 12px rgba(245, 208, 96, 0.4);
+}
+
+.card-deck {
+  position: relative;
+  width: 100%;
+  max-width: 280px;
+  height: 380px;
+  perspective: 1200px;
+  margin: 10px 0;
+}
+
+.card-float-anim {
+  width: 100%;
+  height: 100%;
+  animation: card-float-3d 5s ease-in-out infinite;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.talking-card {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+  cursor: pointer;
+}
+
+.talking-card:hover {
+  transform: perspective(1200px) scale(1.02);
+}
+
+.talking-card.flipped {
+  transform: rotateY(180deg) scale(1.02);
+}
+
+@keyframes card-float-3d {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.card-face {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
+  border-radius: 36px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 35px;
+  text-align: center;
+}
+
+.card-front {
+  background: url('/card_bg.png') no-repeat center center;
+  background-size: cover;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 
+    0 25px 50px rgba(0,0,0,0.15),
+    inset 0 0 40px rgba(255,255,255,0.1);
+}
+
+.card-back {
+  background: url('/card_bg.png') no-repeat center center;
+  background-size: cover;
+  transform: rotateY(180deg);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 
+    0 20px 45px rgba(0,0,0,0.2),
+    inset 0 0 40px rgba(255,255,255,0.05);
+}
+
+.card-pattern-box {
+  width: 100%;
+  height: 100%;
+  border-radius: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end; /* 텍스트를 아래쪽으로 배치 */
+  padding-bottom: 40px;
+  gap: 15px;
+}
+
+.card-back .card-pattern-box {
+  justify-content: center;
+  padding-bottom: 30px;
+  background: rgba(255, 255, 255, 0.4); /* 이미지와 질문이 조화롭도록 투명도 조정 */
+  margin: 15px;
+  height: calc(100% - 30px);
+  width: calc(100% - 30px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+}
+
+.card-back h2 {
+  font-family: 'Noto Serif KR', serif;
+  font-weight: 700;
+  color: #2D1F08;
+  text-shadow: 0 1px 1px rgba(255,255,255,0.8);
+  padding: 0 15px;
+}
+
+/* ── Turn Based System ── */
+.turn-indicator-bar {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 10px;
+  border-radius: 12px;
+  margin-bottom: 5px;
+  transition: all 0.4s;
+}
+
+.turn-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(0,0,0,0.1);
+}
+
+.turn-dot.active {
+  background: #F5D060;
+  box-shadow: 0 0 8px #F5D060;
+  animation: pulse-gold 1.5s infinite;
+}
+
+@keyframes pulse-gold {
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.3); opacity: 0.7; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.pass-turn-btn {
+  margin-top: 20px;
+  background: #2D1F08;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 100px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
+
+.pass-turn-btn:active {
+  transform: scale(0.95);
+}
+
+/* ── Draw Button Style Fix ── */
+.draw-btn {
+  background: #2D1F08;
+  color: #F5D060;
+  padding: 18px 45px;
+  border-radius: 100px;
+  font-weight: 800;
+  border: 1px solid #C8970A;
+  font-size: 16px;
+  cursor: pointer;
+  box-shadow: 0 12px 25px rgba(0,0,0,0.25);
+  transition: 0.3s;
+  margin-top: 10px;
+}
+
+.draw-btn:active {
+  transform: scale(0.95);
+  box-shadow: 0 5px 10px rgba(0,0,0,0.2);
+}
+/* ── Relation Report Tab (Image 1) ── */
+.report-page {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding-bottom: 30px;
+}
+
+.report-card {
+  background: rgba(255, 255, 255, 0.45);
+  backdrop-filter: blur(20px);
+  border-radius: 32px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+}
+
+.report-card-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  margin-bottom: 24px;
+}
+
+.report-icon-bg {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #FFB75E 0%, #ED8F03 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(237, 143, 3, 0.3);
+}
+
+.report-card-label {
+  font-size: 16px;
+  font-weight: 800;
+  color: #2D1F08;
+}
+
+/* Gauge Chart */
+.gauge-container {
+  position: relative;
+  width: 160px;
+  height: 160px;
+  margin-bottom: 20px;
+}
+
+.gauge-svg {
+  transform: rotate(-90deg);
+}
+
+.gauge-circle-bg {
+  fill: none;
+  stroke: rgba(0, 0, 0, 0.05);
+  stroke-width: 12;
+}
+
+.gauge-circle-fill {
+  fill: none;
+  stroke: url(#gauge-gradient);
+  stroke-width: 12;
+  stroke-linecap: round;
+  transition: stroke-dasharray 1.5s ease-in-out;
+}
+
+.gauge-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+}
+
+/* Bar Chart */
+.chart-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  width: 100%;
+  height: 120px;
+  padding: 10px 5px;
+  margin-bottom: 12px;
+}
+
+.chart-bar-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+}
+
+.chart-bar {
+  width: 24px;
+  border-radius: 10px;
+  background: linear-gradient(to top, #FF8A8A, #FFB75E);
+  transition: height 1s ease-out;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+.chart-day {
+  font-size: 11px;
+  font-weight: 700;
+  color: rgba(45, 31, 8, 0.4);
+}
+
+/* Hatti Insight Box */
+.hatti-insight-box {
+  background: rgba(45, 31, 8, 0.85);
+  padding: 20px;
+  border-radius: 28px;
+  margin-top: 10px;
+  border: 1px solid #F5D060;
+  box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+}
+
+.insight-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.insight-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 2px solid #F5D060;
+  overflow: hidden;
+  background: white;
+}
+
+.insight-text {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.insight-title {
+  color: #F5D060;
+  font-weight: 800;
+  font-size: 14px;
+}
+
+/* Report User Toggle */
+.report-user-toggle {
+  display: flex;
+  background: rgba(255, 255, 255, 0.3);
+  padding: 4px;
+  border-radius: 100px;
+  margin-bottom: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(10px);
+}
+
+.toggle-item {
+  flex: 1;
+  border: none;
+  background: transparent;
+  padding: 10px;
+  border-radius: 100px;
+  font-size: 13px;
+  font-weight: 800;
+  color: rgba(45, 31, 8, 0.5);
+  cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.toggle-item.active {
+  background: white;
+  color: #2D1F08;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+}
+/* ── Intimacy Modal (Secret Garden) ── */
+.intimacy-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(45, 10, 20, 0.85);
+  backdrop-filter: blur(12px);
+  z-index: 2000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 24px;
+}
+
+.intimacy-modal-content {
+  width: 100%;
+  max-width: 320px;
+  background: linear-gradient(145deg, #A4133C 0%, #800F2F 100%);
+  border-radius: 40px;
+  padding: 30px 24px;
+  box-shadow: 
+    0 20px 50px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(255, 255, 255, 0.1),
+    inset 0 1px 1px rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.intimacy-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 30px;
+}
+
+.intimacy-action-btn {
+  width: 100%;
+  background: #FF4D6D;
+  color: white;
+  border: none;
+  padding: 18px;
+  border-radius: 20px;
+  font-size: 16px;
+  font-weight: 800;
+  box-shadow: 0 10px 20px rgba(255, 77, 109, 0.4);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.intimacy-action-btn:active {
+  transform: scale(0.96);
+  background: #C9184A;
+}
+
+.intimacy-card-display {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px dashed rgba(255, 255, 255, 0.3);
+  padding: 30px 20px;
+  border-radius: 24px;
+  min-height: 140px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.intimacy-sub-btn {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  padding: 14px;
+  border-radius: 16px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* AI Counseling Interface */
+.counseling-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.counseling-top-info {
+  background: rgba(255, 255, 255, 0.3);
+  padding: 16px;
+  border-radius: 24px;
+  margin-bottom: 20px;
+}
+
+.counseling-input {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(45, 31, 8, 0.1);
+  padding: 15px 50px 15px 20px;
+  border-radius: 100px;
+  font-size: 14px;
+  outline: none;
+  transition: all 0.3s ease;
+}
+
+.counseling-input:focus {
+  background: white;
+  border-color: #F5D060;
+  box-shadow: 0 5px 15px rgba(245, 208, 96, 0.2);
+}
+
+.counseling-send-btn {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: #2D1F08;
+  color: #F5D060;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+/* 🕊️ Prayer Request Section */
+.prayer-request-section {
+  margin-top: 15px;
+  background: rgba(255, 255, 255, 0.4);
+  border-radius: 24px;
+  padding: 16px;
+  border: 1px solid rgba(138, 96, 255, 0.2);
+  box-shadow: 0 4px 15px rgba(138, 96, 255, 0.05);
+}
+
+.prayer-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.prayer-bubble {
+  background: white;
+  padding: 14px;
+  border-radius: 18px;
+  border-bottom-left-radius: 2px;
+  position: relative;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+}
+
+.prayer-bubble p {
+  font-size: 13.5px;
+  color: #5D4037;
+  line-height: 1.6;
+  font-weight: 500;
+  font-style: italic;
+}
+
+.prayer-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  margin-top: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #8A60FF;
+}
+
+/* 📱 2x2 Actions Grid */
+.main-actions-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.premium-action-btn.small {
+  background: white !important;
+  /* ✨ Elegant Thin Gold Border */
+  border: 1.5px solid transparent !important;
+  background-image: linear-gradient(white, white), 
+                    linear-gradient(135deg, #7D5A00 0%, #F5D060 25%, #FFF3A3 50%, #D4960A 75%, #7D5A00 100%) !important;
+  background-origin: border-box !important;
+  background-clip: padding-box, border-box !important;
+  
+  /* 🏔️ Subtle 3D Shadow Base */
+  border-bottom: 5px solid #8B6500 !important;
+  border-radius: 32px !important;
+  padding: 24px 12px !important;
+  height: auto !important;
+  min-height: 120px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 12px !important;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05) !important;
+  transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+  position: relative !important;
+  overflow: hidden !important;
+  margin-bottom: 0 !important;
+}
+
+/* 💫 Very Thin Shimmer Line at the Bottom Rim */
+.premium-action-btn.small::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: -150%;
+  width: 100%; height: 2px;
+  background: linear-gradient(
+    90deg, 
+    transparent, 
+    rgba(255, 255, 255, 0.8), 
+    transparent
+  );
+  animation: shiny-sweep-thin 3s infinite;
+  z-index: 5;
+}
+
+@keyframes shiny-sweep-thin {
+  0% { left: -150%; }
+  30% { left: 150%; }
+  100% { left: 150%; }
+}
+
+.premium-action-btn.small::before { display: none !important; }
+
+.premium-action-btn.small:hover {
+  transform: translateY(-3px) !important;
+}
+
+.premium-action-btn.small:active {
+  transform: translateY(3px) !important;
+  border-bottom-width: 1.5px !important;
+}
+
+.action-title.small {
+  font-size: 16px !important;
+  font-weight: 900 !important;
+  color: #2D1F08 !important;
+  letter-spacing: -0.5px !important;
+  margin-top: 4px !important;
+}
+
+.premium-action-btn.small .action-icon-bg {
+  background: transparent !important;
+  box-shadow: none !important;
+  width: auto !important;
+  height: auto !important;
+  border-radius: 0 !important;
+}
+
+/* 🌸 Intimacy Modal Inside Details */
+.intimacy-menu-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+.menu-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 20px;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  color: white;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.menu-btn:active {
+  background: rgba(255, 255, 255, 0.2);
+  transform: scale(0.98);
+}
+
+.menu-icon {
+  font-size: 24px;
+}
+
+.menu-btn span {
+  font-weight: 800;
+  font-size: 15px;
+  flex: 1;
+}
+
+.menu-btn small {
+  font-size: 11px;
+  opacity: 0.6;
+}
+
+.signal-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.signal-opt {
+  background: white;
+  border: none;
+  border-radius: 18px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: center;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  cursor: pointer;
+}
+
+.signal-opt strong {
+  color: #800F2F;
+  font-size: 15px;
+}
+
+.signal-opt span {
+  color: #A4133C;
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+.mood-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+}
+
+.mood-item {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 20px;
+  padding: 15px 5px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: white;
+  cursor: pointer;
+  border: none;
+}
+
+.back-btn {
+  position: absolute;
+  left: 20px;
+  top: 32px;
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* ── Spouse's Prayer (WorshipView) ── */
+.worship-quote-box {
+  background: rgba(255, 255, 255, 0.45);
+  padding: 24px 20px;
+  border-radius: 26px;
+  margin-bottom: 32px;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  box-shadow: inset 0 2px 10px rgba(255,255,255,0.4);
+}
+
+.worship-quote-text {
+  color: #4D3A1A;
+  line-height: 1.7;
+  font-size: 15.5px;
+  font-weight: 500;
+  text-align: center;
+  word-break: keep-all;
+}
+
+.prayer-input-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 40px;
+  background: rgba(255,255,255,0.85);
+  padding: 22px;
+  border-radius: 28px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.04);
+}
+
+.prayer-textarea-v2 {
+  width: 100%;
+  min-height: 120px;
+  background: white;
+  border-radius: 20px;
+  border: 1.5px solid rgba(0,0,0,0.05);
+  padding: 18px;
+  font-size: 15px;
+  line-height: 1.6;
+  color: #2D1F08;
+  outline: none;
+  resize: none;
+  transition: 0.3s;
+}
+
+.prayer-textarea-v2:focus {
+  border-color: #F5D060;
+  box-shadow: 0 0 0 4px rgba(245, 208, 96, 0.1);
+}
+
+.prayer-card-v2 {
+  background: white !important;
+  border-radius: 24px !important;
+  padding: 22px !important;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.03) !important;
+  position: relative;
+  margin-bottom: 4px;
+  transition: 0.3s;
+}
+
+.prayer-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.prayer-card-role-tag {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.prayer-card-role-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.prayer-card-role-text {
+  font-size: 13px;
+  font-weight: 900;
+  color: #4D3A1A;
+}
+
+.prayer-card-date {
+  font-size: 11px;
+  color: #BBB;
+  font-weight: 600;
+}
+
+.prayer-card-text {
+  font-size: 16px;
+  color: #2D1F08;
+  line-height: 1.7;
+  font-weight: 500;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
