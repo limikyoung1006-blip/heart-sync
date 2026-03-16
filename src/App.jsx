@@ -2220,8 +2220,30 @@ const SettingsView = ({ userRole, husbandInfo, setHusbandInfo, wifeInfo, setWife
                 <input value={myInfo.blood} onChange={(e) => updateProfile('blood', e.target.value)} style={{ width: '100%', padding: '12px 18px', borderRadius: '14px', background: '#F9FAFB', border: '1px solid #EEE' }} />
               </div>
               <div>
-                <label style={{ fontSize: '12px', fontWeight: 800, color: '#8B7355', display: 'block', marginBottom: '6px' }}>결혼기념일</label>
-                <input type="date" value={myInfo.marriageDate} onChange={(e) => updateProfile('marriageDate', e.target.value)} style={{ width: '100%', padding: '12px 18px', borderRadius: '14px', background: '#F9FAFB', border: '1px solid #EEE' }} />
+                <label style={{ fontSize: '12px', fontWeight: 800, color: '#8B7355', display: 'block', marginBottom: '6px' }}>결혼기념일 (년/월/일)</label>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <select 
+                    value={myInfo.marriageDate.split('-')[0]} 
+                    onChange={(e) => updateProfile('marriageDate', `${e.target.value}-${myInfo.marriageDate.split('-')[1]}-${myInfo.marriageDate.split('-')[2]}`)}
+                    style={{ flex: 2, padding: '10px', borderRadius: '12px', background: '#F9FAFB', border: '1px solid #EEE', fontSize: '14px' }}
+                  >
+                    {Array.from({ length: 50 }, (_, i) => 2026 - i).map(year => <option key={year} value={year}>{year}년</option>)}
+                  </select>
+                  <select 
+                    value={parseInt(myInfo.marriageDate.split('-')[1])} 
+                    onChange={(e) => updateProfile('marriageDate', `${myInfo.marriageDate.split('-')[0]}-${String(e.target.value).padStart(2, '0')}-${myInfo.marriageDate.split('-')[2]}`)}
+                    style={{ flex: 1, padding: '10px', borderRadius: '12px', background: '#F9FAFB', border: '1px solid #EEE', fontSize: '14px' }}
+                  >
+                    {Array.from({ length: 12 }, (_, i) => i + 1).map(month => <option key={month} value={month}>{month}월</option>)}
+                  </select>
+                  <select 
+                    value={parseInt(myInfo.marriageDate.split('-')[2])} 
+                    onChange={(e) => updateProfile('marriageDate', `${myInfo.marriageDate.split('-')[0]}-${myInfo.marriageDate.split('-')[1]}-${String(e.target.value).padStart(2, '0')}`)}
+                    style={{ flex: 1, padding: '10px', borderRadius: '12px', background: '#F9FAFB', border: '1px solid #EEE', fontSize: '14px' }}
+                  >
+                    {Array.from({ length: 31 }, (_, i) => i + 1).map(day => <option key={day} value={day}>{day}일</option>)}
+                  </select>
+                </div>
               </div>
               <motion.button whileTap={{ scale: 0.95 }} onClick={() => setShowProfileEdit(false)} style={{ width: '100%', padding: '16px', borderRadius: '16px', background: '#2D1F08', color: 'white', fontWeight: 900, marginTop: '10px', border: 'none', cursor: 'pointer' }}>저장 완료</motion.button>
             </div>
@@ -2554,9 +2576,31 @@ const OnboardingView = ({ userRole, setUserRole, onFinish }) => {
                 <input value={nickname} onChange={(e) => setNickname(e.target.value)} placeholder="예: 사랑꾼 남편" style={{ width: '100%', padding: '16px 22px', borderRadius: '18px', border: '1.5px solid #EEE', background: '#F9FAFB', fontSize: '16px' }} />
               </div>
               <div style={{ display: 'flex', gap: '15px' }}>
-                <div style={{ flex: 2 }}>
-                  <label style={{ fontSize: '12px', fontWeight: 800, color: '#B08D3E', display: 'block', marginBottom: '8px' }}>결혼기념일</label>
-                  <input type="date" value={mDate} onChange={(e) => setMDate(e.target.value)} style={{ width: '100%', padding: '16px 22px', borderRadius: '18px', border: '1.5px solid #EEE', background: '#F9FAFB', fontSize: '16px' }} />
+                <div style={{ flex: 1 }}>
+                  <label style={{ fontSize: '12px', fontWeight: 800, color: '#B08D3E', display: 'block', marginBottom: '8px' }}>결혼기념일 (년/월/일)</label>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <select 
+                      value={mDate.split('-')[0]} 
+                      onChange={(e) => setMDate(`${e.target.value}-${mDate.split('-')[1]}-${mDate.split('-')[2]}`)}
+                      style={{ flex: 2, padding: '14px', borderRadius: '15px', border: '1.5px solid #EEE', background: '#F9FAFB', fontSize: '15px', appearance: 'none' }}
+                    >
+                      {Array.from({ length: 50 }, (_, i) => 2026 - i).map(year => <option key={year} value={year}>{year}년</option>)}
+                    </select>
+                    <select 
+                      value={parseInt(mDate.split('-')[1])} 
+                      onChange={(e) => setMDate(`${mDate.split('-')[0]}-${String(e.target.value).padStart(2, '0')}-${mDate.split('-')[2]}`)}
+                      style={{ flex: 1, padding: '14px', borderRadius: '15px', border: '1.5px solid #EEE', background: '#F9FAFB', fontSize: '15px', appearance: 'none' }}
+                    >
+                      {Array.from({ length: 12 }, (_, i) => i + 1).map(month => <option key={month} value={month}>{month}월</option>)}
+                    </select>
+                    <select 
+                      value={parseInt(mDate.split('-')[2])} 
+                      onChange={(e) => setMDate(`${mDate.split('-')[0]}-${mDate.split('-')[1]}-${String(e.target.value).padStart(2, '0')}`)}
+                      style={{ flex: 1, padding: '14px', borderRadius: '15px', border: '1.5px solid #EEE', background: '#F9FAFB', fontSize: '15px', appearance: 'none' }}
+                    >
+                      {Array.from({ length: 31 }, (_, i) => i + 1).map(day => <option key={day} value={day}>{day}일</option>)}
+                    </select>
+                  </div>
                 </div>
                 <div style={{ flex: 1 }}>
                   <label style={{ fontSize: '12px', fontWeight: 800, color: '#B08D3E', display: 'block', marginBottom: '8px' }}>혈액형</label>
