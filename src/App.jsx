@@ -2450,7 +2450,7 @@ const OnboardingView = ({ userRole, setUserRole, onFinish }) => {
               <img 
                 src="/logo_main.png" 
                 alt="Heart Logo" 
-                style={{ height: '60px', marginBottom: '10px' }}
+                style={{ width: '180px', height: 'auto', marginBottom: '15px' }}
                 onError={(e) => { e.target.style.display = 'none'; }} 
               />
               <p style={{ fontSize: '13px', color: '#B08D3E', fontWeight: 900, letterSpacing: '2px', marginBottom: '4px' }}>부부의 마음을 이어드립니다</p>
