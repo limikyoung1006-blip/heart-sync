@@ -14,7 +14,7 @@ import {
 import questions from '../questions.json';
 import { supabase } from './supabase';
 
-const COUPLE_CODE = 'HS-7289'; // Default couple code
+// Initial configuration removed - now managed via state and onboarding
 const NavItem = ({ active, onClick, icon, label }) => (
   <div onClick={onClick} className={`nav-item ${active ? 'active' : ''}`}>
     <div className="nav-icon-wrapper">
@@ -2563,22 +2563,74 @@ const OnboardingView = ({ userRole, setUserRole, onFinish }) => {
 
         {step === 4 && (
           <motion.div key="step4" initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="flex flex-col h-full justify-center items-center text-center">
-            <div style={{ width: '120px', height: '120px', background: '#F5D060', borderRadius: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '30px', boxShadow: '0 15px 35px rgba(245, 208, 96, 0.3)' }}>
-              <span style={{ fontSize: '50px' }}>💝</span>
+            <div style={{ width: '100px', height: '100px', background: '#F5D060', borderRadius: '35px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '25px', boxShadow: '0 10px 25px rgba(245, 208, 96, 0.2)' }}>
+              <span style={{ fontSize: '40px' }}>💝</span>
             </div>
             <h2 style={{ fontSize: '24px', fontWeight: 900, color: '#2D1F08', marginBottom: '10px' }}>준비가 끝났습니다!</h2>
-            <p style={{ color: '#8B7355', fontSize: '16px', fontWeight: 700, marginBottom: '40px' }}>당신의 기질은 <span style={{ color: '#8A60FF' }}>{insightResult}</span>입니다.<br/>이제 배우자와 연결을 시작할까요?</p>
+            <p style={{ color: '#8B7355', fontSize: '15px', fontWeight: 700, marginBottom: '30px' }}>당신의 기질은 <span style={{ color: '#8A60FF' }}>{insightResult}</span>입니다.<br/>이제 배우자와 연결을 시작할까요?</p>
             
-            <div style={{ width: '100%', padding: '24px', background: '#F9FAFB', borderRadius: '24px', border: '1.5px dashed #D4AF37', marginBottom: '30px' }}>
-              <span style={{ fontSize: '12px', fontWeight: 900, color: '#B08D3E', display: 'block', marginBottom: '10px' }}>우리만의 소중한 연결 코드</span>
-              <div style={{ fontSize: '24px', fontWeight: 900, color: '#2D1F08', letterSpacing: '8px' }}>HS-7289</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', width: '100%' }}>
+              <button 
+                onClick={() => {
+                  const newCode = 'HS-' + Math.floor(1000 + Math.random() * 9000);
+                  setCoupleCode(newCode);
+                  setStep(5); // Show created code
+                }}
+                style={{ width: '100%', padding: '18px', borderRadius: '20px', background: '#2D1F08', color: 'white', fontWeight: 900, fontSize: '16px', boxShadow: '0 8px 20px rgba(0,0,0,0.1)' }}
+              >
+                새로운 초대 코드 만들기
+              </button>
+              <button 
+                onClick={() => setStep(6)}
+                style={{ width: '100%', padding: '18px', borderRadius: '20px', background: '#FDFCF0', border: '2.5px solid #F5D060', color: '#2D1F08', fontWeight: 900, fontSize: '16px' }}
+              >
+                초대 코드 입력하기
+              </button>
             </div>
+          </motion.div>
+        )}
 
-            <button 
-              onClick={() => onFinish({ nickname, mDate, mbti: insightResult, blood })}
-              style={{ width: '100%', padding: '20px', borderRadius: '22px', background: '#2D1F08', color: 'white', fontWeight: 900, fontSize: '17px', boxShadow: '0 10px 30px rgba(0,0,0,0.2)' }}
+        {step === 5 && (
+          <motion.div key="step5" initial={{ x: 20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} className="flex flex-col h-full justify-center items-center text-center">
+             <h2 style={{ fontSize: '22px', fontWeight: 900, color: '#2D1F08', marginBottom: '15px' }}>배우자에게 코드를 공유하세요</h2>
+             <div style={{ width: '100%', padding: '30px', background: '#F9FAFB', borderRadius: '24px', border: '2px dashed #D4AF37', marginBottom: '30px' }}>
+                <span style={{ fontSize: '12px', fontWeight: 900, color: '#B08D3E', display: 'block', marginBottom: '10px' }}>우리만의 소중한 연결 코드</span>
+                <div style={{ fontSize: '32px', fontWeight: 900, color: '#2D1F08', letterSpacing: '8px' }}>{coupleCode}</div>
+             </div>
+             <p style={{ color: '#8B7355', fontSize: '14px', marginBottom: '30px', fontWeight: 600, lineHeight: 1.6 }}>배우자가 앱을 설치하고<br/>이 코드를 입력하면 실시간 연결이 완료됩니다.</p>
+             <button 
+              onClick={() => onFinish({ nickname, mDate, mbti: insightResult, blood, coupleCode })}
+              style={{ width: '100%', padding: '18px', borderRadius: '20px', background: '#2D1F08', color: 'white', fontWeight: 900, fontSize: '16px' }}
             >
-              하티 시작하기
+              연결 대기하며 시작하기
+            </button>
+          </motion.div>
+        )}
+
+        {step === 6 && (
+          <motion.div key="step6" initial={{ x: 20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} className="flex flex-col h-full justify-center">
+            <h2 style={{ fontSize: '22px', fontWeight: 900, color: '#2D1F08', marginBottom: '15px' }}>초대 코드를 입력해주세요</h2>
+            <input 
+              placeholder="예: HS-1234" 
+              onChange={(e) => setCoupleCode(e.target.value.toUpperCase())}
+              style={{ width: '100%', padding: '20px', borderRadius: '20px', border: '2px solid #F5D060', fontSize: '20px', fontWeight: 900, textAlign: 'center', letterSpacing: '4px', marginBottom: '25px' }} 
+            />
+            {coupleCode && coupleCode.startsWith('HS-') && (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ textAlign: 'center', marginBottom: '25px' }}>
+                <div className="flex items-center justify-center gap-2" style={{ color: '#8A60FF', fontWeight: 900 }}>
+                  <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}>
+                    <RefreshCw size={18} />
+                  </motion.div>
+                  하트싱크 연결 중...
+                </div>
+              </motion.div>
+            )}
+            <button 
+              onClick={() => coupleCode && onFinish({ nickname, mDate, mbti: insightResult, blood, coupleCode })}
+              disabled={!coupleCode || !coupleCode.startsWith('HS-')}
+              style={{ width: '100%', padding: '18px', borderRadius: '20px', background: coupleCode && coupleCode.startsWith('HS-') ? '#2D1F08' : '#CCC', color: 'white', fontWeight: 900, fontSize: '16px' }}
+            >
+              연결 완료하기
             </button>
           </motion.div>
         )}
@@ -2594,6 +2646,7 @@ const App = () => {
   // App Global States
   const [isSetupDone, setIsSetupDone] = useState(() => localStorage.getItem('isSetupDone') === 'true');
   const [userRole, setUserRole] = useState(() => localStorage.getItem('userRole') || 'husband');
+  const [coupleCode, setCoupleCode] = useState(() => localStorage.getItem('coupleCode') || 'HS-7289');
   const [husbandInfo, setHusbandInfo] = useState(() => JSON.parse(localStorage.getItem('husbandInfo') || '{"nickname":"김남편", "mbti":"ISTJ", "blood":"A", "marriageDate":"2020-05-23"}'));
   const [wifeInfo, setWifeInfo] = useState(() => JSON.parse(localStorage.getItem('wifeInfo') || '{"nickname":"박아내", "mbti":"ENFP", "blood":"B", "marriageDate":"2020-05-23"}'));
   const appTheme = { id: 'warm', primary: '#D4AF37', bg: '#FDFCF0' };
@@ -2636,7 +2689,7 @@ const App = () => {
       const { data: signalData } = await supabase
         .from('signals')
         .select('*')
-        .eq('couple_id', COUPLE_CODE);
+        .eq('couple_id', coupleCode);
       
       if (signalData) {
         const mySignalRow = signalData.find(s => s.user_role === userRole);
@@ -2649,7 +2702,7 @@ const App = () => {
       const { data: prayerData } = await supabase
         .from('prayers')
         .select('*')
-        .eq('couple_id', COUPLE_CODE)
+        .eq('couple_id', coupleCode)
         .order('created_at', { ascending: false });
       
       if (prayerData) {
@@ -2666,7 +2719,7 @@ const App = () => {
         event: '*', 
         schema: 'public', 
         table: 'signals',
-        filter: `couple_id=eq.${COUPLE_CODE}` 
+        filter: `couple_id=eq.${coupleCode}` 
       }, payload => {
         const { user_role: role, signal } = payload.new;
         if (role !== userRole) setSpouseSignal(signal);
@@ -2676,7 +2729,7 @@ const App = () => {
         event: 'INSERT',
         schema: 'public',
         table: 'prayers',
-        filter: `couple_id=eq.${COUPLE_CODE}`
+        filter: `couple_id=eq.${coupleCode}`
       }, payload => {
         if (payload.new.user_role !== userRole) {
           setPartnerPrayers(prev => [payload.new, ...prev]);
@@ -2693,7 +2746,7 @@ const App = () => {
   const handleSetMySignal = async (newSignal) => {
     setMySignal(newSignal);
     await supabase.from('signals').upsert({
-      couple_id: COUPLE_CODE,
+      couple_id: coupleCode,
       user_role: userRole,
       signal: newSignal,
       updated_at: new Date().toISOString()
@@ -2753,7 +2806,7 @@ const App = () => {
                 <HomeView 
                   key="home"
                   userRole={userRole}
-                  coupleCode={COUPLE_CODE}
+                  coupleCode={coupleCode}
                   mySignal={mySignal} 
                   setMySignal={handleSetMySignal}
                   spouseSignal={spouseSignal}
@@ -2826,7 +2879,7 @@ const App = () => {
                  </div>
               )}
               {activeTab === 'worship' && (
-                <WorshipView key="worship" userRole={userRole} coupleCode={COUPLE_CODE} />
+                <WorshipView key="worship" userRole={userRole} coupleCode={coupleCode} />
               )}
               {activeTab === 'settings' && (
                 <SettingsView 
