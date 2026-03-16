@@ -311,12 +311,12 @@ const HomeView = ({ userRole, coupleCode, mySignal, setMySignal, spouseSignal, p
 
   return (
     <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="flex flex-col w-full">
-      <header className="brand-section" style={{ paddingTop: '20px' }}>
+      <header className="brand-section" style={{ paddingTop: '20px', alignItems: 'flex-start', paddingLeft: '30px' }}>
         <img 
           src="/logo_main.png" 
           alt="Heart Logo" 
           className="brand-logo" 
-          style={{ width: '220px', height: 'auto', marginTop: '-30px', marginBottom: '-50px', display: 'block', transform: 'scale(1.2)' }}
+          style={{ width: '180px', height: 'auto', marginTop: '-20px', marginBottom: '-65px', marginLeft: '-20px', display: 'block', transform: 'scale(1.1)' }}
           onError={(e) => { e.target.style.display = 'none'; }} 
         />
         <p style={{ fontSize: '13px', color: '#B08D3E', fontWeight: 900, letterSpacing: '2px', marginBottom: '4px' }}>부부의 마음을 이어주는</p>
@@ -2446,11 +2446,11 @@ const OnboardingView = ({ userRole, setUserRole, onFinish }) => {
       <AnimatePresence mode="wait">
         {step === 1 && (
           <motion.div key="step1" initial={{ x: 20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} exit={{ x: -20, opacity: 0 }} style={{ display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'center' }}>
-            <div style={{ marginBottom: '40px', textAlign: 'left' }}>
+            <div style={{ marginBottom: '40px', textAlign: 'left', paddingLeft: '10px' }}>
               <img 
                 src="/logo_main.png" 
                 alt="Heart Logo" 
-                style={{ width: '220px', height: 'auto', marginTop: '-30px', marginBottom: '-40px', transform: 'scale(1.2)' }}
+                style={{ width: '180px', height: 'auto', marginTop: '-20px', marginBottom: '-55px', marginLeft: '-25px', transform: 'scale(1.1)' }}
                 onError={(e) => { e.target.style.display = 'none'; }} 
               />
               <p style={{ fontSize: '13px', color: '#B08D3E', fontWeight: 900, letterSpacing: '2px', marginBottom: '4px' }}>부부의 마음을 이어드립니다</p>
