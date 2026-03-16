@@ -1457,7 +1457,6 @@ const SolutionView = ({ onBack }) => (
        </div>
 
        <div className="expert-content" style={{ display: 'flex', flexDirection: 'column', gap: '22px' }}>
-          {/* Section 1: 분석 */}
           <section>
             <h4 style={{ fontSize: '15px', color: '#8A60FF', fontWeight: 900, marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
               <Sparkles size={14} /> 영적 친밀도 분석
@@ -1601,19 +1600,18 @@ const IntimacyModal = ({ show, onClose, subPage, setSubPage, bgImage, onBgUpload
       onClick={!isFullPage ? onClose : undefined}
       style={{ 
         position: 'absolute', 
-        top: '-72px', /* 상단 바 영역까지 배경으로 채움 */
-        left: '-22px', 
-        right: '-22px', 
-        bottom: '-120px', /* 네비게이션 영역까지 확장 */
+        top: 0, 
+        left: 0, 
+        right: 0, 
+        bottom: 0, 
         zIndex: 2000, 
-        background: `url(${currentBg})`, 
+        background: `url(${currentBg}) center center no-repeat`, 
         backgroundSize: 'cover', 
-        backgroundPosition: 'center', 
         display: 'flex', 
         flexDirection: 'column',
         alignItems: 'center',
-        padding: '80px 22px 140px', /* 패딩 조정 */
-        overflowY: 'auto'
+        padding: '0', 
+        overflow: 'hidden'
       }}
     >
       {/* 🔔 상단 아이콘 (모달 안에서 다시 표시) */}
@@ -1625,23 +1623,19 @@ const IntimacyModal = ({ show, onClose, subPage, setSubPage, bgImage, onBgUpload
         onClick={(e) => e.stopPropagation()}
         style={{ 
           width: '100%',
-          maxWidth: '360px',
-          marginTop: '20px', /* 간격 조정 */
-          height: subPage === 'main' ? 'auto' : '100%',
+          height: '100%',
           background: subPage === 'secrets' ? '#B2C7DA' : 'rgba(253, 252, 240, 0.96)',
           backdropFilter: 'blur(30px) saturate(180%)', 
           display: 'flex', 
           flexDirection: 'column', 
           position: 'relative', 
-          borderRadius: '46px',
           overflow: 'hidden',
           border: subPage === 'secrets' ? 'none' : '1.5px solid rgba(212, 175, 55, 0.25)',
-          boxShadow: '0 30px 60px rgba(0,0,0,0.25)',
-          marginBottom: '20px' /* 아래쪽 잘림 방지 */
+          boxShadow: '0 30px 60px rgba(0,0,0,0.25)'
         }}
       >
         {subPage === 'main' && (
-          <div style={{ display: 'flex', flexDirection: 'column', height: '100%', padding: '50px 24px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', height: '100%', padding: '80px 24px', overflowY: 'auto' }}>
             <div style={{ textAlign: 'center', marginBottom: '50px' }}>
               <h2 style={{ 
                 background: 'linear-gradient(105deg, #7D5A00 0%, #C8970A 30%, #F5D060 50%, #D4960A 70%, #7D5A00 100%)',
@@ -1775,7 +1769,7 @@ const IntimacyModal = ({ show, onClose, subPage, setSubPage, bgImage, onBgUpload
             </div>
 
             {/* Input Area */}
-            <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '10px 16px 30px', background: 'white', display: 'flex', flexDirection: 'column', gap: '8px', zIndex: 10 }}>
+            <div style={{ padding: '12px 16px 30px', background: 'rgba(255,255,255,0.95)', backdropFilter: 'blur(10px)', display: 'flex', flexDirection: 'column', gap: '8px', borderTop: '1px solid rgba(0,0,0,0.05)', flexShrink: 0 }}>
               {messages.length === 0 ? (
                 <>
                   <div style={{ background: '#F8F9FA', padding: '12px 16px', borderRadius: '20px', border: '1px solid #E9ECEF' }}>
