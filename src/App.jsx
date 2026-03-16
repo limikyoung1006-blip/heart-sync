@@ -758,17 +758,35 @@ const ChatView = ({ userRole, husbandInfo, wifeInfo, onBack }) => {
     const p = hattiInfo.partnerInfo;
     const pl = hattiInfo.partnerLabel;
 
-    if (input.includes("모르겠어") || input.includes("모르겠") || input.includes("이해") || input.includes("이유")) {
-      return `배우자분의 마음을 헤아리고 싶어 하시는 그 마음이 바로 주님이 기뻐하시는 사랑의 시작입니다. ${p.mbti} 성향의 ${pl}분은 자신의 감정을 직접적으로 말하기보다 행동이나 분위기로 표현하실 때가 많을 거예요. "요즘 당신 마음은 어때?"라고 비판 없이 먼저 물어봐 주시는 것은 어떨까요? 주님의 지혜가 형제님/자매님과 함께하시길 기도합니다.`;
+    const getRandom = (arr) => arr[Math.floor(Math.random() * arr.length)];
+
+    if (input.includes("모르겠어") || input.includes("모르겠") || input.includes("이해") || input.includes("이유") || input.includes("왜")) {
+      return getRandom([
+        `배우자분의 마음을 헤아리고 싶어 하시는 그 마음이 바로 주님이 기뻐하시는 사랑의 시작입니다. ${p.mbti} 성향의 ${pl}분은 자신의 감정을 직접적으로 말하기보다 행동이나 분위기로 표현하실 때가 많을 거예요. "요즘 당신 마음은 어때?"라고 비판 없이 먼저 물어봐 주시는 것은 어떨까요?`,
+        `${pl}님의 ${p.mbti} 기질은 때로 형제님/자매님께는 미지의 영역처럼 느껴질 수 있어요. 하지만 하나님이 그분을 그렇게 지으신 데에는 특별한 이유가 있답니다. 오늘은 배우자의 행동 뒤에 숨겨진 '사랑받고 싶은 갈망'을 한 번 들여다보시겠어요?`,
+        `이해가 되지 않을 때는 주님께 지혜를 구하는 것이 좋습니다. ${pl}분의 ${p.blood}형다운 성격적 특성상, 말보다는 시간이 필요할 수도 있어요. 서두르지 말고 "내가 곁에 있을게"라는 무언의 지지를 보내주세요.`
+      ]);
     }
-    if (input.includes("싸웠어") || input.includes("갈등") || input.includes("화나") || input.includes("속상")) {
-      return `서로 다른 두 사람이 만나 하나가 되는 과정에서 갈등은 성화를 위한 하나님의 도구입니다. 지금의 속상한 마음을 주님께 기도로 먼저 쏟아놓으세요. 그리고 "미안해, 내가 이 부분은 부족했어"라고 먼저 손 내밀 때, 막힌 담이 허물어지는 복음의 능력을 체험하실 거예요. 힘내세요!`;
+    if (input.includes("싸웠어") || input.includes("갈등") || input.includes("화나") || input.includes("속상") || input.includes("싸움")) {
+      return getRandom([
+        `서로 다른 두 사람이 만나 하나가 되는 과정에서 갈등은 성화를 위한 하나님의 도구입니다. 지금의 속상한 마음을 주님께 기도로 먼저 쏟아놓으세요. 그리고 "미안해, 내가 이 부분은 부족했어"라고 먼저 손 내밀 때, 막힌 담이 허물어지는 복음의 능력을 체험하실 거예요.`,
+        `갈등이 생겼을 때 가장 중요한 것은 '정죄'가 아닌 '긍휼'입니다. 형제님/자매님이 먼저 주님 앞에 엎드려 마음의 평안을 얻으시길 기도해요. 그 평안이 ${pl}분과의 대화로 이어질 때, 주님이 예비하신 화해의 열매를 맺게 될 것입니다.`,
+        `화가 나는 감정은 자연스러운 것이지만, 그것이 죄로 이어지지 않게 조심하세요. "해가 지도록 분을 품지 말라"는 말씀처럼, 오늘 밤이 가기 전에 배우자의 손을 잡고 "우리의 관계를 회복시켜 주세요"라고 짧게 기도해 보는 건 어떨까요?`
+      ]);
     }
-    if (input.includes("대화") || input.includes("얘기") || input.includes("카드")) {
-      return `오늘 대화카드를 한 장 뽑아보시는 건 어떨까요? 서로의 깊은 속마음을 자연스럽게 나눌 수 있는 좋은 통로가 될 거예요. ${p.blood}형답게 진지한 대화를 선호하시는 ${pl}분도 대화카드를 통하면 훨씬 편안하게 다가오실 수 있을 겁니다. 하티가 두 분의 풍성한 식탁 교제를 응원합니다.`;
+    if (input.includes("대화") || input.includes("얘기") || input.includes("카드") || input.includes("소통")) {
+      return getRandom([
+        `오늘 대화카드를 한 장 뽑아보시는 건 어떨까요? 서로의 깊은 속마음을 자연스럽게 나눌 수 있는 좋은 통로가 될 거예요. ${p.blood}형답게 진지한 대화를 선호하시는 ${pl}분도 대화카드를 통하면 훨씬 편안하게 다가오실 수 있을 겁니다.`,
+        `소통의 핵심은 '듣는 것'입니다. ${pl}분이 이야기를 할 때 가르치려 하기보다 적극적으로 공감해 주세요. ${p.mbti} 성향의 배우자분은 자신의 감정이 수용될 때 마음의 문을 더욱 활짝 열게 된답니다.`,
+        `대화가 막힐 때는 환경을 바꿔보는 것도 도움이 돼요. 하티는 두 분이 함께 조용한 카페나 산책길에서 '시크릿 질문'을 하나씩 나눠보시는 것을 추천드립니다.`
+      ]);
     }
-    if (input.includes("사랑") || input.includes("고마워") || input.includes("좋아")) {
-      return `주님 안에서 서로를 축복하시는 모습이 참 아름답습니다! 그 고백을 오늘 ${pl}분께도 꼭 직접 전해주세요. "${p.mbti}인 당신이 내 곁에 있어서 정말 행복해"라고요. 사랑은 표현할 때 더욱 자라납니다. 오늘도 복된 하루 되세요.`;
+    if (input.includes("사랑") || input.includes("고마워") || input.includes("좋아") || input.includes("행복")) {
+      return getRandom([
+        `주님 안에서 서로를 축복하시는 모습이 참 아름답습니다! 그 고백을 오늘 ${pl}분께도 꼭 직접 전해주세요. "${p.mbti}인 당신이 내 곁에 있어서 정말 행복해"라고요. 사랑은 표현할 때 더욱 자라납니다.`,
+        `서로를 향한 감사의 마음은 가정을 세우는 가장 강력한 기초석입니다. 형제님/자매님의 그 따뜻한 마음이 배우자분에게도 고스란히 전달될 거예요. 오늘도 하나님의 은혜가 두 분의 식탁 위에 가득하길 축복합니다.`,
+        `행복한 가정을 위한 자매님/형제님의 노력에 박수를 보냅니다! 주님이 주신 이 귀한 배우자를 선물로 여기고 아끼실 때, 세상이 줄 수 없는 평안이 두 분의 심령에 솟아날 것입니다.`
+      ]);
     }
     
     // Default responses based on role and MBTI
@@ -809,12 +827,13 @@ const ChatView = ({ userRole, husbandInfo, wifeInfo, onBack }) => {
 
   const send = () => {
     if (!msg.trim()) return;
-    const newChat = [...chat, { role: 'user', text: msg }];
+    const userMessage = msg;
+    const newChat = [...chat, { role: 'user', text: userMessage }];
     setChat(newChat);
     setMsg("");
 
     setTimeout(() => {
-      const response = getContextualResponse(msg, hatti);
+      const response = getContextualResponse(userMessage, hatti);
       setChat([...newChat, { role: 'hatti', text: response }]);
     }, 1200);
   };
@@ -1776,7 +1795,7 @@ const IntimacyModal = ({ show, onClose, subPage, setSubPage, bgImage, onBgUpload
             </div>
 
             {/* Input Area */}
-            <div style={{ padding: '12px 16px 30px', background: 'rgba(255,255,255,0.95)', backdropFilter: 'blur(10px)', display: 'flex', flexDirection: 'column', gap: '8px', borderTop: '1px solid rgba(0,0,0,0.05)', flexShrink: 0 }}>
+            <div style={{ padding: '12px 16px 110px', background: 'rgba(255,255,255,0.95)', backdropFilter: 'blur(10px)', display: 'flex', flexDirection: 'column', gap: '8px', borderTop: '1px solid rgba(0,0,0,0.05)', flexShrink: 0 }}>
               {messages.length === 0 ? (
                 <>
                   <div style={{ background: '#F8F9FA', padding: '12px 16px', borderRadius: '20px', border: '1px solid #E9ECEF' }}>
