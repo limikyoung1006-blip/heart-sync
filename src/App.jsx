@@ -316,7 +316,7 @@ const HomeView = ({ userRole, coupleCode, mySignal, setMySignal, spouseSignal, p
           src="/logo_main.png" 
           alt="Heart Logo" 
           className="brand-logo" 
-          style={{ width: '180px', height: 'auto', marginBottom: '10px', display: 'block' }}
+          style={{ width: '220px', height: 'auto', marginTop: '-30px', marginBottom: '-50px', display: 'block', transform: 'scale(1.2)' }}
           onError={(e) => { e.target.style.display = 'none'; }} 
         />
         <p style={{ fontSize: '13px', color: '#B08D3E', fontWeight: 900, letterSpacing: '2px', marginBottom: '4px' }}>부부의 마음을 이어주는</p>
@@ -2450,7 +2450,7 @@ const OnboardingView = ({ userRole, setUserRole, onFinish }) => {
               <img 
                 src="/logo_main.png" 
                 alt="Heart Logo" 
-                style={{ width: '180px', height: 'auto', marginBottom: '15px' }}
+                style={{ width: '220px', height: 'auto', marginTop: '-30px', marginBottom: '-40px', transform: 'scale(1.2)' }}
                 onError={(e) => { e.target.style.display = 'none'; }} 
               />
               <p style={{ fontSize: '13px', color: '#B08D3E', fontWeight: 900, letterSpacing: '2px', marginBottom: '4px' }}>부부의 마음을 이어드립니다</p>
