@@ -12,6 +12,9 @@ import {
   ClipboardList, Fingerprint, Share2
 } from 'lucide-react';
 import questions from '../questions.json';
+import { supabase } from './supabase';
+
+const COUPLE_CODE = 'HS-7289'; // Default couple code
 const NavItem = ({ active, onClick, icon, label }) => (
   <div onClick={onClick} className={`nav-item ${active ? 'active' : ''}`}>
     <div className="nav-icon-wrapper">
@@ -118,16 +121,71 @@ const SettingsToggle = ({ icon, label, active, onToggle }) => (
   </div>
 );
 
-const SecretAnswerInteraction = ({ answered, setAnswered, spouseAnswered }) => {
+const SecretAnswerInteraction = ({ userRole, coupleCode, questionText }) => {
   const [myAnswer, setMyAnswer] = useState("");
+  const [spouseAnswer, setSpouseAnswer] = useState(null);
+  const [answered, setAnswered] = useState(false);
   
-  const handleSend = () => {
+  useEffect(() => {
+    // 1. Initial Fetch
+    const fetchAnswers = async () => {
+      const { data } = await supabase
+        .from('secret_answers')
+        .select('*')
+        .eq('couple_id', coupleCode)
+        .eq('question_text', questionText);
+      
+      if (data) {
+        const myRow = data.find(r => r.user_role === userRole);
+        const spouseRow = data.find(r => r.user_role !== userRole);
+        if (myRow) {
+          setMyAnswer(myRow.answer);
+          setAnswered(true);
+        }
+        if (spouseRow) setSpouseAnswer(spouseRow.answer);
+      }
+    };
+    fetchAnswers();
+
+    // 2. Real-time Subscription
+    const channel = supabase
+      .channel('realtime-secret-answers')
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'secret_answers',
+        filter: `couple_id=eq.${coupleCode}`
+      }, payload => {
+        if (payload.new.question_text === questionText) {
+          if (payload.new.user_role === userRole) {
+            setMyAnswer(payload.new.answer);
+            setAnswered(true);
+          } else {
+            setSpouseAnswer(payload.new.answer);
+          }
+        }
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [userRole, coupleCode, questionText]);
+
+  const handleSend = async () => {
     if (!myAnswer) return;
+    await supabase.from('secret_answers').insert({
+      couple_id: coupleCode,
+      question_text: questionText,
+      user_role: userRole,
+      answer: myAnswer,
+      created_at: new Date().toISOString()
+    });
     setAnswered(true);
   };
 
   // 배우자 답변 대기 중인 경우
-  if (answered && !spouseAnswered) {
+  if (answered && !spouseAnswer) {
     return (
       <div className="flex flex-col gap-4 w-full" style={{ marginTop: '15px' }}>
         <div className="prayer-bubble" style={{ background: 'rgba(255,255,255,0.95)', padding: '15px', borderRadius: '24px', boxShadow: '0 4px 15px rgba(0,0,0,0.1)' }}>
@@ -156,7 +214,7 @@ const SecretAnswerInteraction = ({ answered, setAnswered, spouseAnswered }) => {
   }
 
   // 둘 다 답변한 경우 (최종 공개)
-  if (answered && spouseAnswered) {
+  if (answered && spouseAnswer) {
     return (
       <div className="flex flex-col gap-4 w-full" style={{ marginTop: '10px' }}>
         <div className="prayer-bubble" style={{ background: 'rgba(255,255,255,0.98)', padding: '18px', borderRadius: '24px', border: '1px solid rgba(245, 208, 96, 0.3)', boxShadow: '0 8px 25px rgba(0,0,0,0.08)' }}>
@@ -177,7 +235,7 @@ const SecretAnswerInteraction = ({ answered, setAnswered, spouseAnswered }) => {
         >
           <p style={{ fontSize: '14px', color: '#FF4D6D', fontWeight: 900, marginBottom: '8px', textAlign: 'left' }}>배우자의 답변</p>
           <p style={{ fontSize: '18px', color: '#2D1F08', textAlign: 'left', fontWeight: 700, lineHeight: 1.6, wordBreak: 'keep-all' }}>
-            "당신과 이런 이야기를 할 수 있어서 정말 행복해요. 오늘 밤 더 깊은 대화를 나눠요."
+            "{spouseAnswer}"
           </p>
         </motion.div>
       </div>
@@ -225,7 +283,7 @@ const HATTI_TODOS = [
   { id: 8, action: "휴식", text: "오늘은 배우자가 온전히 쉴 수 있도록 육아나 집안일을 도맡아 해주세요." }
 ];
 
-const HomeView = ({ mySignal, setMySignal, spouseSignal, onIntimacyClick, onNav, schedules }) => {
+const HomeView = ({ userRole, coupleCode, mySignal, setMySignal, spouseSignal, partnerPrayers, onIntimacyClick, onNav, schedules }) => {
   const [showGuide, setShowGuide] = useState(false);
   const [isRevealed, setIsRevealed] = useState(false);
   
@@ -240,17 +298,7 @@ const HomeView = ({ mySignal, setMySignal, spouseSignal, onIntimacyClick, onNav,
     const todayStr = new Date().toISOString().split('T')[0];
     return schedules.filter(s => s.date === todayStr);
   }, [schedules]);
-  const [answered, setAnswered] = useState(false);
-  const [spouseAnswered, setSpouseAnswered] = useState(false);
   const [isAdviceOpen, setIsAdviceOpen] = useState(false);
-
-  // 시뮬레이션: 3초 뒤에 배우자가 답변한 것으로 간주
-  useEffect(() => {
-    if (answered && !spouseAnswered) {
-      const timer = setTimeout(() => setSpouseAnswered(true), 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [answered, spouseAnswered]);
 
   const todaySecretQuestion = useMemo(() => {
     // 날짜 기반 시드 생성 (매일 같은 질문)
@@ -480,9 +528,9 @@ const HomeView = ({ mySignal, setMySignal, spouseSignal, onIntimacyClick, onNav,
                   </h2>
                   
                   <SecretAnswerInteraction 
-                    answered={answered} 
-                    setAnswered={setAnswered} 
-                    spouseAnswered={spouseAnswered} 
+                    userRole={userRole}
+                    coupleCode={coupleCode}
+                    questionText={todaySecretQuestion}
                   />
                   
                   <button 
@@ -556,10 +604,10 @@ const HomeView = ({ mySignal, setMySignal, spouseSignal, onIntimacyClick, onNav,
             animation: 'gold-shimmer-sweep 8s infinite'
           }} />
 
-          {JSON.parse(localStorage.getItem('partnerPrayers') || '[]').length > 0 ? (
+          {partnerPrayers.length > 0 ? (
             <div className="flex flex-col gap-2">
               <p style={{ fontSize: '15px', color: '#2D1F08', fontWeight: 600, lineHeight: 1.6, wordBreak: 'keep-all' }}>
-                 "{JSON.parse(localStorage.getItem('partnerPrayers') || '[]')[0].text}"
+                 "{partnerPrayers[0].text}"
               </p>
               <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '4px', marginTop: '6px' }}>
                  <span style={{ fontSize: '11px', color: '#B08D3E', fontWeight: 800 }}>전체 내용 확인하기</span>
@@ -901,7 +949,7 @@ const WORSHIP_SESSIONS = [
   }
 ];
 
-const WorshipView = () => {
+const WorshipView = ({ userRole, coupleCode }) => {
   const [currentSession, setCurrentSession] = useState(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [praiseUrl, setPraiseUrl] = useState("");
@@ -910,14 +958,42 @@ const WorshipView = () => {
   const [partnerPrayers, setPartnerPrayers] = useState([]);
 
   useEffect(() => {
-    localStorage.setItem('myPrayers', JSON.stringify(myPrayers));
-    const sync = () => {
-      const partnerData = JSON.parse(localStorage.getItem('partnerPrayers') || '[]');
-      setPartnerPrayers(partnerData);
+    // 1. Initial Fetch
+    const fetchPrayers = async () => {
+      const { data } = await supabase
+        .from('prayers')
+        .select('*')
+        .eq('couple_id', coupleCode)
+        .order('created_at', { ascending: false });
+      
+      if (data) {
+        setMyPrayers(data.filter(p => p.user_role === userRole));
+        setPartnerPrayers(data.filter(p => p.user_role !== userRole));
+      }
     };
-    const interval = setInterval(sync, 2000);
-    return () => clearInterval(interval);
-  }, [myPrayers]);
+    fetchPrayers();
+
+    // 2. Real-time Subscription
+    const channel = supabase
+      .channel('realtime-prayers')
+      .on('postgres_changes', { 
+        event: 'INSERT', 
+        schema: 'public', 
+        table: 'prayers',
+        filter: `couple_id=eq.${coupleCode}` 
+      }, payload => {
+        if (payload.new.user_role === userRole) {
+          setMyPrayers(prev => [payload.new, ...prev]);
+        } else {
+          setPartnerPrayers(prev => [payload.new, ...prev]);
+        }
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [userRole, coupleCode]);
 
   const extractYoutubeId = (url) => {
     const regExp = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/;
@@ -934,11 +1010,18 @@ const WorshipView = () => {
     }, 1500);
   };
 
-  const handleRecord = () => {
+  const handleRecord = async () => {
     if (!topic) return;
-    const newPrayer = { id: Date.now(), text: topic, date: new Date().toLocaleDateString() };
-    setMyPrayers([newPrayer, ...myPrayers]);
-    setTopic("");
+    const { data, error } = await supabase.from('prayers').insert({
+      couple_id: coupleCode,
+      user_role: userRole,
+      text: topic,
+      created_at: new Date().toISOString()
+    }).select();
+    
+    if (!error && data) {
+      setTopic("");
+    }
   };
 
   const allPrayers = useMemo(() => {
@@ -2525,6 +2608,7 @@ const App = () => {
   const [mySignal, setMySignal] = useState('green');
   const [spouseSignal, setSpouseSignal] = useState('green');
   const [schedules, setSchedules] = useState(() => JSON.parse(localStorage.getItem('coupleSchedules') || '[]'));
+  const [partnerPrayers, setPartnerPrayers] = useState([]);
   
   // Persistence
   useEffect(() => {
@@ -2544,13 +2628,77 @@ const App = () => {
   const addSchedule = (s) => setSchedules([...schedules, s]);
   const deleteSchedule = (id) => setSchedules(schedules.filter(s => s.id !== id));
   
-  // Sync Simulation
+  // Supabase Real-time Sync
   useEffect(() => {
-    localStorage.setItem('mySignal', mySignal);
-    const sync = () => setSpouseSignal(localStorage.getItem('partnerSignal') || 'green');
-    const interval = setInterval(sync, 2000);
-    return () => clearInterval(interval);
-  }, [mySignal]);
+    // 1. Initial Data Fetch
+    const fetchInitialData = async () => {
+      // Fetch Signals
+      const { data: signalData } = await supabase
+        .from('signals')
+        .select('*')
+        .eq('couple_id', COUPLE_CODE);
+      
+      if (signalData) {
+        const mySignalRow = signalData.find(s => s.user_role === userRole);
+        const spouseSignalRow = signalData.find(s => s.user_role !== userRole);
+        if (mySignalRow) setMySignal(mySignalRow.signal);
+        if (spouseSignalRow) setSpouseSignal(spouseSignalRow.signal);
+      }
+
+      // Fetch Prayers
+      const { data: prayerData } = await supabase
+        .from('prayers')
+        .select('*')
+        .eq('couple_id', COUPLE_CODE)
+        .order('created_at', { ascending: false });
+      
+      if (prayerData) {
+        setPartnerPrayers(prayerData.filter(p => p.user_role !== userRole));
+      }
+    };
+
+    fetchInitialData();
+
+    // 2. Real-time Subscription
+    const channel = supabase
+      .channel('realtime-couple-data')
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'signals',
+        filter: `couple_id=eq.${COUPLE_CODE}` 
+      }, payload => {
+        const { user_role: role, signal } = payload.new;
+        if (role !== userRole) setSpouseSignal(signal);
+        else setMySignal(signal);
+      })
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'prayers',
+        filter: `couple_id=eq.${COUPLE_CODE}`
+      }, payload => {
+        if (payload.new.user_role !== userRole) {
+          setPartnerPrayers(prev => [payload.new, ...prev]);
+        }
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [userRole]);
+
+  // Update My Signal to Supabase
+  const handleSetMySignal = async (newSignal) => {
+    setMySignal(newSignal);
+    await supabase.from('signals').upsert({
+      couple_id: COUPLE_CODE,
+      user_role: userRole,
+      signal: newSignal,
+      updated_at: new Date().toISOString()
+    }, { onConflict: 'couple_id,user_role' });
+  };
 
   return (
     <div className="h-full flex flex-col relative w-full" style={{ '--gold': appTheme.primary, '--gold-glow': `${appTheme.primary}40` }}>
@@ -2604,9 +2752,12 @@ const App = () => {
               {activeTab === 'home' && (
                 <HomeView 
                   key="home"
+                  userRole={userRole}
+                  coupleCode={COUPLE_CODE}
                   mySignal={mySignal} 
-                  setMySignal={setMySignal}
+                  setMySignal={handleSetMySignal}
                   spouseSignal={spouseSignal}
+                  partnerPrayers={partnerPrayers}
                   onIntimacyClick={() => setActiveTab('intimacy')}
                   onNav={(tab) => setActiveTab(tab)}
                   schedules={schedules}
@@ -2675,7 +2826,7 @@ const App = () => {
                  </div>
               )}
               {activeTab === 'worship' && (
-                <WorshipView key="worship" />
+                <WorshipView key="worship" userRole={userRole} coupleCode={COUPLE_CODE} />
               )}
               {activeTab === 'settings' && (
                 <SettingsView 
