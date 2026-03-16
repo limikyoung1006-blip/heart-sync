@@ -32,7 +32,10 @@ import {
   Clipboard,
   Bell,
   Home,
-  BookOpen
+  BookOpen,
+  Zap,
+  Send,
+  Music
 } from 'lucide-react';
 import questions from '../questions.json';
 import { supabase } from './supabase';
