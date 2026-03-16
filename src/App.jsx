@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Heart, 
   MessageCircle, 
+  MessageSquare,
   Calendar, 
   User, 
   Smartphone, 
@@ -28,7 +29,10 @@ import {
   ClipboardList,
   Fingerprint,
   Flame,
-  Clipboard
+  Clipboard,
+  Bell,
+  Home,
+  BookOpen
 } from 'lucide-react';
 import questions from '../questions.json';
 import { supabase } from './supabase';
