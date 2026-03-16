@@ -2712,7 +2712,7 @@ const OnboardingView = ({ userRole, setUserRole, onFinish }) => {
                     setIsConnecting(false);
                     setIsConnected(true);
                     setTimeout(() => {
-                      onFinish({ nickname, mDate, mbti: insightResult, blood, coupleCode });
+                      onFinish({ nickname, marriageDate: mDate, mbti: insightResult, blood, coupleCode });
                     }, 1200);
                   }, 2000);
                 }}
@@ -2761,7 +2761,7 @@ const OnboardingView = ({ userRole, setUserRole, onFinish }) => {
                   setIsConnecting(false);
                   setIsConnected(true);
                   setTimeout(() => {
-                    onFinish({ nickname, mDate, mbti: insightResult, blood, coupleCode });
+                    onFinish({ nickname, marriageDate: mDate, mbti: insightResult, blood, coupleCode });
                   }, 1200);
                 }, 2000);
               }}
