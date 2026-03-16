@@ -168,10 +168,10 @@ body {
 }
 
 .brand-logo {
-  height: 55px;
+  height: auto;
+  max-height: 300px;
   object-fit: contain;
-  mix-blend-mode: screen;
-  opacity: 0.9;
+  opacity: 1;
 }
 
 .brand-title {
