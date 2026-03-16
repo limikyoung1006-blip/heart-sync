@@ -1862,7 +1862,7 @@ const IntimacyModal = ({ show, onClose, subPage, setSubPage, bgImage, onBgUpload
 
 
 /* 🃏 Card Game View (Separated Page) */
-const CardGameView = ({ onBack }) => {
+const CardGameView = ({ onBack, coupleCode }) => {
   const [category, setCategory] = useState('일상');
   const [isFlipped, setIsFlipped] = useState(false);
   const filteredQuestions = useMemo(() => questions.filter(q => q.category === category), [category]);
@@ -1896,6 +1896,7 @@ const CardGameView = ({ onBack }) => {
         table: 'card_game_state',
         filter: `couple_id=eq.${coupleCode}`
       }, payload => {
+        if (!payload.new) return;
         const { category: cat, is_flipped, is_waiting, current_question_id } = payload.new;
         setCategory(cat);
         setIsFlipped(is_flipped);
@@ -2954,6 +2955,7 @@ const App = () => {
         table: 'signals',
         filter: `couple_id=eq.${coupleCode}` 
       }, payload => {
+        if (!payload.new) return;
         const { user_role: role, signal } = payload.new;
         if (role !== userRole) setSpouseSignal(signal);
         else setMySignal(signal);
@@ -3059,7 +3061,7 @@ const App = () => {
                 />
               )}
               {activeTab === 'cardGame' && (
-                <CardGameView key="cardGame" onBack={() => setActiveTab('home')} />
+                <CardGameView key="cardGame" coupleCode={coupleCode} onBack={() => setActiveTab('home')} />
               )}
               {activeTab === 'counseling' && (
                  <div className={`flex flex-col pt-4 ${counselingMode === 'chat' ? 'h-full' : ''}`}>
