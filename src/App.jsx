@@ -2459,6 +2459,7 @@ const OnboardingView = ({ userRole, setUserRole, onFinish }) => {
   const [mDate, setMDate] = useState("2020-05-23");
   const [insightResult, setInsightResult] = useState("");
   const [insightAnswers, setInsightAnswers] = useState({ e: null, s: null, t: null, j: null });
+  const [coupleCode, setCoupleCode] = useState("");
 
   const insightQuestions = [
     { key: 'e', title: '에너지 충전 방식', q: '지친 하루의 끝, 당신의 충전법은?', a1: 'E (밖에서 활기차게)', a2: 'I (혼자 조용히)' },
