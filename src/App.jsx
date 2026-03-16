@@ -197,13 +197,13 @@ const SecretAnswerInteraction = ({ userRole, coupleCode, questionText }) => {
 
   const handleSend = async () => {
     if (!myAnswer) return;
-    await supabase.from('secret_answers').insert({
+    await supabase.from('secret_answers').upsert({
       couple_id: coupleCode,
       question_text: questionText,
       user_role: userRole,
       answer: myAnswer,
       created_at: new Date().toISOString()
-    });
+    }, { onConflict: 'couple_id,question_text,user_role' });
     setAnswered(true);
   };
 
@@ -1867,20 +1867,85 @@ const CardGameView = ({ onBack }) => {
   const [isFlipped, setIsFlipped] = useState(false);
   const filteredQuestions = useMemo(() => questions.filter(q => q.category === category), [category]);
   const [currentQuestion, setCurrentQuestion] = useState(filteredQuestions[0]);
-
   const [isWaiting, setIsWaiting] = useState(false);
 
+  // Supabase Sync for Card Game
+  useEffect(() => {
+    const fetchCardState = async () => {
+      const { data } = await supabase
+        .from('card_game_state')
+        .select('*')
+        .eq('couple_id', coupleCode)
+        .single();
+      
+      if (data) {
+        setCategory(data.category);
+        setIsFlipped(data.is_flipped);
+        setIsWaiting(data.is_waiting);
+        const q = questions.find(q => q.id === data.current_question_id);
+        if (q) setCurrentQuestion(q);
+      }
+    };
+    fetchCardState();
+
+    const channel = supabase
+      .channel('realtime-card-game')
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'card_game_state',
+        filter: `couple_id=eq.${coupleCode}`
+      }, payload => {
+        const { category: cat, is_flipped, is_waiting, current_question_id } = payload.new;
+        setCategory(cat);
+        setIsFlipped(is_flipped);
+        setIsWaiting(is_waiting);
+        const q = questions.find(q => q.id === current_question_id);
+        if (q) setCurrentQuestion(q);
+      })
+      .subscribe();
+
+    return () => supabase.removeChannel(channel);
+  }, [coupleCode]);
+
+  const updateCardState = async (updates) => {
+    await supabase.from('card_game_state').upsert({
+      couple_id: coupleCode,
+      category,
+      is_flipped: isFlipped,
+      is_waiting: isWaiting,
+      current_question_id: currentQuestion?.id,
+      updated_at: new Date().toISOString(),
+      ...updates
+    }, { onConflict: 'couple_id' });
+  };
+
   const drawNewCard = () => {
+    const idx = Math.floor(Math.random() * filteredQuestions.length);
+    const newQ = filteredQuestions[idx];
+    setCurrentQuestion(newQ);
     setIsFlipped(false);
     setIsWaiting(false);
-    setTimeout(() => {
-      const idx = Math.floor(Math.random() * filteredQuestions.length);
-      setCurrentQuestion(filteredQuestions[idx]);
-    }, 300);
+    updateCardState({ current_question_id: newQ.id, is_flipped: false, is_waiting: false });
   };
 
   const handOverTurn = () => {
     setIsWaiting(true);
+    updateCardState({ is_waiting: true });
+  };
+
+  const toggleFlip = () => {
+    const nextFlip = !isFlipped;
+    setIsFlipped(nextFlip);
+    updateCardState({ is_flipped: nextFlip });
+  };
+
+  const changeCategory = (cat) => {
+    setCategory(cat);
+    setIsFlipped(false);
+    // When category changes, we don't necessarily want to draw a new card for the other person 
+    // until we click "draw", but for sync consistency, let's just sync the category.
+    updateCardState({ category: cat, is_flipped: false });
   };
 
   return (
@@ -1894,7 +1959,7 @@ const CardGameView = ({ onBack }) => {
 
       <div className="category-row" style={{ overflowX: 'auto', paddingBottom: '10px' }}>
           {['일상', '상상', '추억', '관계', '신앙'].map(cat => (
-            <div key={cat} className={`category-chip ${category === cat ? 'active' : ''}`} onClick={() => { setCategory(cat); setIsFlipped(false); }}>
+            <div key={cat} className={`category-chip ${category === cat ? 'active' : ''}`} onClick={() => changeCategory(cat)}>
               {cat}
             </div>
           ))}
@@ -1918,7 +1983,7 @@ const CardGameView = ({ onBack }) => {
 
       <div className="card-deck">
         <div className="card-float-anim">
-          <div className={`talking-card ${isFlipped ? 'flipped' : ''}`} onClick={() => setIsFlipped(!isFlipped)}>
+          <div className={`talking-card ${isFlipped ? 'flipped' : ''}`} onClick={toggleFlip}>
           <div className="card-face card-front" style={{ background: "url('/card_bg.png') no-repeat center center", backgroundSize: 'cover', borderRadius: '32px', overflow: 'hidden' }}>
             <div className="card-pattern-box" style={{ 
               justifyContent: 'flex-end', 
@@ -2287,7 +2352,11 @@ const SettingsView = ({ userRole, husbandInfo, setHusbandInfo, wifeInfo, setWife
         <SettingsItem icon={<Lock size={18} />} label="데이터 보안 설정" onClick={() => setShowDataSecurity(true)} />
       </div>
 
-      <div style={{ padding: '0 20px', marginTop: '10px' }}>
+      <div style={{ padding: '0 20px', marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        <div style={{ textAlign: 'center', padding: '10px', background: 'rgba(212, 175, 55, 0.1)', borderRadius: '15px' }}>
+          <p style={{ fontSize: '11px', color: '#8B7355', fontWeight: 800 }}>현재 연결 상태: <span style={{ color: '#D4AF37' }}>{coupleCode}</span> | <span style={{ color: userRole === 'husband' ? '#3B82F6' : '#EC4899' }}>{userRole === 'husband' ? '남편' : '아내'}</span></p>
+          <p style={{ fontSize: '10px', color: '#8B7355', opacity: 0.7 }}>배우자와 '서로 다른 역할'이어야 하며 '동일한 코드'여야 합니다.</p>
+        </div>
         <motion.button
           whileTap={{ scale: 0.95 }}
           onClick={() => {
@@ -2904,7 +2973,7 @@ const App = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [userRole]);
+  }, [userRole, coupleCode]);
 
   // Update My Signal to Supabase
   const handleSetMySignal = async (newSignal) => {
