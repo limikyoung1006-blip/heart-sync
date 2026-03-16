@@ -752,6 +752,33 @@ const ChatView = ({ userRole, husbandInfo, wifeInfo, onBack }) => {
   const [showSettings, setShowSettings] = useState(false);
   const chatEndRef = React.useRef(null);
 
+  // Keyword-based response logic for better context understanding
+  const getContextualResponse = (userInput, hattiInfo) => {
+    const input = userInput.toLowerCase();
+    const p = hattiInfo.partnerInfo;
+    const pl = hattiInfo.partnerLabel;
+
+    if (input.includes("모르겠어") || input.includes("모르겠") || input.includes("이해") || input.includes("이유")) {
+      return `배우자분의 마음을 헤아리고 싶어 하시는 그 마음이 바로 주님이 기뻐하시는 사랑의 시작입니다. ${p.mbti} 성향의 ${pl}분은 자신의 감정을 직접적으로 말하기보다 행동이나 분위기로 표현하실 때가 많을 거예요. "요즘 당신 마음은 어때?"라고 비판 없이 먼저 물어봐 주시는 것은 어떨까요? 주님의 지혜가 형제님/자매님과 함께하시길 기도합니다.`;
+    }
+    if (input.includes("싸웠어") || input.includes("갈등") || input.includes("화나") || input.includes("속상")) {
+      return `서로 다른 두 사람이 만나 하나가 되는 과정에서 갈등은 성화를 위한 하나님의 도구입니다. 지금의 속상한 마음을 주님께 기도로 먼저 쏟아놓으세요. 그리고 "미안해, 내가 이 부분은 부족했어"라고 먼저 손 내밀 때, 막힌 담이 허물어지는 복음의 능력을 체험하실 거예요. 힘내세요!`;
+    }
+    if (input.includes("대화") || input.includes("얘기") || input.includes("카드")) {
+      return `오늘 대화카드를 한 장 뽑아보시는 건 어떨까요? 서로의 깊은 속마음을 자연스럽게 나눌 수 있는 좋은 통로가 될 거예요. ${p.blood}형답게 진지한 대화를 선호하시는 ${pl}분도 대화카드를 통하면 훨씬 편안하게 다가오실 수 있을 겁니다. 하티가 두 분의 풍성한 식탁 교제를 응원합니다.`;
+    }
+    if (input.includes("사랑") || input.includes("고마워") || input.includes("좋아")) {
+      return `주님 안에서 서로를 축복하시는 모습이 참 아름답습니다! 그 고백을 오늘 ${pl}분께도 꼭 직접 전해주세요. "${p.mbti}인 당신이 내 곁에 있어서 정말 행복해"라고요. 사랑은 표현할 때 더욱 자라납니다. 오늘도 복된 하루 되세요.`;
+    }
+    
+    // Default responses based on role and MBTI
+    if (userRole === 'husband') {
+      return `남편으로서 아내분을 향한 형제님의 고민은 결코 헛되지 않습니다. ${p.mbti} 기질의 아내분을 그리스도께서 교회를 위해 자신을 주심 같이 사랑하기로 다짐해 보세요. 오늘 저녁, 따뜻한 차 한 잔과 함께 아내분의 이야기를 묵묵히 들어주시는 것만으로도 큰 위로가 될 것입니다.`;
+    } else {
+      return `자매님, 가정의 평안을 위해 애쓰시는 그 기도를 주님이 듣고 계십니다. ${p.mbti} 성향의 남편분은 결과 위주의 대화에 익숙할 수 있지만, 자매님의 따뜻한 격려가 그의 마음을 여는 열쇠가 될 거예요. 오늘 먼저 "당신 참 수고 많아"라고 안아주세요.`;
+    }
+  };
+
   // 상담가 하티 설정 (단일 페르소나)
   const hatti = useMemo(() => {
     const partnerInfo = userRole === 'husband' ? wifeInfo : husbandInfo;
@@ -787,33 +814,13 @@ const ChatView = ({ userRole, husbandInfo, wifeInfo, onBack }) => {
     setMsg("");
 
     setTimeout(() => {
-      const p = hatti.partnerInfo;
-      const pl = hatti.partnerLabel;
-      let response = "";
-
-      // 개혁주의 신앙 기반 따뜻한 맞춤 응답
-      if (userRole === 'husband') {
-        const responses = [
-          `아내분의 ${p.mbti} 기질은 주님이 가정이라는 정원을 가꾸기 위해 주신 특별한 생동감입니다. 남편된 형제님이 그리스도께서 교회를 사랑하시듯 그 다름을 '언약적 사랑'으로 품으실 때, 그 안에서 꽃피는 주님의 은혜를 보게 되실 거예요. 많이 수고하셨습니다.`,
-          `${p.mbti} 기질을 가진 아내분께는 형제님의 따뜻한 공감이 곧 하나님의 위로로 전달됩니다. 오늘 "당신 마음을 내가 알아"라는 한마디로 아내분의 마음을 보듬어 주세요. 주님께서 형제님을 용납하신 것처럼 말이죠.`,
-          `아내분의 ${p.blood}형다운 세심함은 가정을 지키는 파수꾼과 같아요. 때론 그 예민함이 형제님을 지치게 할 수도 있지만, 그것이 가정을 향한 사랑의 표현임을 기억하며 성경적인 온유함으로 반응해 보세요. 형제님 안에 계신 성령께서 능력을 주실 겁니다.`
-        ];
-        response = responses[Math.floor(Math.random() * responses.length)];
-      } else {
-        const responses = [
-          `남편분의 ${p.mbti} 기질은 하나님의 주권을 인정하며 묵묵히 가정의 문지기 역할을 수행하는 방식일 수 있어요. 가끔 표현이 서투를지라도, 주님이 남편분께 맡기신 권위와 책임을 존중하며 기도로 돕는 배필이 되어주세요. 주님의 평강이 자매님께 함께하길 기도합니다.`,
-          `${p.mbti} 성향의 남편분은 결과보다 자매님의 신뢰 어린 격려 한마디에 큰 용기를 얻는 '청지기'입니다. "당신이 있어서 우리 가정이 든든해"라는 진심 어린 위로가 남편분을 더 성숙한 그리스도인으로 성장하게 할 거예요.`,
-          `남편분의 ${p.blood}형다운 과묵함 이면에는 가족을 지키려는 깊은 고민이 담겨 있을 겁니다. 자매님의 따뜻한 미소와 인내가 그 고민의 짐을 덜어주는 보석 같은 은혜가 될 거예요. 오늘 먼저 손을 잡아주며 주님의 사랑을 전해보세요.`
-        ];
-        response = responses[Math.floor(Math.random() * responses.length)];
-      }
-
+      const response = getContextualResponse(msg, hatti);
       setChat([...newChat, { role: 'hatti', text: response }]);
     }, 1200);
   };
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col h-full w-full" style={{ gap: '15px' }}>
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col h-full w-full" style={{ gap: '15px', paddingBottom: '90px' }}>
       
       {/* ⬅️ Dedicated Top Back Button */}
       <div style={{ display: 'flex', padding: '0 5px' }}>
@@ -2117,7 +2124,7 @@ const CardGameView = ({ onBack, coupleCode }) => {
 };
 
 /* ⚙️ Settings View (Extended) */
-const SettingsView = ({ userRole, husbandInfo, setHusbandInfo, wifeInfo, setWifeInfo, onReportClick, onGuideClick }) => {
+const SettingsView = ({ userRole, husbandInfo, setHusbandInfo, wifeInfo, setWifeInfo, coupleCode, onReportClick, onGuideClick }) => {
   const [notifSignal, setNotifSignal] = useState(true);
   const [notifCard, setNotifCard] = useState(true);
   const [notifWorship, setNotifWorship] = useState(true);
@@ -3122,6 +3129,7 @@ const App = () => {
                   setHusbandInfo={setHusbandInfo}
                   wifeInfo={wifeInfo}
                   setWifeInfo={setWifeInfo}
+                  coupleCode={coupleCode}
                   onReportClick={() => setShowReport(true)} 
                   onGuideClick={() => setShowGuidePage(true)}
                 />
