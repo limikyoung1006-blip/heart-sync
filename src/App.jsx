@@ -35,7 +35,8 @@ import {
   BookOpen,
   Zap,
   Send,
-  Music
+  Music,
+  Smile
 } from 'lucide-react';
 import questions from '../questions.json';
 import { supabase } from './supabase';
@@ -1720,7 +1721,7 @@ const IntimacyModal = ({ show, onClose, subPage, setSubPage, bgImage, onBgUpload
             </div>
 
             {/* Chat Area */}
-            <div style={{ flexGrow: 1, overflowY: 'auto', padding: '16px 14px 140px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <div style={{ flex: 1, overflowY: 'auto', padding: '16px 14px 180px', display: 'flex', flexDirection: 'column', gap: '12px', minHeight: 0 }}>
               <div style={{ textAlign: 'center', margin: '10px 0' }}>
                 <span style={{ padding: '5px 14px', borderRadius: '15px', background: 'rgba(0,0,0,0.08)', fontSize: '10px', color: 'white', fontWeight: 800 }}>오직 두 분만을 위한 보안 대화방입니다</span>
               </div>
