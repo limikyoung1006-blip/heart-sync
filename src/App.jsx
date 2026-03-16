@@ -2482,6 +2482,8 @@ const OnboardingView = ({ userRole, setUserRole, onFinish }) => {
   const [insightResult, setInsightResult] = useState("");
   const [insightAnswers, setInsightAnswers] = useState({ e: null, s: null, t: null, j: null });
   const [coupleCode, setCoupleCode] = useState("");
+  const [isConnecting, setIsConnecting] = useState(false);
+  const [isConnected, setIsConnected] = useState(false);
 
   const insightQuestions = [
     { key: 'e', title: '에너지 충전 방식', q: '지친 하루의 끝, 당신의 충전법은?', a1: 'E (밖에서 활기차게)', a2: 'I (혼자 조용히)' },
@@ -2700,11 +2702,32 @@ const OnboardingView = ({ userRole, setUserRole, onFinish }) => {
              </div>
              <p style={{ color: '#8B7355', fontSize: '14px', marginBottom: '30px', fontWeight: 600, lineHeight: 1.6 }}>배우자가 앱을 설치하고<br/>이 코드를 입력하면 실시간 연결이 완료됩니다.</p>
              <button 
-              onClick={() => onFinish({ nickname, mDate, mbti: insightResult, blood, coupleCode })}
-              style={{ width: '100%', padding: '18px', borderRadius: '20px', background: '#2D1F08', color: 'white', fontWeight: 900, fontSize: '16px' }}
-            >
-              연결 대기하며 시작하기
-            </button>
+                onClick={() => {
+                  setIsConnecting(true);
+                  setTimeout(() => {
+                    setIsConnecting(false);
+                    setIsConnected(true);
+                    setTimeout(() => {
+                      onFinish({ nickname, mDate, mbti: insightResult, blood, coupleCode });
+                    }, 1200);
+                  }, 2000);
+                }}
+                disabled={isConnecting || isConnected}
+                style={{ width: '100%', padding: '18px', borderRadius: '20px', background: isConnected ? '#22C55E' : '#2D1F08', color: 'white', fontWeight: 900, fontSize: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}
+              >
+                {isConnecting ? (
+                  <>
+                    <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}><RefreshCw size={20} /></motion.div>
+                    연결 대기 중...
+                  </>
+                ) : isConnected ? (
+                  <>
+                    <CheckCircle2 size={20} /> 연결되었습니다!
+                  </>
+                ) : (
+                  "연결 대기하며 시작하기"
+                )}
+              </button>
           </motion.div>
         )}
 
@@ -2727,11 +2750,32 @@ const OnboardingView = ({ userRole, setUserRole, onFinish }) => {
               </motion.div>
             )}
             <button 
-              onClick={() => coupleCode && onFinish({ nickname, mDate, mbti: insightResult, blood, coupleCode })}
-              disabled={!coupleCode || !coupleCode.startsWith('HS-')}
-              style={{ width: '100%', padding: '18px', borderRadius: '20px', background: coupleCode && coupleCode.startsWith('HS-') ? '#2D1F08' : '#CCC', color: 'white', fontWeight: 900, fontSize: '16px' }}
+              onClick={() => {
+                if (!coupleCode || !coupleCode.startsWith('HS-')) return;
+                setIsConnecting(true);
+                setTimeout(() => {
+                  setIsConnecting(false);
+                  setIsConnected(true);
+                  setTimeout(() => {
+                    onFinish({ nickname, mDate, mbti: insightResult, blood, coupleCode });
+                  }, 1200);
+                }, 2000);
+              }}
+              disabled={!coupleCode || !coupleCode.startsWith('HS-') || isConnecting || isConnected}
+              style={{ width: '100%', padding: '18px', borderRadius: '20px', background: isConnected ? '#22C55E' : (coupleCode && coupleCode.startsWith('HS-') ? '#2D1F08' : '#CCC'), color: 'white', fontWeight: 900, fontSize: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}
             >
-              연결 완료하기
+              {isConnecting ? (
+                <>
+                  <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}><RefreshCw size={20} /></motion.div>
+                  연결 확인 중...
+                </>
+              ) : isConnected ? (
+                <>
+                  <CheckCircle2 size={20} /> 연결되었습니다!
+                </>
+              ) : (
+                "연결 완료하기"
+              )}
             </button>
           </motion.div>
         )}
@@ -2774,8 +2818,23 @@ const App = () => {
   }, [husbandInfo, wifeInfo, userRole, isSetupDone, schedules]);
 
   const handleOnboardingFinish = (info) => {
-    if (userRole === 'husband') setHusbandInfo(prev => ({ ...prev, ...info }));
-    else setWifeInfo(prev => ({ ...prev, ...info }));
+    if (info.coupleCode) {
+      setCoupleCode(info.coupleCode);
+      localStorage.setItem('coupleCode', info.coupleCode);
+    }
+    if (userRole === 'husband') {
+      const updatedInfo = { ...husbandInfo, ...info };
+      delete updatedInfo.coupleCode;
+      setHusbandInfo(updatedInfo);
+      localStorage.setItem('husbandInfo', JSON.stringify(updatedInfo));
+    } else {
+      const updatedInfo = { ...wifeInfo, ...info };
+      delete updatedInfo.coupleCode;
+      setWifeInfo(updatedInfo);
+      localStorage.setItem('wifeInfo', JSON.stringify(updatedInfo));
+    }
+    localStorage.setItem('userRole', userRole);
+    localStorage.setItem('isSetupDone', 'true');
     setIsSetupDone(true);
   };
 
