@@ -316,7 +316,7 @@ const HomeView = ({ userRole, coupleCode, mySignal, setMySignal, spouseSignal, p
           src="/logo_main.png" 
           alt="Heart Logo" 
           className="brand-logo" 
-          style={{ height: '100px', marginBottom: '15px', objectFit: 'contain' }}
+          style={{ height: '220px', width: 'auto', marginBottom: '15px', objectFit: 'contain' }}
           onError={(e) => { e.target.style.display = 'none'; }} 
         />
         <p style={{ fontSize: '13px', color: '#B08D3E', fontWeight: 900, letterSpacing: '2px', marginBottom: '4px' }}>부부의 마음을 이어주는</p>
