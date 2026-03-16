@@ -1,15 +1,34 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  Heart, Home, BookOpen, Settings,
-  Coffee, MessageCircle, MessageSquare,
-  Sparkles, Bell, Menu, ChevronLeft, ChevronDown,
-  Send, Lock, Zap, Smile, Moon, Wine,
-  BarChart3, User, RefreshCw,
-  Music, Play, SkipBack, SkipForward,
-  Calendar, CheckCircle2, ListTodo, Plus, Trash2,
-  AlertCircle, Smartphone, Users, Palette, Info, ArrowRight,
-  ClipboardList, Fingerprint, Share2
+import { 
+  Heart, 
+  MessageCircle, 
+  Calendar, 
+  User, 
+  Smartphone, 
+  Settings, 
+  Lock, 
+  BarChart3, 
+  Info, 
+  Share2, 
+  Users, 
+  Sparkles, 
+  ArrowRight, 
+  ChevronLeft, 
+  ChevronDown, 
+  Plus, 
+  Trash2, 
+  RefreshCw,
+  Camera,
+  Upload,
+  CheckCircle2,
+  ListTodo,
+  AlertCircle,
+  Palette,
+  ClipboardList,
+  Fingerprint,
+  Flame,
+  Clipboard
 } from 'lucide-react';
 import questions from '../questions.json';
 import { supabase } from './supabase';
@@ -2057,6 +2076,23 @@ const SettingsView = ({ userRole, husbandInfo, setHusbandInfo, wifeInfo, setWife
   const myInfo = userRole === 'husband' ? husbandInfo : wifeInfo;
   const setMyInfo = userRole === 'husband' ? setHusbandInfo : setWifeInfo;
 
+  const handlePhotoUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    // Check file size (limit to 1MB for base64 storage)
+    if (file.size > 1024 * 1024) {
+      alert("파일 크기가 너무 큽니다. 1MB 이하의 이미지를 선택해주세요.");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      updateProfile('avatar', reader.result);
+    };
+    reader.readAsDataURL(file);
+  };
+
   useEffect(() => {
     localStorage.setItem('worshipDays', JSON.stringify(worshipDays));
     localStorage.setItem('worshipTime', worshipTime);
@@ -2115,19 +2151,28 @@ const SettingsView = ({ userRole, husbandInfo, setHusbandInfo, wifeInfo, setWife
           <User size={16} color="#8B7355" />
         </button>
 
-        <div style={{ 
-          width: '90px', height: '90px', borderRadius: '50%', 
-          background: 'linear-gradient(135deg, #FF9A8B, #FF6A88)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          marginBottom: '15px', overflow: 'hidden', border: '3px solid white',
-          boxShadow: '0 8px 15px rgba(255, 106, 136, 0.3)'
-        }}>
+        <div 
+          onClick={() => document.getElementById('avatar-upload-main').click()}
+          style={{ 
+            width: '100px', height: '100px', borderRadius: '50%', 
+            background: 'linear-gradient(135deg, #F5D060, #D4AF37)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            marginBottom: '15px', overflow: 'hidden', border: '4px solid white',
+            boxShadow: '0 10px 25px rgba(212, 175, 55, 0.25)',
+            cursor: 'pointer',
+            position: 'relative'
+          }}
+        >
           <img 
-            src={userRole === 'husband' ? "/husband.png" : "/wife.png"} 
+            src={myInfo.avatar || (userRole === 'husband' ? "/husband.png" : "/wife.png")} 
             alt="Profile"
             style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
             onError={(e) => { e.target.src = userRole === 'husband' ? "https://api.dicebear.com/7.x/avataaars/svg?seed=Husband" : "https://api.dicebear.com/7.x/avataaars/svg?seed=Wife"; }}
           />
+          <div style={{ position: 'absolute', bottom: '0', right: '0', background: '#D4AF37', borderRadius: '50%', padding: '6px', border: '2px solid white', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+            <Camera size={14} color="white" />
+          </div>
+          <input type="file" id="avatar-upload-main" hidden accept="image/*" onChange={handlePhotoUpload} />
         </div>
         <h2 style={{ fontSize: '22px', fontWeight: 900, color: '#2D1F08', marginBottom: '8px' }}>
           {husbandInfo.nickname} ❤️ {wifeInfo.nickname}
@@ -2151,6 +2196,17 @@ const SettingsView = ({ userRole, husbandInfo, setHusbandInfo, wifeInfo, setWife
             initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} style={{ background: 'white', borderRadius: '32px', padding: '30px', width: '100%', maxWidth: '340px' }}>
             <h3 style={{ fontSize: '18px', fontWeight: 900, color: '#2D1F08', marginBottom: '20px', textAlign: 'center' }}>내 정보 수정</h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+              <div style={{ alignSelf: 'center', position: 'relative', marginBottom: '10px' }}>
+                <div 
+                  onClick={() => document.getElementById('avatar-upload-modal').click()}
+                  style={{ width: '80px', height: '80px', borderRadius: '50%', overflow: 'hidden', border: '3px solid #FDFCF0', cursor: 'pointer', boxShadow: '0 5px 15px rgba(0,0,0,0.1)' }}>
+                  <img src={myInfo.avatar || (userRole === 'husband' ? "/husband.png" : "/wife.png")} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                </div>
+                <div style={{ position: 'absolute', bottom: '0', right: '0', background: 'white', borderRadius: '50%', padding: '4px', boxShadow: '0 2px 5px rgba(0,0,0,0.2)' }}>
+                  <Upload size={12} color="#2D1F08" />
+                </div>
+                <input type="file" id="avatar-upload-modal" hidden accept="image/*" onChange={handlePhotoUpload} />
+              </div>
               <div>
                 <label style={{ fontSize: '12px', fontWeight: 800, color: '#8B7355', display: 'block', marginBottom: '6px' }}>애칭</label>
                 <input value={myInfo.nickname} onChange={(e) => updateProfile('nickname', e.target.value)} style={{ width: '100%', padding: '12px 18px', borderRadius: '14px', background: '#F9FAFB', border: '1px solid #EEE' }} />
