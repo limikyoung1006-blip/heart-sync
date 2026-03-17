@@ -2051,8 +2051,6 @@ const CardGameView = ({ onBack, coupleCode }) => {
   const changeCategory = (cat) => {
     setCategory(cat);
     setIsFlipped(false);
-    // When category changes, we don't necessarily want to draw a new card for the other person 
-    // until we click "draw", but for sync consistency, let's just sync the category.
     updateCardState({ category: cat, is_flipped: false });
   };
 
@@ -2288,12 +2286,33 @@ const SettingsView = ({ userRole, husbandInfo, setHusbandInfo, wifeInfo, setWife
     return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   }, [weddingDate, today]);
 
-  const updateProfile = (field, value) => {
-    setMyInfo(prev => ({ ...prev, [field]: value }));
+  const updateProfile = async (field, value) => {
+    const updatedInfo = { ...myInfo, [field]: value };
+    setMyInfo(updatedInfo);
+    
+    // Sync to Supabase
+    await supabase.from('profiles').upsert({
+      couple_id: coupleCode,
+      user_role: userRole,
+      info: updatedInfo,
+      updated_at: new Date().toISOString()
+    }, { onConflict: 'couple_id,user_role' });
+
     // 결혼기념일은 부부 공통 정보이므로 양쪽 모두 업데이트하여 싱크 맞춤
     if (field === 'marriageDate') {
-      if (userRole === 'husband') setWifeInfo(prev => ({ ...prev, marriageDate: value }));
-      else setHusbandInfo(prev => ({ ...prev, marriageDate: value }));
+      const spouseRole = userRole === 'husband' ? 'wife' : 'husband';
+      const spouseInfoSetter = userRole === 'husband' ? setWifeInfo : setHusbandInfo;
+      const spouseInfo = userRole === 'husband' ? wifeInfo : husbandInfo;
+      
+      const updatedSpouseInfo = { ...spouseInfo, marriageDate: value };
+      spouseInfoSetter(updatedSpouseInfo);
+      
+      await supabase.from('profiles').upsert({
+        couple_id: coupleCode,
+        user_role: spouseRole,
+        info: updatedSpouseInfo,
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'couple_id,user_role' });
     }
   };
 
@@ -3097,22 +3116,31 @@ const App = () => {
     localStorage.setItem('coupleSchedules', JSON.stringify(schedules));
   }, [husbandInfo, wifeInfo, userRole, isSetupDone, schedules]);
 
-  const handleOnboardingFinish = (info) => {
+  const handleOnboardingFinish = async (info) => {
+    let finalCode = info.coupleCode || coupleCode;
     if (info.coupleCode) {
       setCoupleCode(info.coupleCode);
       localStorage.setItem('coupleCode', info.coupleCode);
     }
+    
+    const baseInfo = userRole === 'husband' ? husbandInfo : wifeInfo;
+    const updatedInfo = { ...baseInfo, ...info };
+    delete updatedInfo.coupleCode;
+    
     if (userRole === 'husband') {
-      const updatedInfo = { ...husbandInfo, ...info };
-      delete updatedInfo.coupleCode;
       setHusbandInfo(updatedInfo);
-      localStorage.setItem('husbandInfo', JSON.stringify(updatedInfo));
     } else {
-      const updatedInfo = { ...wifeInfo, ...info };
-      delete updatedInfo.coupleCode;
       setWifeInfo(updatedInfo);
-      localStorage.setItem('wifeInfo', JSON.stringify(updatedInfo));
     }
+
+    // Push to Supabase immediately
+    await supabase.from('profiles').upsert({
+      couple_id: finalCode,
+      user_role: userRole,
+      info: updatedInfo,
+      updated_at: new Date().toISOString()
+    }, { onConflict: 'couple_id,user_role' });
+
     localStorage.setItem('userRole', userRole);
     localStorage.setItem('isSetupDone', 'true');
     setIsSetupDone(true);
@@ -3154,6 +3182,19 @@ const App = () => {
       if (prayerData) {
         setPartnerPrayers(prayerData.filter(p => p.user_role !== userRole));
       }
+
+      // Fetch Profiles
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('couple_id', coupleCode);
+      
+      if (profileData) {
+        const husbandP = profileData.find(p => p.user_role === 'husband');
+        const wifeP = profileData.find(p => p.user_role === 'wife');
+        if (husbandP) setHusbandInfo(husbandP.info);
+        if (wifeP) setWifeInfo(wifeP.info);
+      }
     };
 
     fetchInitialData();
@@ -3181,6 +3222,17 @@ const App = () => {
         if (payload.new.user_role !== userRole) {
           setPartnerPrayers(prev => [payload.new, ...prev]);
         }
+      })
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'profiles',
+        filter: `couple_id=eq.${coupleCode}`
+      }, payload => {
+        if (!payload.new) return;
+        const { user_role: role, info } = payload.new;
+        if (role === 'husband') setHusbandInfo(info);
+        else if (role === 'wife') setWifeInfo(info);
       })
       .subscribe();
 
