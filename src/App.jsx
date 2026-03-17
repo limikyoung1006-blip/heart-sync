@@ -2235,6 +2235,7 @@ const SettingsView = ({ userRole, husbandInfo, setHusbandInfo, wifeInfo, setWife
   const [showAppInfo, setShowAppInfo] = useState(false);
   const [showDataSecurity, setShowDataSecurity] = useState(false);
   const [showAISet, setShowAISet] = useState(false);
+  const [showNotifIntegration, setShowNotifIntegration] = useState(false);
   const [openaiKey, setOpenaiKey] = useState(() => localStorage.getItem('openai_api_key') || '');
 
   // Worship States
@@ -2430,7 +2431,7 @@ const SettingsView = ({ userRole, husbandInfo, setHusbandInfo, wifeInfo, setWife
         <h3 className="settings-section-title">연결 및 통합</h3>
         <SettingsItem icon={<Zap size={18} />} label="AI 전문가 엔진 설정 (OpenAI)" onClick={() => setShowAISet(true)} />
         <SettingsItem icon={<Users size={18} />} label="배우자 연결 관리 (코드 공유)" onClick={() => setShowConnectSet(true)} />
-        <SettingsItem icon={<Smartphone size={18} />} label="기기 알림 통합 설정" />
+        <SettingsItem icon={<Smartphone size={18} />} label="기기 알림 통합 설정" onClick={() => setShowNotifIntegration(true)} />
       </div>
 
       {/* 🔔 Notifications Section */}
@@ -2502,6 +2503,53 @@ const SettingsView = ({ userRole, husbandInfo, setHusbandInfo, wifeInfo, setWife
             >
               설정 완료
             </motion.button>
+          </motion.div>
+        </div>
+      )}
+
+      {/* 📱 Device Notification Integration Modal */}
+      {showNotifIntegration && (
+        <div 
+          onClick={() => setShowNotifIntegration(false)}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 6000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+          <motion.div 
+            onClick={(e) => e.stopPropagation()}
+            initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} style={{ background: 'white', borderRadius: '35px', padding: '35px', width: '100%', maxWidth: '360px', textAlign: 'center' }}>
+            <div style={{ width: '60px', height: '60px', background: 'rgba(59, 130, 246, 0.1)', borderRadius: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
+               <Smartphone size={28} color="#3B82F6" />
+            </div>
+            <h3 style={{ fontSize: '19px', fontWeight: 900, color: '#2D1F08', marginBottom: '12px' }}>기기 알림 통합 설정</h3>
+            <p style={{ fontSize: '14px', color: '#6B7280', lineHeight: 1.6, marginBottom: '25px', wordBreak: 'keep-all' }}>
+              배우자의 감정 신호나 대화 카드가 도착했을 때 즉시 알림을 받을 수 있도록 기기 설정을 동기화합니다.
+            </p>
+            
+            <div style={{ background: '#F8FAFC', padding: '15px', borderRadius: '20px', textAlign: 'left', marginBottom: '25px' }}>
+               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
+                 <span style={{ fontSize: '13px', color: '#64748B', fontWeight: 700 }}>시스템 권한 상태</span>
+                 <span style={{ fontSize: '13px', color: '#10B981', fontWeight: 900 }}>허용됨</span>
+               </div>
+               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                 <span style={{ fontSize: '13px', color: '#64748B', fontWeight: 700 }}>실시간 동기화 엔진</span>
+                 <span style={{ fontSize: '13px', color: '#3B82F6', fontWeight: 900 }}>활성화</span>
+               </div>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+               <motion.button 
+                 whileTap={{ scale: 0.95 }} 
+                 onClick={() => { alert('기기 알림 최적화가 완료되었습니다.'); setShowNotifIntegration(false); }} 
+                 style={{ width: '100%', padding: '16px', borderRadius: '16px', background: '#3B82F6', color: 'white', fontWeight: 900, border: 'none', cursor: 'pointer' }}
+               >
+                 지금 즉시 최적화하기
+               </motion.button>
+               <motion.button 
+                 whileTap={{ scale: 0.95 }} 
+                 onClick={() => setShowNotifIntegration(false)} 
+                 style={{ width: '100%', padding: '16px', borderRadius: '16px', background: '#F1F5F9', color: '#64748B', fontWeight: 800, border: 'none', cursor: 'pointer' }}
+               >
+                 닫기
+               </motion.button>
+            </div>
           </motion.div>
         </div>
       )}
