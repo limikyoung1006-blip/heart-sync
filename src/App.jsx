@@ -750,51 +750,115 @@ const HomeView = ({ userRole, coupleCode, mySignal, setMySignal, spouseSignal, p
 const ChatView = ({ userRole, husbandInfo, wifeInfo, onBack }) => {
   const [msg, setMsg] = useState("");
   const [showSettings, setShowSettings] = useState(false);
+  const [isAiLoading, setIsAiLoading] = useState(false);
   const chatEndRef = React.useRef(null);
 
+  const openaiKey = localStorage.getItem('openai_api_key');
+
   // Keyword-based response logic for better context understanding
-  const getContextualResponse = (userInput, hattiInfo) => {
+  const getContextualResponse = async (userInput, hattiInfo) => {
     const input = userInput.toLowerCase();
     const p = hattiInfo.partnerInfo;
     const pl = hattiInfo.partnerLabel;
 
-    const getRandom = (arr) => arr[Math.floor(Math.random() * arr.length)];
+    // IF OpenAI Key is available, use REAL AI
+    if (openaiKey) {
+      try {
+        setIsAiLoading(true);
+        const response = await fetch("https://api.openai.com/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${openaiKey}`
+          },
+          body: JSON.stringify({
+            model: "gpt-4o-mini",
+            messages: [
+              { 
+                role: "system", 
+                content: `당신은 'AI 하티'라는 이름의 전문적인 '개혁주의 부부 상담가'입니다. 
+                         사용자는 현재 ${userRole === 'husband' ? '남편' : '아내'}이며, 
+                         배우자는 ${p.mbti} 성향과 ${p.blood}형을 가진 ${pl}입니다.
+                         
+                         답변 원칙:
+                         1. 성경적(개혁주의 신앙) 가치관에 입각하여 따뜻하고 권위 있는 말투를 사용하십시오.
+                         2. 배우자의 MBTI${p.mbti}와 기질을 고려하여 구체적인 심리적 조언을 제공하십시오.
+                         3. 부부의 '하나 됨'과 '언약적 사랑'을 강조하십시오.
+                         4. 너무 길지 않게, 하지만 깊은 통찰이 담긴 답변을 하십시오. (최대 3-4문장)
+                         5. 한국어로 부드럽고 친절한 존댓말을 사용하십시오.`
+              },
+              { role: "user", content: userInput }
+            ],
+            temperature: 0.7
+          })
+        });
+        const data = await response.json();
+        setIsAiLoading(false);
+        if (data.choices && data.choices[0]) {
+          return data.choices[0].message.content;
+        }
+        return "AI 응답을 가져오는 중 오류가 발생했습니다. 키 설정을 확인해 주세요.";
+      } catch (err) {
+        setIsAiLoading(false);
+        console.error("OpenAI API Error:", err);
+        return "죄송합니다. 현재 AI 엔진과 연결이 원활하지 않습니다. 잠시 후 다시 시도해 주세요.";
+      }
+    }
 
-    if (input.includes("모르겠어") || input.includes("모르겠") || input.includes("이해") || input.includes("이유") || input.includes("왜")) {
-      return getRandom([
-        `배우자분의 마음을 헤아리고 싶어 하시는 그 마음이 바로 주님이 기뻐하시는 사랑의 시작입니다. ${p.mbti} 성향의 ${pl}분은 자신의 감정을 직접적으로 말하기보다 행동이나 분위기로 표현하실 때가 많을 거예요. "요즘 당신 마음은 어때?"라고 비판 없이 먼저 물어봐 주시는 것은 어떨까요?`,
-        `${pl}님의 ${p.mbti} 기질은 때로 형제님/자매님께는 미지의 영역처럼 느껴질 수 있어요. 하지만 하나님이 그분을 그렇게 지으신 데에는 특별한 이유가 있답니다. 오늘은 배우자의 행동 뒤에 숨겨진 '사랑받고 싶은 갈망'을 한 번 들여다보시겠어요?`,
-        `이해가 되지 않을 때는 주님께 지혜를 구하는 것이 좋습니다. ${pl}분의 ${p.blood}형다운 성격적 특성상, 말보다는 시간이 필요할 수도 있어요. 서두르지 말고 "내가 곁에 있을게"라는 무언의 지지를 보내주세요.`
-      ]);
-    }
-    if (input.includes("싸웠어") || input.includes("갈등") || input.includes("화나") || input.includes("속상") || input.includes("싸움")) {
-      return getRandom([
-        `서로 다른 두 사람이 만나 하나가 되는 과정에서 갈등은 성화를 위한 하나님의 도구입니다. 지금의 속상한 마음을 주님께 기도로 먼저 쏟아놓으세요. 그리고 "미안해, 내가 이 부분은 부족했어"라고 먼저 손 내밀 때, 막힌 담이 허물어지는 복음의 능력을 체험하실 거예요.`,
-        `갈등이 생겼을 때 가장 중요한 것은 '정죄'가 아닌 '긍휼'입니다. 형제님/자매님이 먼저 주님 앞에 엎드려 마음의 평안을 얻으시길 기도해요. 그 평안이 ${pl}분과의 대화로 이어질 때, 주님이 예비하신 화해의 열매를 맺게 될 것입니다.`,
-        `화가 나는 감정은 자연스러운 것이지만, 그것이 죄로 이어지지 않게 조심하세요. "해가 지도록 분을 품지 말라"는 말씀처럼, 오늘 밤이 가기 전에 배우자의 손을 잡고 "우리의 관계를 회복시켜 주세요"라고 짧게 기도해 보는 건 어떨까요?`
-      ]);
-    }
-    if (input.includes("대화") || input.includes("얘기") || input.includes("카드") || input.includes("소통")) {
-      return getRandom([
-        `오늘 대화카드를 한 장 뽑아보시는 건 어떨까요? 서로의 깊은 속마음을 자연스럽게 나눌 수 있는 좋은 통로가 될 거예요. ${p.blood}형답게 진지한 대화를 선호하시는 ${pl}분도 대화카드를 통하면 훨씬 편안하게 다가오실 수 있을 겁니다.`,
-        `소통의 핵심은 '듣는 것'입니다. ${pl}분이 이야기를 할 때 가르치려 하기보다 적극적으로 공감해 주세요. ${p.mbti} 성향의 배우자분은 자신의 감정이 수용될 때 마음의 문을 더욱 활짝 열게 된답니다.`,
-        `대화가 막힐 때는 환경을 바꿔보는 것도 도움이 돼요. 하티는 두 분이 함께 조용한 카페나 산책길에서 '시크릿 질문'을 하나씩 나눠보시는 것을 추천드립니다.`
-      ]);
-    }
-    if (input.includes("사랑") || input.includes("고마워") || input.includes("좋아") || input.includes("행복")) {
-      return getRandom([
-        `주님 안에서 서로를 축복하시는 모습이 참 아름답습니다! 그 고백을 오늘 ${pl}분께도 꼭 직접 전해주세요. "${p.mbti}인 당신이 내 곁에 있어서 정말 행복해"라고요. 사랑은 표현할 때 더욱 자라납니다.`,
-        `서로를 향한 감사의 마음은 가정을 세우는 가장 강력한 기초석입니다. 형제님/자매님의 그 따뜻한 마음이 배우자분에게도 고스란히 전달될 거예요. 오늘도 하나님의 은혜가 두 분의 식탁 위에 가득하길 축복합니다.`,
-        `행복한 가정을 위한 자매님/형제님의 노력에 박수를 보냅니다! 주님이 주신 이 귀한 배우자를 선물로 여기고 아끼실 때, 세상이 줄 수 없는 평안이 두 분의 심령에 솟아날 것입니다.`
-      ]);
-    }
-    
-    // Default responses based on role and MBTI
-    if (userRole === 'husband') {
-      return `남편으로서 아내분을 향한 형제님의 고민은 결코 헛되지 않습니다. ${p.mbti} 기질의 아내분을 그리스도께서 교회를 위해 자신을 주심 같이 사랑하기로 다짐해 보세요. 오늘 저녁, 따뜻한 차 한 잔과 함께 아내분의 이야기를 묵묵히 들어주시는 것만으로도 큰 위로가 될 것입니다.`;
-    } else {
-      return `자매님, 가정의 평안을 위해 애쓰시는 그 기도를 주님이 듣고 계십니다. ${p.mbti} 성향의 남편분은 결과 위주의 대화에 익숙할 수 있지만, 자매님의 따뜻한 격려가 그의 마음을 여는 열쇠가 될 거예요. 오늘 먼저 "당신 참 수고 많아"라고 안아주세요.`;
-    }
+    // 🚀 Smart Modular Engine: Combines parts to create thousands of unique responses
+    const intros = [
+      `반갑습니다, ${userRole === 'husband' ? '형제님' : '자매님'}. 하티가 두 분의 가정을 위해 기도하는 마음으로 답변드릴게요.`,
+      `주님의 평강이 함께하시길 바랍니다. 사연을 들으니 ${pl}분을 향한 깊은 사랑과 고민이 느껴지네요.`,
+      `하나님의 언약 안에 있는 가정을 소중히 여기는 그 마음이 참 귀합니다. 하티와 함께 지혜를 찾아보아요.`,
+      `${pl}분과 더 깊이 하나 되고 싶어 하시는 고민은 성숙한 그리스도인 부부의 아름다운 모습입니다.`
+    ];
+
+    const analysis = (() => {
+      if (input.includes("모르겠") || input.includes("이해") || input.includes("왜")) {
+        return [
+          `${pl}님의 ${p.mbti} 성향은 감정 표현보다 신중함을 우선시할 수 있습니다. 형제님/자매님이 보기에 답답할 수 있지만, 이는 신중하게 사랑을 지키려는 그분만의 방식일 거예요.`,
+          `${p.mbti} 기질을 가진 ${pl}분은 환경의 변화나 자신의 속마음이 노출되는 것에 예민할 수 있습니다. 그래서 가끔은 침묵으로 자신을 보호하곤 하죠.`,
+          `${p.blood}형 특유의 세심함이 때로는 날카로운 말로 나올 수 있지만, 사실 그 이면에는 배우자에게 더 완벽한 사랑을 주고 싶은 열망이 숨어 있답니다.`
+        ];
+      }
+      if (input.includes("싸웠") || input.includes("갈등") || input.includes("화나") || input.includes("속상")) {
+        return [
+          `서로 다른 두 기질(${userRole === 'husband' ? husbandInfo.mbti : wifeInfo.mbti}와 ${p.mbti})이 만나 부딪히는 것은 정금이 되기 위한 필수적인 연단 과정입니다.`,
+          `오늘의 갈등은 두 분이 서로를 '내 방식'이 아닌 '하나님의 방식'으로 사랑하는 법을 배우라고 주신 거룩한 불편함일 수 있어요.`,
+          `속상한 마음이 크시겠지만, ${pl}분 또한 자신의 연약함 때문에 지금 마음 한구석에서 힘들어하고 있을 가능성이 큽니다.`
+        ];
+      }
+      // Default analysis based on MBTI
+      return [
+        `${p.mbti} 성향의 배우자분은 정서적 지지보다는 확실한 신뢰와 존중을 느낄 때 마음을 활짝 여는 특징이 있습니다.`,
+        `${p.blood}형다운 과묵함 이면에는 가족을 지켜야 한다는 선한 책임감이 묵직하게 자리 잡고 있죠.`,
+        `${pl}님의 독특한 기질은 주님이 이 가정이라는 정원을 가꾸기 위해 심어두신 특별한 꽃과 같습니다.`
+      ];
+    })();
+
+    const principles = [
+      `그리스도께서 우리를 정죄하지 않고 품으셨듯이, 배우자의 부족함을 사명의 영역으로 바라보는 역설적인 은혜가 필요합니다.`,
+      `성경은 "서로 인자하게 하며 불쌍히 여기며 서로 용서하기를 하나님이 그리스도 안에서 너희를 용서하심과 같이 하라"고 권면합니다.`,
+      `결혼은 계약이 아닌 언약입니다. 상황에 따라 변하는 감정이 아니라, 변치 않는 주님의 약속 위에 두 분의 관계를 세우십시오.`,
+      `우리는 모두 공사 중인 건물과 같습니다. 주님이 우리를 빚어가시듯, 서로를 향한 기다림의 미학이 곧 사랑의 증거입니다.`
+    ];
+
+    const actions = [
+      `오늘 저녁에는 "당신이 있어서 우리 가정이 정말 든든해"라고 배우자의 존재 자체를 인정해 주는 축복의 말을 건네보세요.`,
+      `내 생각을 먼저 말하기보다, 10분만 아무 비판 없이 ${pl}분의 이야기를 묵묵히 들어주는 '경청의 예배'를 드려보시는 건 어떨까요?`,
+      `부끄러우시다면 대화카드 한 장을 슬쩍 건네보세요. 자연스럽게 마음의 담을 허무는 좋은 도구가 될 것입니다.`,
+      `배우자가 좋아하는 작은 간식이나 따뜻한 차 한 잔을 준비하며 "내가 당신을 생각하고 있어"라는 신호를 보내보십시오.`
+    ];
+
+    const outros = [
+      `주님이 두 분을 위해 예비하신 복된 평강이 오늘 밤 가득하기를 하티가 함께 기도하겠습니다.`,
+      `수고 많으셨습니다. 형제님/자매님의 그 노력이 주님 보시기에 가장 아름다운 향기입니다.`,
+      `이 고민의 끝에 두 분이 더 단단한 한 몸이 되길 믿습니다. 평안한 시간 되세요.`,
+      `하티는 항상 두 분의 언약적 사랑을 응원합니다. 언제든 다시 찾아주세요.`
+    ];
+
+    const response = `${getRandom(intros)} \n\n${getRandom(analysis)} \n\n${getRandom(principles)} ${getRandom(actions)} \n\n${getRandom(outros)}`;
+    return response;
   };
 
   // 상담가 하티 설정 (단일 페르소나)
@@ -832,8 +896,8 @@ const ChatView = ({ userRole, husbandInfo, wifeInfo, onBack }) => {
     setChat(newChat);
     setMsg("");
 
-    setTimeout(() => {
-      const response = getContextualResponse(userMessage, hatti);
+    setTimeout(async () => {
+      const response = await getContextualResponse(userMessage, hatti);
       setChat([...newChat, { role: 'hatti', text: response }]);
     }, 1200);
   };
@@ -936,6 +1000,18 @@ const ChatView = ({ userRole, husbandInfo, wifeInfo, onBack }) => {
             </div>
           </div>
         ))}
+        {isAiLoading && (
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+            <div style={{ width: '38px', height: '38px', borderRadius: '50%', overflow: 'hidden', border: `1.5px solid ${hatti.color}`, flexShrink: 0, marginTop: '4px' }}>
+              <img src={hatti.avatar} alt="Hatti" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            </div>
+            <div style={{ background: 'white', padding: '12px 18px', borderRadius: '24px 24px 24px 4px', border: `1px solid ${hatti.borderColor}`, display: 'flex', gap: '4px', alignItems: 'center' }}>
+               <motion.div animate={{ opacity: [0.3, 1, 0.3] }} transition={{ repeat: Infinity, duration: 1 }} style={{ width: '6px', height: '6px', borderRadius: '50%', background: hatti.color }} />
+               <motion.div animate={{ opacity: [0.3, 1, 0.3] }} transition={{ repeat: Infinity, duration: 1, delay: 0.2 }} style={{ width: '6px', height: '6px', borderRadius: '50%', background: hatti.color }} />
+               <motion.div animate={{ opacity: [0.3, 1, 0.3] }} transition={{ repeat: Infinity, duration: 1, delay: 0.4 }} style={{ width: '6px', height: '6px', borderRadius: '50%', background: hatti.color }} />
+            </div>
+          </div>
+        )}
         <div ref={chatEndRef} />
       </div>
 
@@ -2156,6 +2232,8 @@ const SettingsView = ({ userRole, husbandInfo, setHusbandInfo, wifeInfo, setWife
   const [showConnectSet, setShowConnectSet] = useState(false);
   const [showAppInfo, setShowAppInfo] = useState(false);
   const [showDataSecurity, setShowDataSecurity] = useState(false);
+  const [showAISet, setShowAISet] = useState(false);
+  const [openaiKey, setOpenaiKey] = useState(() => localStorage.getItem('openai_api_key') || '');
 
   // Worship States
   const [worshipDays, setWorshipDays] = useState(() => JSON.parse(localStorage.getItem('worshipDays') || '["일", "수"]'));
@@ -2348,6 +2426,7 @@ const SettingsView = ({ userRole, husbandInfo, setHusbandInfo, wifeInfo, setWife
       {/* 🔗 Connection Section */}
       <div className="settings-section">
         <h3 className="settings-section-title">연결 및 통합</h3>
+        <SettingsItem icon={<Zap size={18} />} label="AI 전문가 엔진 설정 (OpenAI)" onClick={() => setShowAISet(true)} />
         <SettingsItem icon={<Users size={18} />} label="배우자 연결 관리 (코드 공유)" onClick={() => setShowConnectSet(true)} />
         <SettingsItem icon={<Smartphone size={18} />} label="기기 알림 통합 설정" />
       </div>
@@ -2376,6 +2455,54 @@ const SettingsView = ({ userRole, husbandInfo, setHusbandInfo, wifeInfo, setWife
         <SettingsItem icon={<Info size={18} />} label="하트싱크 사용 가이드 (기능 설명)" onClick={onGuideClick} />
         <SettingsItem icon={<Lock size={18} />} label="데이터 보안 설정" onClick={() => setShowDataSecurity(true)} />
       </div>
+
+      {/* 🚀 AI Expert Engine Modal */}
+      {showAISet && (
+        <div 
+          onClick={() => setShowAISet(false)}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 6000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+          <motion.div 
+            onClick={(e) => e.stopPropagation()}
+            initial={{ y: 50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} style={{ background: 'white', borderRadius: '35px', padding: '35px', width: '100%', maxWidth: '360px', boxShadow: '0 25px 50px rgba(0,0,0,0.3)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
+               <div style={{ width: '45px', height: '45px', borderRadius: '14px', background: 'linear-gradient(135deg, #8A60FF, #AC8AFF)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                 <Zap size={22} color="white" />
+               </div>
+               <div>
+                  <h3 style={{ fontSize: '18px', fontWeight: 900, color: '#2D1F08' }}>AI 전문가 엔진 설정</h3>
+                  <span style={{ fontSize: '11px', color: '#8A60FF', fontWeight: 800 }}>POWERED BY OPENAI GPT-4O</span>
+               </div>
+            </div>
+            
+            <p style={{ fontSize: '14px', color: '#4B5563', lineHeight: 1.6, marginBottom: '20px', wordBreak: 'keep-all' }}>
+              진짜 인공지능 '하티'와 대화하려면 **OpenAI API Key**가 필요합니다. 입력된 키는 본인의 브라우저에만 안전하게 저장됩니다.
+            </p>
+
+            <div style={{ marginBottom: '20px' }}>
+               <label style={{ fontSize: '12px', fontWeight: 800, color: '#8B7355', display: 'block', marginBottom: '8px' }}>API KEY 입력</label>
+               <input 
+                 type="password"
+                 placeholder="sk-..." 
+                 value={openaiKey} 
+                 onChange={(e) => {
+                   setOpenaiKey(e.target.value);
+                   localStorage.setItem('openai_api_key', e.target.value);
+                 }} 
+                 style={{ width: '100%', padding: '15px 20px', borderRadius: '16px', background: '#F9FAFB', border: '1.5px solid #EEE', fontSize: '14px', outline: 'none' }} 
+               />
+               <p style={{ fontSize: '11px', color: '#9CA3AF', marginTop: '8px' }}>* 입력 즉시 반영되며, 삭제 시 로컬 엔진으로 돌아갑니다.</p>
+            </div>
+
+            <motion.button 
+              whileTap={{ scale: 0.95 }} 
+              onClick={() => setShowAISet(false)} 
+              style={{ width: '100%', padding: '18px', borderRadius: '18px', background: '#2D1F08', color: 'white', fontWeight: 900, fontSize: '16px', border: 'none', cursor: 'pointer' }}
+            >
+              설정 완료
+            </motion.button>
+          </motion.div>
+        </div>
+      )}
 
       <div style={{ padding: '0 20px', marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
         <div style={{ textAlign: 'center', padding: '10px', background: 'rgba(212, 175, 55, 0.1)', borderRadius: '15px' }}>
