@@ -2224,7 +2224,7 @@ const CardGameView = ({ onBack, coupleCode }) => {
 };
 
 /* ⚙️ Settings View (Extended) */
-const SettingsView = ({ userRole, husbandInfo, setHusbandInfo, wifeInfo, setWifeInfo, coupleCode, setCoupleCode, onReportClick, onGuideClick }) => {
+const SettingsView = ({ userRole, husbandInfo, setHusbandInfo, wifeInfo, setWifeInfo, coupleCode, onReportClick, onGuideClick }) => {
   const [notifSignal, setNotifSignal] = useState(true);
   const [notifCard, setNotifCard] = useState(true);
   const [notifWorship, setNotifWorship] = useState(true);
@@ -2240,7 +2240,6 @@ const SettingsView = ({ userRole, husbandInfo, setHusbandInfo, wifeInfo, setWife
   const [showAISet, setShowAISet] = useState(false);
   const [showNotifIntegration, setShowNotifIntegration] = useState(false);
   const [openaiKey, setOpenaiKey] = useState(() => localStorage.getItem('openai_api_key') || '');
-  const [tempCoupleCode, setTempCoupleCode] = useState(coupleCode);
 
   // Worship States
   const [worshipDays, setWorshipDays] = useState(() => JSON.parse(localStorage.getItem('worshipDays') || '["일", "수"]'));
@@ -2706,61 +2705,13 @@ const SettingsView = ({ userRole, husbandInfo, setHusbandInfo, wifeInfo, setWife
              <div style={{ width: '70px', height: '70px', background: '#F0FDF4', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
                 <Users size={32} color="#15803D" />
              </div>
-             <h3 style={{ fontSize: '18px', fontWeight: 900, color: '#2D1F08', marginBottom: '8px' }}>배우자 연결 관리</h3>
-              <p style={{ fontSize: '14px', color: '#6B7280', marginBottom: '25px' }}>연결 코드를 수정하여 배우자와 다시 연결할 수 있습니다.</p>
-              
-              <div style={{ padding: '20px', background: '#F9FAFB', borderRadius: '24px', border: '1.5px dashed #D4AF37', marginBottom: '25px', textAlign: 'left' }}>
-                 <label style={{ fontSize: '11px', color: '#8B7355', fontWeight: 800, display: 'block', marginBottom: '8px', paddingLeft: '5px' }}>우리 부부의 연결 코드 (4-8자)</label>
-                 <input 
-                   type="text"
-                   value={tempCoupleCode}
-                   onChange={(e) => setTempCoupleCode(e.target.value.toUpperCase())}
-                   placeholder="코드 입력 (예: HS-7289)"
-                   style={{ 
-                     width: '100%', 
-                     padding: '16px', 
-                     borderRadius: '16px', 
-                     border: '1px solid #E5E7EB', 
-                     fontSize: '18px', 
-                     fontWeight: 900, 
-                     textAlign: 'center', 
-                     letterSpacing: '2px',
-                     color: '#2D1F08',
-                     background: 'white'
-                   }}
-                 />
-                 <p style={{ fontSize: '11px', color: '#9CA3AF', marginTop: '10px', textAlign: 'center', lineHeight: 1.4 }}>
-                   * 상대방과 동일한 코드를 입력해야 데이터가 공유됩니다.
-                 </p>
-              </div>
-
-              <div style={{ display: 'flex', gap: '10px' }}>
-                <motion.button 
-                  whileTap={{ scale: 0.95 }} 
-                  onClick={() => setShowConnectSet(false)} 
-                  style={{ flex: 1, padding: '16px', borderRadius: '16px', background: '#F1F5F9', color: '#64748B', fontWeight: 800, border: 'none', cursor: 'pointer' }}
-                >
-                  취소
-                </motion.button>
-                <motion.button 
-                  whileTap={{ scale: 0.95 }} 
-                  onClick={() => {
-                    if (tempCoupleCode.trim().length < 4) {
-                      alert('코드는 최소 4자 이상 입력해 주세요.');
-                      return;
-                    }
-                    setCoupleCode(tempCoupleCode);
-                    localStorage.setItem('coupleCode', tempCoupleCode);
-                    alert('연결 코드가 성공적으로 변경되었습니다. 앱을 다시 시작하거나 새로고침하여 데이터를 확인하세요.');
-                    setShowConnectSet(false);
-                    // Force refresh to re-initiate supabase channels with new code
-                    window.location.reload();
-                  }} 
-                  style={{ flex: 2, padding: '16px', borderRadius: '16px', background: '#2D1F08', color: 'white', fontWeight: 900, border: 'none', cursor: 'pointer' }}
-                >
-                  변경사항 저장
-                </motion.button>
-              </div>
+             <h3 style={{ fontSize: '18px', fontWeight: 900, color: '#2D1F08', marginBottom: '8px' }}>배우자와 연결된 상태입니다</h3>
+             <p style={{ fontSize: '14px', color: '#6B7280', marginBottom: '25px' }}>현재 안정적으로 데이터를 공유하고 있어요.</p>
+             <div style={{ padding: '20px', background: '#F9FAFB', borderRadius: '20px', border: '1.5px dashed #CCC', marginBottom: '25px' }}>
+                <span style={{ fontSize: '11px', color: '#8B7355', fontWeight: 800, display: 'block', marginBottom: '5px' }}>우리 부부의 연결 코드</span>
+                <span style={{ fontSize: '20px', fontWeight: 900, color: '#2D1F08', letterSpacing: '4px' }}>HS-7289</span>
+             </div>
+             <motion.button whileTap={{ scale: 0.95 }} onClick={() => setShowConnectSet(false)} style={{ width: '100%', padding: '16px', borderRadius: '16px', background: '#2D1F08', color: 'white', fontWeight: 900, border: 'none', cursor: 'pointer' }}>확인</motion.button>
           </motion.div>
         </div>
       )}
@@ -3445,7 +3396,6 @@ const App = () => {
                   wifeInfo={wifeInfo}
                   setWifeInfo={setWifeInfo}
                   coupleCode={coupleCode}
-                  setCoupleCode={setCoupleCode}
                   onReportClick={() => setShowReport(true)} 
                   onGuideClick={() => setShowGuidePage(true)}
                 />
