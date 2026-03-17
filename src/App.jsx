@@ -805,6 +805,8 @@ const ChatView = ({ userRole, husbandInfo, wifeInfo, onBack }) => {
       }
     }
 
+    const getRandom = (arr) => arr[Math.floor(Math.random() * arr.length)];
+
     // 🚀 Smart Modular Engine: Combines parts to create thousands of unique responses
     const intros = [
       `반갑습니다, ${userRole === 'husband' ? '형제님' : '자매님'}. 하티가 두 분의 가정을 위해 기도하는 마음으로 답변드릴게요.`,
@@ -3067,6 +3069,12 @@ const App = () => {
   const deleteSchedule = (id) => setSchedules(schedules.filter(s => s.id !== id));
   
   // Supabase Real-time Sync
+  useEffect(() => {
+    // 💡 Reset scroll position when tab changes
+    const mainArea = document.querySelector('.main-content');
+    if (mainArea) mainArea.scrollTop = 0;
+  }, [activeTab, counselingMode]);
+
   useEffect(() => {
     // 1. Initial Data Fetch
     const fetchInitialData = async () => {
