@@ -1474,8 +1474,12 @@ const AppGuideView = ({ onBack }) => {
 };
 
 /* 📊 Solution (AI Records) */
-const SolutionView = ({ onBack }) => (
-  <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="report-page" style={{ paddingBottom: '100px' }}>
+const SolutionView = ({ onBack, userRole, husbandInfo, wifeInfo, schedules }) => {
+  const myInfo = userRole === 'husband' ? husbandInfo : wifeInfo;
+  const spouseInfo = userRole === 'husband' ? wifeInfo : husbandInfo;
+
+  return (
+    <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="report-page" style={{ paddingBottom: '120px', overflowY: 'auto', height: '100%' }}>
     <div className="flex items-center gap-3 mb-6 p-4">
       <button onClick={onBack} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '5px' }}>
         <ChevronLeft size={24} color="#2D1F08" />
@@ -1521,7 +1525,7 @@ const SolutionView = ({ onBack }) => (
         <div className="report-icon-bg" style={{ background: 'linear-gradient(135deg, #8A60FF, #AC8AFF)' }}>
           <Zap size={20} color="white" />
         </div>
-        <span className="report-card-label" style={{ fontSize: '18px', fontWeight: 900 }}>대화 테마 테마 분석</span>
+        <span className="report-card-label" style={{ fontSize: '18px', fontWeight: 900 }}>대화 테마 분석</span>
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginTop: '10px' }}>
@@ -1566,7 +1570,7 @@ const SolutionView = ({ onBack }) => (
               <Sparkles size={14} /> 영적 친밀도 분석
             </h4>
             <p style={{ fontSize: '14px', lineHeight:1.7, color: '#4D3A1A', textAlign: 'justify' }}>
-              이번 달 두 분은 42회의 깊은 대화를 통해 <strong>'하나님 앞에서의 정직함'</strong>을 실천하셨습니다. 특히 배우자의 기도로 표현하지 못한 속마음을 나누는 비중이 높아진 것은, 부부라는 언약적 관계 안에서 안전감을 충분히 누리고 있다는 증거입니다. 서로의 MBTI 기질 차이를 '불편함'이 아닌 '보완적 은혜'로 인식하기 시작한 점이 고무적입니다.
+              이번 달 {husbandInfo.nickname}님과 {wifeInfo.nickname}님은 성실한 대화로 <strong>'하나님 앞에서의 정직함'</strong>을 실천하셨습니다. 특히 {spouseInfo.nickname}님의 {spouseInfo.mbti} 기질을 배려하는 {myInfo.nickname}님의 노력이 돋보입니다. 신앙 고백과 일상 소통이 균형을 이루며, 부부라는 거룩한 언약 안에서 정서적 안전감을 충분히 누리고 있다는 증거입니다.
             </p>
           </section>
 
@@ -1597,7 +1601,8 @@ const SolutionView = ({ onBack }) => (
        </div>
     </div>
   </motion.div>
-);
+  );
+};
 
 /* 🌸 Intimacy Modal (Secret Garden) */
 const IntimacyModal = ({ show, onClose, subPage, setSubPage, bgImage, onBgUpload, partnerLabel, isFullPage, onNav }) => {
@@ -2052,7 +2057,7 @@ const CardGameView = ({ onBack, coupleCode }) => {
   };
 
   return (
-    <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="flex flex-col h-full items-center p-4">
+    <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="flex flex-col h-full items-center p-4" style={{ overflowY: 'auto', paddingBottom: '120px' }}>
       <div className="w-full flex items-center justify-start mb-2">
         <button onClick={onBack} style={{ display: 'flex', alignItems: 'center', gap: '3px', background: 'none', border: 'none', cursor: 'pointer', padding: '8px 0' }}>
           <ChevronLeft size={20} color="#8A60FF" strokeWidth={3} />
@@ -3316,7 +3321,14 @@ const App = () => {
                    {counselingMode === 'chat' ? (
                      <ChatView key="chat" userRole={userRole} husbandInfo={husbandInfo} wifeInfo={wifeInfo} onBack={() => setActiveTab('home')} />
                    ) : (
-                     <SolutionView key="solution" onBack={() => setCounselingMode('chat')} />
+                     <SolutionView 
+                        key="solution" 
+                        userRole={userRole}
+                        husbandInfo={husbandInfo}
+                        wifeInfo={wifeInfo}
+                        schedules={schedules}
+                        onBack={() => setCounselingMode('chat')} 
+                     />
                    )}
                  </div>
               )}
@@ -3407,7 +3419,13 @@ const App = () => {
             }}
           >
             <div style={{ minHeight: '100%', paddingBottom: '50px' }}>
-              <SolutionView onBack={() => setShowReport(false)} />
+              <SolutionView 
+                userRole={userRole}
+                husbandInfo={husbandInfo}
+                wifeInfo={wifeInfo}
+                schedules={schedules}
+                onBack={() => setShowReport(false)} 
+              />
             </div>
           </motion.div>
         )}
