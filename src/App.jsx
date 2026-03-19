@@ -3034,10 +3034,10 @@ const OnboardingView = ({ user, userRole, setUserRole, onFinish }) => {
                     }, { onConflict: 'id' });
                     
                     if (error) throw error;
-                    console.log("Early upsert success:", newCode);
+                    alert("서버에 코드 등록 완료: " + newCode + "\n이제 배우자에게 코드를 알려주세요!");
                   } catch (err) {
                     console.error("Early upsert failed:", err);
-                    alert("데이터베이스 업데이트 실패: " + err.message);
+                    alert("서버 등록 실패: " + err.message);
                   }
                   
                   setStep(5); // Show created code
@@ -3142,6 +3142,7 @@ const OnboardingView = ({ user, userRole, setUserRole, onFinish }) => {
                 const { data } = await supabase.from('profiles').select('*').eq('couple_id', coupleCode);
                 
                 if (data && data.length > 0) {
+                  alert("연결 대상을 찾았습니다! (" + data.length + "명)");
                   // Found existing couple code
                   setIsConnected(true);
                   setTimeout(() => {
@@ -3151,7 +3152,7 @@ const OnboardingView = ({ user, userRole, setUserRole, onFinish }) => {
                   // No such code yet
                   setTimeout(() => {
                     setIsConnecting(false);
-                    alert("잘못된 코드이거나 아직 생성되지 않은 코드입니다. 코드를 다시 확인해주세요.");
+                    alert("코드를 찾을 수 없습니다.\n입력한 코드: " + coupleCode + "\n(데이터베이스에 등록된 정보가 없습니다.)");
                   }, 1500);
                 }
               }}
