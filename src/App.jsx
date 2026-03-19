@@ -2224,7 +2224,23 @@ const CardGameView = ({ onBack, coupleCode }) => {
 };
 
 /* ⚙️ Settings View (Extended) */
-const SettingsView = ({ userRole, husbandInfo, setHusbandInfo, wifeInfo, setWifeInfo, coupleCode, onReportClick, onGuideClick }) => {
+const SettingsView = ({ 
+  user,
+  userRole, 
+  husbandInfo, 
+  setHusbandInfo, 
+  wifeInfo, 
+  setWifeInfo, 
+  coupleCode, 
+  onReportClick, 
+  onGuideClick,
+  worshipDays,
+  setWorshipDays,
+  worshipTime,
+  setWorshipTime,
+  anniversaries,
+  setAnniversaries
+}) => {
   const [notifSignal, setNotifSignal] = useState(true);
   const [notifCard, setNotifCard] = useState(true);
   const [notifWorship, setNotifWorship] = useState(true);
@@ -2241,14 +2257,10 @@ const SettingsView = ({ userRole, husbandInfo, setHusbandInfo, wifeInfo, setWife
   const [showNotifIntegration, setShowNotifIntegration] = useState(false);
   const [openaiKey, setOpenaiKey] = useState(() => localStorage.getItem('openai_api_key') || '');
 
-  // Worship States
-  const [worshipDays, setWorshipDays] = useState(() => JSON.parse(localStorage.getItem('worshipDays') || '["일", "수"]'));
-  const [worshipTime, setWorshipTime] = useState(() => localStorage.getItem('worshipTime') || '21:00');
-
-  // Anniversary States
-  const [anniversaries, setAnniversaries] = useState(() => JSON.parse(localStorage.getItem('anniversaries') || '[]'));
   const [newAnnivTitle, setNewAnnivTitle] = useState("");
   const [newAnnivDate, setNewAnnivDate] = useState("");
+  
+  // Shared Settings (worshipDays, worshipTime, anniversaries) are now passed as props from App.jsx
 
 
   const myInfo = userRole === 'husband' ? husbandInfo : wifeInfo;
@@ -2275,7 +2287,27 @@ const SettingsView = ({ userRole, husbandInfo, setHusbandInfo, wifeInfo, setWife
     localStorage.setItem('worshipDays', JSON.stringify(worshipDays));
     localStorage.setItem('worshipTime', worshipTime);
     localStorage.setItem('anniversaries', JSON.stringify(anniversaries));
-  }, [worshipDays, worshipTime, anniversaries]);
+
+    // Also sync these to Supabase profile info to share with spouse
+    const syncSettings = async () => {
+      const updatedInfo = { 
+        ...myInfo, 
+        worshipDays, 
+        worshipTime, 
+        anniversaries 
+      };
+      
+      await supabase.from('profiles').upsert({
+        user_id: user.id,
+        couple_id: coupleCode,
+        user_role: userRole,
+        info: updatedInfo,
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'user_id' });
+    };
+    // Only sync if values have actually changed vs initial props to avoid loops
+    syncSettings();
+  }, [worshipDays, worshipTime, anniversaries, coupleCode, userRole]);
 
   // 결혼기념일 기반 D-Day 계산 (공용 날짜 사용으로 동기화 보장)
   const sharedMarriageDate = husbandInfo.marriageDate || wifeInfo.marriageDate || '2020-05-23';
@@ -2292,11 +2324,12 @@ const SettingsView = ({ userRole, husbandInfo, setHusbandInfo, wifeInfo, setWife
     
     // Sync to Supabase
     await supabase.from('profiles').upsert({
+      user_id: user.id,
       couple_id: coupleCode,
       user_role: userRole,
       info: updatedInfo,
       updated_at: new Date().toISOString()
-    }, { onConflict: 'couple_id,user_role' });
+    }, { onConflict: 'user_id' });
 
     // 결혼기념일은 부부 공통 정보이므로 양쪽 모두 업데이트하여 싱크 맞춤
     if (field === 'marriageDate') {
@@ -2585,15 +2618,28 @@ const SettingsView = ({ userRole, husbandInfo, setHusbandInfo, wifeInfo, setWife
         </div>
         <motion.button
           whileTap={{ scale: 0.95 }}
-          onClick={() => {
-            if(window.confirm("모든 데이터가 초기화되고 로그아웃됩니다. 계속하시겠습니까?")) {
+          onClick={async () => {
+            if(window.confirm("로그아웃 하시겠습니까?")) {
+              await supabase.auth.signOut();
               localStorage.clear();
               window.location.reload();
             }
           }}
-          style={{ width: '100%', padding: '16px', borderRadius: '20px', background: 'rgba(239, 68, 68, 0.1)', color: '#EF4444', fontWeight: 800, border: '1px solid rgba(239, 68, 68, 0.2)', cursor: 'pointer' }}
+          style={{ width: '100%', padding: '16px', borderRadius: '20px', background: 'rgba(239, 68, 68, 0.1)', color: '#EF4444', fontWeight: 800, border: '1px solid rgba(239, 68, 68, 0.2)', cursor: 'pointer', marginBottom: '10px' }}
         >
-          데이터 초기화 및 로그아웃
+          로그아웃
+        </motion.button>
+        <motion.button
+          whileTap={{ scale: 0.95 }}
+          onClick={() => {
+            if(window.confirm("모든 데이터가 초기화되고 계정 연결이 해제됩니다. 계속하시겠습니까?")) {
+              localStorage.clear();
+              window.location.reload();
+            }
+          }}
+          style={{ width: '100%', padding: '16px', borderRadius: '20px', background: 'rgba(239, 68, 68, 0.05)', color: '#9CA3AF', fontWeight: 800, border: '1px solid #EEE', cursor: 'pointer' }}
+        >
+          데이터 초기화 (데모용)
         </motion.button>
       </div>
 
@@ -2773,9 +2819,9 @@ const SettingsView = ({ userRole, husbandInfo, setHusbandInfo, wifeInfo, setWife
 
 
 /* 🚀 Onboarding View (First Time Experience) */
-const OnboardingView = ({ userRole, setUserRole, onFinish }) => {
+const OnboardingView = ({ user, userRole, setUserRole, onFinish }) => {
   const [step, setStep] = useState(1);
-  const [nickname, setNickname] = useState("");
+  const [nickname, setNickname] = useState(() => user?.user_metadata?.full_name || user?.user_metadata?.name || "");
   const [blood, setBlood] = useState("A");
   const [mDate, setMDate] = useState("2020-05-23");
   const [insightResult, setInsightResult] = useState("");
@@ -2994,47 +3040,68 @@ const OnboardingView = ({ userRole, setUserRole, onFinish }) => {
 
         {step === 5 && (
           <motion.div key="step5" initial={{ x: 20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} className="flex flex-col h-full justify-center items-center text-center">
-             <h2 style={{ fontSize: '22px', fontWeight: 900, color: '#2D1F08', marginBottom: '15px' }}>배우자에게 코드를 공유하세요</h2>
-             <div style={{ width: '100%', padding: '30px', background: '#F9FAFB', borderRadius: '24px', border: '2px dashed #D4AF37', marginBottom: '30px' }}>
+             <h2 style={{ fontSize: '22px', fontWeight: 900, color: '#2D1F08', marginBottom: '15px' }}>초대 코드가 생성되었습니다</h2>
+             <div style={{ width: '100%', padding: '30px', background: '#F9FAFB', borderRadius: '24px', border: '2px dashed #D4AF37', marginBottom: '15px' }}>
                 <span style={{ fontSize: '12px', fontWeight: 900, color: '#B08D3E', display: 'block', marginBottom: '10px' }}>우리만의 소중한 연결 코드</span>
                 <div style={{ fontSize: '32px', fontWeight: 900, color: '#2D1F08', letterSpacing: '8px' }}>{coupleCode}</div>
              </div>
-             <p style={{ color: '#8B7355', fontSize: '14px', marginBottom: '30px', fontWeight: 600, lineHeight: 1.6 }}>배우자가 앱을 설치하고<br/>이 코드를 입력하면 실시간 연결이 완료됩니다.</p>
-             <button 
-                onClick={() => {
-                  setIsConnecting(true);
-                  setTimeout(() => {
-                    setIsConnecting(false);
-                    setIsConnected(true);
-                    setTimeout(() => {
-                      onFinish({ nickname, marriageDate: mDate, mbti: insightResult, blood, coupleCode });
-                    }, 1200);
-                  }, 2000);
-                }}
-                disabled={isConnecting || isConnected}
-                style={{ width: '100%', padding: '18px', borderRadius: '20px', background: isConnected ? '#22C55E' : '#2D1F08', color: 'white', fontWeight: 900, fontSize: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}
-              >
-                {isConnecting ? (
-                  <>
-                    <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}><RefreshCw size={20} /></motion.div>
-                    연결 대기 중...
-                  </>
-                ) : isConnected ? (
-                  <>
-                    <CheckCircle2 size={20} /> 연결되었습니다!
-                  </>
-                ) : (
-                  "연결 대기하며 시작하기"
-                )}
-              </button>
+             <p style={{ color: '#8B7355', fontSize: '14px', marginBottom: '30px', fontWeight: 600, lineHeight: 1.6 }}>이 코드를 복사해서 배우자에게 보내주세요.<br/>배우자와 연결이 확인되면 자동으로 시작됩니다.</p>
+             
+             <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <button 
+                  onClick={() => {
+                    navigator.clipboard.writeText(coupleCode);
+                    alert("코드가 복사되었습니다!");
+                  }}
+                  style={{ width: '100%', padding: '15px', borderRadius: '15px', background: '#FDFCF0', border: '1.5px solid #F5D060', color: '#2D1F08', fontWeight: 800, fontSize: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                >
+                  <Share2 size={18} /> 초대 코드 복사하기
+                </button>
+
+                <button 
+                  onClick={async () => {
+                    setIsConnecting(true);
+                    // Check if spouse has connected (created a profile)
+                    const { data } = await supabase.from('profiles').select('*').eq('couple_id', coupleCode);
+                    if (data && data.length > 1) {
+                      setIsConnected(true);
+                      setTimeout(() => {
+                        onFinish({ nickname, marriageDate: mDate, mbti: insightResult, blood, coupleCode });
+                      }, 1000);
+                    } else {
+                      setTimeout(() => {
+                        setIsConnecting(false);
+                        alert("아직 배우자가 연결되지 않았습니다. 코드를 공유했는지 확인해주세요!");
+                      }, 1500);
+                    }
+                  }}
+                  disabled={isConnecting || isConnected}
+                  style={{ width: '100%', padding: '18px', borderRadius: '20px', background: isConnected ? '#22C55E' : '#2D1F08', color: 'white', fontWeight: 900, fontSize: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}
+                >
+                  {isConnecting ? (
+                    <>
+                      <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}><RefreshCw size={20} /></motion.div>
+                      배우자 연결 확인 중...
+                    </>
+                  ) : isConnected ? (
+                    <>
+                      <CheckCircle2 size={20} /> 연결 완료!
+                    </>
+                  ) : (
+                    "배우자 연결 확인 및 시작"
+                  )}
+                </button>
+             </div>
           </motion.div>
         )}
 
         {step === 6 && (
           <motion.div key="step6" initial={{ x: 20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} className="flex flex-col h-full justify-center">
             <h2 style={{ fontSize: '22px', fontWeight: 900, color: '#2D1F08', marginBottom: '15px' }}>초대 코드를 입력해주세요</h2>
+            <p style={{ color: '#8B7355', fontSize: '14px', marginBottom: '25px', fontWeight: 600 }}>배우자에게 받은 HS-로 시작하는 코드를 입력하세요.</p>
             <input 
               placeholder="예: HS-1234" 
+              value={coupleCode}
               onChange={(e) => setCoupleCode(e.target.value.toUpperCase())}
               style={{ width: '100%', padding: '20px', borderRadius: '20px', border: '2px solid #F5D060', fontSize: '20px', fontWeight: 900, textAlign: 'center', letterSpacing: '4px', marginBottom: '25px' }} 
             />
@@ -3044,21 +3111,31 @@ const OnboardingView = ({ userRole, setUserRole, onFinish }) => {
                   <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}>
                     <RefreshCw size={18} />
                   </motion.div>
-                  하트싱크 연결 중...
+                  서버와 동기화 중...
                 </div>
               </motion.div>
             )}
             <button 
-              onClick={() => {
+              onClick={async () => {
                 if (!coupleCode || !coupleCode.startsWith('HS-')) return;
                 setIsConnecting(true);
-                setTimeout(() => {
-                  setIsConnecting(false);
+                
+                // Try to find existing couple in Supabase
+                const { data } = await supabase.from('profiles').select('*').eq('couple_id', coupleCode);
+                
+                if (data && data.length > 0) {
+                  // Found existing couple code
                   setIsConnected(true);
                   setTimeout(() => {
                     onFinish({ nickname, marriageDate: mDate, mbti: insightResult, blood, coupleCode });
                   }, 1200);
-                }, 2000);
+                } else {
+                  // No such code yet
+                  setTimeout(() => {
+                    setIsConnecting(false);
+                    alert("잘못된 코드이거나 아직 생성되지 않은 코드입니다. 코드를 다시 확인해주세요.");
+                  }, 1500);
+                }
               }}
               disabled={!coupleCode || !coupleCode.startsWith('HS-') || isConnecting || isConnected}
               style={{ width: '100%', padding: '18px', borderRadius: '20px', background: isConnected ? '#22C55E' : (coupleCode && coupleCode.startsWith('HS-') ? '#2D1F08' : '#CCC'), color: 'white', fontWeight: 900, fontSize: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}
@@ -3066,15 +3143,21 @@ const OnboardingView = ({ userRole, setUserRole, onFinish }) => {
               {isConnecting ? (
                 <>
                   <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}><RefreshCw size={20} /></motion.div>
-                  연결 확인 중...
+                  보안 연결 확인 중...
                 </>
               ) : isConnected ? (
                 <>
-                  <CheckCircle2 size={20} /> 연결되었습니다!
+                  <CheckCircle2 size={20} /> 동기화 완료!
                 </>
               ) : (
-                "연결 완료하기"
+                "동기화 및 시작하기"
               )}
+            </button>
+            <button 
+              onClick={() => setStep(4)}
+              style={{ marginTop: '15px', background: 'none', border: 'none', color: '#9CA3AF', fontSize: '13px', fontWeight: 600, textDecoration: 'underline' }}
+            >
+              처음으로 돌아가기
             </button>
           </motion.div>
         )}
@@ -3085,15 +3168,76 @@ const OnboardingView = ({ userRole, setUserRole, onFinish }) => {
 
 
 
+/* 🔐 Auth View (Social Login) */
+const AuthView = () => {
+  const handleLogin = async (provider) => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider,
+      options: {
+        redirectTo: window.location.origin,
+      },
+    });
+    if (error) alert("로그인 오류: " + error.message);
+  };
+
+  return (
+    <motion.div 
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+      style={{ display: 'flex', flexDirection: 'column', height: '100vh', width: '100%', backgroundColor: 'white', padding: '60px 30px', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}
+    >
+      <img src="/logo_main.png" alt="Heart Sync" style={{ width: '180px', marginBottom: '10px' }} />
+      <h1 className="brand-text" style={{ fontSize: '28px', color: '#D4AF37', fontWeight: 900, marginBottom: '5px' }}>HEART SYNC</h1>
+      <p style={{ fontSize: '14px', color: '#8B7355', marginBottom: '50px', fontWeight: 600 }}>부부의 마음을 더 깊게, 더 가까이</p>
+      
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', width: '100%', maxWidth: '320px' }}>
+        <button 
+          onClick={() => handleLogin('kakao')}
+          style={{ width: '100%', padding: '16px', borderRadius: '15px', background: '#FEE500', color: '#3C1E1E', fontWeight: 900, border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', fontSize: '15px' }}
+        >
+          <img src="https://upload.wikimedia.org/wikipedia/commons/e/e3/KakaoTalk_logo.svg" width="20" alt="Kakao" />
+          카카오로 1초 만에 시작하기
+        </button>
+      </div>
+      
+      <p style={{ fontSize: '12px', color: '#9CA3AF', marginTop: '40px', lineHeight: 1.6 }}>
+        로그인 시 Heart Sync의 <span style={{ textDecoration: 'underline' }}>이용약관</span> 및<br/>
+        <span style={{ textDecoration: 'underline' }}>개인정보 처리방침</span>에 동의하게 됩니다.
+      </p>
+    </motion.div>
+  );
+};
+
+
 const App = () => {
   const [activeTab, setActiveTab] = useState('home');
-  // App Global States
+  // Auth & Global States
+  const [session, setSession] = useState(null);
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+
   const [isSetupDone, setIsSetupDone] = useState(() => localStorage.getItem('isSetupDone') === 'true');
   const [userRole, setUserRole] = useState(() => localStorage.getItem('userRole') || 'husband');
   const [coupleCode, setCoupleCode] = useState(() => localStorage.getItem('coupleCode') || 'HS-7289');
   const [husbandInfo, setHusbandInfo] = useState(() => JSON.parse(localStorage.getItem('husbandInfo') || '{"nickname":"김남편", "mbti":"ISTJ", "blood":"A", "marriageDate":"2020-05-23"}'));
   const [wifeInfo, setWifeInfo] = useState(() => JSON.parse(localStorage.getItem('wifeInfo') || '{"nickname":"박아내", "mbti":"ENFP", "blood":"B", "marriageDate":"2020-05-23"}'));
   const appTheme = { id: 'warm', primary: '#D4AF37', bg: '#FDFCF0' };
+
+  // Auth Session Listener
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      setLoading(false);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      setLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
   
   const partnerLabel = userRole === 'husband' ? '아내' : '남편';
   const [intimacyBg, setIntimacyBg] = useState(localStorage.getItem('intimacyBg') || null);
@@ -3106,6 +3250,11 @@ const App = () => {
   const [spouseSignal, setSpouseSignal] = useState('green');
   const [schedules, setSchedules] = useState(() => JSON.parse(localStorage.getItem('coupleSchedules') || '[]'));
   const [partnerPrayers, setPartnerPrayers] = useState([]);
+
+  // Shared Settings Lifted from SettingsView
+  const [worshipDays, setWorshipDays] = useState(() => JSON.parse(localStorage.getItem('worshipDays') || '["일", "수"]'));
+  const [worshipTime, setWorshipTime] = useState(() => localStorage.getItem('worshipTime') || '21:00');
+  const [anniversaries, setAnniversaries] = useState(() => JSON.parse(localStorage.getItem('anniversaries') || '[]'));
   
   // Persistence
   useEffect(() => {
@@ -3114,7 +3263,10 @@ const App = () => {
     localStorage.setItem('userRole', userRole);
     localStorage.setItem('isSetupDone', isSetupDone);
     localStorage.setItem('coupleSchedules', JSON.stringify(schedules));
-  }, [husbandInfo, wifeInfo, userRole, isSetupDone, schedules]);
+    localStorage.setItem('worshipDays', JSON.stringify(worshipDays));
+    localStorage.setItem('worshipTime', worshipTime);
+    localStorage.setItem('anniversaries', JSON.stringify(anniversaries));
+  }, [husbandInfo, wifeInfo, userRole, isSetupDone, schedules, worshipDays, worshipTime, anniversaries]);
 
   const handleOnboardingFinish = async (info) => {
     let finalCode = info.coupleCode || coupleCode;
@@ -3133,21 +3285,44 @@ const App = () => {
       setWifeInfo(updatedInfo);
     }
 
-    // Push to Supabase immediately
+    // Push to Supabase immediately with user.id
     await supabase.from('profiles').upsert({
+      user_id: user.id,
       couple_id: finalCode,
       user_role: userRole,
       info: updatedInfo,
       updated_at: new Date().toISOString()
-    }, { onConflict: 'couple_id,user_role' });
+    }, { onConflict: 'user_id' });
 
     localStorage.setItem('userRole', userRole);
     localStorage.setItem('isSetupDone', 'true');
     setIsSetupDone(true);
   };
 
-  const addSchedule = (s) => setSchedules([...schedules, s]);
-  const deleteSchedule = (id) => setSchedules(schedules.filter(s => s.id !== id));
+  const addSchedule = async (s) => {
+    const newSchedules = [...schedules, s];
+    setSchedules(newSchedules);
+    // Sync schedules via profile info
+    const baseInfo = userRole === 'husband' ? husbandInfo : wifeInfo;
+    await supabase.from('profiles').upsert({
+      couple_id: coupleCode,
+      user_role: userRole,
+      info: { ...baseInfo, coupleSchedules: newSchedules },
+      updated_at: new Date().toISOString()
+    }, { onConflict: 'couple_id,user_role' });
+  };
+
+  const deleteSchedule = async (id) => {
+    const newSchedules = schedules.filter(s => s.id !== id);
+    setSchedules(newSchedules);
+    const baseInfo = userRole === 'husband' ? husbandInfo : wifeInfo;
+    await supabase.from('profiles').upsert({
+      couple_id: coupleCode,
+      user_role: userRole,
+      info: { ...baseInfo, coupleSchedules: newSchedules },
+      updated_at: new Date().toISOString()
+    }, { onConflict: 'couple_id,user_role' });
+  };
   
   // Supabase Real-time Sync
   useEffect(() => {
@@ -3159,7 +3334,22 @@ const App = () => {
   useEffect(() => {
     // 1. Initial Data Fetch
     const fetchInitialData = async () => {
-      // Fetch Signals
+      if (!isSetupDone || !user) return;
+
+      // Fetch My Profile by User ID
+      const { data: myProfile } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+      
+      if (myProfile) {
+        if (myProfile.user_role === 'husband') setHusbandInfo(myProfile.info);
+        else setWifeInfo(myProfile.info);
+        setCoupleCode(myProfile.couple_id);
+      }
+
+      // Fetch Signals by coupleCode
       const { data: signalData } = await supabase
         .from('signals')
         .select('*')
@@ -3183,7 +3373,7 @@ const App = () => {
         setPartnerPrayers(prayerData.filter(p => p.user_role !== userRole));
       }
 
-      // Fetch Profiles
+      // Fetch Spouse Profile
       const { data: profileData } = await supabase
         .from('profiles')
         .select('*')
@@ -3194,6 +3384,14 @@ const App = () => {
         const wifeP = profileData.find(p => p.user_role === 'wife');
         if (husbandP) setHusbandInfo(husbandP.info);
         if (wifeP) setWifeInfo(wifeP.info);
+
+        const commonInfo = husbandP?.info || wifeP?.info;
+        if (commonInfo) {
+          if (commonInfo.worshipDays) setWorshipDays(commonInfo.worshipDays);
+          if (commonInfo.worshipTime) setWorshipTime(commonInfo.worshipTime);
+          if (commonInfo.anniversaries) setAnniversaries(commonInfo.anniversaries);
+          if (commonInfo.coupleSchedules) setSchedules(commonInfo.coupleSchedules);
+        }
       }
     };
 
@@ -3233,6 +3431,12 @@ const App = () => {
         const { user_role: role, info } = payload.new;
         if (role === 'husband') setHusbandInfo(info);
         else if (role === 'wife') setWifeInfo(info);
+
+        // Real-time sync for shared settings
+        if (info.coupleSchedules) setSchedules(info.coupleSchedules);
+        if (info.worshipDays) setWorshipDays(info.worshipDays);
+        if (info.worshipTime) setWorshipTime(info.worshipTime);
+        if (info.anniversaries) setAnniversaries(info.anniversaries);
       })
       .subscribe();
 
@@ -3254,19 +3458,30 @@ const App = () => {
 
   return (
     <div className="h-full flex flex-col relative w-full" style={{ '--gold': appTheme.primary, '--gold-glow': `${appTheme.primary}40` }}>
-      {!isSetupDone && (
+      {loading && (
+        <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'white' }}>
+          <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}>
+            <RefreshCw size={40} color="#D4AF37" />
+          </motion.div>
+        </div>
+      )}
+
+      {!loading && !session && <AuthView />}
+
+      {!loading && session && !isSetupDone && (
         <OnboardingView 
+          user={user}
           userRole={userRole} 
           setUserRole={setUserRole} 
           onFinish={handleOnboardingFinish} 
         />
       )}
 
-      {isSetupDone && (
+      {!loading && session && isSetupDone && (
         <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, height: '100%', pointerEvents: 'none', zIndex: -1, background: `radial-gradient(circle at 50% -20%, ${appTheme.primary}15, transparent)` }} />
       )}
       
-      {isSetupDone && (
+      {!loading && session && isSetupDone && (
         <>
           <div className="app-bg" style={{ 
             backgroundColor: appTheme.bg,
@@ -3390,12 +3605,19 @@ const App = () => {
               {activeTab === 'settings' && (
                 <SettingsView 
                   key="settings" 
+                  user={user}
                   userRole={userRole}
                   husbandInfo={husbandInfo}
                   setHusbandInfo={setHusbandInfo}
                   wifeInfo={wifeInfo}
                   setWifeInfo={setWifeInfo}
                   coupleCode={coupleCode}
+                  worshipDays={worshipDays}
+                  setWorshipDays={setWorshipDays}
+                  worshipTime={worshipTime}
+                  setWorshipTime={setWorshipTime}
+                  anniversaries={anniversaries}
+                  setAnniversaries={setAnniversaries}
                   onReportClick={() => setShowReport(true)} 
                   onGuideClick={() => setShowGuidePage(true)}
                 />
