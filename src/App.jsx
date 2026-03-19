@@ -3175,6 +3175,7 @@ const AuthView = () => {
       provider,
       options: {
         redirectTo: window.location.origin,
+        scopes: 'profile_nickname profile_image',
       },
     });
     if (error) alert("로그인 오류: " + error.message);
