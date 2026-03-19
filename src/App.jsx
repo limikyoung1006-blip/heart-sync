@@ -3028,7 +3028,7 @@ const OnboardingView = ({ user, userRole, setUserRole, onFinish }) => {
                     const { error } = await supabase.from('profiles').upsert({
                       id: user.id,
                       couple_id: newCode,
-                      user_role: role,
+                      user_role: userRole,
                       info: { nickname, marriageDate: mDate || new Date().toISOString().split('T')[0], mbti: insightResult, blood },
                       updated_at: new Date().toISOString()
                     }, { onConflict: 'id' });
