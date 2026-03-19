@@ -2298,12 +2298,12 @@ const SettingsView = ({
       };
       
       await supabase.from('profiles').upsert({
-        user_id: user.id,
+        id: user.id,
         couple_id: coupleCode,
         user_role: userRole,
         info: updatedInfo,
         updated_at: new Date().toISOString()
-      }, { onConflict: 'user_id' });
+      }, { onConflict: 'id' });
     };
     // Only sync if values have actually changed vs initial props to avoid loops
     syncSettings();
@@ -2324,12 +2324,12 @@ const SettingsView = ({
     
     // Sync to Supabase
     await supabase.from('profiles').upsert({
-      user_id: user.id,
+      id: user.id,
       couple_id: coupleCode,
       user_role: userRole,
       info: updatedInfo,
       updated_at: new Date().toISOString()
-    }, { onConflict: 'user_id' });
+    }, { onConflict: 'id' });
 
     // 결혼기념일은 부부 공통 정보이므로 양쪽 모두 업데이트하여 싱크 맞춤
     if (field === 'marriageDate') {
@@ -3026,12 +3026,12 @@ const OnboardingView = ({ user, userRole, setUserRole, onFinish }) => {
                   // Early upsert for creator so the joiner can find this code
                   try {
                     const { error } = await supabase.from('profiles').upsert({
-                      user_id: user.id,
+                      id: user.id,
                       couple_id: newCode,
                       user_role: role,
-                      nickname: nickname,
-                      marriage_date: mDate || new Date().toISOString().split('T')[0]
-                    }, { onConflict: 'user_id' });
+                      info: { nickname, marriageDate: mDate || new Date().toISOString().split('T')[0], mbti: insightResult, blood },
+                      updated_at: new Date().toISOString()
+                    }, { onConflict: 'id' });
                     
                     if (error) throw error;
                     console.log("Early upsert success:", newCode);
@@ -3308,12 +3308,12 @@ const App = () => {
 
     // Push to Supabase immediately with user.id
     await supabase.from('profiles').upsert({
-      user_id: user.id,
+      id: user.id,
       couple_id: finalCode,
       user_role: userRole,
       info: updatedInfo,
       updated_at: new Date().toISOString()
-    }, { onConflict: 'user_id' });
+    }, { onConflict: 'id' });
 
     localStorage.setItem('userRole', userRole);
     localStorage.setItem('isSetupDone', 'true');
@@ -3361,7 +3361,7 @@ const App = () => {
       const { data: myProfile } = await supabase
         .from('profiles')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('id', user.id)
         .single();
       
       if (myProfile) {
