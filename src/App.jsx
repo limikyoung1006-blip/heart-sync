@@ -3019,9 +3019,27 @@ const OnboardingView = ({ user, userRole, setUserRole, onFinish }) => {
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', width: '100%' }}>
               <button 
-                onClick={() => {
+                onClick={async () => {
                   const newCode = 'HS-' + Math.floor(1000 + Math.random() * 9000);
                   setCoupleCode(newCode);
+                  
+                  // Early upsert for creator so the joiner can find this code
+                  try {
+                    const { error } = await supabase.from('profiles').upsert({
+                      user_id: user.id,
+                      couple_id: newCode,
+                      user_role: role,
+                      nickname: nickname,
+                      marriage_date: mDate || new Date().toISOString().split('T')[0]
+                    }, { onConflict: 'user_id' });
+                    
+                    if (error) throw error;
+                    console.log("Early upsert success:", newCode);
+                  } catch (err) {
+                    console.error("Early upsert failed:", err);
+                    alert("데이터베이스 업데이트 실패: " + err.message);
+                  }
+                  
                   setStep(5); // Show created code
                 }}
                 style={{ width: '100%', padding: '18px', borderRadius: '20px', background: '#2D1F08', color: 'white', fontWeight: 900, fontSize: '16px', boxShadow: '0 8px 20px rgba(0,0,0,0.1)' }}
