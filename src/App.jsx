@@ -3895,38 +3895,36 @@ const App = () => {
               )}
               {activeTab === 'counseling' && (
                  <div className={`flex flex-col pt-4 ${counselingMode === 'chat' ? 'h-full' : ''}`}>
-                    {/* 💖 Hatti Greeting (Only visible when chat is empty to save space) */}
-                    {chat.length === 0 && (
-                      <div style={{ 
-                        display: 'flex', 
-                        flexDirection: 'column', 
-                        alignItems: 'center', 
-                        marginBottom: '20px', 
-                        position: 'relative',
-                        minHeight: '130px', // 높이 축소
-                        justifyContent: 'flex-end',
-                        width: '100%'
-                      }}>
-                        <div style={{ position: 'absolute', top: '10px', zIndex: 10 }}>
-                           <HattiCharacter size={100} /> {/* 크기 축소 */}
-                        </div>
-                        
-                        <div style={{ 
-                          background: 'white', 
-                          padding: '12px 20px', 
-                          borderRadius: '24px', 
-                          boxShadow: '0 8px 25px rgba(138, 96, 255, 0.08)',
-                          border: '1px solid rgba(138, 96, 255, 0.12)',
-                          position: 'relative',
-                          zIndex: 5,
-                          width: '80%'
-                        }}>
-                          <p style={{ fontSize: '14px', fontWeight: 900, color: '#2D1F08', margin: 0, lineHeight: 1.5, textAlign: 'center' }}>
-                            <span style={{ color: '#8A60FF' }}>하티가 두 분을 돕기 위해 기다리고 있어요! ✨</span>
-                          </p>
-                        </div>
+                    {/* 💖 Hatti Greeting (Safe version) */}
+                    <div style={{ 
+                      display: 'flex', 
+                      flexDirection: 'column', 
+                      alignItems: 'center', 
+                      marginBottom: '20px', 
+                      position: 'relative',
+                      minHeight: '130px', 
+                      justifyContent: 'flex-end',
+                      width: '100%'
+                    }}>
+                      <div style={{ position: 'absolute', top: '10px', zIndex: 10 }}>
+                         <HattiCharacter size={100} />
                       </div>
-                    )}
+                      
+                      <div style={{ 
+                        background: 'white', 
+                        padding: '12px 20px', 
+                        borderRadius: '24px', 
+                        boxShadow: '0 8px 25px rgba(138, 96, 255, 0.08)',
+                        border: '1px solid rgba(138, 96, 255, 0.12)',
+                        position: 'relative',
+                        zIndex: 5,
+                        width: '80%'
+                      }}>
+                        <p style={{ fontSize: '14px', fontWeight: 900, color: '#2D1F08', margin: 0, lineHeight: 1.5, textAlign: 'center' }}>
+                          <span style={{ color: '#8A60FF' }}>하티가 두 분을 돕기 위해 기다리고 있어요! ✨</span>
+                        </p>
+                      </div>
+                    </div>
 
                     {/* 💊 AI Hatti Sub-Navigation (Chat vs Solution) */}
                    <div className="flex justify-center mb-4">
