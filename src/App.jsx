@@ -1138,7 +1138,7 @@ const ChatView = ({ userRole, setUserRole, husbandInfo, setHusbandInfo, wifeInfo
   };
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col h-full w-full" style={{ gap: '15px', paddingBottom: '90px' }}>
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col flex-1 w-full" style={{ gap: '15px' }}>
       
       <div style={{ display: 'flex', padding: '0 5px' }}>
         <button onClick={onBack} style={{ display: 'flex', alignItems: 'center', gap: '3px', background: 'none', border: 'none', cursor: 'pointer', padding: '8px 0' }}>
@@ -1851,7 +1851,7 @@ const SolutionView = ({ onBack, userRole, husbandInfo, wifeInfo, schedules, admi
   };
 
   return (
-    <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="report-page" style={{ paddingBottom: '120px', overflowY: 'auto', height: '100%' }}>
+    <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="report-page" style={{ overflowY: 'auto' }}>
     <div className="flex items-center gap-3 mb-6 p-4">
       <button onClick={onBack} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '5px' }}>
         <ChevronLeft size={24} color="#2D1F08" />
@@ -3843,7 +3843,7 @@ const App = () => {
                 <CardGameView key="cardGame" coupleCode={coupleCode} onBack={() => setActiveTab('home')} />
               )}
               {activeTab === 'counseling' && (
-                 <div className={`flex flex-col pt-4 ${counselingMode === 'chat' ? 'h-full' : ''}`}>
+                 <div className={`flex flex-col pt-4 ${counselingMode === 'chat' ? 'flex-1 min-h-0' : ''}`}>
                     {/* 💊 AI Hatti Sub-Navigation (Chat vs Solution) */}
 
                     {/* 💊 AI Hatti Sub-Navigation (Chat vs Solution) */}

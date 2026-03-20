@@ -183,6 +183,8 @@ body {
   padding-bottom: 120px; /* 네비게이션 공간 확보 */
   scroll-behavior: smooth;
   -webkit-overflow-scrolling: touch;
+  display: flex;
+  flex-direction: column;
 }
 
 /* ── Central Glass Card Stack ── */
