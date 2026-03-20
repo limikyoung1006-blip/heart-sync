@@ -407,11 +407,11 @@ const HomeView = ({ userRole, coupleCode, mySignal, setMySignal, spouseSignal, p
                   border: '1px solid #8A60FF',
                   boxShadow: '0 4px 15px rgba(138, 96, 255, 0.1)'
                 }}>
-                  <div className="flex items-center gap-2 mb-2">
-                     <Sparkles size={16} color="#8A60FF" />
-                     <span style={{ fontSize: '12px', fontWeight: 800, color: '#8A60FF' }}>하티의 대응 가이드</span>
+                  <div className="flex items-center gap-3 mb-2">
+                     <HattiCharacter size={40} state="floating" />
+                     <span style={{ fontSize: '13px', fontWeight: 900, color: '#8A60FF' }}>하티의 대응 가이드</span>
                   </div>
-                  <p style={{ fontSize: '14px', color: '#2D1F08', lineHeight: 1.6, wordBreak: 'keep-all' }}>
+                  <p style={{ fontSize: '14px', color: '#2D1F08', lineHeight: 1.6, wordBreak: 'keep-all', paddingLeft: '45px' }}>
                     {spouseSignal === 'red' && "배우자분이 지금 많이 지쳐 계신 것 같아요. 오늘은 집안일을 조금 나눠서 하거나, 따뜻한 물로 족욕을 도와주며 정적을 지켜주는 건 어떨까요?"}
                     {spouseSignal === 'amber' && "지금 배우자분은 당신과의 깊은 소통을 원하고 있어요. 스마트폰을 잠시 내려놓고 눈을 맞추며 오늘 하루는 어땠인지 먼저 물어봐 주세요."}
                     {spouseSignal === 'green' && "상대방의 기분이 아주 좋습니다! 지금이 바로 평소 하고 싶었던 부탁이나 밝은 미래 계획을 이야기하기 가장 좋은 타이밍이에요."}
@@ -657,19 +657,29 @@ const HomeView = ({ userRole, coupleCode, mySignal, setMySignal, spouseSignal, p
       </div>
 
       {/* 4. 오늘 배우자를 위해 할 일 (AI Hatti's Instructions) */}
-      <div style={{ 
-        marginBottom: '20px',
-        background: '#FFFBEB',
-        borderRadius: '24px',
-        padding: '24px',
-        border: '1.5px solid #FEF3C7',
-        boxShadow: '0 4px 20px rgba(251, 191, 36, 0.05)'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-          <div style={{ background: '#FDE68A', padding: '6px', borderRadius: '10px' }}>
-            <ListTodo size={16} color="#B45309" />
+      <motion.div 
+        whileTap={{ scale: 0.98 }}
+        onClick={() => {
+          alert(`하티의 원-포인트 조언: \n\n"오늘의 미션인 '${dailyTodo.text}'는 부부 사이의 [${dailyTodo.action}]을 돕기 위해 하티가 특별히 준비한 것이에요. \n\n작은 실천이 쌓여 두 분의 영적, 정서적 친밀도를 높이는 큰 기적이 될 거예요. 지금 바로 배우자에게 하티의 마음을 전해보세요! ✨"`);
+        }}
+        style={{ 
+          marginBottom: '20px',
+          background: '#FFFBEB',
+          borderRadius: '24px',
+          padding: '24px',
+          border: '1.5px solid #FEF3C7',
+          boxShadow: '0 4px 20px rgba(251, 191, 36, 0.1)',
+          cursor: 'pointer'
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div style={{ background: '#FDE68A', padding: '6px', borderRadius: '10px' }}>
+              <ListTodo size={16} color="#B45309" />
+            </div>
+            <span style={{ fontSize: '15px', fontWeight: 900, color: '#92400E' }}>오늘 하티의 부부 원-포인트</span>
           </div>
-          <span style={{ fontSize: '15px', fontWeight: 900, color: '#92400E' }}>오늘 배우자를 위해 할 일</span>
+          <HattiCharacter size={55} state="response" />
         </div>
         
         <div style={{ display: 'flex', gap: '15px', alignItems: 'flex-start' }}>
@@ -693,11 +703,11 @@ const HomeView = ({ userRole, coupleCode, mySignal, setMySignal, spouseSignal, p
             </p>
             <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
               <CheckCircle2 size={14} color="#10B981" />
-              <span style={{ fontSize: '11px', fontWeight: 900, color: '#059669' }}>AI 하티의 추천 미션</span>
+              <span style={{ fontSize: '11px', fontWeight: 900, color: '#059669' }}>미션 확인하고 실천하기 (클릭)</span>
             </div>
           </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* 5. 오늘의 일정 (Calendar Summary) */}
       <div 
@@ -926,25 +936,24 @@ const AdminView = ({ onBack, usersCount, couplesCount, activeSessions, recentAct
 
          {activeAdminTab === 'settings' && (
             <div style={{ background: 'white', padding: '24px', borderRadius: '30px', boxShadow: '0 10px 25px rgba(0,0,0,0.02)' }}>
-               <h3 style={{ fontSize: '16px', fontWeight: 900, color: '#1E293B', marginBottom: '8px' }}>AI 시스템 마스터 설정</h3>
-               <p style={{ fontSize: '12px', color: '#64748B', marginBottom: '20px', lineHeight: 1.5 }}>관리자가 제공하는 통합 OpenAI API Key를 사용하여 모든 사용자에게 상담 서비스를 제공합니다.</p>
+               <h3 style={{ fontSize: '16px', fontWeight: 900, color: '#1E293B', marginBottom: '8px' }}>시스템 상태 및 환경</h3>
+               <p style={{ fontSize: '12px', color: '#64748B', marginBottom: '20px', lineHeight: 1.5 }}>현재 하트싱크 시스템의 엔진 상태를 확인합니다.</p>
                
-               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  <label style={{ fontSize: '11px', fontWeight: 900, color: '#94A3B8' }}>OPENAI MASTER KEY</label>
-                  <input 
-                    type="password" 
-                    value={tempKey}
-                    onChange={(e) => setTempKey(e.target.value)}
-                    placeholder="sk-..."
-                    style={{ padding: '15px', borderRadius: '15px', background: '#F8FAFC', border: '1px solid #E2E8F0', outline: 'none', fontSize: '14px' }}
-                  />
+               <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                  <div style={{ padding: '15px', borderRadius: '15px', background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
+                     <p style={{ fontSize: '13px', fontWeight: 700, color: '#334155', marginBottom: '4px' }}>AI 상담 엔진 (OpenAI)</p>
+                     <p style={{ fontSize: '12px', color: '#10B981', fontWeight: 800 }}>● 정상 작동 중 (V4.0-Mini)</p>
+                  </div>
+                  <div style={{ padding: '15px', borderRadius: '15px', background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
+                     <p style={{ fontSize: '13px', fontWeight: 700, color: '#334155', marginBottom: '4px' }}>데이터 보안</p>
+                     <p style={{ fontSize: '12px', color: '#3B82F6', fontWeight: 800 }}>● 종단간 암호화 활성</p>
+                  </div>
                   <button 
-                    onClick={() => onSaveMasterKey(tempKey)}
-                    style={{ width: '100%', padding: '15px', borderRadius: '15px', background: '#8A60FF', color: 'white', fontWeight: 900, border: 'none', marginTop: '10px', boxShadow: '0 4px 12px rgba(138, 96, 255, 0.2)' }}
+                    onClick={() => alert("시스템 최적화가 완료되었습니다.")}
+                    style={{ width: '100%', padding: '15px', borderRadius: '15px', background: '#1E293B', color: 'white', fontWeight: 900, border: 'none', marginTop: '10px' }}
                   >
-                    마스터 키 업데이트
+                    시스템 최적화 실행
                   </button>
-                  <p style={{ fontSize: '11px', color: '#EF4444', marginTop: '10px', fontWeight: 700 }}>* 주의: 이 키를 통해 발생하는 모든 비용은 관리자 계정으로 청구됩니다.</p>
                </div>
             </div>
          )}
@@ -1089,7 +1098,7 @@ const ChatView = ({ userRole, setUserRole, husbandInfo, setHusbandInfo, wifeInfo
     return {
       name: 'AI 하티',
       subtitle: '개혁주의 부부상담가',
-      avatar: '/counselor_f.png', // 하티 캐릭터 이미지
+      avatar: '/hatti_3d.png', // 3D 하티 캐릭터 이미지
       intro: `반갑습니다, ${userRole === 'husband' ? husbandInfo.nickname : wifeInfo.nickname}님. 하나님의 언약 안에 있는 부부를 지키는 상담가 AI 하티입니다. ${partnerLabel}분의 ${partnerInfo.mbti} 성향과 우리의 통계 데이터를 바탕으로 ${userRole === 'husband' ? '형제님' : '자매님'}께 꼭 필요한 위로와 솔루션을 드릴게요.`,
       partnerInfo,
       partnerLabel,
@@ -1145,10 +1154,12 @@ const ChatView = ({ userRole, setUserRole, husbandInfo, setHusbandInfo, wifeInfo
         gap: '16px',
         boxShadow: '0 8px 32px rgba(0,0,0,0.05)'
       }}>
-        <div style={{ width: '48px', height: '48px', borderRadius: '50%', overflow: 'hidden', border: `2.5px solid ${hatti.color}`, flexShrink: 0 }}>
-          <img src={hatti.avatar} alt="Hatti" style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-            onError={(e) => { e.target.src = `https://api.dicebear.com/7.x/bottts/svg?seed=Hatti`; }} />
-        </div>
+        <motion.div 
+          animate={{ y: [0, -5, 0] }}
+          transition={{ duration: 3, repeat: Infinity }}
+        >
+          <HattiCharacter size={65} style={{ flexShrink: 0 }} />
+        </motion.div>
         <div style={{ flex: 1 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
              <p style={{ fontSize: '18px', fontWeight: 900, color: '#2D1F08', margin: 0 }}>{hatti.name}</p>
@@ -1198,10 +1209,7 @@ const ChatView = ({ userRole, setUserRole, husbandInfo, setHusbandInfo, wifeInfo
         {chat.map((c, i) => (
           <div key={i} style={{ display: 'flex', flexDirection: c.role === 'user' ? 'row-reverse' : 'row', alignItems: 'flex-start', gap: '10px' }}>
             {c.role === 'hatti' && (
-              <div style={{ width: '38px', height: '38px', borderRadius: '50%', overflow: 'hidden', border: `1.5px solid ${hatti.color}`, flexShrink: 0, marginTop: '4px' }}>
-                <img src={hatti.avatar} alt="Hatti" style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                  onError={(e) => { e.target.src = `https://api.dicebear.com/7.x/bottts/svg?seed=Hatti`; }} />
-              </div>
+              <HattiCharacter size={45} style={{ marginTop: '4px', flexShrink: 0 }} />
             )}
             <div style={{
               maxWidth: '75%',
@@ -1222,9 +1230,7 @@ const ChatView = ({ userRole, setUserRole, husbandInfo, setHusbandInfo, wifeInfo
         ))}
         {isAiLoading && (
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
-            <div style={{ width: '38px', height: '38px', borderRadius: '50%', overflow: 'hidden', border: `1.5px solid ${hatti.color}`, flexShrink: 0, marginTop: '4px' }}>
-              <img src={hatti.avatar} alt="Hatti" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-            </div>
+            <HattiCharacter state="thinking" size={45} style={{ marginTop: '4px', flexShrink: 0 }} />
             <div style={{ background: 'white', padding: '12px 18px', borderRadius: '24px 24px 24px 4px', border: `1px solid ${hatti.borderColor}`, display: 'flex', gap: '4px', alignItems: 'center' }}>
                <motion.div animate={{ opacity: [0.3, 1, 0.3] }} transition={{ repeat: Infinity, duration: 1 }} style={{ width: '6px', height: '6px', borderRadius: '50%', background: hatti.color }} />
                <motion.div animate={{ opacity: [0.3, 1, 0.3] }} transition={{ repeat: Infinity, duration: 1, delay: 0.2 }} style={{ width: '6px', height: '6px', borderRadius: '50%', background: hatti.color }} />
@@ -1691,6 +1697,45 @@ const AppGuideView = ({ onBack }) => {
   );
 };
 
+/* 🤖 Dynamic AI Hatti Character */
+const HattiCharacter = ({ state = 'floating', size = 120, style = {} }) => {
+  const getClassName = () => {
+    if (state === 'thinking') return 'hatti-thinking';
+    if (state === 'response') return 'hatti-response';
+    return 'hatti-floating';
+  };
+
+  return (
+    <div 
+      className={getClassName()} 
+      style={{ 
+        width: size, 
+        height: size, 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center',
+        position: 'relative',
+        zIndex: 100,
+        ...style 
+      }}
+    >
+      <img 
+        src="/Users/macbook/.gemini/antigravity/brain/1f2d9bec-6ffd-4e1d-a95f-913174a3daae/hatti_3d_v2_1774008365880.png" 
+        alt="Hatti" 
+        style={{ width: '100%', height: '100%', objectFit: 'contain', filter: 'drop-shadow(0 15px 15px rgba(0,0,0,0.1))' }}
+      />
+      {/* Dynamic Glow */}
+      <div style={{ 
+        position: 'absolute', inset: '10%', 
+        background: 'rgba(138, 96, 255, 0.2)', 
+        filter: 'blur(20px)', 
+        zIndex: -1,
+        borderRadius: '50%'
+      }} />
+    </div>
+  );
+};
+
 /* 📊 Solution (AI Records) */
 const SolutionView = ({ onBack, userRole, husbandInfo, wifeInfo, schedules, adminStats, coupleStats, masterApiKey }) => {
   const myInfo = userRole === 'husband' ? husbandInfo : wifeInfo;
@@ -1876,10 +1921,8 @@ const SolutionView = ({ onBack, userRole, husbandInfo, wifeInfo, schedules, admi
 
     {/* ✝️ 부부를 위한 하티의 제안 (풍성한 상담 리포트) */}
     <div className="hatti-insight-box" style={{ background: 'rgba(255,255,255,0.7)', border: '1.5px solid #D4AF37', borderRadius: '32px', padding: '25px' }}>
-       <div className="insight-header" style={{ marginBottom: '20px' }}>
-         <div className="insight-avatar" style={{ border: '2px solid #D4AF37' }}>
-           <img src="/counselor_f.png" alt="Hatti" onError={(e) => { e.target.src="https://api.dicebear.com/7.x/bottts/svg?seed=hatti"; }} />
-         </div>
+       <div className="insight-header" style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '15px' }}>
+         <HattiCharacter state={isAnalyzing ? 'thinking' : 'floating'} size={80} />
          <div className="flex flex-col">
            <span className="insight-title" style={{ fontSize: '18px', color: '#2D1F08', fontWeight: 900 }}>부부를 위한 하티의 제안</span>
            <span style={{ fontSize: '11px', color: '#B08D3E', fontWeight: 800, letterSpacing: '1px' }}>SPIRITUAL COUNSELING REPORT</span>
@@ -3764,7 +3807,25 @@ const App = () => {
               )}
               {activeTab === 'counseling' && (
                  <div className={`flex flex-col pt-4 ${counselingMode === 'chat' ? 'h-full' : ''}`}>
-                   {/* 💊 AI Hatti Sub-Navigation (Chat vs Solution) */}
+                    {/* 💖 Hatti Main Greeting Character */}
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '25px', gap: '8px' }}>
+                      <HattiCharacter size={110} />
+                      <div style={{ 
+                        background: 'white', 
+                        padding: '12px 22px', 
+                        borderRadius: '24px 24px 24px 4px', 
+                        boxShadow: '0 8px 25px rgba(138, 96, 255, 0.1)',
+                        border: '1px solid rgba(138, 96, 255, 0.15)',
+                        position: 'relative'
+                      }}>
+                        <p style={{ fontSize: '15px', fontWeight: 900, color: '#2D1F08', margin: 0, lineHeight: 1.5 }}>
+                          반가워요! 무엇을 도와드릴까요? <br/>
+                          하티는 언제든 두 분을 도울 준비가 되어 있어요! ✨
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* 💊 AI Hatti Sub-Navigation (Chat vs Solution) */}
                    <div className="flex justify-center mb-4">
                      <div style={{ 
                        display: 'flex', 

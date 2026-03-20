@@ -1987,3 +1987,30 @@ body {
   white-space: pre-wrap;
   word-break: break-all;
 }
+
+/* 🤖 AI Hatti Animation & Styling */
+@keyframes hatti-float {
+  0% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-12px) rotate(2.5deg); }
+  100% { transform: translateY(0px) rotate(0deg); }
+}
+
+@keyframes hatti-bounce {
+  0% { transform: scale(1); }
+  30% { transform: scale(1.18) translateY(-8px); }
+  50% { transform: scale(0.85) translateY(0); }
+  100% { transform: scale(1); }
+}
+
+.hatti-floating {
+  animation: hatti-float 3.5s ease-in-out infinite;
+  filter: drop-shadow(0 12px 20px rgba(138, 96, 255, 0.25));
+}
+
+.hatti-thinking {
+  animation: hatti-float 0.7s ease-in-out infinite;
+}
+
+.hatti-response {
+  animation: hatti-bounce 0.7s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
