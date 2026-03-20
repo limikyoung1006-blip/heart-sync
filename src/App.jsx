@@ -2280,7 +2280,7 @@ const CardGameView = ({ onBack, coupleCode }) => {
   };
 
   return (
-    <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="flex flex-col h-full items-center p-4" style={{ overflowY: 'auto', paddingBottom: '120px' }}>
+    <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="flex flex-col h-full items-center p-4" style={{ overflowY: 'auto', paddingBottom: '120px', paddingTop: '45px' }}>
       <div className="w-full flex items-center justify-start mb-2">
         <button onClick={onBack} style={{ display: 'flex', alignItems: 'center', gap: '3px', background: 'none', border: 'none', cursor: 'pointer', padding: '8px 0' }}>
           <ChevronLeft size={20} color="#8A60FF" strokeWidth={3} />
@@ -3505,6 +3505,7 @@ const App = () => {
   const [isAdmin, setIsAdmin] = useState(() => localStorage.getItem('isAdmin') === 'true');
   const [adminStats, setAdminStats] = useState({ users: 0, couples: 0, activeSessions: 0, recentActivities: [] });
   const [coupleStats, setCoupleStats] = useState({ totalInteractions: 0 });
+  const [syncStatus, setSyncStatus] = useState('WAITING'); // WAITING, SUBSCRIBED, ERROR
   const [logoClickCount, setLogoClickCount] = useState(0);
   const [showAdminLogin, setShowAdminLogin] = useState(false);
   const [isSetupDone, setIsSetupDone] = useState(() => localStorage.getItem('isSetupDone') === 'true');
@@ -3794,8 +3795,14 @@ const App = () => {
         if (info.anniversaries) setAnniversaries(info.anniversaries);
       })
       .subscribe((status) => {
-        if (status === 'SUBSCRIBED') console.log(`Connected to couple-${coupleCode}`);
-        if (status === 'CLOSED') console.warn('Realtime connection closed');
+        if (status === 'SUBSCRIBED') {
+          console.log(`Connected to couple-${coupleCode}`);
+          setSyncStatus('SUBSCRIBED');
+        }
+        if (status === 'CLOSED' || status === 'CHANNEL_ERROR') {
+          console.warn('Realtime connection issues');
+          setSyncStatus('ERROR');
+        }
       });
 
     // 3. Fetch Couple Real Stats
@@ -3892,13 +3899,27 @@ const App = () => {
             background: 'rgba(255, 255, 255, 0.4)',
             backdropFilter: 'blur(10px)'
           }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'rgba(212, 175, 55, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <User size={16} color={appTheme.primary} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'rgba(212, 175, 55, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <User size={16} color={appTheme.primary} />
+                </div>
+                <span style={{ fontSize: '13px', fontWeight: 900, color: appTheme.primary }}>
+                  {isAdmin ? '백동희 관리자님' : `${userRole === 'husband' ? husbandInfo.nickname : wifeInfo.nickname}님`}
+                </span>
               </div>
-              <span style={{ fontSize: '13px', fontWeight: 900, color: appTheme.primary }}>
-                {isAdmin ? '백동희 관리자님' : `${userRole === 'husband' ? husbandInfo.nickname : wifeInfo.nickname}님`}
-              </span>
+              {/* Sync Status Dot */}
+              <div 
+                title={syncStatus === 'SUBSCRIBED' ? '실시간 동기화 중' : '동기화 확인 중...'}
+                style={{ 
+                  width: '8px', 
+                  height: '8px', 
+                  borderRadius: '50%', 
+                  background: syncStatus === 'SUBSCRIBED' ? '#4BD991' : syncStatus === 'ERROR' ? '#FF5E5E' : '#FFBE61',
+                  boxShadow: `0 0 8px ${syncStatus === 'SUBSCRIBED' ? '#4BD991' : '#FFBE61'}`,
+                  marginLeft: '-4px'
+                }} 
+              />
             </div>
             <div className="top-bar-icons">
               <Bell size={22} color={appTheme.primary} style={{ opacity: 0.7 }} />
