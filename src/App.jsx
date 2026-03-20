@@ -2214,7 +2214,7 @@ const CardGameView = ({ onBack, coupleCode }) => {
     fetchCardState();
 
     const channel = supabase
-      .channel('realtime-card-game')
+      .channel(`card-game-${coupleCode}`)
       .on('postgres_changes', { 
         event: '*', 
         schema: 'public', 
@@ -2229,21 +2229,28 @@ const CardGameView = ({ onBack, coupleCode }) => {
         const q = questions.find(q => q.id === current_question_id);
         if (q) setCurrentQuestion(q);
       })
-      .subscribe();
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') console.log(`Card game sync active for ${coupleCode}`);
+      });
 
     return () => supabase.removeChannel(channel);
   }, [coupleCode]);
 
   const updateCardState = async (updates) => {
-    await supabase.from('card_game_state').upsert({
-      couple_id: coupleCode,
-      category,
-      is_flipped: isFlipped,
-      is_waiting: isWaiting,
-      current_question_id: currentQuestion?.id,
-      updated_at: new Date().toISOString(),
-      ...updates
-    }, { onConflict: 'couple_id' });
+    try {
+      const { error } = await supabase.from('card_game_state').upsert({
+        couple_id: coupleCode,
+        category,
+        is_flipped: isFlipped,
+        is_waiting: isWaiting,
+        current_question_id: currentQuestion?.id,
+        updated_at: new Date().toISOString(),
+        ...updates
+      }, { onConflict: 'couple_id' });
+      if (error) throw error;
+    } catch (err) {
+      console.error("Card game sync error:", err);
+    }
   };
 
   const drawNewCard = () => {
@@ -3745,9 +3752,9 @@ const App = () => {
 
     fetchInitialData();
 
-    // 2. Real-time Subscription
+    // 2. Real-time Subscription (Unique Channel per Couple)
     const channel = supabase
-      .channel('realtime-couple-data')
+      .channel(`couple-${coupleCode}`)
       .on('postgres_changes', { 
         event: '*', 
         schema: 'public', 
@@ -3766,7 +3773,7 @@ const App = () => {
         filter: `couple_id=eq.${coupleCode}`
       }, payload => {
         if (payload.new.user_role !== userRole) {
-          setPartnerPrayers(prev => [payload.new, ...prev]);
+          setPartnerPrayers(prev => [payload.new, ...prev].slice(0, 10));
         }
       })
       .on('postgres_changes', {
@@ -3786,7 +3793,10 @@ const App = () => {
         if (info.worshipTime) setWorshipTime(info.worshipTime);
         if (info.anniversaries) setAnniversaries(info.anniversaries);
       })
-      .subscribe();
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') console.log(`Connected to couple-${coupleCode}`);
+        if (status === 'CLOSED') console.warn('Realtime connection closed');
+      });
 
     // 3. Fetch Couple Real Stats
     const fetchCoupleStats = async () => {
@@ -3806,12 +3816,18 @@ const App = () => {
   // Update My Signal to Supabase
   const handleSetMySignal = async (newSignal) => {
     setMySignal(newSignal);
-    await supabase.from('signals').upsert({
-      couple_id: coupleCode,
-      user_role: userRole,
-      signal: newSignal,
-      updated_at: new Date().toISOString()
-    }, { onConflict: 'couple_id,user_role' });
+    try {
+      const { error } = await supabase.from('signals').upsert({
+        couple_id: coupleCode,
+        user_role: userRole,
+        signal: newSignal,
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'couple_id,user_role' });
+      if (error) throw error;
+    } catch (err) {
+      console.error("Signal sync error:", err);
+      // Fallback: alert the user if sync failed
+    }
   };
 
   return (
