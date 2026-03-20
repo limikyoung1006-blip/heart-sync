@@ -2476,10 +2476,11 @@ const SettingsView = ({
   anniversaries,
   setAnniversaries
 }) => {
-  const [notifSignal, setNotifSignal] = useState(true);
-  const [notifCard, setNotifCard] = useState(true);
-  const [notifWorship, setNotifWorship] = useState(true);
-  const [notifHatti, setNotifHatti] = useState(false);
+  // Persistence for user preferences
+  const [notifSignal, setNotifSignal] = useState(() => JSON.parse(localStorage.getItem('notif_signal') ?? 'true'));
+  const [notifCard, setNotifCard] = useState(() => JSON.parse(localStorage.getItem('notif_card') ?? 'true'));
+  const [notifWorship, setNotifWorship] = useState(() => JSON.parse(localStorage.getItem('notif_worship') ?? 'true'));
+  const [notifHatti, setNotifHatti] = useState(() => JSON.parse(localStorage.getItem('notif_hatti') ?? 'false'));
   
   const [showProfileEdit, setShowProfileEdit] = useState(false);
   const [showWorshipSet, setShowWorshipSet] = useState(false);
@@ -2488,50 +2489,30 @@ const SettingsView = ({
   const [showConnectSet, setShowConnectSet] = useState(false);
   const [showAppInfo, setShowAppInfo] = useState(false);
   const [showDataSecurity, setShowDataSecurity] = useState(false);
-  const [showAISet, setShowAISet] = useState(false);
   const [showNotifIntegration, setShowNotifIntegration] = useState(false);
-  const [openaiKey, setOpenaiKey] = useState(() => localStorage.getItem('openai_api_key') || '');
 
   const [newAnnivTitle, setNewAnnivTitle] = useState("");
   const [newAnnivDate, setNewAnnivDate] = useState("");
-  
-  // Shared Settings (worshipDays, worshipTime, anniversaries) are now passed as props from App.jsx
-
 
   const myInfo = userRole === 'husband' ? husbandInfo : wifeInfo;
   const setMyInfo = userRole === 'husband' ? setHusbandInfo : setWifeInfo;
 
-  const handlePhotoUpload = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    
-    // Check file size (limit to 1MB for base64 storage)
-    if (file.size > 1024 * 1024) {
-      alert("파일 크기가 너무 큽니다. 1MB 이하의 이미지를 선택해주세요.");
-      return;
-    }
+  // Persist notification preferences
+  useEffect(() => {
+    localStorage.setItem('notif_signal', JSON.stringify(notifSignal));
+    localStorage.setItem('notif_card', JSON.stringify(notifCard));
+    localStorage.setItem('notif_worship', JSON.stringify(notifWorship));
+    localStorage.setItem('notif_hatti', JSON.stringify(notifHatti));
+  }, [notifSignal, notifCard, notifWorship, notifHatti]);
 
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      updateProfile('avatar', reader.result);
-    };
-    reader.readAsDataURL(file);
-  };
-
+  // Sync Shared Settings to Supabase and LocalStorage
   useEffect(() => {
     localStorage.setItem('worshipDays', JSON.stringify(worshipDays));
     localStorage.setItem('worshipTime', worshipTime);
     localStorage.setItem('anniversaries', JSON.stringify(anniversaries));
 
-    // Also sync these to Supabase profile info to share with spouse
     const syncSettings = async () => {
-      const updatedInfo = { 
-        ...myInfo, 
-        worshipDays, 
-        worshipTime, 
-        anniversaries 
-      };
-      
+      const updatedInfo = { ...myInfo, worshipDays, worshipTime, anniversaries };
       await supabase.from('profiles').upsert({
         id: user.id,
         couple_id: coupleCode,
@@ -2540,53 +2521,52 @@ const SettingsView = ({
         updated_at: new Date().toISOString()
       }, { onConflict: 'id' });
     };
-    // Only sync if values have actually changed vs initial props to avoid loops
     syncSettings();
   }, [worshipDays, worshipTime, anniversaries, coupleCode, userRole]);
 
-  // 결혼기념일 기반 D-Day 계산 (공용 날짜 사용으로 동기화 보장)
+  // Marriage D-Day Calculation
   const sharedMarriageDate = husbandInfo.marriageDate || wifeInfo.marriageDate || '2020-05-23';
   const weddingDate = useMemo(() => new Date(sharedMarriageDate), [sharedMarriageDate]);
-  const today = new Date();
   const dDay = useMemo(() => {
+    const today = new Date();
     const diffTime = Math.abs(today - weddingDate);
     return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-  }, [weddingDate, today]);
+  }, [weddingDate]);
+
+  const handlePhotoUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (file.size > 1024 * 1024) {
+      alert("파일 크기가 너무 큽니다. 1MB 이하의 이미지를 선택해주세요.");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onloadend = () => updateProfile('avatar', reader.result);
+    reader.readAsDataURL(file);
+  };
 
   const updateProfile = async (field, value) => {
     const updatedInfo = { ...myInfo, [field]: value };
     setMyInfo(updatedInfo);
-    
-    // Sync to Supabase
     await supabase.from('profiles').upsert({
-      id: user.id,
-      couple_id: coupleCode,
-      user_role: userRole,
-      info: updatedInfo,
-      updated_at: new Date().toISOString()
+      id: user.id, couple_id: coupleCode, user_role: userRole, info: updatedInfo, updated_at: new Date().toISOString()
     }, { onConflict: 'id' });
 
-    // 결혼기념일은 부부 공통 정보이므로 양쪽 모두 업데이트하여 싱크 맞춤
     if (field === 'marriageDate') {
       const spouseRole = userRole === 'husband' ? 'wife' : 'husband';
-      const spouseInfoSetter = userRole === 'husband' ? setWifeInfo : setHusbandInfo;
+      const spouseSetter = userRole === 'husband' ? setWifeInfo : setHusbandInfo;
       const spouseInfo = userRole === 'husband' ? wifeInfo : husbandInfo;
-      
       const updatedSpouseInfo = { ...spouseInfo, marriageDate: value };
-      spouseInfoSetter(updatedSpouseInfo);
-      
+      spouseSetter(updatedSpouseInfo);
       await supabase.from('profiles').upsert({
-        couple_id: coupleCode,
-        user_role: spouseRole,
-        info: updatedSpouseInfo,
-        updated_at: new Date().toISOString()
+        couple_id: coupleCode, user_role: spouseRole, info: updatedSpouseInfo, updated_at: new Date().toISOString()
       }, { onConflict: 'couple_id,user_role' });
     }
   };
 
   const addAnniversary = () => {
     if (!newAnnivTitle.trim() || !newAnnivDate) {
-      alert("기념일 이름과 날짜를 모두 정확히 입력해주세요.");
+      alert("기념일 이름과 날짜를 입력해주세요.");
       return;
     }
     const newEntry = { id: Date.now(), title: newAnnivTitle, date: newAnnivDate };
@@ -2599,120 +2579,40 @@ const SettingsView = ({
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="settings-page" style={{ padding: '20px 0 100px' }}>
       {/* 💑 Couple Profile Card */}
       <div className="settings-profile-card" style={{ 
-        background: 'rgba(255, 255, 255, 0.7)', 
-        backdropFilter: 'blur(20px)',
-        borderRadius: '35px',
-        padding: '30px',
-        margin: '0 20px 25px',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        boxShadow: '0 15px 35px rgba(0,0,0,0.05)',
-        border: '1px solid rgba(255,255,255,0.4)',
-        position: 'relative'
+        background: 'rgba(255, 255, 255, 0.7)', backdropFilter: 'blur(20px)', borderRadius: '35px',
+        padding: '30px', margin: '0 20px 25px', display: 'flex', flexDirection: 'column', alignItems: 'center', boxShadow: '0 15px 35px rgba(0,0,0,0.05)', border: '1px solid rgba(255,255,255,0.4)', position: 'relative'
       }}>
-        <button 
-          onClick={() => setShowProfileEdit(true)}
-          style={{ position: 'absolute', top: '20px', right: '20px', background: 'white', border: '1px solid #EEE', borderRadius: '12px', padding: '8px', boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}
-        >
+        <button onClick={() => setShowProfileEdit(true)} style={{ position: 'absolute', top: '20px', right: '20px', background: 'white', border: '1px solid #EEE', borderRadius: '12px', padding: '8px', boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}>
           <User size={16} color="#8B7355" />
         </button>
-
         <div 
           onClick={() => document.getElementById('avatar-upload-main').click()}
-          style={{ 
-            width: '100px', height: '100px', borderRadius: '50%', 
-            background: 'linear-gradient(135deg, #F5D060, #D4AF37)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            marginBottom: '15px', overflow: 'hidden', border: '4px solid white',
-            boxShadow: '0 10px 25px rgba(212, 175, 55, 0.25)',
-            cursor: 'pointer',
-            position: 'relative'
-          }}
+          style={{ width: '100px', height: '100px', borderRadius: '50%', background: 'linear-gradient(135deg, #F5D060, #D4AF37)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '15px', overflow: 'hidden', border: '4px solid white', boxShadow: '0 10px 25px rgba(212, 175, 55, 0.25)', cursor: 'pointer', position: 'relative' }}
         >
-          <img 
-            src={myInfo.avatar || (userRole === 'husband' ? "/husband.png" : "/wife.png")} 
-            alt="Profile"
-            style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
-            onError={(e) => { e.target.src = userRole === 'husband' ? "https://api.dicebear.com/7.x/avataaars/svg?seed=Husband" : "https://api.dicebear.com/7.x/avataaars/svg?seed=Wife"; }}
-          />
-          <div style={{ position: 'absolute', bottom: '0', right: '0', background: '#D4AF37', borderRadius: '50%', padding: '6px', border: '2px solid white', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
-            <Camera size={14} color="white" />
-          </div>
+          <img src={myInfo.avatar || (userRole === 'husband' ? "/husband.png" : "/wife.png")} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => { e.target.src = userRole === 'husband' ? "https://api.dicebear.com/7.x/avataaars/svg?seed=Husband" : "https://api.dicebear.com/7.x/avataaars/svg?seed=Wife"; }} />
+          <div style={{ position: 'absolute', bottom: '0', right: '0', background: '#D4AF37', borderRadius: '50%', padding: '6px', border: '2px solid white' }}><Camera size={14} color="white" /></div>
           <input type="file" id="avatar-upload-main" hidden accept="image/*" onChange={handlePhotoUpload} />
         </div>
-        <h2 style={{ fontSize: '22px', fontWeight: 900, color: '#2D1F08', marginBottom: '8px' }}>
-          {husbandInfo.nickname} ❤️ {wifeInfo.nickname}
-        </h2>
+        <h2 style={{ fontSize: '22px', fontWeight: 900, color: '#2D1F08', marginBottom: '8px' }}>{husbandInfo.nickname} ❤️ {wifeInfo.nickname}</h2>
         <p style={{ fontSize: '14px', color: '#8B7355', fontWeight: 700, marginBottom: '5px' }}>결혼기념일 {husbandInfo.marriageDate}</p>
         <div style={{ fontSize: '32px', fontWeight: 900, color: '#FF7E5F', letterSpacing: '2px' }}>D+{dDay}</div>
-        
-        <div style={{ display: 'flex', gap: '10px', marginTop: '15px' }}>
-          <div style={{ background: '#FDFCF0', padding: '6px 12px', borderRadius: '100px', fontSize: '11px', fontWeight: 900, color: '#B08D3E', border: '1px solid #F5D060' }}>{husbandInfo.mbti}</div>
-          <div style={{ background: '#FDFCF0', padding: '6px 12px', borderRadius: '100px', fontSize: '11px', fontWeight: 900, color: '#B08D3E', border: '1px solid #F5D060' }}>{wifeInfo.mbti}</div>
-        </div>
       </div>
 
       {/* Profile Edit Modal */}
       {showProfileEdit && (
-        <div 
-          onClick={() => setShowProfileEdit(false)}
-          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 5000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-          <motion.div 
-            onClick={(e) => e.stopPropagation()}
-            initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} style={{ background: 'white', borderRadius: '32px', padding: '30px', width: '100%', maxWidth: '340px' }}>
+        <div onClick={() => setShowProfileEdit(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 5000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+          <motion.div onClick={(e) => e.stopPropagation()} initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} style={{ background: 'white', borderRadius: '32px', padding: '30px', width: '100%', maxWidth: '340px' }}>
             <h3 style={{ fontSize: '18px', fontWeight: 900, color: '#2D1F08', marginBottom: '20px', textAlign: 'center' }}>내 정보 수정</h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-              <div style={{ alignSelf: 'center', position: 'relative', marginBottom: '10px' }}>
-                <div 
-                  onClick={() => document.getElementById('avatar-upload-modal').click()}
-                  style={{ width: '80px', height: '80px', borderRadius: '50%', overflow: 'hidden', border: '3px solid #FDFCF0', cursor: 'pointer', boxShadow: '0 5px 15px rgba(0,0,0,0.1)' }}>
-                  <img src={myInfo.avatar || (userRole === 'husband' ? "/husband.png" : "/wife.png")} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                </div>
-                <div style={{ position: 'absolute', bottom: '0', right: '0', background: 'white', borderRadius: '50%', padding: '4px', boxShadow: '0 2px 5px rgba(0,0,0,0.2)' }}>
-                  <Upload size={12} color="#2D1F08" />
-                </div>
-                <input type="file" id="avatar-upload-modal" hidden accept="image/*" onChange={handlePhotoUpload} />
-              </div>
               <div>
                 <label style={{ fontSize: '12px', fontWeight: 800, color: '#8B7355', display: 'block', marginBottom: '6px' }}>애칭</label>
                 <input value={myInfo.nickname} onChange={(e) => updateProfile('nickname', e.target.value)} style={{ width: '100%', padding: '12px 18px', borderRadius: '14px', background: '#F9FAFB', border: '1px solid #EEE' }} />
               </div>
               <div>
-                <label style={{ fontSize: '12px', fontWeight: 800, color: '#8B7355', display: 'block', marginBottom: '6px' }}>성격 유형 (하티 인사이트)</label>
+                <label style={{ fontSize: '12px', fontWeight: 800, color: '#8B7355', display: 'block', marginBottom: '6px' }}>성격 유형 (MBT-H)</label>
                 <input value={myInfo.mbti} onChange={(e) => updateProfile('mbti', e.target.value)} style={{ width: '100%', padding: '12px 18px', borderRadius: '14px', background: '#F9FAFB', border: '1px solid #EEE' }} />
               </div>
-              <div>
-                <label style={{ fontSize: '12px', fontWeight: 800, color: '#8B7355', display: 'block', marginBottom: '6px' }}>혈액형</label>
-                <input value={myInfo.blood} onChange={(e) => updateProfile('blood', e.target.value)} style={{ width: '100%', padding: '12px 18px', borderRadius: '14px', background: '#F9FAFB', border: '1px solid #EEE' }} />
-              </div>
-              <div>
-                <label style={{ fontSize: '12px', fontWeight: 800, color: '#8B7355', display: 'block', marginBottom: '6px' }}>결혼기념일 (년/월/일)</label>
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  <select 
-                    value={myInfo.marriageDate.split('-')[0]} 
-                    onChange={(e) => updateProfile('marriageDate', `${e.target.value}-${myInfo.marriageDate.split('-')[1]}-${myInfo.marriageDate.split('-')[2]}`)}
-                    style={{ flex: 2, padding: '10px', borderRadius: '12px', background: '#F9FAFB', border: '1px solid #EEE', fontSize: '14px' }}
-                  >
-                    {Array.from({ length: 50 }, (_, i) => 2026 - i).map(year => <option key={year} value={year}>{year}년</option>)}
-                  </select>
-                  <select 
-                    value={parseInt(myInfo.marriageDate.split('-')[1])} 
-                    onChange={(e) => updateProfile('marriageDate', `${myInfo.marriageDate.split('-')[0]}-${String(e.target.value).padStart(2, '0')}-${myInfo.marriageDate.split('-')[2]}`)}
-                    style={{ flex: 1, padding: '10px', borderRadius: '12px', background: '#F9FAFB', border: '1px solid #EEE', fontSize: '14px' }}
-                  >
-                    {Array.from({ length: 12 }, (_, i) => i + 1).map(month => <option key={month} value={month}>{month}월</option>)}
-                  </select>
-                  <select 
-                    value={parseInt(myInfo.marriageDate.split('-')[2])} 
-                    onChange={(e) => updateProfile('marriageDate', `${myInfo.marriageDate.split('-')[0]}-${myInfo.marriageDate.split('-')[1]}-${String(e.target.value).padStart(2, '0')}`)}
-                    style={{ flex: 1, padding: '10px', borderRadius: '12px', background: '#F9FAFB', border: '1px solid #EEE', fontSize: '14px' }}
-                  >
-                    {Array.from({ length: 31 }, (_, i) => i + 1).map(day => <option key={day} value={day}>{day}일</option>)}
-                  </select>
-                </div>
-              </div>
-              <motion.button whileTap={{ scale: 0.95 }} onClick={() => setShowProfileEdit(false)} style={{ width: '100%', padding: '16px', borderRadius: '16px', background: '#2D1F08', color: 'white', fontWeight: 900, marginTop: '10px', border: 'none', cursor: 'pointer' }}>저장 완료</motion.button>
+              <motion.button whileTap={{ scale: 0.95 }} onClick={() => setShowProfileEdit(false)} style={{ width: '100%', padding: '16px', borderRadius: '16px', background: '#2D1F08', color: 'white', fontWeight: 900, border: 'none', cursor: 'pointer' }}>저장 완료</motion.button>
             </div>
           </motion.div>
         </div>
@@ -2721,7 +2621,6 @@ const SettingsView = ({
       {/* 🔗 Connection Section */}
       <div className="settings-section">
         <h3 className="settings-section-title">연결 및 통합</h3>
-        <SettingsItem icon={<Zap size={18} />} label="AI 전문가 엔진 설정 (OpenAI)" onClick={() => setShowAISet(true)} />
         <SettingsItem icon={<Users size={18} />} label="배우자 연결 관리 (코드 공유)" onClick={() => setShowConnectSet(true)} />
         <SettingsItem icon={<Smartphone size={18} />} label="기기 알림 통합 설정" onClick={() => setShowNotifIntegration(true)} />
       </div>
@@ -2729,124 +2628,104 @@ const SettingsView = ({
       {/* 🔔 Notifications Section */}
       <div className="settings-section">
         <h3 className="settings-section-title">알림 설정</h3>
-        <SettingsToggle icon="🚦" label="감정신호 실방 알림" active={notifSignal} onToggle={() => setNotifSignal(!notifSignal)} />
+        <SettingsToggle icon="🚦" label="감정신호 실시간 알림" active={notifSignal} onToggle={() => setNotifSignal(!notifSignal)} />
         <SettingsToggle icon="💬" label="대화 카드 도착 알림" active={notifCard} onToggle={() => setNotifCard(!notifCard)} />
         <SettingsToggle icon="🙏" label="가정예배 시간 알림" active={notifWorship} onToggle={() => setNotifWorship(!notifWorship)} />
         <SettingsToggle icon="💖" label="하티 데일리 원포인트" active={notifHatti} onToggle={() => setNotifHatti(!notifHatti)} />
       </div>
 
-      {/* 🎨 Customization Section */}
+      {/* 🎨 Customization */}
       <div className="settings-section">
         <h3 className="settings-section-title">개인화</h3>
         <SettingsItem icon={<Calendar size={18} />} label="가정예배 주기 설정" onClick={() => setShowWorshipSet(true)} />
         <SettingsItem icon={<Heart size={18} />} label="우리만의 기념일 추가" onClick={() => setShowAnnivSet(true)} />
       </div>
 
-      {/* 🏛️ Data & Legal */}
       <div className="settings-section">
         <h3 className="settings-section-title">시스템</h3>
         <SettingsItem icon={<BarChart3 size={18} />} label="월간 관계 리포트 보기" onClick={onReportClick} />
         <SettingsItem icon={<Share2 size={18} />} label="우리 기록 백업하기 (PDF)" onClick={() => setShowExport(true)} />
-        <SettingsItem icon={<Info size={18} />} label="하트싱크 사용 가이드 (기능 설명)" onClick={onGuideClick} />
+        <SettingsItem icon={<Info size={18} />} label="하트싱크 사용 가이드" onClick={onGuideClick} />
         <SettingsItem icon={<Lock size={18} />} label="데이터 보안 설정" onClick={() => setShowDataSecurity(true)} />
       </div>
 
-      {/* 🚀 AI Expert Engine Modal */}
-      {showAISet && (
-        <div 
-          onClick={() => setShowAISet(false)}
-          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 6000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-          <motion.div 
-            onClick={(e) => e.stopPropagation()}
-            initial={{ y: 50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} style={{ background: 'white', borderRadius: '35px', padding: '35px', width: '100%', maxWidth: '360px', boxShadow: '0 25px 50px rgba(0,0,0,0.3)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
-               <div style={{ width: '45px', height: '45px', borderRadius: '14px', background: 'linear-gradient(135deg, #8A60FF, #AC8AFF)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                 <Zap size={22} color="white" />
-               </div>
-               <div>
-                  <h3 style={{ fontSize: '18px', fontWeight: 900, color: '#2D1F08' }}>AI 전문가 엔진 설정</h3>
-                  <span style={{ fontSize: '11px', color: '#8A60FF', fontWeight: 800 }}>POWERED BY OPENAI GPT-4O</span>
-               </div>
-            </div>
-            
-            <p style={{ fontSize: '14px', color: '#4B5563', lineHeight: 1.6, marginBottom: '20px', wordBreak: 'keep-all' }}>
-              진짜 인공지능 '하티'와 대화하려면 **OpenAI API Key**가 필요합니다. 입력된 키는 본인의 브라우저에만 안전하게 저장됩니다.
-            </p>
-
-            <div style={{ marginBottom: '20px' }}>
-               <label style={{ fontSize: '12px', fontWeight: 800, color: '#8B7355', display: 'block', marginBottom: '8px' }}>API KEY 입력</label>
-               <input 
-                 type="password"
-                 placeholder="sk-..." 
-                 value={openaiKey} 
-                 onChange={(e) => {
-                   setOpenaiKey(e.target.value);
-                   localStorage.setItem('openai_api_key', e.target.value);
-                 }} 
-                 style={{ width: '100%', padding: '15px 20px', borderRadius: '16px', background: '#F9FAFB', border: '1.5px solid #EEE', fontSize: '14px', outline: 'none' }} 
-               />
-               <p style={{ fontSize: '11px', color: '#9CA3AF', marginTop: '8px' }}>* 입력 즉시 반영되며, 삭제 시 로컬 엔진으로 돌아갑니다.</p>
-            </div>
-
-            <motion.button 
-              whileTap={{ scale: 0.95 }} 
-              onClick={() => setShowAISet(false)} 
-              style={{ width: '100%', padding: '18px', borderRadius: '18px', background: '#2D1F08', color: 'white', fontWeight: 900, fontSize: '16px', border: 'none', cursor: 'pointer' }}
-            >
-              설정 완료
-            </motion.button>
-          </motion.div>
-        </div>
-      )}
-
-      {/* 📱 Device Notification Integration Modal */}
-      {showNotifIntegration && (
-        <div 
-          onClick={() => setShowNotifIntegration(false)}
-          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 6000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-          <motion.div 
-            onClick={(e) => e.stopPropagation()}
-            initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} style={{ background: 'white', borderRadius: '35px', padding: '35px', width: '100%', maxWidth: '360px', textAlign: 'center' }}>
-            <div style={{ width: '60px', height: '60px', background: 'rgba(59, 130, 246, 0.1)', borderRadius: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
-               <Smartphone size={28} color="#3B82F6" />
-            </div>
-            <h3 style={{ fontSize: '19px', fontWeight: 900, color: '#2D1F08', marginBottom: '12px' }}>기기 알림 통합 설정</h3>
-            <p style={{ fontSize: '14px', color: '#6B7280', lineHeight: 1.6, marginBottom: '25px', wordBreak: 'keep-all' }}>
-              배우자의 감정 신호나 대화 카드가 도착했을 때 즉시 알림을 받을 수 있도록 기기 설정을 동기화합니다.
-            </p>
-            
-            <div style={{ background: '#F8FAFC', padding: '15px', borderRadius: '20px', textAlign: 'left', marginBottom: '25px' }}>
-               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
-                 <span style={{ fontSize: '13px', color: '#64748B', fontWeight: 700 }}>시스템 권한 상태</span>
-                 <span style={{ fontSize: '13px', color: '#10B981', fontWeight: 900 }}>허용됨</span>
-               </div>
-               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                 <span style={{ fontSize: '13px', color: '#64748B', fontWeight: 700 }}>실시간 동기화 엔진</span>
-                 <span style={{ fontSize: '13px', color: '#3B82F6', fontWeight: 900 }}>활성화</span>
-               </div>
-            </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-               <motion.button 
-                 whileTap={{ scale: 0.95 }} 
-                 onClick={() => { alert('기기 알림 최적화가 완료되었습니다.'); setShowNotifIntegration(false); }} 
-                 style={{ width: '100%', padding: '16px', borderRadius: '16px', background: '#3B82F6', color: 'white', fontWeight: 900, border: 'none', cursor: 'pointer' }}
-               >
-                 지금 즉시 최적화하기
-               </motion.button>
-               <motion.button 
-                 whileTap={{ scale: 0.95 }} 
-                 onClick={() => setShowNotifIntegration(false)} 
-                 style={{ width: '100%', padding: '16px', borderRadius: '16px', background: '#F1F5F9', color: '#64748B', fontWeight: 800, border: 'none', cursor: 'pointer' }}
-               >
-                 닫기
-               </motion.button>
-            </div>
-          </motion.div>
-        </div>
-      )}
-
       <div style={{ padding: '0 20px', marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        <div style={{ textAlign: 'center', padding: '10px', background: 'rgba(212, 175, 55, 0.1)', borderRadius: '15px' }}>
+          <p style={{ fontSize: '11px', color: '#8B7355', fontWeight: 800 }}>현재 연결 상태: <span style={{ color: '#D4AF37' }}>{coupleCode}</span> | <span style={{ color: userRole === 'husband' ? '#3B82F6' : '#EC4899' }}>{userRole === 'husband' ? '남편' : '아내'}</span></p>
+        </div>
+        <motion.button
+          whileTap={{ scale: 0.95 }}
+          onClick={async () => {
+            if(window.confirm("로그아웃 하시겠습니까?")) {
+              await supabase.auth.signOut();
+              localStorage.clear();
+              window.location.reload();
+            }
+          }}
+          style={{ width: '100%', padding: '16px', borderRadius: '20px', background: 'rgba(239, 68, 68, 0.1)', color: '#EF4444', fontWeight: 800, border: '1px solid rgba(239, 68, 68, 0.2)', cursor: 'pointer', marginBottom: '10px' }}
+        >
+          로그아웃
+        </motion.button>
+      </div>
+
+      {/* Modals for Settings functions */}
+      {showAnnivSet && (
+        <div onClick={() => setShowAnnivSet(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 5000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+          <motion.div onClick={(e) => e.stopPropagation()} initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} style={{ background: 'white', borderRadius: '32px', padding: '30px', width: '100%', maxWidth: '340px' }}>
+            <h3 style={{ fontSize: '18px', fontWeight: 900, color: '#2D1F08', marginBottom: '20px' }}>기념일 추가</h3>
+            <input placeholder="기념일 이름" value={newAnnivTitle} onChange={(e) => setNewAnnivTitle(e.target.value)} style={{ width: '100%', padding: '12px', borderRadius: '12px', border: '1px solid #EEE', marginBottom: '10px' }} />
+            <input type="date" value={newAnnivDate} onChange={(e) => setNewAnnivDate(e.target.value)} style={{ width: '100%', padding: '12px', borderRadius: '12px', border: '1px solid #EEE', marginBottom: '15px' }} />
+            <motion.button whileTap={{ scale: 0.95 }} onClick={addAnniversary} style={{ width: '100%', padding: '14px', borderRadius: '12px', background: '#F5D060', color: 'white', fontWeight: 900, border: 'none' }}>추가</motion.button>
+          </motion.div>
+        </div>
+      )}
+
+      {showExport && (
+        <div onClick={() => setShowExport(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 5000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+          <motion.div onClick={(e) => e.stopPropagation()} initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} style={{ background: 'white', borderRadius: '32px', padding: '30px', width: '100%', maxWidth: '340px', textAlign: 'center' }}>
+            <Share2 size={40} color="#4F46E5" style={{ marginBottom: '15px' }} />
+            <h3 style={{ fontSize: '18px', fontWeight: 900, marginBottom: '10px' }}>PDF 백업 생성</h3>
+            <p style={{ fontSize: '14px', color: '#6B7280', marginBottom: '20px' }}>모든 대화와 일정을 PDF로 저장합니다.</p>
+            <motion.button whileTap={{ scale: 0.95 }} onClick={() => { alert('준비 중입니다...'); setShowExport(false); }} style={{ width: '100%', padding: '15px', borderRadius: '15px', background: '#4F46E5', color: 'white', fontWeight: 900 }}>생성하기</motion.button>
+          </motion.div>
+        </div>
+      )}
+
+      {showConnectSet && (
+        <div onClick={() => setShowConnectSet(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 5000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+          <motion.div onClick={(e) => e.stopPropagation()} initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} style={{ background: 'white', borderRadius: '32px', padding: '30px', width: '100%', maxWidth: '340px', textAlign: 'center' }}>
+            <Users size={40} color="#15803D" style={{ marginBottom: '15px' }} />
+            <h3 style={{ fontSize: '18px', fontWeight: 900, marginBottom: '20px' }}>배우자 연결 코드</h3>
+            <div style={{ padding: '20px', background: '#F9FAFB', borderRadius: '15px', fontSize: '24px', fontWeight: 900, letterSpacing: '4px' }}>{coupleCode}</div>
+            <motion.button whileTap={{ scale: 0.95 }} onClick={() => setShowConnectSet(false)} style={{ width: '100%', padding: '15px', marginTop: '20px', borderRadius: '15px', background: '#2D1F08', color: 'white', fontWeight: 900 }}>닫기</motion.button>
+          </motion.div>
+        </div>
+      )}
+
+      {showNotifIntegration && (
+        <div onClick={() => setShowNotifIntegration(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 6000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+          <motion.div onClick={(e) => e.stopPropagation()} initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} style={{ background: 'white', borderRadius: '35px', padding: '35px', width: '100%', maxWidth: '360px', textAlign: 'center' }}>
+            <Smartphone size={32} color="#3B82F6" style={{ marginBottom: '15px' }} />
+            <h3 style={{ fontSize: '19px', fontWeight: 900, marginBottom: '25px' }}>기기 알림 통합</h3>
+            <p style={{ fontSize: '14px', color: '#6B7280', marginBottom: '25px' }}>실시간 푸시 알림 엔진이 활성화되었습니다.</p>
+            <motion.button whileTap={{ scale: 0.95 }} onClick={() => setShowNotifIntegration(false)} style={{ width: '100%', padding: '16px', borderRadius: '16px', background: '#2D1F08', color: 'white', fontWeight: 900 }}>확인</motion.button>
+          </motion.div>
+        </div>
+      )}
+
+      {showDataSecurity && (
+        <div onClick={() => setShowDataSecurity(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 5000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+          <motion.div onClick={(e) => e.stopPropagation()} initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} style={{ background: 'white', borderRadius: '32px', padding: '30px', width: '100%', maxWidth: '340px', textAlign: 'center' }}>
+            <Lock size={40} color="#0369A1" style={{ marginBottom: '15px' }} />
+            <h3 style={{ fontSize: '18px', fontWeight: 900, marginBottom: '20px' }}>데이터 보안</h3>
+            <p style={{ fontSize: '14px', color: '#4B5563' }}>모든 대화 내용은 기기 간 종단간 암호화로 보호됩니다.</p>
+            <motion.button whileTap={{ scale: 0.95 }} onClick={() => setShowDataSecurity(false)} style={{ width: '100%', padding: '16px', marginTop: '20px', borderRadius: '16px', background: '#2D1F08', color: 'white', fontWeight: 900 }}>닫기</motion.button>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Logout & Reset Buttons (Bottom of Settings) */}
+      <div style={{ padding: '0 20px', marginTop: '30px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
         <div style={{ textAlign: 'center', padding: '10px', background: 'rgba(212, 175, 55, 0.1)', borderRadius: '15px' }}>
           <p style={{ fontSize: '11px', color: '#8B7355', fontWeight: 800 }}>현재 연결 상태: <span style={{ color: '#D4AF37' }}>{coupleCode}</span> | <span style={{ color: userRole === 'husband' ? '#3B82F6' : '#EC4899' }}>{userRole === 'husband' ? '남편' : '아내'}</span></p>
           <p style={{ fontSize: '10px', color: '#8B7355', opacity: 0.7 }}>배우자와 '서로 다른 역할'이어야 하며 '동일한 코드'여야 합니다.</p>
@@ -2864,19 +2743,10 @@ const SettingsView = ({
         >
           로그아웃
         </motion.button>
-        <motion.button
-          whileTap={{ scale: 0.95 }}
-          onClick={() => {
-            if(window.confirm("모든 데이터가 초기화되고 계정 연결이 해제됩니다. 계속하시겠습니까?")) {
-              localStorage.clear();
-              window.location.reload();
-            }
-          }}
-          style={{ width: '100%', padding: '16px', borderRadius: '20px', background: 'rgba(239, 68, 68, 0.05)', color: '#9CA3AF', fontWeight: 800, border: '1px solid #EEE', cursor: 'pointer' }}
-        >
-          데이터 초기화 (데모용)
-        </motion.button>
       </div>
+    </motion.div>
+  );
+};
 
       {/* --- Addition Modals --- */}
       {/* 1. Worship Settings Modal */}
