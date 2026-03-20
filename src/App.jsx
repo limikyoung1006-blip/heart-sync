@@ -751,6 +751,54 @@ const HomeView = ({ userRole, coupleCode, mySignal, setMySignal, spouseSignal, p
 const AdminView = ({ onBack, usersCount, couplesCount, activeSessions, recentActivities, masterApiKey, onSaveMasterKey }) => {
   const [activeAdminTab, setActiveAdminTab] = useState('overview');
   const [tempKey, setTempKey] = useState(masterApiKey || '');
+  const [userList, setUserList] = useState([]);
+  const [loadingUsers, setLoadingUsers] = useState(false);
+
+  useEffect(() => {
+    if (activeAdminTab === 'users') {
+      fetchUserList();
+    }
+  }, [activeAdminTab]);
+
+  const fetchUserList = async () => {
+    setLoadingUsers(true);
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .order('updated_at', { ascending: false });
+      
+      if (error) throw error;
+      setUserList(data || []);
+    } catch (err) {
+      console.error("Error fetching users:", err);
+      alert("사용자 목록을 불러오는 중 오류가 발생했습니다.");
+    } finally {
+      setLoadingUsers(false);
+    }
+  };
+
+  const handleDeleteUser = async (id, nickname) => {
+    if (!window.confirm(`[주의] '${nickname}' 사용자의 모든 데이터를 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.`)) return;
+    
+    try {
+      // 1. Delete from profiles
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .delete()
+        .eq('id', id);
+      
+      if (profileError) throw profileError;
+
+      // 2. Clear from local storage if this is me (though admin shouldn't delete themselves easily)
+      
+      alert("사용자가 성공적으로 삭제되었습니다.");
+      fetchUserList();
+    } catch (err) {
+      console.error("Delete Error:", err);
+      alert("삭제 중 오류가 발생했습니다: " + err.message);
+    }
+  };
   
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col h-full bg-[#F8FAFC]">
@@ -840,8 +888,39 @@ const AdminView = ({ onBack, usersCount, couplesCount, activeSessions, recentAct
          )}
 
          {activeAdminTab === 'users' && (
-           <div style={{ background: 'white', padding: '20px', borderRadius: '30px' }}>
-              <p style={{ textAlign: 'center', color: '#94A3B8', fontSize: '13px', padding: '40px 0' }}>사용자 목록 로딩 중...</p>
+           <div style={{ background: 'white', padding: '20px', borderRadius: '30px', boxShadow: '0 10px 25px rgba(0,0,0,0.02)' }}>
+              <div className="flex items-center justify-between mb-5">
+                 <h3 style={{ fontSize: '16px', fontWeight: 900, color: '#1E293B' }}>전체 사용자 목록</h3>
+                 <button onClick={fetchUserList} style={{ background: 'none', border: 'none', color: '#8A60FF' }}><RefreshCw size={18} /></button>
+              </div>
+              
+              <div className="flex flex-col gap-3">
+                 {loadingUsers ? (
+                    <p style={{ textAlign: 'center', color: '#94A3B8', fontSize: '13px', padding: '40px 0' }}>사용자 데이터 조회 중...</p>
+                 ) : userList.length > 0 ? (
+                    userList.map((usr) => (
+                       <div key={usr.id} style={{ padding: '16px', borderRadius: '20px', background: '#F8FAFC', border: '1px solid #F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <div style={{ flex: 1 }}>
+                             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+                                <span style={{ fontSize: '14px', fontWeight: 900, color: '#1E293B' }}>{usr.info?.nickname || '익명'}</span>
+                                <span style={{ fontSize: '10px', padding: '2px 6px', borderRadius: '6px', background: usr.user_role === 'husband' ? '#E0F2FE' : '#FCE7F3', color: usr.user_role === 'husband' ? '#0369A1' : '#BE185D', fontWeight: 800 }}>
+                                   {usr.user_role === 'husband' ? '남편' : '아내'}
+                                </span>
+                             </div>
+                             <p style={{ fontSize: '11px', color: '#94A3B8', fontWeight: 600 }}>코드: {usr.couple_id} | MBTI: {usr.info?.mbti || '-'}</p>
+                          </div>
+                          <button 
+                             onClick={() => handleDeleteUser(usr.id, usr.info?.nickname || '익명')}
+                             style={{ padding: '8px', borderRadius: '10px', background: 'rgba(239, 68, 68, 0.1)', color: '#EF4444', border: 'none', marginLeft: '10px' }}
+                          >
+                             <Trash2 size={18} />
+                          </button>
+                       </div>
+                    ))
+                 ) : (
+                    <p style={{ textAlign: 'center', color: '#94A3B8', fontSize: '13px', padding: '40px 0' }}>등록된 사용자가 없습니다.</p>
+                 )}
+              </div>
            </div>
          )}
 
