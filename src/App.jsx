@@ -3310,7 +3310,7 @@ const OnboardingView = ({ user, userRole, setUserRole, onFinish }) => {
 
 
 /* 🔐 Auth View (Social Login) */
-const AuthView = ({ onLogoClick, showAdminLogin, setShowAdminLogin, setUser, setSession }) => {
+const AuthView = ({ onLogoClick, showAdminLogin, setShowAdminLogin, setUser, setSession, setIsAdmin }) => {
   const handleOAuthLogin = async (provider) => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider,
@@ -3330,10 +3330,11 @@ const AuthView = ({ onLogoClick, showAdminLogin, setShowAdminLogin, setUser, set
     
     // Check Super Admin bypass
     if (name === "백동희" && password === "0000") {
+      setIsAdmin(true); 
       setUser({ id: 'admin-id', email: 'admin@heartsync.com', user_metadata: { full_name: '백동희', role: 'admin' } });
       setSession({ user: { id: 'admin-id', role: 'admin' } });
       localStorage.setItem('isAdmin', 'true');
-      window.location.reload(); 
+      // No need to reload, the state update will trigger render
       return;
     }
 
@@ -3653,7 +3654,7 @@ const App = () => {
         </div>
       )}
 
-      {!loading && !session && (
+      {!loading && !session && !isAdmin && (
         <AuthView 
           onLogoClick={() => {
             const newCount = logoClickCount + 1;
@@ -3667,10 +3668,11 @@ const App = () => {
           setShowAdminLogin={setShowAdminLogin}
           setUser={setUser}
           setSession={setSession}
+          setIsAdmin={setIsAdmin}
         />
       )}
 
-      {!loading && session && !isSetupDone && (
+      {!loading && (session || isAdmin) && !isSetupDone && (
         <OnboardingView 
           user={user}
           userRole={userRole} 
@@ -3679,11 +3681,11 @@ const App = () => {
         />
       )}
 
-      {!loading && session && isSetupDone && (
+      {!loading && (session || isAdmin) && isSetupDone && (
         <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, height: '100%', pointerEvents: 'none', zIndex: -1, background: `radial-gradient(circle at 50% -20%, ${appTheme.primary}15, transparent)` }} />
       )}
       
-      {!loading && session && isSetupDone && (
+      {!loading && (session || isAdmin) && isSetupDone && (
         <>
           <div className="app-bg" style={{ 
             backgroundColor: appTheme.bg,
