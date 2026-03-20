@@ -946,8 +946,27 @@ const AdminView = ({ onBack, usersCount, couplesCount, activeSessions, recentAct
                
                <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
                   <div style={{ padding: '15px', borderRadius: '15px', background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
-                     <p style={{ fontSize: '13px', fontWeight: 700, color: '#334155', marginBottom: '4px' }}>AI 상담 엔진 (OpenAI)</p>
-                     <p style={{ fontSize: '12px', color: '#10B981', fontWeight: 800 }}>● 정상 작동 중 (V4.0-Mini)</p>
+                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                        <p style={{ fontSize: '13px', fontWeight: 700, color: '#334155' }}>AI 상담 엔진 (OpenAI API 키)</p>
+                        <p style={{ fontSize: '11px', color: masterApiKey ? '#10B981' : '#EF4444', fontWeight: 800 }}>
+                           {masterApiKey ? '● 활성 (키 등록됨)' : '● 미등록 (데모 모드)'}
+                        </p>
+                     </div>
+                     <div style={{ display: 'flex', gap: '8px' }}>
+                        <input 
+                           type="password" 
+                           placeholder="sk-... API 키 입력" 
+                           value={tempKey} 
+                           onChange={(e) => setTempKey(e.target.value)} 
+                           style={{ flex: 1, padding: '10px 14px', borderRadius: '12px', border: '1px solid #CBD5E1', fontSize: '13px' }}
+                        />
+                        <button 
+                           onClick={() => onSaveMasterKey(tempKey)}
+                           style={{ padding: '0 16px', borderRadius: '12px', background: '#8A60FF', color: 'white', border: 'none', fontWeight: 800, fontSize: '12px', cursor: 'pointer' }}
+                        >
+                           저장
+                        </button>
+                     </div>
                   </div>
                   <div style={{ padding: '15px', borderRadius: '15px', background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                      <p style={{ fontSize: '13px', fontWeight: 700, color: '#334155', marginBottom: '4px' }}>데이터 보안</p>
@@ -1001,22 +1020,22 @@ const ChatView = ({ userRole, setUserRole, husbandInfo, setHusbandInfo, wifeInfo
                          - 역할: ${userRole === 'husband' ? '남편' : '아내'}
                          - 닉네임: ${userRole === 'husband' ? husbandInfo.nickname : wifeInfo.nickname}
                          - MBTI: ${userRole === 'husband' ? husbandInfo.mbti : wifeInfo.mbti}
+                         - 심층 성향 진단 결과: ${JSON.stringify((userRole === 'husband' ? husbandInfo.deepAnalysis : wifeInfo.deepAnalysis) || '미진단')}
                          
                          배우자 정보:
                          - 역할: ${pl}
                          - 닉네임: ${p.nickname}
                          - MBTI: ${p.mbti}
+                         - 심층 성향 진단 결과: ${JSON.stringify(p.deepAnalysis || '미진단')}
                          
                          가정 데이터 (통계):
-                         - 등록된 가족 일정: ${schedules?.length || 0}개
-                         - 최근 감정 통계: 최근 ${adminStats?.recentActivities?.length || 0}건의 감정 변화가 기록되었습니다.
+                         - 등록된 일별 활동 및 알림 데이터 수: ${schedules?.length || 0}건
                          
-                         [필수 지침]
-                         1. 절대 '여러분', '두 분'이라는 호칭을 사용하지 마십시오. 현재 1:1 비밀 상담 중입니다.
-                         2. 사용자를 지칭할 때는 '${userRole === 'husband' ? '형제님' : '자매님'}' 또는 '${userRole === 'husband' ? husbandInfo.nickname : wifeInfo.nickname}님'이라고 부르십시오.
-                         3. 모든 답변은 개혁주의 상담학 관점에서 '언약(Covenant)'과 '희생적 사랑(Agape)'을 기반으로 합니다.
-                         4. 사용자의 MBTI(${userRole === 'husband' ? husbandInfo.mbti : wifeInfo.mbti})와 배우자의 MBTI(${p.mbti}) 상호작용을 심도 있게 분석하십시오.
-                         5. 월간 리포트 및 통계 데이터를 언급하며 '사용자의 상황을 정확히 인지하고 있음'을 보여주십시오.`
+                         [필수 지침: 맥락 파악 및 맞춤 상담]
+                         1. 절대 상투적이거나 뻔한 교과서적인 답변을 금지합니다. 사용자의 질문 의도, 대화의 맥락, 감정 상태를 깊이 파악하여 매우 구체적으로 공감하고 답변하십시오.
+                         2. 사용자와 배우자의 '심층 성향 진단 결과' 데이터가 있다면, 이 데이터를 100% 근거로 활용하여 "왜 서로가 다르게 반응하는지", "어떤 방식(사랑의 언어, 갈등 대처법 등)으로 현 상황에 접근해야 상대방이 마음을 여는지" 소름 돋게 구체적이고 전문적으로 제안하십시오.
+                         3. 절대 '여러분', '두 분'이라는 호칭을 사용하지 마십시오. 사용자 측면에서 1:1 비밀 상담 중입니다. 사용자 호칭은 오직 '${userRole === 'husband' ? husbandInfo.nickname : wifeInfo.nickname}님'으로 부르십시오.
+                         4. 모든 답변은 개혁주의 신학 기반 위에 현대 가족 체계 심리학(Family Systems)을 융합하여 가장 실질적이고 납득 가능한 조언을 제공하십시오.`
               },
               { role: "user", content: userInput }
             ],
@@ -1037,62 +1056,8 @@ const ChatView = ({ userRole, setUserRole, husbandInfo, setHusbandInfo, wifeInfo
       }
     }
 
-    const getRandom = (arr) => arr[Math.floor(Math.random() * arr.length)];
-
-    // 🚀 Smart Modular Engine: Combines parts to create thousands of unique responses
-    const intros = [
-      `반갑습니다, ${userRole === 'husband' ? '형제님' : '자매님'}. 하티가 두 분의 가정을 위해 기도하는 마음으로 답변드릴게요.`,
-      `주님의 평강이 함께하시길 바랍니다. 사연을 들으니 ${pl}분을 향한 깊은 사랑과 고민이 느껴지네요.`,
-      `하나님의 언약 안에 있는 가정을 소중히 여기는 그 마음이 참 귀합니다. 하티와 함께 지혜를 찾아보아요.`,
-      `${pl}분과 더 깊이 하나 되고 싶어 하시는 고민은 성숙한 그리스도인 부부의 아름다운 모습입니다.`
-    ];
-
-    const analysis = (() => {
-      if (input.includes("모르겠") || input.includes("이해") || input.includes("왜")) {
-        return [
-          `${pl}님의 ${p.mbti} 성향은 감정 표현보다 신중함을 우선시할 수 있습니다. 형제님/자매님이 보기에 답답할 수 있지만, 이는 신중하게 사랑을 지키려는 그분만의 방식일 거예요.`,
-          `${p.mbti} 기질을 가진 ${pl}분은 환경의 변화나 자신의 속마음이 노출되는 것에 예민할 수 있습니다. 그래서 가끔은 침묵으로 자신을 보호하곤 하죠.`,
-          `${p.blood}형 특유의 세심함이 때로는 날카로운 말로 나올 수 있지만, 사실 그 이면에는 배우자에게 더 완벽한 사랑을 주고 싶은 열망이 숨어 있답니다.`
-        ];
-      }
-      if (input.includes("싸웠") || input.includes("갈등") || input.includes("화나") || input.includes("속상")) {
-        return [
-          `서로 다른 두 기질(${userRole === 'husband' ? husbandInfo.mbti : wifeInfo.mbti}와 ${p.mbti})이 만나 부딪히는 것은 정금이 되기 위한 필수적인 연단 과정입니다.`,
-          `오늘의 갈등은 두 분이 서로를 '내 방식'이 아닌 '하나님의 방식'으로 사랑하는 법을 배우라고 주신 거룩한 불편함일 수 있어요.`,
-          `속상한 마음이 크시겠지만, ${pl}분 또한 자신의 연약함 때문에 지금 마음 한구석에서 힘들어하고 있을 가능성이 큽니다.`
-        ];
-      }
-      // Default analysis based on MBTI
-      return [
-        `${p.mbti} 성향의 배우자분은 정서적 지지보다는 확실한 신뢰와 존중을 느낄 때 마음을 활짝 여는 특징이 있습니다.`,
-        `${p.blood}형다운 과묵함 이면에는 가족을 지켜야 한다는 선한 책임감이 묵직하게 자리 잡고 있죠.`,
-        `${pl}님의 독특한 기질은 주님이 이 가정이라는 정원을 가꾸기 위해 심어두신 특별한 꽃과 같습니다.`
-      ];
-    })();
-
-    const principles = [
-      `그리스도께서 우리를 정죄하지 않고 품으셨듯이, 배우자의 부족함을 사명의 영역으로 바라보는 역설적인 은혜가 필요합니다.`,
-      `성경은 "서로 인자하게 하며 불쌍히 여기며 서로 용서하기를 하나님이 그리스도 안에서 너희를 용서하심과 같이 하라"고 권면합니다.`,
-      `결혼은 계약이 아닌 언약입니다. 상황에 따라 변하는 감정이 아니라, 변치 않는 주님의 약속 위에 두 분의 관계를 세우십시오.`,
-      `우리는 모두 공사 중인 건물과 같습니다. 주님이 우리를 빚어가시듯, 서로를 향한 기다림의 미학이 곧 사랑의 증거입니다.`
-    ];
-
-    const actions = [
-      `오늘 저녁에는 "당신이 있어서 우리 가정이 정말 든든해"라고 배우자의 존재 자체를 인정해 주는 축복의 말을 건네보세요.`,
-      `내 생각을 먼저 말하기보다, 10분만 아무 비판 없이 ${pl}분의 이야기를 묵묵히 들어주는 '경청의 예배'를 드려보시는 건 어떨까요?`,
-      `부끄러우시다면 대화카드 한 장을 슬쩍 건네보세요. 자연스럽게 마음의 담을 허무는 좋은 도구가 될 것입니다.`,
-      `배우자가 좋아하는 작은 간식이나 따뜻한 차 한 잔을 준비하며 "내가 당신을 생각하고 있어"라는 신호를 보내보십시오.`
-    ];
-
-    const outros = [
-      `주님이 두 분을 위해 예비하신 복된 평강이 오늘 밤 가득하기를 하티가 함께 기도하겠습니다.`,
-      `수고 많으셨습니다. 형제님/자매님의 그 노력이 주님 보시기에 가장 아름다운 향기입니다.`,
-      `이 고민의 끝에 두 분이 더 단단한 한 몸이 되길 믿습니다. 평안한 시간 되세요.`,
-      `하티는 항상 두 분의 언약적 사랑을 응원합니다. 언제든 다시 찾아주세요.`
-    ];
-
-    const response = `${getRandom(intros)} \n\n${getRandom(analysis)} \n\n${getRandom(principles)} ${getRandom(actions)} \n\n${getRandom(outros)}`;
-    return response;
+    // 💡 데모 모드 (API 키 부재 시) - 사용자의 불만 해소용 안내 메시지
+    return `💡 [AI 하티의 알림]\n${userRole === 'husband' ? husbandInfo.nickname : wifeInfo.nickname}님, 지금은 '시스템 마스터 키(OpenAI API Key)'가 등록되지 않아 제가 진짜 실력을 발휘할 수 없는 [데모 모드] 상태예요!\n\n따라서 지금은 상황에 꼭 맞는 답변을 드리기 어렵습니다. 😭\n[관리자 메뉴] 혹은 시스템 설정에서 API 키를 연결해주시면, 두 분의 **MBTI와 최근 진행하신 심층 성향 데이터**를 모두 완벽히 분석해서 맥락을 정확하게 짚어내는 소름 돋는 '개인 맞춤형 부부 상담'을 시작하겠습니다! 미리 키를 준비해 주세요! ✨`;
   };
 
   // 상담가 하티 설정
@@ -2616,6 +2581,98 @@ const CardGameView = ({ onBack, coupleCode }) => {
 };
 
 /* ⚙️ Settings View (Extended) */
+/* 🧠 Deep Analysis View (전문 성향 진단) */
+const DeepAnalysisView = ({ onBack, myInfo, updateProfile }) => {
+  const [step, setStep] = useState(0);
+  const [selections, setSelections] = useState(myInfo.deepAnalysis || {});
+
+  const questions = [
+    {
+      id: 'conflict',
+      title: '갈등이 발생했을 때, 당신이 가장 선호하는 대처 방식은 무엇인가요?',
+      options: [
+        { value: '대화중심형', label: '즉시 대화로 풀면서 감정을 나누어야 직성이 풀린다' },
+        { value: '분석회피형', label: '일단 혼자 생각을 정리하고 감정을 식힐 시간이 필요하다' },
+        { value: '수용배려형', label: '상대방의 의견을 먼저 들어보고 그에 따르는 편이다' }
+      ]
+    },
+    {
+      id: 'loveLanguage',
+      title: '당신이 배우자로부터 가장 큰 사랑의 확신을 느끼는 순간은?',
+      options: [
+        { value: '상호인정', label: '진심 어린 칭찬, 나를 인정하고 존중해주는 따뜻한 말' },
+        { value: '함께시간', label: '바쁜 일상을 뒤로하고 오롯이 나만을 바라봐주는 시간' },
+        { value: '헌신봉사', label: '피곤하거나 힘들 때 묵묵히 나의 일을 도와줄 때' },
+        { value: '안정감', label: '말이 없어도 어깨를 감싸주거나 손을 잡아주는 스킨십' }
+      ]
+    },
+    {
+      id: 'spiritual',
+      title: '우리 가정의 현재 영적 소통 단계를 솔직하게 진단한다면?',
+      options: [
+        { value: '초기단계', label: '식사 기도 외에는 신앙적인 대화를 나누는 것이 어색하다' },
+        { value: '성장단계', label: '서로의 기도제목을 알며, 가끔 삶에서 주님을 고백한다' },
+        { value: '성숙단계', label: '정기적으로 함께 말씀을 나누고 가정 예배를 지키려 한다' }
+      ]
+    }
+  ];
+
+  const handleSelect = (val) => {
+    const newSelections = { ...selections, [questions[step].id]: val };
+    setSelections(newSelections);
+    if (step < questions.length - 1) {
+      setStep(step + 1);
+    } else {
+      updateProfile('deepAnalysis', newSelections);
+      alert('🎉 심층 성향 분석이 완료되었습니다!\n이제 AI 하티가 이 데이터를 바탕으로 두 분만의 소름 돋는 맞춤 상담을 제공합니다!');
+      onBack();
+    }
+  };
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, background: '#F8FAFC', zIndex: 10000, display: 'flex', flexDirection: 'column' }}>
+      <div style={{ display: 'flex', alignItems: 'center', padding: '50px 20px 20px', background: 'white', borderBottom: '1px solid #E2E8F0' }}>
+        <button onClick={onBack} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <ChevronLeft size={24} color="#1E293B" /> <span style={{ fontSize: '16px', fontWeight: 800 }}>진단 취소</span>
+        </button>
+      </div>
+      <div style={{ flex: 1, padding: '30px 24px', display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '15px' }}>
+           <Sparkles size={24} color="#8A60FF" />
+           <h2 style={{ fontSize: '20px', fontWeight: 900, color: '#1E293B' }}>하티 부부 성향 심층 진단</h2>
+        </div>
+        <p style={{ fontSize: '13px', color: '#64748B', marginBottom: '30px', lineHeight: 1.5 }}>
+          AI 하티가 두 분의 관계 패턴을 더 정확히 이해하기 위한 전문적인 진단 과정입니다. 솔직하게 선택해주세요! ({step + 1}/{questions.length})
+        </p>
+        
+        <h3 style={{ fontSize: '22px', fontWeight: 900, color: '#0F172A', marginBottom: '24px', lineHeight: 1.5, wordBreak: 'keep-all' }}>
+          {questions[step].title}
+        </h3>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          {questions[step].options.map((opt, i) => (
+            <motion.button 
+              whileTap={{ scale: 0.98 }}
+              key={i} 
+              onClick={() => handleSelect(opt.value)}
+              style={{
+                width: '100%', padding: '24px 20px', borderRadius: '20px', background: 'white',
+                border: '2px solid rgba(138, 96, 255, 0.1)', textAlign: 'left', fontSize: '15px', fontWeight: 700,
+                color: '#334155', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                boxShadow: '0 8px 20px rgba(0,0,0,0.02)', cursor: 'pointer' /* ADD THIS TO MAKE IT CLICKABLE */
+              }}
+            >
+              <span style={{ flex: 1, lineHeight: 1.4 }}>{opt.label}</span>
+              <ChevronLeft size={18} color="#8A60FF" style={{ flexShrink: 0, marginLeft: '10px', transform: 'rotate(180deg)' }} />
+            </motion.button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+/* ⚙️ Settings View */
 const SettingsView = ({ 
   user,
   userRole, 
@@ -2647,6 +2704,7 @@ const SettingsView = ({
   const [showAppInfo, setShowAppInfo] = useState(false);
   const [showDataSecurity, setShowDataSecurity] = useState(false);
   const [showNotifIntegration, setShowNotifIntegration] = useState(false);
+  const [showDeepAnalysis, setShowDeepAnalysis] = useState(false);
 
   const [newAnnivTitle, setNewAnnivTitle] = useState("");
   const [newAnnivDate, setNewAnnivDate] = useState("");
@@ -2775,6 +2833,12 @@ const SettingsView = ({
         </div>
       )}
 
+      {/* 🧠 Hatti Deep Analysis Section */}
+      <div className="settings-section">
+        <h3 className="settings-section-title">전문 성향 진단</h3>
+        <SettingsItem icon={<Sparkles size={18} />} label="하티 부부 성향 심층 진단 시작하기" onClick={() => setShowDeepAnalysis(true)} />
+      </div>
+
       {/* 🔗 Connection Section */}
       <div className="settings-section">
         <h3 className="settings-section-title">연결 및 통합</h3>
@@ -2808,6 +2872,16 @@ const SettingsView = ({
 
 
       {/* Modals for Settings functions */}
+      <AnimatePresence>
+        {showDeepAnalysis && (
+          <DeepAnalysisView 
+            onBack={() => setShowDeepAnalysis(false)}
+            myInfo={myInfo}
+            updateProfile={updateProfile}
+          />
+        )}
+      </AnimatePresence>
+
       {showAnnivSet && (
         <div onClick={() => setShowAnnivSet(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 5000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
           <motion.div onClick={(e) => e.stopPropagation()} initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} style={{ background: 'white', borderRadius: '32px', padding: '30px', width: '100%', maxWidth: '340px' }}>
