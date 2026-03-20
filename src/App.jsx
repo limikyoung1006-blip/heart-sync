@@ -672,14 +672,17 @@ const HomeView = ({ userRole, coupleCode, mySignal, setMySignal, spouseSignal, p
           cursor: 'pointer'
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px', position: 'relative' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <div style={{ background: '#FDE68A', padding: '6px', borderRadius: '10px' }}>
               <ListTodo size={16} color="#B45309" />
             </div>
             <span style={{ fontSize: '15px', fontWeight: 900, color: '#92400E' }}>오늘 하티의 부부 원-포인트</span>
           </div>
-          <HattiCharacter size={55} state="response" />
+          {/* 🚀 팝업 스타일: 카드 밖으로 튀어나온 역동적 배치 */}
+          <div style={{ position: 'absolute', right: '-15px', top: '-40px' }}>
+             <HattiCharacter size={85} state="response" />
+          </div>
         </div>
         
         <div style={{ display: 'flex', gap: '15px', alignItems: 'flex-start' }}>
@@ -1207,9 +1210,17 @@ const ChatView = ({ userRole, setUserRole, husbandInfo, setHusbandInfo, wifeInfo
       {/* 💬 Chat Window */}
       <div className="chat-window" style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '16px', padding: '0 4px' }}>
         {chat.map((c, i) => (
-          <div key={i} style={{ display: 'flex', flexDirection: c.role === 'user' ? 'row-reverse' : 'row', alignItems: 'flex-start', gap: '10px' }}>
+          <div key={i} style={{ 
+            display: 'flex', 
+            flexDirection: c.role === 'user' ? 'row-reverse' : 'row', 
+            alignItems: 'flex-start', 
+            gap: c.role === 'user' ? '10px' : '0px', // 하티일 땐 겹치기 위해 0
+            position: 'relative'
+          }}>
             {c.role === 'hatti' && (
-              <HattiCharacter size={45} style={{ marginTop: '4px', flexShrink: 0 }} />
+              <div style={{ zIndex: 10, marginRight: '-12px', marginTop: '-8px' }}>
+                 <HattiCharacter size={55} style={{ flexShrink: 0 }} />
+              </div>
             )}
             <div style={{
               maxWidth: '75%',
@@ -1222,16 +1233,30 @@ const ChatView = ({ userRole, setUserRole, husbandInfo, setHusbandInfo, wifeInfo
               boxShadow: '0 4px 12px rgba(0,0,0,0.04)',
               border: c.role === 'hatti' ? `1px solid ${hatti.borderColor}` : 'none',
               wordBreak: 'keep-all',
-              fontWeight: 500
+              fontWeight: 500,
+              zIndex: 5,
+              position: 'relative'
             }}>
               {c.text}
             </div>
           </div>
         ))}
         {isAiLoading && (
-          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
-            <HattiCharacter state="thinking" size={45} style={{ marginTop: '4px', flexShrink: 0 }} />
-            <div style={{ background: 'white', padding: '12px 18px', borderRadius: '24px 24px 24px 4px', border: `1px solid ${hatti.borderColor}`, display: 'flex', gap: '4px', alignItems: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0px', position: 'relative' }}>
+            <div style={{ zIndex: 10, marginRight: '-12px', marginTop: '-8px' }}>
+               <HattiCharacter state="thinking" size={55} style={{ flexShrink: 0 }} />
+            </div>
+            <div style={{ 
+              background: 'white', 
+              padding: '12px 18px', 
+              borderRadius: '24px 24px 24px 4px', 
+              border: `1px solid ${hatti.borderColor}`, 
+              display: 'flex', 
+              gap: '4px', 
+              alignItems: 'center',
+              zIndex: 5,
+              position: 'relative'
+            }}>
                <motion.div animate={{ opacity: [0.3, 1, 0.3] }} transition={{ repeat: Infinity, duration: 1 }} style={{ width: '6px', height: '6px', borderRadius: '50%', background: hatti.color }} />
                <motion.div animate={{ opacity: [0.3, 1, 0.3] }} transition={{ repeat: Infinity, duration: 1, delay: 0.2 }} style={{ width: '6px', height: '6px', borderRadius: '50%', background: hatti.color }} />
                <motion.div animate={{ opacity: [0.3, 1, 0.3] }} transition={{ repeat: Infinity, duration: 1, delay: 0.4 }} style={{ width: '6px', height: '6px', borderRadius: '50%', background: hatti.color }} />
@@ -1706,23 +1731,32 @@ const HattiCharacter = ({ state = 'floating', size = 120, style = {} }) => {
   };
 
   return (
-    <div style={{ perspective: '1500px', display: 'flex', alignItems: 'center', justifyContent: 'center', ...style }}>
+    <div style={{ 
+      perspective: '1500px', 
+      display: 'flex', 
+      alignItems: 'center', 
+      justifyContent: 'center', 
+      position: 'relative', // 팝업처럼 띄우기 위한 기준점
+      filter: 'drop-shadow(0 30px 50px rgba(0,0,0,0.25))', // 강력한 팝업림자
+      ...style 
+    }}>
       <motion.div 
-        initial={{ scale: 0, rotateX: 20 }}
+        initial={{ scale: 0, rotateX: 25, y: 10 }}
         animate={{ 
           scale: 1, 
-          y: state === 'floating' ? [0, -25, 0] : 0,
-          rotateY: state === 'floating' ? [-15, 15, -15] : 0, // 회전각 증폭
-          rotateX: state === 'floating' ? [5, -5, 5] : 0,
-          rotateZ: state === 'floating' ? [-3, 3, -3] : 0
+          y: state === 'floating' ? [0, -30, 0] : 0, // 더 높게 둥실거림
+          rotateY: state === 'floating' ? [-18, 18, -18] : 0,
+          rotateX: state === 'floating' ? [8, -8, 8] : 0,
+          rotateZ: state === 'floating' ? [-5, 5, -5] : 0
         }}
+        whileHover={{ scale: 1.1, y: -40 }} // 마우스/손가락 근처만 가도 더 높게 뜸
         whileTap={{ 
-          scale: 1.2, 
-          rotateX: 360, // 탭하면 공중제비 (Flip)
-          transition: { duration: 0.8, type: 'spring' } 
+          scale: 1.3, 
+          rotateY: 360, // 이번엔 가로로 팽이처럼 회전하며 인사
+          transition: { duration: 1, type: 'spring' } 
         }}
         transition={{ 
-          duration: 4.5, 
+          duration: 4, 
           repeat: Infinity, 
           ease: "easeInOut" 
         }}
@@ -1734,60 +1768,55 @@ const HattiCharacter = ({ state = 'floating', size = 120, style = {} }) => {
           justifyContent: 'center',
           position: 'relative',
           zIndex: 100,
-          transformStyle: 'preserve-3d' // 자식들까지 3D 공간 유지
+          transformStyle: 'preserve-3d'
         }}
       >
         <img 
           src="/hatti_3d_v2.png" 
           alt="Hatti" 
           style={{ 
-            width: '100%', 
-            height: '100%', 
+            width: '110%', // 박스보다 살짝 크게
+            height: '110%', 
             objectFit: 'contain', 
-            filter: 'drop-shadow(0 25px 40px rgba(0,0,0,0.2))', 
             zIndex: 5,
             position: 'relative',
-            pointerEvents: 'none' // 탭 이벤트가 부모(motion.div)에 집중되도록
+            pointerEvents: 'none'
           }}
         />
         
-        {/* 🔮 Pulsing 3D Aura (빛의 고동 효과) */}
+        {/* 🔮 Radiant Pulse (하티 뒤에서 뿜어져 나오는 입체 아우라) */}
         <motion.div 
-          animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }}
-          transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+          animate={{ scale: [1, 1.3, 1], opacity: [0.4, 0.7, 0.4] }}
+          transition={{ duration: 2.5, repeat: Infinity }}
           style={{ 
             position: 'absolute', 
-            inset: '-30%', 
-            background: 'radial-gradient(circle, rgba(138, 96, 255, 0.3) 0%, rgba(245, 208, 96, 0.2) 40%, transparent 75%)', 
-            filter: 'blur(45px)', 
+            inset: '-40%', 
+            background: 'radial-gradient(circle, rgba(138, 96, 255, 0.4) 0%, rgba(245, 208, 96, 0.25) 30%, transparent 80%)', 
+            filter: 'blur(50px)', 
             zIndex: 1,
             borderRadius: '50%',
             mixBlendMode: 'screen'
           }} 
         />
         
-        {/* 🌑 Hyper-Reactive Shadow */}
+        {/* 🌑 Unreal Shadow (바닥면 훨씬 아래로) */}
         <motion.div 
           animate={{ 
-            scale: state === 'floating' ? [1.3, 0.4, 1.3] : 1.3,
-            opacity: state === 'floating' ? [0.25, 0.05, 0.25] : 0.25,
-            filter: state === 'floating' ? ['blur(15px)', 'blur(25px)', 'blur(15px)'] : 'blur(15px)'
+            scale: state === 'floating' ? [1.5, 0.3, 1.5] : 1.5,
+            opacity: state === 'floating' ? [0.3, 0.05, 0.3] : 0.3,
           }}
-          transition={{ 
-            duration: 4.5, 
-            repeat: Infinity, 
-            ease: "easeInOut" 
-          }}
+          transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
           style={{ 
             position: 'absolute', 
-            bottom: '-35%', 
-            left: '10%', 
-            right: '10%', 
-            height: '16px', 
-            background: 'rgba(0,0,0,0.3)', 
+            bottom: '-45%', 
+            left: '5%', 
+            right: '5%', 
+            height: '18px', 
+            background: 'rgba(0,0,0,0.4)', 
+            filter: 'blur(20px)',
             borderRadius: '50%',
             zIndex: 0,
-            transform: 'translateZ(-50px)' // 그림자를 캐릭터 뒤쪽 바닥으로
+            transform: 'translateZ(-80px)'
           }} 
         />
       </motion.div>
@@ -3866,20 +3895,34 @@ const App = () => {
               )}
               {activeTab === 'counseling' && (
                  <div className={`flex flex-col pt-4 ${counselingMode === 'chat' ? 'h-full' : ''}`}>
-                    {/* 💖 Hatti Main Greeting Character */}
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '25px', gap: '8px' }}>
-                      <HattiCharacter size={110} />
+                    {/* 💖 Hatti Main Greeting Character (Popup Style) */}
+                    <div style={{ 
+                      display: 'flex', 
+                      flexDirection: 'column', 
+                      alignItems: 'center', 
+                      marginBottom: '35px', 
+                      position: 'relative',
+                      minHeight: '200px', // 하티가 떠 있을 공간 확보
+                      justifyContent: 'flex-end'
+                    }}>
+                      {/* 🚀 하티를 말풍선 위로 둥실 띄움 */}
+                      <div style={{ position: 'absolute', top: '-10px', zIndex: 10 }}>
+                         <HattiCharacter size={140} />
+                      </div>
+                      
                       <div style={{ 
                         background: 'white', 
-                        padding: '12px 22px', 
-                        borderRadius: '24px 24px 24px 4px', 
-                        boxShadow: '0 8px 25px rgba(138, 96, 255, 0.1)',
+                        padding: '15px 25px', 
+                        borderRadius: '28px 28px 28px 6px', 
+                        boxShadow: '0 10px 30px rgba(138, 96, 255, 0.12)',
                         border: '1px solid rgba(138, 96, 255, 0.15)',
-                        position: 'relative'
+                        position: 'relative',
+                        zIndex: 5,
+                        width: '85%'
                       }}>
-                        <p style={{ fontSize: '15px', fontWeight: 900, color: '#2D1F08', margin: 0, lineHeight: 1.5 }}>
+                        <p style={{ fontSize: '15px', fontWeight: 900, color: '#2D1F08', margin: 0, lineHeight: 1.6, textAlign: 'center' }}>
                           반가워요! 무엇을 도와드릴까요? <br/>
-                          하티는 언제든 두 분을 도울 준비가 되어 있어요! ✨
+                          <span style={{ color: '#8A60FF' }}>하티는 언제든 두 분을 도울 준비가 되어 있어요! ✨</span>
                         </p>
                       </div>
                     </div>
