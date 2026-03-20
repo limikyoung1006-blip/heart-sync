@@ -2280,7 +2280,7 @@ const CardGameView = ({ onBack, coupleCode }) => {
   };
 
   return (
-    <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="flex flex-col h-full items-center p-4" style={{ overflowY: 'auto', paddingBottom: '140px', paddingTop: '60px' }}>
+    <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="flex flex-col items-center p-4" style={{ paddingBottom: '150px', paddingTop: '20px' }}>
       <div className="w-full flex items-center justify-start mb-2">
         <button onClick={onBack} style={{ display: 'flex', alignItems: 'center', gap: '3px', background: 'none', border: 'none', cursor: 'pointer', padding: '8px 0' }}>
           <ChevronLeft size={20} color="#8A60FF" strokeWidth={3} />
