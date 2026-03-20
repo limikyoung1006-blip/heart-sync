@@ -1943,8 +1943,18 @@ const IntimacyModal = ({ show, onClose, subPage, setSubPage, bgImage, onBgUpload
     >
       {/* 🔔 상단 아이콘 (모달 안에서 다시 표시) */}
       <div style={{ position: 'absolute', top: '70px', right: '45px', display: 'flex', gap: '18px', zIndex: 2010 }}>
-        <Bell size={22} color="rgba(45, 31, 8, 0.4)" />
-        <Settings size={22} color="rgba(45, 31, 8, 0.4)" />
+        <Bell 
+          size={22} 
+          color="rgba(45, 31, 8, 0.4)" 
+          style={{ cursor: 'pointer' }}
+          onClick={() => alert("새로운 알림이 없습니다.")} 
+        />
+        <Settings 
+          size={22} 
+          color="rgba(45, 31, 8, 0.4)" 
+          style={{ cursor: 'pointer' }}
+          onClick={() => onNav('settings')} 
+        />
       </div>
       <div 
         onClick={(e) => e.stopPropagation()}
