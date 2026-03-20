@@ -1706,83 +1706,92 @@ const HattiCharacter = ({ state = 'floating', size = 120, style = {} }) => {
   };
 
   return (
-    <motion.div 
-      initial={{ scale: 0.9, opacity: 0 }}
-      animate={{ 
-        scale: 1, opacity: 1,
-        y: state === 'floating' ? [0, -22, 0] : 0,
-        rotateY: state === 'floating' ? [-8, 8, -8] : 0, // 좌우 3D 회전
-        rotateX: state === 'floating' ? [3, -3, 3] : 0   // 상하 3D 회전
-      }}
-      whileTap={{ scale: 1.15, rotateZ: [0, 10, -10, 0] }} // 탭하면 인사하는 반응성
-      transition={{ 
-        duration: 5, 
-        repeat: Infinity, 
-        ease: "easeInOut",
-        opacity: { duration: 0.6 },
-        scale: { duration: 0.6 }
-      }}
-      style={{ 
-        width: size, 
-        height: size, 
-        display: 'flex', 
-        alignItems: 'center', 
-        justifyContent: 'center',
-        position: 'relative',
-        zIndex: 100,
-        perspective: '1200px', // 실제 3D 느낌을 위한 원근법 적용
-        ...style 
-      }}
-    >
-      <img 
-        src="/hatti_3d_v2.png" 
-        alt="Hatti" 
-        style={{ 
-          width: '100%', 
-          height: '100%', 
-          objectFit: 'contain', 
-          /* 투명 이미지 특유의 깔끔한 그림자 */
-          filter: 'drop-shadow(0 25px 35px rgba(0,0,0,0.18))', 
-          zIndex: 5,
-          position: 'relative'
-        }}
-      />
-      
-      {/* 🔮 Multi-layered 3D Aura (투명 이미지 뒤에서 발광) */}
-      <div style={{ 
-        position: 'absolute', 
-        inset: '-20%', 
-        background: 'radial-gradient(circle, rgba(138, 96, 255, 0.25) 0%, rgba(245, 208, 96, 0.15) 35%, transparent 70%)', 
-        filter: 'blur(40px)', 
-        zIndex: 1,
-        borderRadius: '50%',
-        mixBlendMode: 'screen'
-      }} />
-      
-      {/* 🌑 Hyper-Realistic Shadow (바닥 면과의 상호작용) */}
+    <div style={{ perspective: '1500px', display: 'flex', alignItems: 'center', justifyContent: 'center', ...style }}>
       <motion.div 
+        initial={{ scale: 0, rotateX: 20 }}
         animate={{ 
-          scale: state === 'floating' ? [1.2, 0.5, 1.2] : 1.2,
-          opacity: state === 'floating' ? [0.2, 0.05, 0.2] : 0.2,
+          scale: 1, 
+          y: state === 'floating' ? [0, -25, 0] : 0,
+          rotateY: state === 'floating' ? [-15, 15, -15] : 0, // 회전각 증폭
+          rotateX: state === 'floating' ? [5, -5, 5] : 0,
+          rotateZ: state === 'floating' ? [-3, 3, -3] : 0
+        }}
+        whileTap={{ 
+          scale: 1.2, 
+          rotateX: 360, // 탭하면 공중제비 (Flip)
+          transition: { duration: 0.8, type: 'spring' } 
         }}
         transition={{ 
-          duration: 5, 
+          duration: 4.5, 
           repeat: Infinity, 
           ease: "easeInOut" 
         }}
         style={{ 
-          position: 'absolute', 
-          bottom: '-30%', 
-          left: '10%', 
-          right: '10%', 
-          height: '14px', 
-          background: 'rgba(0,0,0,0.25)', 
-          filter: 'blur(18px)', 
-          borderRadius: '50%',
-          zIndex: 0,
-        }} 
-      />
-    </motion.div>
+          width: size, 
+          height: size, 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'center',
+          position: 'relative',
+          zIndex: 100,
+          transformStyle: 'preserve-3d' // 자식들까지 3D 공간 유지
+        }}
+      >
+        <img 
+          src="/hatti_3d_v2.png" 
+          alt="Hatti" 
+          style={{ 
+            width: '100%', 
+            height: '100%', 
+            objectFit: 'contain', 
+            filter: 'drop-shadow(0 25px 40px rgba(0,0,0,0.2))', 
+            zIndex: 5,
+            position: 'relative',
+            pointerEvents: 'none' // 탭 이벤트가 부모(motion.div)에 집중되도록
+          }}
+        />
+        
+        {/* 🔮 Pulsing 3D Aura (빛의 고동 효과) */}
+        <motion.div 
+          animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }}
+          transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+          style={{ 
+            position: 'absolute', 
+            inset: '-30%', 
+            background: 'radial-gradient(circle, rgba(138, 96, 255, 0.3) 0%, rgba(245, 208, 96, 0.2) 40%, transparent 75%)', 
+            filter: 'blur(45px)', 
+            zIndex: 1,
+            borderRadius: '50%',
+            mixBlendMode: 'screen'
+          }} 
+        />
+        
+        {/* 🌑 Hyper-Reactive Shadow */}
+        <motion.div 
+          animate={{ 
+            scale: state === 'floating' ? [1.3, 0.4, 1.3] : 1.3,
+            opacity: state === 'floating' ? [0.25, 0.05, 0.25] : 0.25,
+            filter: state === 'floating' ? ['blur(15px)', 'blur(25px)', 'blur(15px)'] : 'blur(15px)'
+          }}
+          transition={{ 
+            duration: 4.5, 
+            repeat: Infinity, 
+            ease: "easeInOut" 
+          }}
+          style={{ 
+            position: 'absolute', 
+            bottom: '-35%', 
+            left: '10%', 
+            right: '10%', 
+            height: '16px', 
+            background: 'rgba(0,0,0,0.3)', 
+            borderRadius: '50%',
+            zIndex: 0,
+            transform: 'translateZ(-50px)' // 그림자를 캐릭터 뒤쪽 바닥으로
+          }} 
+        />
+      </motion.div>
+    </div>
   );
 };
 
