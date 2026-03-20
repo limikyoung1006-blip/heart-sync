@@ -3650,6 +3650,7 @@ const App = () => {
   const [spouseSignal, setSpouseSignal] = useState('green');
   const [schedules, setSchedules] = useState(() => JSON.parse(localStorage.getItem('coupleSchedules') || '[]'));
   const [partnerPrayers, setPartnerPrayers] = useState([]);
+  const [incomingCardCall, setIncomingCardCall] = useState(null); // { category, questionId }
 
   // Shared Settings Lifted from SettingsView
   const [worshipDays, setWorshipDays] = useState(() => JSON.parse(localStorage.getItem('worshipDays') || '["일", "수"]'));
@@ -3839,6 +3840,21 @@ const App = () => {
         if (info.worshipDays) setWorshipDays(info.worshipDays);
         if (info.worshipTime) setWorshipTime(info.worshipTime);
         if (info.anniversaries) setAnniversaries(info.anniversaries);
+      })
+      .on('postgres_changes', {
+        event: '*', 
+        schema: 'public', 
+        table: 'card_game_state',
+        filter: `couple_id=eq.${coupleCode}`
+      }, payload => {
+        if (!payload.new) return;
+        // Only trigger if we are NOT on the card game tab and it's a "waiting" or "flipped" state (partner signaling)
+        if (activeTab !== 'cardGame' && payload.new.is_flipped) {
+           setIncomingCardCall({ 
+             category: payload.new.category, 
+             questionId: payload.new.current_question_id 
+           });
+        }
       })
       .subscribe((status) => {
         if (status === 'SUBSCRIBED') {
@@ -4222,6 +4238,47 @@ const App = () => {
             </div>
           </motion.div>
         )}
+      </AnimatePresence>
+
+      {/* 🔔 Card Game Real-time Toast Notification (배우자 카드 호출 알림) */}
+      <AnimatePresence>
+         {incomingCardCall && (
+            <motion.div 
+              initial={{ opacity: 0, y: 100, scale: 0.9 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 100, scale: 0.9 }}
+              style={{
+                position: 'fixed', bottom: '120px', left: '20px', right: '20px',
+                background: 'rgba(30, 41, 59, 0.95)', backdropFilter: 'blur(20px)',
+                borderRadius: '24px', padding: '20px', color: 'white', zIndex: 100000,
+                boxShadow: '0 20px 40px rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)',
+                display: 'flex', alignItems: 'center', gap: '15px'
+              }}
+            >
+              <div style={{ background: '#8A60FF', padding: '12px', borderRadius: '16px' }}>
+                 <Sparkles size={24} color="white" />
+              </div>
+              <div style={{ flex: 1 }}>
+                 <p style={{ fontSize: '15px', fontWeight: 900, marginBottom: '2px' }}>{partnerLabel}님이 대화 카드를 뽑았습니다!</p>
+                 <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.6)', fontWeight: 700 }}>지금 수락해서 함께 깊은 대화를 나눠보세요.</p>
+              </div>
+              <button 
+                onClick={() => {
+                  setActiveTab('cardGame');
+                  setIncomingCardCall(null);
+                }}
+                style={{ background: 'white', color: '#1E293B', padding: '10px 18px', borderRadius: '12px', border: 'none', fontWeight: 900, fontSize: '13px' }}
+              >
+                수락
+              </button>
+              <button 
+                onClick={() => setIncomingCardCall(null)}
+                style={{ background: 'rgba(255,255,255,0.1)', color: 'white', padding: '10px', borderRadius: '12px', border: 'none' }}
+              >
+                <X size={18} />
+              </button>
+            </motion.div>
+         )}
       </AnimatePresence>
 
       {/* 📘 Full Screen App Guide Overlay */}
