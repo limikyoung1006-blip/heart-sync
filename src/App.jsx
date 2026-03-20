@@ -1692,7 +1692,7 @@ const AppGuideView = ({ onBack }) => {
 };
 
 /* 📊 Solution (AI Records) */
-const SolutionView = ({ onBack, userRole, husbandInfo, wifeInfo, schedules, adminStats }) => {
+const SolutionView = ({ onBack, userRole, husbandInfo, wifeInfo, schedules, adminStats, coupleStats }) => {
   const myInfo = userRole === 'husband' ? husbandInfo : wifeInfo;
   const spouseInfo = userRole === 'husband' ? wifeInfo : husbandInfo;
 
@@ -1728,7 +1728,7 @@ const SolutionView = ({ onBack, userRole, husbandInfo, wifeInfo, schedules, admi
           </defs>
         </svg>
         <div className="absolute flex flex-col items-center">
-           <span style={{ fontSize: '38px', fontWeight: 900, color: '#FF4D6D' }}>{adminStats?.activeSessions || 42}</span>
+           <span style={{ fontSize: '38px', fontWeight: 900, color: '#FF4D6D' }}>{coupleStats?.totalInteractions || 0}</span>
           <span style={{ fontSize: '14px', fontWeight: 700, opacity: 0.4 }}>회</span>
         </div>
       </div>
@@ -3497,6 +3497,7 @@ const App = () => {
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(() => localStorage.getItem('isAdmin') === 'true');
   const [adminStats, setAdminStats] = useState({ users: 0, couples: 0, activeSessions: 0, recentActivities: [] });
+  const [coupleStats, setCoupleStats] = useState({ totalInteractions: 0 });
   const [logoClickCount, setLogoClickCount] = useState(0);
   const [showAdminLogin, setShowAdminLogin] = useState(false);
   const [isSetupDone, setIsSetupDone] = useState(() => localStorage.getItem('isSetupDone') === 'true');
@@ -3647,14 +3648,15 @@ const App = () => {
   const addSchedule = async (s) => {
     const newSchedules = [...schedules, s];
     setSchedules(newSchedules);
-    // Sync schedules via profile info
+    // Sync schedules via profile info using user.id for reliable upsert/real-time
     const baseInfo = userRole === 'husband' ? husbandInfo : wifeInfo;
     await supabase.from('profiles').upsert({
+      id: user.id,
       couple_id: coupleCode,
       user_role: userRole,
       info: { ...baseInfo, coupleSchedules: newSchedules },
       updated_at: new Date().toISOString()
-    }, { onConflict: 'couple_id,user_role' });
+    }, { onConflict: 'id' });
   };
 
   const deleteSchedule = async (id) => {
@@ -3662,11 +3664,12 @@ const App = () => {
     setSchedules(newSchedules);
     const baseInfo = userRole === 'husband' ? husbandInfo : wifeInfo;
     await supabase.from('profiles').upsert({
+      id: user.id,
       couple_id: coupleCode,
       user_role: userRole,
       info: { ...baseInfo, coupleSchedules: newSchedules },
       updated_at: new Date().toISOString()
-    }, { onConflict: 'couple_id,user_role' });
+    }, { onConflict: 'id' });
   };
   
   // Supabase Real-time Sync
@@ -3785,10 +3788,20 @@ const App = () => {
       })
       .subscribe();
 
+    // 3. Fetch Couple Real Stats
+    const fetchCoupleStats = async () => {
+      if (!isSetupDone || !coupleCode || coupleCode === 'none') return;
+      const { count: sCount } = await supabase.from('signals').select('*', { count: 'exact', head: true }).eq('couple_id', coupleCode);
+      const { count: pCount } = await supabase.from('prayers').select('*', { count: 'exact', head: true }).eq('couple_id', coupleCode);
+      const { count: scheduleCount } = await supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('couple_id', coupleCode);
+      setCoupleStats({ totalInteractions: (sCount || 0) + (pCount || 0) + (scheduleCount || 0) });
+    };
+    fetchCoupleStats();
+
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [userRole, coupleCode]);
+  }, [userRole, coupleCode, isSetupDone]);
 
   // Update My Signal to Supabase
   const handleSetMySignal = async (newSignal) => {
@@ -3975,6 +3988,7 @@ const App = () => {
                         wifeInfo={wifeInfo}
                         schedules={schedules}
                         adminStats={adminStats}
+                        coupleStats={coupleStats}
                         onBack={() => setCounselingMode('chat')} 
                      />
                    )}
@@ -4104,6 +4118,7 @@ const App = () => {
                 wifeInfo={wifeInfo}
                 schedules={schedules}
                 adminStats={adminStats}
+                coupleStats={coupleStats}
                 onBack={() => setShowReport(false)} 
               />
             </div>
