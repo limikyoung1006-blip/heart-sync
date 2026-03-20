@@ -748,7 +748,7 @@ const HomeView = ({ userRole, coupleCode, mySignal, setMySignal, spouseSignal, p
 
 
 /* 📊 Admin Dashboard View (Super Admin Only) */
-const AdminView = ({ onBack, usersCount, couplesCount, activeSessions, masterApiKey, onSaveMasterKey }) => {
+const AdminView = ({ onBack, usersCount, couplesCount, activeSessions, recentActivities, masterApiKey, onSaveMasterKey }) => {
   const [activeAdminTab, setActiveAdminTab] = useState('overview');
   const [tempKey, setTempKey] = useState(masterApiKey || '');
   
@@ -807,17 +807,21 @@ const AdminView = ({ onBack, usersCount, couplesCount, activeSessions, masterApi
            <div className="flex flex-col gap-5">
               <div style={{ background: 'white', padding: '24px', borderRadius: '30px', boxShadow: '0 10px 25px rgba(0,0,0,0.02)' }}>
                  <h3 style={{ fontSize: '16px', fontWeight: 900, color: '#1E293B', marginBottom: '15px' }}>실시간 활동 로그</h3>
-                 <div className="flex flex-col gap-4">
-                    {[1, 2, 3].map(i => (
-                      <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '12px', paddingBottom: '12px', borderBottom: '1px solid #F1F5F9' }}>
-                         <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10B981' }} />
-                         <div style={{ flex: 1 }}>
-                            <p style={{ fontSize: '13px', fontWeight: 700, color: '#334155' }}>부부 코드 [HS-7289] 감정 신호 업데이트</p>
-                            <p style={{ fontSize: '11px', color: '#94A3B8' }}>방금 전</p>
+                  <div className="flex flex-col gap-4">
+                     {recentActivities.length > 0 ? (
+                       recentActivities.map((act, i) => (
+                         <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '12px', paddingBottom: '12px', borderBottom: '1px solid #F1F5F9' }}>
+                            <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: act.signal === 'red' ? '#FF5E5E' : act.signal === 'amber' ? '#FFBE61' : '#10B981' }} />
+                            <div style={{ flex: 1 }}>
+                               <p style={{ fontSize: '13px', fontWeight: 700, color: '#334155' }}>부부 [{act.couple_id}] 감정 신호 업데이트</p>
+                               <p style={{ fontSize: '11px', color: '#94A3B8' }}>{new Date(act.updated_at).toLocaleString('ko-KR', { hour: '2-digit', minute: '2-digit' })}</p>
+                            </div>
                          </div>
-                      </div>
-                    ))}
-                 </div>
+                       ))
+                     ) : (
+                       <p style={{ fontSize: '13px', color: '#94A3B8', textAlign: 'center', padding: '10px 0' }}>최근 활동이 없습니다.</p>
+                     )}
+                  </div>
               </div>
 
               <div style={{ background: 'white', padding: '24px', borderRadius: '30px', boxShadow: '0 10px 25px rgba(0,0,0,0.02)' }}>
@@ -3401,6 +3405,7 @@ const App = () => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(() => localStorage.getItem('isAdmin') === 'true');
+  const [adminStats, setAdminStats] = useState({ users: 0, couples: 0, activeSessions: 0, recentActivities: [] });
   const [logoClickCount, setLogoClickCount] = useState(0);
   const [showAdminLogin, setShowAdminLogin] = useState(false);
   const [isSetupDone, setIsSetupDone] = useState(() => localStorage.getItem('isSetupDone') === 'true');
@@ -3434,6 +3439,59 @@ const App = () => {
 
     return () => subscription.unsubscribe();
   }, []);
+  
+  // Admin Statistics Fetcher
+  useEffect(() => {
+    if (!isAdmin) return;
+
+    const fetchAdminStats = async () => {
+      try {
+        // 1. Total Users Count
+        const { count: usersCount, error: usersError } = await supabase
+          .from('profiles')
+          .select('*', { count: 'exact', head: true });
+        
+        if (usersError) throw usersError;
+
+        // 2. Connected Couples (Unique Couple IDs)
+        const { data: couplesData, error: couplesError } = await supabase
+          .from('profiles')
+          .select('couple_id');
+        
+        if (couplesError) throw couplesError;
+
+        const uniqueCouples = new Set(couplesData?.map(c => c.couple_id).filter(id => id && id !== 'none')).size;
+        
+        // 3. Active Sessions (Simulated or based on recent activity)
+        const fifteenMinsAgo = new Date(Date.now() - 15 * 60000).toISOString();
+        const { count: activeCount } = await supabase
+          .from('signals')
+          .select('*', { count: 'exact', head: true })
+          .gt('updated_at', fifteenMinsAgo);
+
+        // 4. Recent Activities
+        const { data: recentData } = await supabase
+          .from('signals')
+          .select('*')
+          .order('updated_at', { ascending: false })
+          .limit(5);
+
+        setAdminStats({
+          users: usersCount || 0,
+          couples: uniqueCouples || 0,
+          activeSessions: activeCount || 0,
+          recentActivities: recentData || []
+        });
+      } catch (err) {
+        console.error("Admin stats fetch error:", err);
+      }
+    };
+
+    fetchAdminStats();
+    const interval = setInterval(fetchAdminStats, 60000);
+    return () => clearInterval(interval);
+  }, [isAdmin]);
+
   
   const partnerLabel = userRole === 'husband' ? '아내' : '남편';
   const [intimacyBg, setIntimacyBg] = useState(localStorage.getItem('intimacyBg') || null);
@@ -3855,9 +3913,10 @@ const App = () => {
                 <AdminView 
                   key="admin" 
                   onBack={() => setActiveTab('home')}
-                  usersCount={124}
-                  couplesCount={58}
-                  activeSessions={12}
+                  usersCount={adminStats.users}
+                  couplesCount={adminStats.couples}
+                  activeSessions={adminStats.activeSessions}
+                  recentActivities={adminStats.recentActivities}
                   masterApiKey={masterApiKey}
                   onSaveMasterKey={(key) => {
                     setMasterApiKey(key);
