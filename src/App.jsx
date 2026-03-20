@@ -1707,13 +1707,20 @@ const HattiCharacter = ({ state = 'floating', size = 120, style = {} }) => {
 
   return (
     <motion.div 
+      initial={{ scale: 0.9, opacity: 0 }}
       animate={{ 
-        y: state === 'floating' ? [0, -15, 0] : 0,
+        scale: 1, opacity: 1,
+        y: state === 'floating' ? [0, -22, 0] : 0,
+        rotateY: state === 'floating' ? [-8, 8, -8] : 0, // 좌우 3D 회전
+        rotateX: state === 'floating' ? [3, -3, 3] : 0   // 상하 3D 회전
       }}
+      whileTap={{ scale: 1.15, rotateZ: [0, 10, -10, 0] }} // 탭하면 인사하는 반응성
       transition={{ 
-        duration: 4, 
+        duration: 5, 
         repeat: Infinity, 
-        ease: "easeInOut" 
+        ease: "easeInOut",
+        opacity: { duration: 0.6 },
+        scale: { duration: 0.6 }
       }}
       style={{ 
         width: size, 
@@ -1723,6 +1730,7 @@ const HattiCharacter = ({ state = 'floating', size = 120, style = {} }) => {
         justifyContent: 'center',
         position: 'relative',
         zIndex: 100,
+        perspective: '1200px', // 실제 3D 느낌을 위한 원근법 적용
         ...style 
       }}
     >
@@ -1733,44 +1741,43 @@ const HattiCharacter = ({ state = 'floating', size = 120, style = {} }) => {
           width: '100%', 
           height: '100%', 
           objectFit: 'contain', 
-          mixBlendMode: 'multiply',
-          /* 하얀색 사각형 테두리를 부드럽게 지워주는 마스크 효과 */
-          WebkitMaskImage: 'radial-gradient(circle, black 40%, transparent 75%)',
-          maskImage: 'radial-gradient(circle, black 40%, transparent 75%)',
-          filter: 'drop-shadow(0 15px 15px rgba(138, 96, 255, 0.2))', 
+          /* 투명 이미지 특유의 깔끔한 그림자 */
+          filter: 'drop-shadow(0 25px 35px rgba(0,0,0,0.18))', 
           zIndex: 5,
           position: 'relative'
         }}
       />
-      {/* 🔮 Aura Glow */}
+      
+      {/* 🔮 Multi-layered 3D Aura (투명 이미지 뒤에서 발광) */}
       <div style={{ 
         position: 'absolute', 
-        inset: '-10%', 
-        background: 'radial-gradient(circle, rgba(138, 96, 255, 0.15) 0%, transparent 65%)', 
-        filter: 'blur(30px)', 
+        inset: '-20%', 
+        background: 'radial-gradient(circle, rgba(138, 96, 255, 0.25) 0%, rgba(245, 208, 96, 0.15) 35%, transparent 70%)', 
+        filter: 'blur(40px)', 
         zIndex: 1,
-        borderRadius: '50%'
+        borderRadius: '50%',
+        mixBlendMode: 'screen'
       }} />
       
-      {/* 🌑 Realistic Shadow (Reacts to floating motion) */}
+      {/* 🌑 Hyper-Realistic Shadow (바닥 면과의 상호작용) */}
       <motion.div 
         animate={{ 
-          scale: state === 'floating' ? [1, 0.7, 1] : 1,
-          opacity: state === 'floating' ? [0.1, 0.2, 0.1] : 0.1,
+          scale: state === 'floating' ? [1.2, 0.5, 1.2] : 1.2,
+          opacity: state === 'floating' ? [0.2, 0.05, 0.2] : 0.2,
         }}
         transition={{ 
-          duration: 4, 
+          duration: 5, 
           repeat: Infinity, 
           ease: "easeInOut" 
         }}
         style={{ 
           position: 'absolute', 
-          bottom: '-15%', 
-          left: '15%', 
-          right: '15%', 
-          height: '8px', 
-          background: 'rgba(0,0,0,0.1)', 
-          filter: 'blur(12px)', 
+          bottom: '-30%', 
+          left: '10%', 
+          right: '10%', 
+          height: '14px', 
+          background: 'rgba(0,0,0,0.25)', 
+          filter: 'blur(18px)', 
           borderRadius: '50%',
           zIndex: 0,
         }} 
