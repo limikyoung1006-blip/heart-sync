@@ -1095,7 +1095,7 @@ const ChatView = ({ userRole, setUserRole, husbandInfo, setHusbandInfo, wifeInfo
     return response;
   };
 
-  // 상담가 하티 설정 (단일 페르소나)
+  // 상담가 하티 설정
   const hatti = useMemo(() => {
     const partnerInfo = userRole === 'husband' ? wifeInfo : husbandInfo;
     const partnerLabel = userRole === 'husband' ? '아내' : '남편';
@@ -1103,8 +1103,8 @@ const ChatView = ({ userRole, setUserRole, husbandInfo, setHusbandInfo, wifeInfo
     return {
       name: 'AI 하티',
       subtitle: '개혁주의 부부상담가',
-      avatar: '/hatti_3d_v2.png', // 3D 하티 캐릭터 이미지
-      intro: `반갑습니다, ${userRole === 'husband' ? husbandInfo.nickname : wifeInfo.nickname}님. 하나님의 언약 안에 있는 부부를 지키는 상담가 AI 하티입니다. ${partnerLabel}분의 ${partnerInfo.mbti} 성향과 우리의 통계 데이터를 바탕으로 ${userRole === 'husband' ? '형제님' : '자매님'}께 꼭 필요한 위로와 솔루션을 드릴게요.`,
+      avatar: '/hatti_3d_v2.png',
+      intro: `반갑습니다. 부부의 언약을 지키는 AI 하티입니다.`,
       partnerInfo,
       partnerLabel,
       color: '#8A60FF',
@@ -1112,12 +1112,11 @@ const ChatView = ({ userRole, setUserRole, husbandInfo, setHusbandInfo, wifeInfo
     };
   }, [userRole, husbandInfo, wifeInfo]);
 
-  const [chat, setChat] = useState([{ role: 'hatti', text: hatti.intro }]);
+  const [chat, setChat] = useState([]);
 
-  // 역할 전환 시 대화 초기화 (동작 확인용)
   useEffect(() => {
-    setChat([{ role: 'hatti', text: hatti.intro }]);
-  }, [userRole, hatti.intro]);
+    setChat([]);
+  }, [userRole]);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -1129,17 +1128,18 @@ const ChatView = ({ userRole, setUserRole, husbandInfo, setHusbandInfo, wifeInfo
     const newChat = [...chat, { role: 'user', text: userMessage }];
     setChat(newChat);
     setMsg("");
+    setIsAiLoading(true);
 
     setTimeout(async () => {
       const response = await getContextualResponse(userMessage, hatti);
       setChat([...newChat, { role: 'hatti', text: response }]);
+      setIsAiLoading(false);
     }, 1200);
   };
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col h-full w-full" style={{ gap: '15px', paddingBottom: '90px' }}>
       
-      {/* ⬅️ Dedicated Top Back Button */}
       <div style={{ display: 'flex', padding: '0 5px' }}>
         <button onClick={onBack} style={{ display: 'flex', alignItems: 'center', gap: '3px', background: 'none', border: 'none', cursor: 'pointer', padding: '8px 0' }}>
           <ChevronLeft size={20} color="#8A60FF" strokeWidth={3} />
@@ -1147,123 +1147,72 @@ const ChatView = ({ userRole, setUserRole, husbandInfo, setHusbandInfo, wifeInfo
         </button>
       </div>
 
-      {/* 🏛️ 하티 프로필 상단 (역할 선택 제거) */}
       <div style={{
-        background: 'rgba(255, 255, 255, 0.7)',
-        backdropFilter: 'blur(10px)',
-        border: `1.5px solid ${hatti.borderColor}`,
-        borderRadius: '24px',
-        padding: '16px 20px',
+        background: 'white',
+        borderRadius: '28px',
+        padding: '20px',
+        boxShadow: '0 8px 30px rgba(138, 96, 255, 0.08)',
+        border: '1px solid rgba(138, 96, 255, 0.12)',
         display: 'flex',
         alignItems: 'center',
-        gap: '16px',
-        boxShadow: '0 8px 32px rgba(0,0,0,0.05)'
+        gap: '20px',
+        position: 'relative'
       }}>
-        <motion.div 
-          animate={{ y: [0, -5, 0] }}
-          transition={{ duration: 3, repeat: Infinity }}
-        >
-          <HattiCharacter size={65} style={{ flexShrink: 0 }} />
-        </motion.div>
+        <HattiCharacter size={65} style={{ flexShrink: 0 }} />
         <div style={{ flex: 1 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
              <p style={{ fontSize: '18px', fontWeight: 900, color: '#2D1F08', margin: 0 }}>{hatti.name}</p>
              <span style={{ fontSize: '11px', background: hatti.color, color: 'white', padding: '2px 8px', borderRadius: '100px', fontWeight: 700 }}>{hatti.subtitle}</span>
           </div>
           <p style={{ fontSize: '11px', color: '#886B5A', fontWeight: 600, margin: '4px 0 0' }}>
-            대상: <span style={{ color: hatti.color }}>{userRole === 'husband' ? '남편' : '아내'}</span> | 
-            배우자 정보: {hatti.partnerInfo.mbti} ({hatti.partnerInfo.blood}형)
+            대상: <span style={{ color: hatti.color }}>{userRole === 'husband' ? '남편' : '아내'}</span> | {hatti.partnerLabel} 정보: {hatti.partnerInfo.mbti}
           </p>
         </div>
-        <button onClick={() => setShowSettings(!showSettings)} style={{ background: 'none', border: 'none', cursor: 'pointer', opacity: 0.6 }}>
-           <Settings size={20} color={hatti.color} />
+        <button onClick={() => setShowSettings(!showSettings)} style={{ opacity: 0.5 }}>
+           <Settings size={20} />
         </button>
       </div>
 
-      {/* ⚙ Settings Panel (내부 설정 전용) */}
       <AnimatePresence>
         {showSettings && (
           <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} style={{ overflow: 'hidden' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', padding: '16px', background: 'rgba(255,255,255,0.6)', borderRadius: '22px', border: '1px solid white' }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <p style={{ fontSize: '11px', fontWeight: 900, color: '#2D1F08', margin: 0 }}>나의 신분 설정 (데모용)</p>
-                <select value={userRole} onChange={e => setUserRole(e.target.value)} className="mini-input" style={{ appearance: 'none', padding: '8px' }}>
-                  <option value="husband">👨 남편으로 상담</option>
-                  <option value="wife">👩 아내로 상담</option>
-                </select>
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <p style={{ fontSize: '11px', fontWeight: 900, color: '#2D1F08', margin: 0 }}>배우자 MBTI</p>
-                <input 
-                  className="mini-input" 
-                  value={userRole === 'husband' ? wifeInfo.mbti : husbandInfo.mbti} 
-                  onChange={(e) => {
-                    const val = e.target.value.toUpperCase();
-                    if (userRole === 'husband') setWifeInfo({ ...wifeInfo, mbti: val });
-                    else setHusbandInfo({ ...husbandInfo, mbti: val });
-                  }}
-                />
-              </div>
+            <div style={{ padding: '16px', background: 'white', borderRadius: '22px', border: '1px solid #eee', marginBottom: '10px' }}>
+               <p style={{ fontSize: '12px', fontWeight: 800, marginBottom: '8px' }}>상담 설정</p>
+               <select value={userRole} onChange={e => setUserRole(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '12px', border: '1px solid #ddd' }}>
+                  <option value="husband">남편</option>
+                  <option value="wife">아내</option>
+               </select>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
+ 
+      {chat.length === 0 && (
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 20px' }}>
+          <HattiCharacter size={130} />
+          <div style={{ background: 'white', padding: '20px', borderRadius: '24px', boxShadow: '0 10px 30px rgba(0,0,0,0.05)', marginTop: '20px', textAlign: 'center', border: '1px solid #eee' }}>
+            <p style={{ fontSize: '15px', color: '#2D1F08', fontWeight: 800 }}>반가워요! 무엇을 도와드릴까요? ✨</p>
+          </div>
+        </div>
+      )}
 
-      {/* 💬 Chat Window */}
       <div className="chat-window" style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '16px', padding: '0 4px' }}>
         {chat.map((c, i) => (
-          <div key={i} style={{ 
-            display: 'flex', 
-            flexDirection: c.role === 'user' ? 'row-reverse' : 'row', 
-            alignItems: 'flex-start', 
-            marginBottom: '10px',
-            position: 'relative',
-            paddingLeft: c.role === 'hatti' ? '45px' : '0px', // 하티일 때 아바타 공간 확보
-          }}>
+          <div key={i} style={{ display: 'flex', flexDirection: c.role === 'user' ? 'row-reverse' : 'row', alignItems: 'flex-start', position: 'relative', paddingLeft: c.role === 'hatti' ? '45px' : '0px' }}>
             {c.role === 'hatti' && (
               <div style={{ position: 'absolute', left: '-5px', top: '-5px', zIndex: 10 }}>
-                 <HattiCharacter size={50} style={{ flexShrink: 0 }} />
+                 <HattiCharacter size={50} />
               </div>
             )}
-            <div style={{
-              maxWidth: '85%', // 너비 확장
-              padding: '12px 18px',
-              borderRadius: c.role === 'user' ? '24px 24px 4px 24px' : '24px 24px 24px 4px',
-              background: c.role === 'user' ? 'linear-gradient(135deg, #8A60FF, #AC8AFF)' : 'white',
-              color: c.role === 'user' ? 'white' : '#2D1F08',
-              fontSize: '15px',
-              lineHeight: 1.6,
-              boxShadow: '0 4px 12px rgba(0,0,0,0.04)',
-              border: c.role === 'hatti' ? `1px solid ${hatti.borderColor}` : 'none',
-              wordBreak: 'keep-all',
-              fontWeight: 500,
-              zIndex: 5,
-              position: 'relative'
-            }}>
+            <div style={{ maxWidth: '85%', padding: '12px 18px', borderRadius: c.role === 'user' ? '24px 24px 4px 24px' : '24px 24px 24px 4px', background: c.role === 'user' ? '#8A60FF' : 'white', color: c.role === 'user' ? 'white' : '#2D1F08', boxShadow: '0 4px 12px rgba(0,0,0,0.04)', border: c.role === 'hatti' ? '1px solid #eee' : 'none', wordBreak: 'keep-all', zIndex: 5, position: 'relative' }}>
               {c.text}
             </div>
           </div>
         ))}
         {isAiLoading && (
-          <div style={{ display: 'flex', alignItems: 'flex-start', position: 'relative', paddingLeft: '45px', marginBottom: '10px' }}>
-            <div style={{ position: 'absolute', left: '-5px', top: '-5px', zIndex: 10 }}>
-               <HattiCharacter state="thinking" size={50} style={{ flexShrink: 0 }} />
-            </div>
-            <div style={{ 
-              background: 'white', 
-              padding: '12px 18px', 
-              borderRadius: '24px 24px 24px 4px', 
-              border: `1px solid ${hatti.borderColor}`, 
-              display: 'flex', 
-              gap: '4px', 
-              alignItems: 'center',
-              zIndex: 5,
-              position: 'relative'
-            }}>
-               <motion.div animate={{ opacity: [0.3, 1, 0.3] }} transition={{ repeat: Infinity, duration: 1 }} style={{ width: '6px', height: '6px', borderRadius: '50%', background: hatti.color }} />
-               <motion.div animate={{ opacity: [0.3, 1, 0.3] }} transition={{ repeat: Infinity, duration: 1, delay: 0.2 }} style={{ width: '6px', height: '6px', borderRadius: '50%', background: hatti.color }} />
-               <motion.div animate={{ opacity: [0.3, 1, 0.3] }} transition={{ repeat: Infinity, duration: 1, delay: 0.4 }} style={{ width: '6px', height: '6px', borderRadius: '50%', background: hatti.color }} />
-            </div>
+          <div style={{ display: 'flex', alignItems: 'flex-start', position: 'relative', paddingLeft: '45px' }}>
+             <div style={{ position: 'absolute', left: '-5px', top: '-5px' }}><HattiCharacter state="thinking" size={50} /></div>
+             <div style={{ background: 'white', padding: '12px 18px', borderRadius: '24px', border: '1px solid #eee' }}>...하티가 답변을 준비중이에요...</div>
           </div>
         )}
         <div ref={chatEndRef} />
@@ -3895,36 +3844,7 @@ const App = () => {
               )}
               {activeTab === 'counseling' && (
                  <div className={`flex flex-col pt-4 ${counselingMode === 'chat' ? 'h-full' : ''}`}>
-                    {/* 💖 Hatti Greeting (Safe version) */}
-                    <div style={{ 
-                      display: 'flex', 
-                      flexDirection: 'column', 
-                      alignItems: 'center', 
-                      marginBottom: '20px', 
-                      position: 'relative',
-                      minHeight: '130px', 
-                      justifyContent: 'flex-end',
-                      width: '100%'
-                    }}>
-                      <div style={{ position: 'absolute', top: '10px', zIndex: 10 }}>
-                         <HattiCharacter size={100} />
-                      </div>
-                      
-                      <div style={{ 
-                        background: 'white', 
-                        padding: '12px 20px', 
-                        borderRadius: '24px', 
-                        boxShadow: '0 8px 25px rgba(138, 96, 255, 0.08)',
-                        border: '1px solid rgba(138, 96, 255, 0.12)',
-                        position: 'relative',
-                        zIndex: 5,
-                        width: '80%'
-                      }}>
-                        <p style={{ fontSize: '14px', fontWeight: 900, color: '#2D1F08', margin: 0, lineHeight: 1.5, textAlign: 'center' }}>
-                          <span style={{ color: '#8A60FF' }}>하티가 두 분을 돕기 위해 기다리고 있어요! ✨</span>
-                        </p>
-                      </div>
-                    </div>
+                    {/* 💊 AI Hatti Sub-Navigation (Chat vs Solution) */}
 
                     {/* 💊 AI Hatti Sub-Navigation (Chat vs Solution) */}
                    <div className="flex justify-center mb-4">
