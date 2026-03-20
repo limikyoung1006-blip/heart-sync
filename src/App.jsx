@@ -2649,24 +2649,6 @@ const SettingsView = ({
         <SettingsItem icon={<Lock size={18} />} label="데이터 보안 설정" onClick={() => setShowDataSecurity(true)} />
       </div>
 
-      <div style={{ padding: '0 20px', marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-        <div style={{ textAlign: 'center', padding: '10px', background: 'rgba(212, 175, 55, 0.1)', borderRadius: '15px' }}>
-          <p style={{ fontSize: '11px', color: '#8B7355', fontWeight: 800 }}>현재 연결 상태: <span style={{ color: '#D4AF37' }}>{coupleCode}</span> | <span style={{ color: userRole === 'husband' ? '#3B82F6' : '#EC4899' }}>{userRole === 'husband' ? '남편' : '아내'}</span></p>
-        </div>
-        <motion.button
-          whileTap={{ scale: 0.95 }}
-          onClick={async () => {
-            if(window.confirm("로그아웃 하시겠습니까?")) {
-              await supabase.auth.signOut();
-              localStorage.clear();
-              window.location.reload();
-            }
-          }}
-          style={{ width: '100%', padding: '16px', borderRadius: '20px', background: 'rgba(239, 68, 68, 0.1)', color: '#EF4444', fontWeight: 800, border: '1px solid rgba(239, 68, 68, 0.2)', cursor: 'pointer', marginBottom: '10px' }}
-        >
-          로그아웃
-        </motion.button>
-      </div>
 
       {/* Modals for Settings functions */}
       {showAnnivSet && (
