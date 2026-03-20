@@ -1692,9 +1692,81 @@ const AppGuideView = ({ onBack }) => {
 };
 
 /* 📊 Solution (AI Records) */
-const SolutionView = ({ onBack, userRole, husbandInfo, wifeInfo, schedules, adminStats, coupleStats }) => {
+const SolutionView = ({ onBack, userRole, husbandInfo, wifeInfo, schedules, adminStats, coupleStats, masterApiKey }) => {
   const myInfo = userRole === 'husband' ? husbandInfo : wifeInfo;
   const spouseInfo = userRole === 'husband' ? wifeInfo : husbandInfo;
+  
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [reportResult, setReportResult] = useState(null);
+  const [recentPrayers, setRecentPrayers] = useState([]);
+
+  useEffect(() => {
+    const fetchPrayers = async () => {
+      const { data } = await supabase.from('prayers').select('*').limit(5).order('created_at', { ascending: false });
+      if (data) setRecentPrayers(data);
+    };
+    fetchPrayers();
+  }, []);
+
+  const handleDeepAnalysis = async () => {
+    if (!masterApiKey) {
+      alert("시스템 마스터 키가 설정되지 않았습니다. 관리자에게 문의하세요.");
+      return;
+    }
+    
+    setIsAnalyzing(true);
+    try {
+      const prompt = `
+        당신은 "부부신호등(Heart Sync)"의 상담 엔진 전문가 '하티'입니다. 
+        개혁주의 신학(기독교 언약적 관점)과 심리 상담학(가족 시스템 이론)의 대가로서 아래 제공된 부부의 실제 활동 데이터를 심층 분석하여 전문가용 월간 리포트를 작성해 주세요. 
+        
+        [부부 정보]
+        - 남편: ${husbandInfo.nickname} (MBTI: ${husbandInfo.mbti})
+        - 아내: ${wifeInfo.nickname} (MBTI: ${wifeInfo.mbti})
+        - 결혼 기념일: ${husbandInfo.marriageDate}
+        
+        [한 달 활동 데이터]
+        - 총 상호작용: ${coupleStats?.totalInteractions}회
+        - 기도 제목 수: ${coupleStats?.prayerCount}개
+        - 무드 시그널 교환: ${coupleStats?.signalCount}회
+        - 공유된 일정: ${coupleStats?.scheduleCount}개
+        - 최근 기도 제목들: ${recentPrayers.map(p => p.text).join(", ")}
+        
+        [리포트 형식 요구사항]
+        1. 영적 친밀도 분석: 두 사람의 활동과 대화가 '주님 안에서의 언약'을 어떻게 실천하고 있는지 구체적으로 격려
+        2. 기질적 조언: MBTI와 최근 상호작용 빈도를 토대로, 갈등이 생길 수 있는 지점과 서로의 고유한 성향을 어떻게 보충할지 분석 (심리학적 용어 활용 가능)
+        3. 실천 미션: 다음 한 달간 실천할 아주 구체적이고 풍성한 숙제(Daily Task) 3가지 제안 (하나님 중심적 삶과 일상의 친밀감 조종)
+        
+        최소 1000자 이상의 풍성하고 따뜻하며 권위 있는 어조로 한국어로 작성해 주세요. 
+        마크다운 형식은 제외하고 텍스트 줄바꿈을 활용해주세요.
+      `;
+
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${masterApiKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o',
+          messages: [{ role: 'user', content: prompt }],
+          temperature: 0.7
+        })
+      });
+
+      const data = await response.json();
+      if (data.choices && data.choices[0]) {
+        setReportResult(data.choices[0].message.content);
+      } else {
+        throw new Error("AI 분석 실패");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("AI 분석 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.");
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
 
   return (
     <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="report-page" style={{ paddingBottom: '120px', overflowY: 'auto', height: '100%' }}>
@@ -1704,13 +1776,42 @@ const SolutionView = ({ onBack, userRole, husbandInfo, wifeInfo, schedules, admi
       </button>
       <span style={{ fontSize: '20px', fontWeight: 900, color: '#2D1F08' }}>뒤로가기</span>
     </div>
+    <div className="report-card" style={{ padding: '25px', marginBottom: '15px' }}>
+      <div className="flex items-center gap-3 mb-4">
+        <Sparkles size={20} color="#8A60FF" />
+        <span style={{ fontSize: '18px', fontWeight: 900 }}>AI 전문가 정밀 분석</span>
+      </div>
+      <p style={{ fontSize: '13px', color: '#6B7280', marginBottom: '20px', lineHeight: 1.6 }}>
+        최근 한 달간의 대화 패턴, 기도 제목, 감정 신호를 종합하여 AI 하티가 전하는 깊이 있는 조언을 만나보세요.
+      </p>
+      <motion.button 
+        whileTap={{ scale: 0.95 }}
+        onClick={handleDeepAnalysis}
+        disabled={isAnalyzing}
+        style={{ 
+          width: '100%', padding: '18px', borderRadius: '20px', 
+          background: isAnalyzing ? '#CCC' : 'linear-gradient(135deg, #2D1F08 0%, #4D3A1A 100%)',
+          color: 'white', fontWeight: 900, border: 'none', cursor: 'pointer',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
+          boxShadow: '0 10px 20px rgba(0,0,0,0.1)'
+        }}
+      >
+        {isAnalyzing ? (
+          <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}>
+            <RefreshCw size={20} />
+          </motion.div>
+        ) : <Sparkles size={20} />}
+        {isAnalyzing ? "데이터 분석 및 리포트 작성 중..." : "새로운 리분석 요청하기"}
+      </motion.button>
+    </div>
+
     {/* 📈 이번 달 대화 횟수 현황 */}
     <div className="report-card" style={{ padding: '25px', marginBottom: '15px' }}>
       <div className="flex items-center gap-3 mb-6">
         <div className="report-icon-bg" style={{ background: 'linear-gradient(135deg, #FF9A8B, #FF6A88)' }}>
           <BarChart3 size={20} color="white" />
         </div>
-        <span className="report-card-label" style={{ fontSize: '18px', fontWeight: 900 }}>이번 달 대화 기록</span>
+        <span className="report-card-label" style={{ fontSize: '18px', fontWeight: 900 }}>이번 달 종합 활동 지표</span>
       </div>
       
       <div className="flex flex-col items-center justify-center py-4 relative">
@@ -1718,7 +1819,11 @@ const SolutionView = ({ onBack, userRole, husbandInfo, wifeInfo, schedules, admi
           <circle className="gauge-circle-bg" cx="80" cy="80" r="70" stroke="rgba(0,0,0,0.05)" strokeWidth="12" fill="none" />
           <circle className="gauge-circle-fill" cx="80" cy="80" r="70" 
             stroke="url(#gauge-grad)" strokeWidth="12" strokeLinecap="round" fill="none"
-            style={{ strokeDasharray: `370, 440`, transform: 'rotate(-90deg)', transformOrigin: 'center' }} 
+            style={{ 
+              strokeDasharray: `${Math.min((coupleStats.totalInteractions / 50) * 440, 440)}, 440`, 
+              transform: 'rotate(-90deg)', transformOrigin: 'center',
+              transition: '2s ease-out'
+            }} 
           />
           <defs>
             <linearGradient id="gauge-grad" x1="0%" y1="0%" x2="100%" y2="0%">
@@ -1733,25 +1838,24 @@ const SolutionView = ({ onBack, userRole, husbandInfo, wifeInfo, schedules, admi
         </div>
       </div>
       <p className="text-center" style={{ fontSize: '13px', fontWeight: 800, color: 'rgba(0,0,0,0.5)', marginTop: '15px' }}>
-         목표 50회 중 84% 달성! 🎉
+         {coupleStats.totalInteractions >= 50 ? '축하드려요! 목표를 달성했습니다! 🥳' : `목표 50회 중 ${Math.round((coupleStats.totalInteractions / 50) * 100)}% 달성! 🎉`}
       </p>
     </div>
 
-    {/* 📊 대화 테마 분석 (직관적 분포 그래프) */}
+    {/* 📊 대화 테마 분석 (실제 데이터 기반 시뮬레이션) */}
     <div className="report-card" style={{ padding: '25px', marginBottom: '15px' }}>
       <div className="flex items-center gap-3 mb-6">
         <div className="report-icon-bg" style={{ background: 'linear-gradient(135deg, #8A60FF, #AC8AFF)' }}>
           <Zap size={20} color="white" />
         </div>
-        <span className="report-card-label" style={{ fontSize: '18px', fontWeight: 900 }}>대화 테마 분석</span>
+        <span className="report-card-label" style={{ fontSize: '18px', fontWeight: 900 }}>데이터 종합 분석</span>
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginTop: '10px' }}>
         {[
-          { label: '일상 소통', value: 45, color: '#FF8A9D' },
-          { label: '신앙 고백', value: 30, color: '#8A60FF' },
-          { label: '기대와 서운함', value: 15, color: '#F5D060' },
-          { label: '추억과 미래', value: 10, color: '#5B7FFF' }
+          { label: '영적 소통 (기도제목)', value: Math.min(Math.round((coupleStats.prayerCount / Math.max(coupleStats.totalInteractions, 1)) * 100), 100), color: '#8A60FF' },
+          { label: '정서적 교감 (무드시그널)', value: Math.min(Math.round((coupleStats.signalCount / Math.max(coupleStats.totalInteractions, 1)) * 100), 100), color: '#FF8A9D' },
+          { label: '일상 협력 (공유일정)', value: Math.min(Math.round((coupleStats.scheduleCount / Math.max(coupleStats.totalInteractions, 1)) * 100), 100), color: '#F5D060' }
         ].map((item, idx) => (
           <div key={idx} style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -1766,7 +1870,7 @@ const SolutionView = ({ onBack, userRole, husbandInfo, wifeInfo, schedules, admi
         ))}
       </div>
       <p style={{ fontSize: '12px', color: '#8B7355', marginTop: '15px', lineHeight: 1.5 }}>
-        * 한 달간의 대화 카테고리 분포입니다. <strong>신앙 고백</strong> 테마가 지난달보다 12% 증가하며 영적 친밀도가 높아지고 있어요!
+        * 한 달간 수집된 활동 비중입니다. 서로를 향한 관심이 구체적인 데이터로 기록되고 있습니다.
       </p>
     </div>
 
@@ -1783,39 +1887,35 @@ const SolutionView = ({ onBack, userRole, husbandInfo, wifeInfo, schedules, admi
        </div>
 
        <div className="expert-content" style={{ display: 'flex', flexDirection: 'column', gap: '22px' }}>
-          <section>
-            <h4 style={{ fontSize: '15px', color: '#8A60FF', fontWeight: 900, marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <Sparkles size={14} /> 영적 친밀도 분석
-            </h4>
-            <p style={{ fontSize: '14px', lineHeight:1.7, color: '#4D3A1A', textAlign: 'justify' }}>
-              이번 달 {husbandInfo.nickname}님과 {wifeInfo.nickname}님은 성실한 대화로 <strong>'하나님 앞에서의 정직함'</strong>을 실천하셨습니다. 특히 {spouseInfo.nickname}님의 {spouseInfo.mbti} 기질을 배려하는 {myInfo.nickname}님의 노력이 돋보입니다. 신앙 고백과 일상 소통이 균형을 이루며, 부부라는 거룩한 언약 안에서 정서적 안전감을 충분히 누리고 있다는 증거입니다.
-            </p>
-          </section>
+          {reportResult ? (
+            <div style={{ fontSize: '14px', lineHeight: 1.8, color: '#4D3A1A', whiteSpace: 'pre-wrap', textAlign: 'justify' }}>
+              {reportResult}
+            </div>
+          ) : (
+            <>
+              <section>
+                <h4 style={{ fontSize: '15px', color: '#8A60FF', fontWeight: 900, marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <Sparkles size={14} /> 영적 친밀도 분석
+                </h4>
+                <p style={{ fontSize: '14px', lineHeight:1.7, color: '#4D3A1A', textAlign: 'justify' }}>
+                  아직 상세 분석 결과가 생성되지 않았습니다. 상단의 <strong>'분석 요청'</strong> 버튼을 클릭하여 ${husbandInfo.nickname}님과 ${wifeInfo.nickname}님만을 위한 특별한 리포트를 받아보세요. 하티가 두 분의 기록을 바탕으로 깊이 있는 조언을 준비해 드립니다.
+                </p>
+              </section>
 
-          {/* Section 2: 신앙적 원리 */}
-          <section style={{ borderTop: '1px solid rgba(212, 175, 55, 0.2)', paddingTop: '20px' }}>
-            <h4 style={{ fontSize: '15px', color: '#D4AF37', fontWeight: 900, marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <BookOpen size={14} /> 언약적 사랑의 원리
-            </h4>
-            <p style={{ fontSize: '14px', lineHeight: 1.7, color: '#4D3A1A', fontStyle: 'italic', marginBottom: '10px' }}>
-              "아내들이여 자기 남편에게 복종하기를 주께 하듯 하라... 남편들아 아내 사랑하기를 그리스도께서 교회를 사랑하시고 그 교회를 위하여 자신을 주심 같이 하라" (엡 5:22, 25)
-            </p>
-            <p style={{ fontSize: '14px', lineHeight: 1.7, color: '#4D3A1A' }}>
-              개혁주의 관점에서 결혼은 단순한 계약이 아닌 <strong>거룩한 언약(Covenant)</strong>입니다. 상대의 부족함은 내가 정죄할 대상이 아니라, 주님이 나를 통해 채우라고 하시는 사명의 영역임을 기억하십시오. 이번 대화 패턴에서 나타난 사소한 갈등들은 두 분을 하나의 성전으로 빚어가시는 하나님의 손길입니다.
-            </p>
-          </section>
-
-          {/* Section 3: 이번 주의 실천 과제 */}
-          <section style={{ background: 'rgba(138, 96, 255, 0.05)', borderRadius: '20px', padding: '18px' }}>
-            <h4 style={{ fontSize: '15px', color: '#8A60FF', fontWeight: 900, marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <Zap size={14} /> 이번 주 실천 방안 (Weekly Mission)
-            </h4>
-            <ul style={{ paddingLeft: '20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <li style={{ fontSize: '13px', color: '#2D1F08', fontWeight: 600 }}>1. 배우자의 장점 세 가지를 적어 침대 맡에 두기</li>
-              <li style={{ fontSize: '13px', color: '#2D1F08', fontWeight: 600 }}>2. 하루 5분, 서로의 손을 잡고 중보 기도하기</li>
-              <li style={{ fontSize: '13px', color: '#2D1F08', fontWeight: 600 }}>3. 비판적인 단어 대신 "나는 ~라고 느껴서 도움이 필요해"라는 'I Message' 시도하기</li>
-            </ul>
-          </section>
+              {/* Section 2: 신앙적 원리 */}
+              <section style={{ borderTop: '1px solid rgba(212, 175, 55, 0.2)', paddingTop: '20px' }}>
+                <h4 style={{ fontSize: '15px', color: '#D4AF37', fontWeight: 900, marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <BookOpen size={14} /> 언약적 사랑의 원리
+                </h4>
+                <p style={{ fontSize: '14px', lineHeight: 1.7, color: '#4D3A1A', fontStyle: 'italic', marginBottom: '10px' }}>
+                  "아내들이여 자기 남편에게 복종하기를 주께 하듯 하라... 남편들아 아내 사랑하기를 그리스도께서 교회를 사랑하시고 그 교회를 위하여 자신을 주심 같이 하라" (엡 5:22, 25)
+                </p>
+                <p style={{ fontSize: '14px', lineHeight: 1.7, color: '#4D3A1A' }}>
+                  개혁주의 관점에서 결혼은 단순한 계약이 아닌 <strong>거룩한 언약(Covenant)</strong>입니다. 상대의 부족함은 내가 정죄할 대상이 아니라, 주님이 나를 통해 채우라고 하시는 사명의 영역임을 기억하십시오.
+                </p>
+              </section>
+            </>
+          )}
        </div>
     </div>
   </motion.div>
@@ -3498,10 +3598,22 @@ const App = () => {
     // 3. Fetch Couple Real Stats
     const fetchCoupleStats = async () => {
       if (!isSetupDone || !coupleCode || coupleCode === 'none') return;
-      const { count: sCount } = await supabase.from('signals').select('*', { count: 'exact', head: true }).eq('couple_id', coupleCode);
+      
+      // 기기도 제목 총 개수
       const { count: pCount } = await supabase.from('prayers').select('*', { count: 'exact', head: true }).eq('couple_id', coupleCode);
-      const { count: scheduleCount } = await supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('couple_id', coupleCode);
-      setCoupleStats({ totalInteractions: (sCount || 0) + (pCount || 0) + (scheduleCount || 0) });
+      
+      // 시그널 업데이트는 업서트지만, 활동 자체로 간주 (마지막 활동 시간 기준 등으로 확장 가능)
+      const { data: sData } = await supabase.from('signals').select('*').eq('couple_id', coupleCode);
+      
+      // 스케줄 개수
+      const totalSchedules = schedules.length;
+      
+      setCoupleStats({ 
+        totalInteractions: (pCount || 0) + (sData?.length || 0) + totalSchedules,
+        prayerCount: pCount || 0,
+        signalCount: sData?.length || 0,
+        scheduleCount: totalSchedules
+      });
     };
     fetchCoupleStats();
 
@@ -3846,6 +3958,7 @@ const App = () => {
                 schedules={schedules}
                 adminStats={adminStats}
                 coupleStats={coupleStats}
+                masterApiKey={masterApiKey}
                 onBack={() => setShowReport(false)} 
               />
             </div>
