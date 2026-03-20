@@ -408,7 +408,9 @@ const HomeView = ({ userRole, coupleCode, mySignal, setMySignal, spouseSignal, p
                   boxShadow: '0 4px 15px rgba(138, 96, 255, 0.1)'
                 }}>
                   <div className="flex items-center gap-3 mb-2">
-                     <HattiCharacter size={40} state="floating" />
+                    {activeTab !== 'counseling' && (
+                       <HattiCharacter size={40} state="floating" />
+                    )}
                      <span style={{ fontSize: '13px', fontWeight: 900, color: '#8A60FF' }}>하티의 대응 가이드</span>
                   </div>
                   <p style={{ fontSize: '14px', color: '#2D1F08', lineHeight: 1.6, wordBreak: 'keep-all', paddingLeft: '45px' }}>
@@ -1214,17 +1216,18 @@ const ChatView = ({ userRole, setUserRole, husbandInfo, setHusbandInfo, wifeInfo
             display: 'flex', 
             flexDirection: c.role === 'user' ? 'row-reverse' : 'row', 
             alignItems: 'flex-start', 
-            gap: c.role === 'user' ? '10px' : '0px', // 하티일 땐 겹치기 위해 0
-            position: 'relative'
+            marginBottom: '10px',
+            position: 'relative',
+            paddingLeft: c.role === 'hatti' ? '45px' : '0px', // 하티일 때 아바타 공간 확보
           }}>
             {c.role === 'hatti' && (
-              <div style={{ zIndex: 10, marginRight: '-12px', marginTop: '-8px' }}>
-                 <HattiCharacter size={55} style={{ flexShrink: 0 }} />
+              <div style={{ position: 'absolute', left: '-5px', top: '-5px', zIndex: 10 }}>
+                 <HattiCharacter size={50} style={{ flexShrink: 0 }} />
               </div>
             )}
             <div style={{
-              maxWidth: '75%',
-              padding: '14px 18px',
+              maxWidth: '85%', // 너비 확장
+              padding: '12px 18px',
               borderRadius: c.role === 'user' ? '24px 24px 4px 24px' : '24px 24px 24px 4px',
               background: c.role === 'user' ? 'linear-gradient(135deg, #8A60FF, #AC8AFF)' : 'white',
               color: c.role === 'user' ? 'white' : '#2D1F08',
@@ -1242,9 +1245,9 @@ const ChatView = ({ userRole, setUserRole, husbandInfo, setHusbandInfo, wifeInfo
           </div>
         ))}
         {isAiLoading && (
-          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0px', position: 'relative' }}>
-            <div style={{ zIndex: 10, marginRight: '-12px', marginTop: '-8px' }}>
-               <HattiCharacter state="thinking" size={55} style={{ flexShrink: 0 }} />
+          <div style={{ display: 'flex', alignItems: 'flex-start', position: 'relative', paddingLeft: '45px', marginBottom: '10px' }}>
+            <div style={{ position: 'absolute', left: '-5px', top: '-5px', zIndex: 10 }}>
+               <HattiCharacter state="thinking" size={50} style={{ flexShrink: 0 }} />
             </div>
             <div style={{ 
               background: 'white', 
@@ -3892,37 +3895,38 @@ const App = () => {
               )}
               {activeTab === 'counseling' && (
                  <div className={`flex flex-col pt-4 ${counselingMode === 'chat' ? 'h-full' : ''}`}>
-                    {/* 💖 Hatti Main Greeting Character (Popup Style) */}
-                    <div style={{ 
-                      display: 'flex', 
-                      flexDirection: 'column', 
-                      alignItems: 'center', 
-                      marginBottom: '35px', 
-                      position: 'relative',
-                      minHeight: '200px', // 하티가 떠 있을 공간 확보
-                      justifyContent: 'flex-end'
-                    }}>
-                      {/* 🚀 하티를 말풍선 위로 둥실 띄움 */}
-                      <div style={{ position: 'absolute', top: '-10px', zIndex: 10 }}>
-                         <HattiCharacter size={140} />
-                      </div>
-                      
+                    {/* 💖 Hatti Greeting (Only visible when chat is empty to save space) */}
+                    {chat.length === 0 && (
                       <div style={{ 
-                        background: 'white', 
-                        padding: '15px 25px', 
-                        borderRadius: '28px 28px 28px 6px', 
-                        boxShadow: '0 10px 30px rgba(138, 96, 255, 0.12)',
-                        border: '1px solid rgba(138, 96, 255, 0.15)',
+                        display: 'flex', 
+                        flexDirection: 'column', 
+                        alignItems: 'center', 
+                        marginBottom: '20px', 
                         position: 'relative',
-                        zIndex: 5,
-                        width: '85%'
+                        minHeight: '130px', // 높이 축소
+                        justifyContent: 'flex-end',
+                        width: '100%'
                       }}>
-                        <p style={{ fontSize: '15px', fontWeight: 900, color: '#2D1F08', margin: 0, lineHeight: 1.6, textAlign: 'center' }}>
-                          반가워요! 무엇을 도와드릴까요? <br/>
-                          <span style={{ color: '#8A60FF' }}>하티는 언제든 두 분을 도울 준비가 되어 있어요! ✨</span>
-                        </p>
+                        <div style={{ position: 'absolute', top: '10px', zIndex: 10 }}>
+                           <HattiCharacter size={100} /> {/* 크기 축소 */}
+                        </div>
+                        
+                        <div style={{ 
+                          background: 'white', 
+                          padding: '12px 20px', 
+                          borderRadius: '24px', 
+                          boxShadow: '0 8px 25px rgba(138, 96, 255, 0.08)',
+                          border: '1px solid rgba(138, 96, 255, 0.12)',
+                          position: 'relative',
+                          zIndex: 5,
+                          width: '80%'
+                        }}>
+                          <p style={{ fontSize: '14px', fontWeight: 900, color: '#2D1F08', margin: 0, lineHeight: 1.5, textAlign: 'center' }}>
+                            <span style={{ color: '#8A60FF' }}>하티가 두 분을 돕기 위해 기다리고 있어요! ✨</span>
+                          </p>
+                        </div>
                       </div>
-                    </div>
+                    )}
 
                     {/* 💊 AI Hatti Sub-Navigation (Chat vs Solution) */}
                    <div className="flex justify-center mb-4">
