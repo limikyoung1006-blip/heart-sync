@@ -36,7 +36,8 @@ import {
   Zap,
   Send,
   Music,
-  Smile
+  Smile,
+  ShieldCheck
 } from 'lucide-react';
 import questions from '../questions.json';
 import { supabase } from './supabase';
@@ -3380,7 +3381,7 @@ const AuthView = ({ onLogoClick, showAdminLogin, setShowAdminLogin, setUser, set
             <img src="https://upload.wikimedia.org/wikipedia/commons/e/e3/KakaoTalk_logo.svg" width="20" alt="Kakao" />
             카카오로 1초 만에 시작하기
           </button>
-          <p style={{ fontSize: '11px', color: '#D1D5DB', marginTop: '10px' }}>로고를 5번 연속 터치하면 관리자 모드로 전환됩니다.</p>
+          <div style={{ height: '10px' }} />
         </div>
       )}
       
@@ -3412,13 +3413,20 @@ const App = () => {
 
   // Auth Session Listener
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
+    supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
+      if (!currentSession && localStorage.getItem('isAdmin') === 'true') {
+        const dummyAdmin = { id: 'admin-id', email: 'admin@heartsync.com', user_metadata: { full_name: '백동희', role: 'admin' } };
+        setSession({ user: dummyAdmin });
+        setUser(dummyAdmin);
+      } else {
+        setSession(currentSession);
+        setUser(currentSession?.user ?? null);
+      }
       setLoading(false);
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!session && localStorage.getItem('isAdmin') === 'true') return; // Keep admin dummy
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
@@ -3706,7 +3714,14 @@ const App = () => {
             background: 'rgba(255, 255, 255, 0.4)',
             backdropFilter: 'blur(10px)'
           }}>
-            <div style={{ width: '24px' }} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'rgba(212, 175, 55, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <User size={16} color={appTheme.primary} />
+              </div>
+              <span style={{ fontSize: '13px', fontWeight: 900, color: appTheme.primary }}>
+                {isAdmin ? '백동희 관리자님' : `${userRole === 'husband' ? husbandInfo.nickname : wifeInfo.nickname}님`}
+              </span>
+            </div>
             <div className="top-bar-icons">
               <Bell size={22} color={appTheme.primary} style={{ opacity: 0.7 }} />
               <button 
