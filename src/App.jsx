@@ -954,7 +954,7 @@ const AdminView = ({ onBack, usersCount, couplesCount, activeSessions, recentAct
 };
 
 /* 💬 Chat View (AI Personalized Hatti Counseling) */
-const ChatView = ({ userRole, setUserRole, husbandInfo, setHusbandInfo, wifeInfo, setWifeInfo, onBack, masterApiKey }) => {
+const ChatView = ({ userRole, setUserRole, husbandInfo, setHusbandInfo, wifeInfo, setWifeInfo, onBack, masterApiKey, adminStats, schedules }) => {
   const [msg, setMsg] = useState("");
   const [showSettings, setShowSettings] = useState(false);
   const [isAiLoading, setIsAiLoading] = useState(false);
@@ -982,15 +982,27 @@ const ChatView = ({ userRole, setUserRole, husbandInfo, setHusbandInfo, wifeInfo
               { 
                 role: "system", 
                 content: `당신은 'AI 하티'라는 이름의 전문적인 '개혁주의 상담목회 연구자'이자 '탁월한 부부 상담가'입니다. 
-                         사용자는 현재 ${userRole === 'husband' ? '남편' : '아내'}이며, 
-                         배우자는 ${p.mbti} 성향과 ${p.blood}형을 가진 ${pl}입니다.
                          
-                         상담 원칙:
-                         1. 신학적 깊이: 개혁주의 신앙의 관점에서 '언약', '희생', '헌신'을 강조하며 상담합니다.
-                         2. 전문적 따스함: 사용자의 감정에 깊이 공감하되, 명확한 심리학적/영적 통찰을 제공하십시오.
-                         3. 구체적 솔루션: 배우자의 MBTI(${p.mbti})와 기질에 기초한 매우 세밀하고 개인화된 대화법이나 행동 실천 방안을 제시하십시오.
-                         4. 풍성한 내용: 질문에 대해 따뜻하고 품격 있는 호칭과 함께 풍성하게 답변하십시오.
-                         5. 브랜드 정체성: 당신은 부부의 관계를 정금같이 만드는 조력자입니다. 한국어 존댓말로 품격 있게 답변하십시오.`
+                         사용자 정보:
+                         - 역할: ${userRole === 'husband' ? '남편' : '아내'}
+                         - 닉네임: ${userRole === 'husband' ? husbandInfo.nickname : wifeInfo.nickname}
+                         - MBTI: ${userRole === 'husband' ? husbandInfo.mbti : wifeInfo.mbti}
+                         
+                         배우자 정보:
+                         - 역할: ${pl}
+                         - 닉네임: ${p.nickname}
+                         - MBTI: ${p.mbti}
+                         
+                         가정 데이터 (통계):
+                         - 등록된 가족 일정: ${schedules?.length || 0}개
+                         - 최근 감정 통계: 최근 ${adminStats?.recentActivities?.length || 0}건의 감정 변화가 기록되었습니다.
+                         
+                         [필수 지침]
+                         1. 절대 '여러분', '두 분'이라는 호칭을 사용하지 마십시오. 현재 1:1 비밀 상담 중입니다.
+                         2. 사용자를 지칭할 때는 '${userRole === 'husband' ? '형제님' : '자매님'}' 또는 '${userRole === 'husband' ? husbandInfo.nickname : wifeInfo.nickname}님'이라고 부르십시오.
+                         3. 모든 답변은 개혁주의 상담학 관점에서 '언약(Covenant)'과 '희생적 사랑(Agape)'을 기반으로 합니다.
+                         4. 사용자의 MBTI(${userRole === 'husband' ? husbandInfo.mbti : wifeInfo.mbti})와 배우자의 MBTI(${p.mbti}) 상호작용을 심도 있게 분석하십시오.
+                         5. 월간 리포트 및 통계 데이터를 언급하며 '사용자의 상황을 정확히 인지하고 있음'을 보여주십시오.`
               },
               { role: "user", content: userInput }
             ],
@@ -1078,7 +1090,7 @@ const ChatView = ({ userRole, setUserRole, husbandInfo, setHusbandInfo, wifeInfo
       name: 'AI 하티',
       subtitle: '개혁주의 부부상담가',
       avatar: '/counselor_f.png', // 하티 캐릭터 이미지
-      intro: `반갑습니다. 하나님의 언약 안에 있는 가정을 지키는 개혁주의 상담가 AI하티입니다. ${partnerLabel}분의 ${partnerInfo.mbti} 성향과 성경적 원리를 바탕으로, 두 분이 주님 안에서 한 몸 된 기쁨을 누리도록 따뜻한 위로와 솔루션을 드릴게요.`,
+      intro: `반갑습니다, ${userRole === 'husband' ? husbandInfo.nickname : wifeInfo.nickname}님. 하나님의 언약 안에 있는 부부를 지키는 상담가 AI 하티입니다. ${partnerLabel}분의 ${partnerInfo.mbti} 성향과 우리의 통계 데이터를 바탕으로 ${userRole === 'husband' ? '형제님' : '자매님'}께 꼭 필요한 위로와 솔루션을 드릴게요.`,
       partnerInfo,
       partnerLabel,
       color: '#8A60FF',
@@ -1680,7 +1692,7 @@ const AppGuideView = ({ onBack }) => {
 };
 
 /* 📊 Solution (AI Records) */
-const SolutionView = ({ onBack, userRole, husbandInfo, wifeInfo, schedules }) => {
+const SolutionView = ({ onBack, userRole, husbandInfo, wifeInfo, schedules, adminStats }) => {
   const myInfo = userRole === 'husband' ? husbandInfo : wifeInfo;
   const spouseInfo = userRole === 'husband' ? wifeInfo : husbandInfo;
 
@@ -1716,7 +1728,7 @@ const SolutionView = ({ onBack, userRole, husbandInfo, wifeInfo, schedules }) =>
           </defs>
         </svg>
         <div className="absolute flex flex-col items-center">
-          <span style={{ fontSize: '38px', fontWeight: 900, color: '#FF4D6D' }}>42</span>
+           <span style={{ fontSize: '38px', fontWeight: 900, color: '#FF4D6D' }}>{adminStats?.activeSessions || 42}</span>
           <span style={{ fontSize: '14px', fontWeight: 700, opacity: 0.4 }}>회</span>
         </div>
       </div>
@@ -3951,6 +3963,8 @@ const App = () => {
                         wifeInfo={wifeInfo} 
                         setWifeInfo={setWifeInfo}
                         masterApiKey={masterApiKey}
+                        adminStats={adminStats}
+                        schedules={schedules}
                         onBack={() => setActiveTab('home')} 
                       />
                    ) : (
@@ -3960,6 +3974,7 @@ const App = () => {
                         husbandInfo={husbandInfo}
                         wifeInfo={wifeInfo}
                         schedules={schedules}
+                        adminStats={adminStats}
                         onBack={() => setCounselingMode('chat')} 
                      />
                    )}
@@ -4088,6 +4103,7 @@ const App = () => {
                 husbandInfo={husbandInfo}
                 wifeInfo={wifeInfo}
                 schedules={schedules}
+                adminStats={adminStats}
                 onBack={() => setShowReport(false)} 
               />
             </div>
