@@ -1145,22 +1145,31 @@ body {
 
 .category-row {
   display: flex;
-  gap: 10px;
+  gap: 12px;
   width: 100%;
-  justify-content: center;
-  margin-bottom: 5px;
+  overflow-x: auto;
+  padding: 5px 20px 15px; /* 양옆 여백 확보 및 아래쪽 스크롤바 간격 */
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none; /* 파이어폭스 스크롤바 숨기기 */
+}
+
+.category-row::-webkit-scrollbar {
+  display: none; /* 크롬/사파리 스크롤바 숨기기 */
 }
 
 .category-chip {
-  padding: 8px 16px;
+  padding: 10px 20px;
   border-radius: 50px;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 800;
   cursor: pointer;
-  background: rgba(255,255,255,0.4);
-  color: rgba(45,31,8,0.5);
-  border: 1px solid rgba(255,255,255,0.4);
-  transition: all 0.3s;
+  background: rgba(255,255,255,0.45);
+  color: rgba(45,31,8,0.6);
+  border: 1.5px solid rgba(255,255,255,0.5);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  white-space: nowrap; /* 텍스트 줄바꿈 방지 */
+  flex-shrink: 0;      /* 칩이 찌그러지지 않도록 설정 */
+  box-shadow: 0 4px 10px rgba(0,0,0,0.02);
 }
 
 .category-chip.active {

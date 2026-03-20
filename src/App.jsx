@@ -2280,7 +2280,7 @@ const CardGameView = ({ onBack, coupleCode }) => {
   };
 
   return (
-    <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="flex flex-col h-full items-center p-4" style={{ overflowY: 'auto', paddingBottom: '120px', paddingTop: '45px' }}>
+    <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="flex flex-col h-full items-center p-4" style={{ overflowY: 'auto', paddingBottom: '140px', paddingTop: '60px' }}>
       <div className="w-full flex items-center justify-start mb-2">
         <button onClick={onBack} style={{ display: 'flex', alignItems: 'center', gap: '3px', background: 'none', border: 'none', cursor: 'pointer', padding: '8px 0' }}>
           <ChevronLeft size={20} color="#8A60FF" strokeWidth={3} />
@@ -2288,7 +2288,7 @@ const CardGameView = ({ onBack, coupleCode }) => {
         </button>
       </div>
 
-      <div className="category-row" style={{ overflowX: 'auto', paddingBottom: '10px' }}>
+      <div className="category-row">
           {['일상', '상상', '추억', '관계', '신앙'].map(cat => (
             <div key={cat} className={`category-chip ${category === cat ? 'active' : ''}`} onClick={() => changeCategory(cat)}>
               {cat}
