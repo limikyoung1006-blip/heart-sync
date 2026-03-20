@@ -1734,6 +1734,9 @@ const HattiCharacter = ({ state = 'floating', size = 120, style = {} }) => {
           height: '100%', 
           objectFit: 'contain', 
           mixBlendMode: 'multiply',
+          /* 하얀색 사각형 테두리를 부드럽게 지워주는 마스크 효과 */
+          WebkitMaskImage: 'radial-gradient(circle, black 40%, transparent 75%)',
+          maskImage: 'radial-gradient(circle, black 40%, transparent 75%)',
           filter: 'drop-shadow(0 15px 15px rgba(138, 96, 255, 0.2))', 
           zIndex: 5,
           position: 'relative'
