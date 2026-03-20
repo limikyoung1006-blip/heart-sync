@@ -746,6 +746,103 @@ const HomeView = ({ userRole, coupleCode, mySignal, setMySignal, spouseSignal, p
 
 
 
+/* 📊 Admin Dashboard View (Super Admin Only) */
+const AdminView = ({ onBack, usersCount, couplesCount, activeSessions }) => {
+  const [activeAdminTab, setActiveAdminTab] = useState('overview');
+  
+  return (
+    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col h-full bg-[#F8FAFC]">
+      {/* Admin Header */}
+      <div style={{ padding: '60px 24px 20px', background: '#1E293B', color: 'white', borderRadius: '0 0 40px 40px', boxShadow: '0 10px 30px rgba(0,0,0,0.1)' }}>
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+             <div style={{ background: 'rgba(255,255,255,0.1)', padding: '10px', borderRadius: '15px' }}>
+                <ShieldCheck size={24} color="#F5D060" />
+             </div>
+             <div>
+                <h2 style={{ fontSize: '20px', fontWeight: 900, letterSpacing: '-0.5px' }}>시스템 관리자</h2>
+                <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)', fontWeight: 700 }}>SUPER ADMIN DASHBOARD</p>
+             </div>
+          </div>
+          <button onClick={onBack} style={{ background: 'rgba(255,255,255,0.1)', border: 'none', color: 'white', padding: '8px 15px', borderRadius: '12px', fontSize: '12px', fontWeight: 800 }}>나가기</button>
+        </div>
+        
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
+           <div style={{ background: 'rgba(255,255,255,0.05)', padding: '15px', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.1)' }}>
+              <p style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', fontWeight: 800, marginBottom: '4px' }}>총 사용자</p>
+              <p style={{ fontSize: '18px', fontWeight: 900 }}>{usersCount}<span style={{ fontSize: '12px', opacity: 0.5 }}>명</span></p>
+           </div>
+           <div style={{ background: 'rgba(255,255,255,0.05)', padding: '15px', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.1)' }}>
+              <p style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', fontWeight: 800, marginBottom: '4px' }}>연결된 부부</p>
+              <p style={{ fontSize: '18px', fontWeight: 900 }}>{couplesCount}<span style={{ fontSize: '12px', opacity: 0.5 }}>쌍</span></p>
+           </div>
+           <div style={{ background: 'rgba(255,255,255,0.05)', padding: '15px', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.1)' }}>
+              <p style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', fontWeight: 800, marginBottom: '4px' }}>활성 세션</p>
+              <p style={{ fontSize: '18px', fontWeight: 900 }}>{activeSessions}<span style={{ fontSize: '12px', opacity: 0.5 }}>회</span></p>
+           </div>
+        </div>
+      </div>
+
+      <div style={{ padding: '24px', flex: 1, overflowY: 'auto' }}>
+         <div style={{ display: 'flex', gap: '10px', marginBottom: '24px' }}>
+            {['overview', 'users', 'content'].map(tab => (
+              <button 
+                key={tab}
+                onClick={() => setActiveAdminTab(tab)}
+                style={{ 
+                  flex: 1, padding: '12px', borderRadius: '15px', border: 'none', fontSize: '13px', fontWeight: 900,
+                  background: activeAdminTab === tab ? '#1E293B' : 'white',
+                  color: activeAdminTab === tab ? 'white' : '#64748B',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.03)'
+                }}
+              >
+                {tab === 'overview' ? '현황' : tab === 'users' ? '사용자' : '콘텐츠'}
+              </button>
+            ))}
+         </div>
+
+         {activeAdminTab === 'overview' && (
+           <div className="flex flex-col gap-5">
+              <div style={{ background: 'white', padding: '24px', borderRadius: '30px', boxShadow: '0 10px 25px rgba(0,0,0,0.02)' }}>
+                 <h3 style={{ fontSize: '16px', fontWeight: 900, color: '#1E293B', marginBottom: '15px' }}>실시간 활동 로그</h3>
+                 <div className="flex flex-col gap-4">
+                    {[1, 2, 3].map(i => (
+                      <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '12px', paddingBottom: '12px', borderBottom: '1px solid #F1F5F9' }}>
+                         <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10B981' }} />
+                         <div style={{ flex: 1 }}>
+                            <p style={{ fontSize: '13px', fontWeight: 700, color: '#334155' }}>부부 코드 [HS-7289] 감정 신호 업데이트</p>
+                            <p style={{ fontSize: '11px', color: '#94A3B8' }}>방금 전</p>
+                         </div>
+                      </div>
+                    ))}
+                 </div>
+              </div>
+
+              <div style={{ background: 'white', padding: '24px', borderRadius: '30px', boxShadow: '0 10px 25px rgba(0,0,0,0.02)' }}>
+                 <h3 style={{ fontSize: '16px', fontWeight: 900, color: '#1E293B', marginBottom: '15px' }}>AI 하티 사용 통계</h3>
+                 <div style={{ height: '150px', display: 'flex', alignItems: 'flex-end', gap: '8px', padding: '10px 0' }}>
+                    {[40, 70, 45, 90, 65, 80, 50].map((h, i) => (
+                      <div key={i} style={{ flex: 1, height: `${h}%`, background: '#8A60FF', borderRadius: '4px', opacity: 0.6 + (i * 0.05) }} />
+                    ))}
+                 </div>
+                 <div className="flex justify-between mt-2">
+                    <span style={{ fontSize: '10px', color: '#94A3B8', fontWeight: 800 }}>Mon</span>
+                    <span style={{ fontSize: '10px', color: '#94A3B8', fontWeight: 800 }}>Sun</span>
+                 </div>
+              </div>
+           </div>
+         )}
+
+         {activeAdminTab === 'users' && (
+           <div style={{ background: 'white', padding: '20px', borderRadius: '30px' }}>
+              <p style={{ textAlign: 'center', color: '#94A3B8', fontSize: '13px', padding: '40px 0' }}>사용자 목록 로딩 중...</p>
+           </div>
+         )}
+      </div>
+    </motion.div>
+  );
+};
+
 /* 💬 Chat View (AI Personalized Hatti Counseling) */
 const ChatView = ({ userRole, husbandInfo, wifeInfo, onBack }) => {
   const [msg, setMsg] = useState("");
@@ -772,24 +869,25 @@ const ChatView = ({ userRole, husbandInfo, wifeInfo, onBack }) => {
             "Authorization": `Bearer ${openaiKey}`
           },
           body: JSON.stringify({
-            model: "gpt-4o-mini",
+            model: "gpt-4o",
             messages: [
               { 
                 role: "system", 
-                content: `당신은 'AI 하티'라는 이름의 전문적인 '개혁주의 부부 상담가'입니다. 
+                content: `당신은 'AI 하티'라는 이름의 전문적인 '개혁주의 상담목회 연구자'이자 '탁월한 부부 상담가'입니다. 
                          사용자는 현재 ${userRole === 'husband' ? '남편' : '아내'}이며, 
                          배우자는 ${p.mbti} 성향과 ${p.blood}형을 가진 ${pl}입니다.
                          
-                         답변 원칙:
-                         1. 성경적(개혁주의 신앙) 가치관에 입각하여 따뜻하고 권위 있는 말투를 사용하십시오.
-                         2. 배우자의 MBTI${p.mbti}와 기질을 고려하여 구체적인 심리적 조언을 제공하십시오.
-                         3. 부부의 '하나 됨'과 '언약적 사랑'을 강조하십시오.
-                         4. 너무 길지 않게, 하지만 깊은 통찰이 담긴 답변을 하십시오. (최대 3-4문장)
-                         5. 한국어로 부드럽고 친절한 존댓말을 사용하십시오.`
+                         상담 원칙:
+                         1. 신학적 깊이: 개혁주의 신앙의 관점에서 '언약', '희생', '헌신'을 강조하며 상담합니다.
+                         2. 전문적 따스함: 사용자의 감정에 깊이 공감하되, 명확한 심리학적/영적 통찰을 제공하십시오.
+                         3. 구체적 솔루션: 배우자의 MBTI(${p.mbti})와 기질에 기초한 매우 세밀하고 개인화된 대화법이나 행동 실천 방안을 제시하십시오.
+                         4. 풍성한 내용: 단답형보다는 풍성하고 논리적인 전개를 사용하되 읽기 편하게 문단을 나누십시오.
+                         5. 브랜드 정체성: 당신은 부부의 관계를 정금같이 만드는 조력자입니다. 한국어 존댓말로 품격 있게 답변하십시오.`
               },
               { role: "user", content: userInput }
             ],
-            temperature: 0.7
+            temperature: 0.75,
+            max_tokens: 1000
           })
         });
         const data = await response.json();
@@ -797,11 +895,11 @@ const ChatView = ({ userRole, husbandInfo, wifeInfo, onBack }) => {
         if (data.choices && data.choices[0]) {
           return data.choices[0].message.content;
         }
-        return "AI 응답을 가져오는 중 오류가 발생했습니다. 키 설정을 확인해 주세요.";
+        return "죄송합니다. AI 응답을 가져오는 중 오류가 발생했습니다. OpenAI API 키 설정을 다시 확인해 주시겠어요? 제가 더 깊은 도움을 드리고 싶습니다.";
       } catch (err) {
         setIsAiLoading(false);
         console.error("OpenAI API Error:", err);
-        return "죄송합니다. 현재 AI 엔진과 연결이 원활하지 않습니다. 잠시 후 다시 시도해 주세요.";
+        return "하티가 지금 응답을 준비하는 과정에서 잠시 어려움을 겪고 있습니다. 주님께서 주신 지혜를 잘 정리하여 다시 말씀드릴 수 있도록 잠시 후 다시 여쭤봐 주시면 감사하겠습니다.";
       }
     }
 
@@ -3188,8 +3286,8 @@ const OnboardingView = ({ user, userRole, setUserRole, onFinish }) => {
 
 
 /* 🔐 Auth View (Social Login) */
-const AuthView = () => {
-  const handleLogin = async (provider) => {
+const AuthView = ({ onLogoClick, showAdminLogin, setShowAdminLogin, setUser, setSession }) => {
+  const handleOAuthLogin = async (provider) => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider,
       options: {
@@ -3202,24 +3300,64 @@ const AuthView = () => {
     if (error) alert("로그인 오류: " + error.message);
   };
 
+  const handleAdminLogin = (e) => {
+    const name = e.target.elements.name.value;
+    const password = e.target.elements.password.value;
+    
+    // Check Super Admin bypass
+    if (name === "백동희" && password === "0000") {
+      setUser({ id: 'admin-id', email: 'admin@heartsync.com', user_metadata: { full_name: '백동희', role: 'admin' } });
+      setSession({ user: { id: 'admin-id', role: 'admin' } });
+      localStorage.setItem('isAdmin', 'true');
+      window.location.reload(); 
+      return;
+    }
+
+    alert("일치하는 관리자 정보가 없습니다.");
+  };
+
   return (
     <motion.div 
       initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-      style={{ display: 'flex', flexDirection: 'column', height: '100vh', width: '100%', backgroundColor: 'white', padding: '60px 30px', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}
+      style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', width: '100%', backgroundColor: 'white', padding: '60px 30px', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}
     >
-      <img src="/logo_main.png" alt="Heart Sync" style={{ width: '180px', marginBottom: '10px' }} />
+      <motion.img 
+        whileTap={{ scale: 0.9 }}
+        onClick={onLogoClick}
+        src="/logo_main.png" 
+        alt="Heart Sync" 
+        style={{ width: '180px', marginBottom: '10px', cursor: 'pointer' }} 
+      />
       <h1 className="brand-text" style={{ fontSize: '28px', color: '#D4AF37', fontWeight: 900, marginBottom: '5px' }}>HEART SYNC</h1>
       <p style={{ fontSize: '14px', color: '#8B7355', marginBottom: '50px', fontWeight: 600 }}>부부의 마음을 더 깊게, 더 가까이</p>
       
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', width: '100%', maxWidth: '320px' }}>
-        <button 
-          onClick={() => handleLogin('kakao')}
-          style={{ width: '100%', padding: '16px', borderRadius: '15px', background: '#FEE500', color: '#3C1E1E', fontWeight: 900, border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', fontSize: '15px' }}
+      {showAdminLogin ? (
+        <motion.form 
+          initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+          onSubmit={(e) => { e.preventDefault(); handleAdminLogin(e); }}
+          style={{ width: '100%', maxWidth: '320px', display: 'flex', flexDirection: 'column', gap: '12px' }}
         >
-          <img src="https://upload.wikimedia.org/wikipedia/commons/e/e3/KakaoTalk_logo.svg" width="20" alt="Kakao" />
-          카카오로 1초 만에 시작하기
-        </button>
-      </div>
+          <div style={{ textAlign: 'left', marginBottom: '10px' }}>
+            <span style={{ fontSize: '12px', fontWeight: 900, color: '#D4AF37' }}>ADMIN PORTAL (관리자 모드)</span>
+          </div>
+          <input name="name" placeholder="이름" style={{ padding: '15px', borderRadius: '15px', background: '#F8FAFC', border: '1px solid #E2E8F0', outline: 'none' }} />
+          <input name="phone" placeholder="전화번호" style={{ padding: '15px', borderRadius: '15px', background: '#F8FAFC', border: '1px solid #E2E8F0', outline: 'none' }} />
+          <input name="password" type="password" placeholder="비밀번호" style={{ padding: '15px', borderRadius: '15px', background: '#F8FAFC', border: '1px solid #E2E8F0', outline: 'none' }} />
+          <button type="submit" style={{ padding: '16px', borderRadius: '15px', background: '#1E293B', color: 'white', fontWeight: 900, border: 'none', marginTop: '10px' }}>로그인</button>
+          <button type="button" onClick={() => setShowAdminLogin(false)} style={{ background: 'none', border: 'none', color: '#94A3B8', fontSize: '12px', fontWeight: 800 }}>취소</button>
+        </motion.form>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', width: '100%', maxWidth: '320px' }}>
+          <button 
+            onClick={() => handleOAuthLogin('kakao')}
+            style={{ width: '100%', padding: '16px', borderRadius: '15px', background: '#FEE500', color: '#3C1E1E', fontWeight: 900, border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', fontSize: '15px' }}
+          >
+            <img src="https://upload.wikimedia.org/wikipedia/commons/e/e3/KakaoTalk_logo.svg" width="20" alt="Kakao" />
+            카카오로 1초 만에 시작하기
+          </button>
+          <p style={{ fontSize: '11px', color: '#D1D5DB', marginTop: '10px' }}>로고를 5번 연속 터치하면 관리자 모드로 전환됩니다.</p>
+        </div>
+      )}
       
       <p style={{ fontSize: '12px', color: '#9CA3AF', marginTop: '40px', lineHeight: 1.6 }}>
         로그인 시 Heart Sync의 <span style={{ textDecoration: 'underline' }}>이용약관</span> 및<br/>
@@ -3236,7 +3374,9 @@ const App = () => {
   const [session, setSession] = useState(null);
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-
+  const [isAdmin, setIsAdmin] = useState(() => localStorage.getItem('isAdmin') === 'true');
+  const [logoClickCount, setLogoClickCount] = useState(0);
+  const [showAdminLogin, setShowAdminLogin] = useState(false);
   const [isSetupDone, setIsSetupDone] = useState(() => localStorage.getItem('isSetupDone') === 'true');
   const [userRole, setUserRole] = useState(() => localStorage.getItem('userRole') || 'husband');
   const [coupleCode, setCoupleCode] = useState(() => localStorage.getItem('coupleCode') || 'HS-7289');
@@ -3488,7 +3628,22 @@ const App = () => {
         </div>
       )}
 
-      {!loading && !session && <AuthView />}
+      {!loading && !session && (
+        <AuthView 
+          onLogoClick={() => {
+            const newCount = logoClickCount + 1;
+            setLogoClickCount(newCount);
+            if (newCount >= 5) {
+              setShowAdminLogin(true);
+              setLogoClickCount(0);
+            }
+          }}
+          showAdminLogin={showAdminLogin}
+          setShowAdminLogin={setShowAdminLogin}
+          setUser={setUser}
+          setSession={setSession}
+        />
+      )}
 
       {!loading && session && !isSetupDone && (
         <OnboardingView 
@@ -3644,6 +3799,15 @@ const App = () => {
                   onGuideClick={() => setShowGuidePage(true)}
                 />
               )}
+              {activeTab === 'admin' && isAdmin && (
+                <AdminView 
+                  key="admin" 
+                  onBack={() => setActiveTab('home')}
+                  usersCount={124}
+                  couplesCount={58}
+                  activeSessions={12}
+                />
+              )}
               {activeTab === 'intimacy' && (
                 <IntimacyModal 
                   key="intimacy"
@@ -3693,6 +3857,14 @@ const App = () => {
               icon={<Heart size={22} fill={activeTab === 'intimacy' ? appTheme.primary : "none"} color={activeTab === 'intimacy' ? appTheme.primary : undefined} />} 
               label="비밀화원" 
             />
+            {isAdmin && (
+              <NavItem 
+                active={activeTab === 'admin'} 
+                onClick={() => setActiveTab('admin')} 
+                icon={<ShieldCheck size={22} fill={activeTab === 'admin' ? '#F5D060' : "none"} color={activeTab === 'admin' ? '#F5D060' : undefined} />} 
+                label="관리자" 
+              />
+            )}
           </nav>
         </>
       )}
