@@ -1736,27 +1736,25 @@ const HattiCharacter = ({ state = 'floating', size = 120, style = {} }) => {
       display: 'flex', 
       alignItems: 'center', 
       justifyContent: 'center', 
-      position: 'relative', // 팝업처럼 띄우기 위한 기준점
-      filter: 'drop-shadow(0 30px 50px rgba(0,0,0,0.25))', // 강력한 팝업림자
+      position: 'relative', 
+      filter: 'drop-shadow(0 30px 60px rgba(0,0,0,0.22))', 
       ...style 
     }}>
       <motion.div 
-        initial={{ scale: 0, rotateX: 25, y: 10 }}
+        initial={{ scale: 1, rotateX: 25 }} // 진입 시 작았다 커지는 효과 제거
         animate={{ 
-          scale: 1, 
-          y: state === 'floating' ? [0, -30, 0] : 0, // 더 높게 둥실거림
-          rotateY: state === 'floating' ? [-18, 18, -18] : 0,
-          rotateX: state === 'floating' ? [8, -8, 8] : 0,
-          rotateZ: state === 'floating' ? [-5, 5, -5] : 0
+          y: state === 'floating' ? [0, -28, 0] : 0, // 상하 부유만 유지
+          rotateY: state === 'floating' ? [-16, 16, -16] : 0,
+          rotateX: state === 'floating' ? [6, -6, 6] : 0,
+          rotateZ: state === 'floating' ? [-4, 4, -4] : 0
         }}
-        whileHover={{ scale: 1.1, y: -40 }} // 마우스/손가락 근처만 가도 더 높게 뜸
         whileTap={{ 
-          scale: 1.3, 
-          rotateY: 360, // 이번엔 가로로 팽이처럼 회전하며 인사
+          scale: 1.1, // 터치 시에만 살짝 강조
+          rotateY: 360, 
           transition: { duration: 1, type: 'spring' } 
         }}
         transition={{ 
-          duration: 4, 
+          duration: 4.5, 
           repeat: Infinity, 
           ease: "easeInOut" 
         }}
@@ -1775,8 +1773,8 @@ const HattiCharacter = ({ state = 'floating', size = 120, style = {} }) => {
           src="/hatti_3d_v2.png" 
           alt="Hatti" 
           style={{ 
-            width: '110%', // 박스보다 살짝 크게
-            height: '110%', 
+            width: '115%', 
+            height: '115%', 
             objectFit: 'contain', 
             zIndex: 5,
             position: 'relative',
@@ -1784,14 +1782,14 @@ const HattiCharacter = ({ state = 'floating', size = 120, style = {} }) => {
           }}
         />
         
-        {/* 🔮 Radiant Pulse (하티 뒤에서 뿜어져 나오는 입체 아우라) */}
+        {/* 🔮 Radiant Aura (크기 변화 없이 투명도만 은은하게) */}
         <motion.div 
-          animate={{ scale: [1, 1.3, 1], opacity: [0.4, 0.7, 0.4] }}
-          transition={{ duration: 2.5, repeat: Infinity }}
+          animate={{ opacity: [0.4, 0.6, 0.4] }}
+          transition={{ duration: 3, repeat: Infinity }}
           style={{ 
             position: 'absolute', 
-            inset: '-40%', 
-            background: 'radial-gradient(circle, rgba(138, 96, 255, 0.4) 0%, rgba(245, 208, 96, 0.25) 30%, transparent 80%)', 
+            inset: '-45%', 
+            background: 'radial-gradient(circle, rgba(138, 96, 255, 0.3) 0%, rgba(245, 208, 96, 0.2) 35%, transparent 80%)', 
             filter: 'blur(50px)', 
             zIndex: 1,
             borderRadius: '50%',
@@ -1799,20 +1797,19 @@ const HattiCharacter = ({ state = 'floating', size = 120, style = {} }) => {
           }} 
         />
         
-        {/* 🌑 Unreal Shadow (바닥면 훨씬 아래로) */}
+        {/* 🌑 Unreal Shadow (크기 고정, 부유에 따른 투명도 변화만) */}
         <motion.div 
           animate={{ 
-            scale: state === 'floating' ? [1.5, 0.3, 1.5] : 1.5,
-            opacity: state === 'floating' ? [0.3, 0.05, 0.3] : 0.3,
+            opacity: state === 'floating' ? [0.25, 0.1, 0.25] : 0.25,
           }}
-          transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+          transition={{ duration: 4.5, repeat: Infinity, ease: "easeInOut" }}
           style={{ 
             position: 'absolute', 
             bottom: '-45%', 
-            left: '5%', 
-            right: '5%', 
-            height: '18px', 
-            background: 'rgba(0,0,0,0.4)', 
+            left: '10%', 
+            right: '10%', 
+            height: '14px', 
+            background: 'rgba(0,0,0,0.3)', 
             filter: 'blur(20px)',
             borderRadius: '50%',
             zIndex: 0,
