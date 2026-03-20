@@ -1722,16 +1722,54 @@ const HattiCharacter = ({ state = 'floating', size = 120, style = {} }) => {
       <img 
         src="/hatti_3d_v2.png" 
         alt="Hatti" 
-        style={{ width: '100%', height: '100%', objectFit: 'contain', filter: 'drop-shadow(0 15px 15px rgba(0,0,0,0.1))' }}
+        style={{ 
+          width: '100%', 
+          height: '100%', 
+          objectFit: 'contain', 
+          mixBlendMode: 'multiply', // 하얀색 배경 완벽 제거
+          filter: 'drop-shadow(0 15px 15px rgba(138, 96, 255, 0.2))', 
+          zIndex: 5,
+          position: 'relative'
+        }}
       />
-      {/* Dynamic Glow */}
+      {/* 🔮 Dynamic 3D Aura Overlay */}
       <div style={{ 
-        position: 'absolute', inset: '10%', 
-        background: 'rgba(138, 96, 255, 0.2)', 
-        filter: 'blur(20px)', 
-        zIndex: -1,
+        position: 'absolute', 
+        inset: '-10%', 
+        background: 'radial-gradient(circle, rgba(138, 96, 255, 0.15) 0%, transparent 65%)', 
+        filter: 'blur(30px)', 
+        zIndex: 1,
         borderRadius: '50%'
       }} />
+      
+      {/* 🌑 Realistic Floating Shadow (Reacts to Y-axis movement) */}
+      <div style={{ 
+        position: 'absolute', 
+        bottom: '-15%', 
+        left: '15%', 
+        right: '15%', 
+        height: '8px', 
+        background: 'rgba(0,0,0,0.1)', 
+        filter: 'blur(12px)', 
+        borderRadius: '50%',
+        zIndex: 0,
+        /* 부모의 natti-floating 애니메이션과 연동되는 느낌을 주기 위해 그림자도 스케일링 */
+        animation: 'shadow-pulse 4s ease-in-out infinite'
+      }} />
+      
+      <style>{`
+        @keyframes shadow-pulse {
+          0%, 100% { transform: scale(1); opacity: 0.1; }
+          50% { transform: scale(0.6); opacity: 0.2; }
+        }
+        .hatti-floating {
+          animation: hatti-float 4s ease-in-out infinite;
+        }
+        @keyframes hatti-float {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-15px); }
+        }
+      `}</style>
     </div>
   );
 };
