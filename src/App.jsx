@@ -747,8 +747,9 @@ const HomeView = ({ userRole, coupleCode, mySignal, setMySignal, spouseSignal, p
 
 
 /* 📊 Admin Dashboard View (Super Admin Only) */
-const AdminView = ({ onBack, usersCount, couplesCount, activeSessions }) => {
+const AdminView = ({ onBack, usersCount, couplesCount, activeSessions, masterApiKey, onSaveMasterKey }) => {
   const [activeAdminTab, setActiveAdminTab] = useState('overview');
+  const [tempKey, setTempKey] = useState(masterApiKey || '');
   
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col h-full bg-[#F8FAFC]">
@@ -785,7 +786,7 @@ const AdminView = ({ onBack, usersCount, couplesCount, activeSessions }) => {
 
       <div style={{ padding: '24px', flex: 1, overflowY: 'auto' }}>
          <div style={{ display: 'flex', gap: '10px', marginBottom: '24px' }}>
-            {['overview', 'users', 'content'].map(tab => (
+            {['overview', 'users', 'settings'].map(tab => (
               <button 
                 key={tab}
                 onClick={() => setActiveAdminTab(tab)}
@@ -796,7 +797,7 @@ const AdminView = ({ onBack, usersCount, couplesCount, activeSessions }) => {
                   boxShadow: '0 4px 12px rgba(0,0,0,0.03)'
                 }}
               >
-                {tab === 'overview' ? '현황' : tab === 'users' ? '사용자' : '콘텐츠'}
+                {tab === 'overview' ? '현황' : tab === 'users' ? '사용자' : '시스템'}
               </button>
             ))}
          </div>
@@ -838,19 +839,42 @@ const AdminView = ({ onBack, usersCount, couplesCount, activeSessions }) => {
               <p style={{ textAlign: 'center', color: '#94A3B8', fontSize: '13px', padding: '40px 0' }}>사용자 목록 로딩 중...</p>
            </div>
          )}
+
+         {activeAdminTab === 'settings' && (
+            <div style={{ background: 'white', padding: '24px', borderRadius: '30px', boxShadow: '0 10px 25px rgba(0,0,0,0.02)' }}>
+               <h3 style={{ fontSize: '16px', fontWeight: 900, color: '#1E293B', marginBottom: '8px' }}>AI 시스템 마스터 설정</h3>
+               <p style={{ fontSize: '12px', color: '#64748B', marginBottom: '20px', lineHeight: 1.5 }}>관리자가 제공하는 통합 OpenAI API Key를 사용하여 모든 사용자에게 상담 서비스를 제공합니다.</p>
+               
+               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <label style={{ fontSize: '11px', fontWeight: 900, color: '#94A3B8' }}>OPENAI MASTER KEY</label>
+                  <input 
+                    type="password" 
+                    value={tempKey}
+                    onChange={(e) => setTempKey(e.target.value)}
+                    placeholder="sk-..."
+                    style={{ padding: '15px', borderRadius: '15px', background: '#F8FAFC', border: '1px solid #E2E8F0', outline: 'none', fontSize: '14px' }}
+                  />
+                  <button 
+                    onClick={() => onSaveMasterKey(tempKey)}
+                    style={{ width: '100%', padding: '15px', borderRadius: '15px', background: '#8A60FF', color: 'white', fontWeight: 900, border: 'none', marginTop: '10px', boxShadow: '0 4px 12px rgba(138, 96, 255, 0.2)' }}
+                  >
+                    마스터 키 업데이트
+                  </button>
+                  <p style={{ fontSize: '11px', color: '#EF4444', marginTop: '10px', fontWeight: 700 }}>* 주의: 이 키를 통해 발생하는 모든 비용은 관리자 계정으로 청구됩니다.</p>
+               </div>
+            </div>
+         )}
       </div>
     </motion.div>
   );
 };
 
 /* 💬 Chat View (AI Personalized Hatti Counseling) */
-const ChatView = ({ userRole, husbandInfo, wifeInfo, onBack }) => {
+const ChatView = ({ userRole, setUserRole, husbandInfo, setHusbandInfo, wifeInfo, setWifeInfo, onBack, masterApiKey }) => {
   const [msg, setMsg] = useState("");
   const [showSettings, setShowSettings] = useState(false);
   const [isAiLoading, setIsAiLoading] = useState(false);
   const chatEndRef = React.useRef(null);
-
-  const openaiKey = localStorage.getItem('openai_api_key');
 
   // Keyword-based response logic for better context understanding
   const getContextualResponse = async (userInput, hattiInfo) => {
@@ -858,18 +882,18 @@ const ChatView = ({ userRole, husbandInfo, wifeInfo, onBack }) => {
     const p = hattiInfo.partnerInfo;
     const pl = hattiInfo.partnerLabel;
 
-    // IF OpenAI Key is available, use REAL AI
-    if (openaiKey) {
+    // IF OpenAI Key is available (provided by admin), use REAL AI
+    if (masterApiKey) {
       try {
         setIsAiLoading(true);
         const response = await fetch("https://api.openai.com/v1/chat/completions", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${openaiKey}`
+            "Authorization": `Bearer ${masterApiKey}`
           },
           body: JSON.stringify({
-            model: "gpt-4o",
+            model: "gpt-4o-mini", // 비용 효율적인 mini 모델 사용 권장
             messages: [
               { 
                 role: "system", 
@@ -881,13 +905,13 @@ const ChatView = ({ userRole, husbandInfo, wifeInfo, onBack }) => {
                          1. 신학적 깊이: 개혁주의 신앙의 관점에서 '언약', '희생', '헌신'을 강조하며 상담합니다.
                          2. 전문적 따스함: 사용자의 감정에 깊이 공감하되, 명확한 심리학적/영적 통찰을 제공하십시오.
                          3. 구체적 솔루션: 배우자의 MBTI(${p.mbti})와 기질에 기초한 매우 세밀하고 개인화된 대화법이나 행동 실천 방안을 제시하십시오.
-                         4. 풍성한 내용: 단답형보다는 풍성하고 논리적인 전개를 사용하되 읽기 편하게 문단을 나누십시오.
+                         4. 풍성한 내용: 질문에 대해 따뜻하고 품격 있는 호칭과 함께 풍성하게 답변하십시오.
                          5. 브랜드 정체성: 당신은 부부의 관계를 정금같이 만드는 조력자입니다. 한국어 존댓말로 품격 있게 답변하십시오.`
               },
               { role: "user", content: userInput }
             ],
             temperature: 0.75,
-            max_tokens: 1000
+            max_tokens: 800
           })
         });
         const data = await response.json();
@@ -895,11 +919,11 @@ const ChatView = ({ userRole, husbandInfo, wifeInfo, onBack }) => {
         if (data.choices && data.choices[0]) {
           return data.choices[0].message.content;
         }
-        return "죄송합니다. AI 응답을 가져오는 중 오류가 발생했습니다. OpenAI API 키 설정을 다시 확인해 주시겠어요? 제가 더 깊은 도움을 드리고 싶습니다.";
+        return "죄송합니다. AI 응답을 가져오는 중 오류가 발생했습니다. 관리자님께서 설정한 시스템 상태를 확인 중입니다.";
       } catch (err) {
         setIsAiLoading(false);
         console.error("OpenAI API Error:", err);
-        return "하티가 지금 응답을 준비하는 과정에서 잠시 어려움을 겪고 있습니다. 주님께서 주신 지혜를 잘 정리하여 다시 말씀드릴 수 있도록 잠시 후 다시 여쭤봐 주시면 감사하겠습니다.";
+        return "하티가 지금 응답을 준비하는 과정에서 잠시 어려움을 겪고 있습니다. 잠시 후 다시 여쭤봐 주시면 감사하겠습니다.";
       }
     }
 
@@ -3378,6 +3402,7 @@ const App = () => {
   const [logoClickCount, setLogoClickCount] = useState(0);
   const [showAdminLogin, setShowAdminLogin] = useState(false);
   const [isSetupDone, setIsSetupDone] = useState(() => localStorage.getItem('isSetupDone') === 'true');
+  const [masterApiKey, setMasterApiKey] = useState(localStorage.getItem('master_openai_key') || '');
   const [userRole, setUserRole] = useState(() => localStorage.getItem('userRole') || 'husband');
   const [coupleCode, setCoupleCode] = useState(() => localStorage.getItem('coupleCode') || 'HS-7289');
   const [husbandInfo, setHusbandInfo] = useState(() => JSON.parse(localStorage.getItem('husbandInfo') || '{"nickname":"김남편", "mbti":"ISTJ", "blood":"A", "marriageDate":"2020-05-23"}'));
@@ -3763,7 +3788,17 @@ const App = () => {
                      </div>
                    </div>
                    {counselingMode === 'chat' ? (
-                     <ChatView key="chat" userRole={userRole} husbandInfo={husbandInfo} wifeInfo={wifeInfo} onBack={() => setActiveTab('home')} />
+                     <ChatView 
+                        key="chat" 
+                        userRole={userRole} 
+                        setUserRole={setUserRole}
+                        husbandInfo={husbandInfo} 
+                        setHusbandInfo={setHusbandInfo}
+                        wifeInfo={wifeInfo} 
+                        setWifeInfo={setWifeInfo}
+                        masterApiKey={masterApiKey}
+                        onBack={() => setActiveTab('home')} 
+                      />
                    ) : (
                      <SolutionView 
                         key="solution" 
@@ -3806,6 +3841,12 @@ const App = () => {
                   usersCount={124}
                   couplesCount={58}
                   activeSessions={12}
+                  masterApiKey={masterApiKey}
+                  onSaveMasterKey={(key) => {
+                    setMasterApiKey(key);
+                    localStorage.setItem('master_openai_key', key);
+                    alert("시스템 마스터 키가 성공적으로 저장되었습니다.");
+                  }}
                 />
               )}
               {activeTab === 'intimacy' && (
