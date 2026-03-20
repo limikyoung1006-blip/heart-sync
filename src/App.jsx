@@ -1140,35 +1140,12 @@ const ChatView = ({ userRole, setUserRole, husbandInfo, setHusbandInfo, wifeInfo
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col flex-1 w-full" style={{ gap: '15px' }}>
       
-      <div style={{ display: 'flex', padding: '0 5px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 5px' }}>
         <button onClick={onBack} style={{ display: 'flex', alignItems: 'center', gap: '3px', background: 'none', border: 'none', cursor: 'pointer', padding: '8px 0' }}>
           <ChevronLeft size={20} color="#8A60FF" strokeWidth={3} />
           <span style={{ fontSize: '14px', fontWeight: 900, color: '#8A60FF' }}>홈으로</span>
         </button>
-      </div>
-
-      <div style={{
-        background: 'white',
-        borderRadius: '28px',
-        padding: '20px',
-        boxShadow: '0 8px 30px rgba(138, 96, 255, 0.08)',
-        border: '1px solid rgba(138, 96, 255, 0.12)',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '20px',
-        position: 'relative'
-      }}>
-        <HattiCharacter size={65} style={{ flexShrink: 0 }} />
-        <div style={{ flex: 1 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-             <p style={{ fontSize: '18px', fontWeight: 900, color: '#2D1F08', margin: 0 }}>{hatti.name}</p>
-             <span style={{ fontSize: '11px', background: hatti.color, color: 'white', padding: '2px 8px', borderRadius: '100px', fontWeight: 700 }}>{hatti.subtitle}</span>
-          </div>
-          <p style={{ fontSize: '11px', color: '#886B5A', fontWeight: 600, margin: '4px 0 0' }}>
-            대상: <span style={{ color: hatti.color }}>{userRole === 'husband' ? '남편' : '아내'}</span> | {hatti.partnerLabel} 정보: {hatti.partnerInfo.mbti}
-          </p>
-        </div>
-        <button onClick={() => setShowSettings(!showSettings)} style={{ opacity: 0.5 }}>
+        <button onClick={() => setShowSettings(!showSettings)} style={{ opacity: 0.5, background: 'none', border: 'none', cursor: 'pointer' }}>
            <Settings size={20} />
         </button>
       </div>
