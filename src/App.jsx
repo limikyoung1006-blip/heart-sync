@@ -3100,6 +3100,9 @@ const OnboardingView = ({ user, userRole, setUserRole, onFinish }) => {
   const [coupleCode, setCoupleCode] = useState("");
   const [isConnecting, setIsConnecting] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
+  const [deepAnalysis, setDeepAnalysis] = useState(null);
+  const [deepStep, setDeepStep] = useState(0);
+  const [deepSelections, setDeepSelections] = useState({});
 
   const insightQuestions = [
     { key: 'e', title: '에너지 충전 방식', q: '지친 하루의 끝, 당신의 충전법은?', a1: 'E (밖에서 활기차게)', a2: 'I (혼자 조용히)' },
@@ -3108,10 +3111,31 @@ const OnboardingView = ({ user, userRole, setUserRole, onFinish }) => {
     { key: 'j', title: '생활의 스타일', q: '이번 주 주말 여행, 당신의 스타일은?', a1: 'J (미리 짜둔 시간표대로)', a2: 'P (그때그때 기분 따라)' },
   ];
 
+  const deepAnalysisQuestions = [
+    { key: 'q1', q: '배우자와 갈등이 생겼을 때, 당신은 주로 어떻게 반응하나요?', options: ['문제를 즉시 해결하려 한다', '혼자 생각할 시간을 가진다', '감정을 표현하며 대화를 시도한다', '상황을 피하고 싶어 한다'] },
+    { key: 'q2', q: '배우자에게 사랑을 표현하는 가장 자연스러운 방법은?', options: ['선물이나 작은 이벤트를 준비한다', '말로 애정을 표현한다', '함께 시간을 보내며 활동한다', '필요할 때 도움을 준다'] },
+    { key: 'q3', q: '배우자와의 관계에서 가장 중요하다고 생각하는 것은?', options: ['신뢰와 정직', '서로의 성장과 발전', '안정감과 편안함', '열정과 설렘'] },
+    { key: 'q4', q: '스트레스를 받을 때 배우자에게 기대하는 역할은?', options: ['해결책을 제시해주는 것', '조용히 옆에 있어주는 것', '내 이야기를 들어주는 것', '기분 전환을 도와주는 것'] },
+    { key: 'q5', q: '배우자와의 데이트를 계획할 때, 당신의 주된 고려사항은?', options: ['새로운 경험과 모험', '편안하고 익숙한 장소', '배우자의 취향과 선호', '나의 취향과 선호'] },
+    { key: 'q6', q: '배우자의 어떤 점이 당신을 가장 행복하게 하나요?', options: ['유머 감각과 긍정적인 태도', '따뜻하고 배려심 깊은 마음', '지적이고 현명한 모습', '활동적이고 에너지가 넘치는 모습'] },
+    { key: 'q7', q: '배우자와의 미래를 상상할 때, 가장 먼저 떠오르는 이미지는?', options: ['함께 새로운 목표를 달성하는 모습', '평화롭고 안정적인 일상', '서로에게 깊이 공감하며 위로하는 모습', '늘 즐겁고 활기찬 시간'] },
+  ];
+
   const calculateInsight = () => {
     const res = (insightAnswers.e || 'I') + (insightAnswers.s || 'S') + (insightAnswers.t || 'F') + (insightAnswers.j || 'P');
     setInsightResult(res);
     setStep(4);
+  };
+
+  const submitDeepAnalysis = async () => {
+    // Simulate AI analysis
+    const analysisResult = {
+      title: "🧭 공감과 신뢰의 관계 수호자",
+      summary: "당신은 배우자와의 관계에서 깊은 공감과 안정감을 중요하게 생각하며, 갈등 상황에서는 대화를 통해 해결하려는 경향이 강합니다. 배우자의 감정을 이해하고 지지하는 데 능숙하며, 함께하는 시간을 통해 사랑을 확인하는 것을 선호합니다. 때로는 자신의 감정을 솔직하게 표현하는 데 어려움을 겪을 수 있으나, 배우자와의 신뢰를 바탕으로 점차 개선될 것입니다.",
+      raw: deepSelections
+    };
+    setDeepAnalysis(analysisResult);
+    setStep(8); // Go to result view
   };
 
   return (
@@ -3132,6 +3156,14 @@ const OnboardingView = ({ user, userRole, setUserRole, onFinish }) => {
       }}
     >
       {step > 1 && step < 4 && (
+        <button 
+          onClick={() => setStep(step - 1)}
+          style={{ position: 'absolute', top: '15px', left: '15px', display: 'flex', alignItems: 'center', gap: '5px', padding: '10px', background: 'none', border: 'none', color: '#8B7355', fontWeight: 700, fontSize: '14px', zIndex: 10 }}
+        >
+          <ChevronLeft size={20} /> 뒤로
+        </button>
+      )}
+      {step >= 7 && step <= 8 && (
         <button 
           onClick={() => setStep(step - 1)}
           style={{ position: 'absolute', top: '15px', left: '15px', display: 'flex', alignItems: 'center', gap: '5px', padding: '10px', background: 'none', border: 'none', color: '#8B7355', fontWeight: 700, fontSize: '14px', zIndex: 10 }}
@@ -3288,6 +3320,27 @@ const OnboardingView = ({ user, userRole, setUserRole, onFinish }) => {
             <h2 style={{ fontSize: '24px', fontWeight: 900, color: '#2D1F08', marginBottom: '10px' }}>준비가 끝났습니다!</h2>
             <p style={{ color: '#8B7355', fontSize: '15px', fontWeight: 700, marginBottom: '30px' }}>당신의 기질은 <span style={{ color: '#8A60FF' }}>{insightResult}</span>입니다.<br/>이제 배우자와 연결을 시작할까요?</p>
             
+            {/* 🧠 New Deep Analysis Prompt in Onboarding */}
+            {!deepAnalysis && (
+              <div style={{ background: 'rgba(138, 96, 255, 0.05)', padding: '24px', borderRadius: '24px', border: '1.5px dashed #8A60FF', marginBottom: '25px', width: '100%' }}>
+                <p style={{ fontSize: '14px', fontWeight: 900, color: '#6A4DCE', marginBottom: '8px' }}>🤖 하티가 당신을 더 잘 이해하고 싶대요!</p>
+                <p style={{ fontSize: '12px', color: '#8B7355', fontWeight: 600, marginBottom: '15px', lineHeight: 1.5 }}>7개의 전문 질문에 답하면, AI 하티가 더욱 정교한 부부 맞춤형 조언을 제공합니다.</p>
+                <button 
+                  onClick={() => setStep(7)} 
+                  style={{ width: '100%', background: '#8A60FF', color: 'white', padding: '12px', borderRadius: '15px', border: 'none', fontWeight: 900, fontSize: '14px' }}
+                >
+                  3분 전문 성향 진단 시작 (추천)
+                </button>
+              </div>
+            )}
+
+            {deepAnalysis && (
+              <div style={{ background: 'rgba(34, 197, 94, 0.05)', padding: '20px', borderRadius: '24px', border: '1px solid #22C55E', marginBottom: '25px', width: '100%', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <CheckCircle2 size={20} color="#22C55E" />
+                <span style={{ fontSize: '13px', fontWeight: 800, color: '#166534' }}>심층 분석이 완료되었습니다!</span>
+              </div>
+            )}
+            
             <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', width: '100%' }}>
               <button 
                 onClick={async () => {
@@ -3300,7 +3353,7 @@ const OnboardingView = ({ user, userRole, setUserRole, onFinish }) => {
                       id: user.id,
                       couple_id: newCode,
                       user_role: userRole,
-                      info: { nickname, marriageDate: mDate || new Date().toISOString().split('T')[0], mbti: insightResult, blood },
+                      info: { nickname, marriageDate: mDate || new Date().toISOString().split('T')[0], mbti: insightResult, blood, deepAnalysis },
                       updated_at: new Date().toISOString()
                     }, { onConflict: 'id' });
                     
@@ -3355,7 +3408,7 @@ const OnboardingView = ({ user, userRole, setUserRole, onFinish }) => {
                     if (data && data.length > 1) {
                       setIsConnected(true);
                       setTimeout(() => {
-                        onFinish({ nickname, marriageDate: mDate, mbti: insightResult, blood, coupleCode });
+                        onFinish({ nickname, marriageDate: mDate, mbti: insightResult, blood, coupleCode, deepAnalysis });
                       }, 1000);
                     } else {
                       setTimeout(() => {
@@ -3417,7 +3470,7 @@ const OnboardingView = ({ user, userRole, setUserRole, onFinish }) => {
                   // Found existing couple code
                   setIsConnected(true);
                   setTimeout(() => {
-                    onFinish({ nickname, marriageDate: mDate, mbti: insightResult, blood, coupleCode });
+                    onFinish({ nickname, marriageDate: mDate, mbti: insightResult, blood, coupleCode, deepAnalysis });
                   }, 1200);
                 } else {
                   // No such code yet
@@ -3449,6 +3502,54 @@ const OnboardingView = ({ user, userRole, setUserRole, onFinish }) => {
             >
               처음으로 돌아가기
             </button>
+          </motion.div>
+        )}
+
+        {/* 🧠 Deep Analysis Sync Steps */}
+        {step === 7 && (
+          <motion.div key="step7" initial={{ x: 20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} className="flex flex-col h-full py-5">
+             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '15px' }}>
+                <Sparkles size={20} color="#8A60FF" />
+                <h2 style={{ fontSize: '18px', fontWeight: 800, color: '#1E293B' }}>하티 전문 성향 진단</h2>
+             </div>
+             <div style={{ width: '100%', height: '4px', background: '#E2E8F0', borderRadius: '10px', marginBottom: '20px' }}>
+                <div style={{ width: `${((deepStep + 1)/deepAnalysisQuestions.length)*100}%`, height: '100%', background: '#8A60FF', transition: '0.3s' }} />
+             </div>
+             <h3 style={{ fontSize: '18px', fontWeight: 900, color: '#0F172A', marginBottom: '24px', lineHeight: 1.5 }}>
+                {deepAnalysisQuestions[deepStep].q}
+             </h3>
+             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', flex: 1, overflowY: 'auto' }}>
+                {deepAnalysisQuestions[deepStep].options.map((opt, i) => (
+                   <button 
+                     key={i}
+                     onClick={() => {
+                        const newSels = { ...deepSelections, [deepAnalysisQuestions[deepStep].key]: opt };
+                        setDeepSelections(newSels);
+                        if (deepStep < deepAnalysisQuestions.length - 1) setDeepStep(deepStep + 1);
+                        else submitDeepAnalysis();
+                     }}
+                     style={{ width: '100%', padding: '20px', borderRadius: '18px', background: 'white', border: '1.5px solid #F1F5F9', textAlign: 'left', fontSize: '14px', fontWeight: 700, color: '#475569', boxShadow: '0 4px 10px rgba(0,0,0,0.02)' }}
+                   >
+                     {opt}
+                   </button>
+                ))}
+             </div>
+          </motion.div>
+        )}
+
+        {step === 8 && deepAnalysis && (
+          <motion.div key="step8" initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="flex flex-col h-full justify-center">
+             <div style={{ background: 'white', padding: '30px 20px', borderRadius: '24px', boxShadow: '0 10px 30px rgba(0,0,0,0.05)', border: '2px solid #8A60FF', marginBottom: '30px' }}>
+                <p style={{ fontSize: '12px', fontWeight: 900, color: '#8A60FF', marginBottom: '10px' }}>진단 완료!</p>
+                <h1 style={{ fontSize: '19px', fontWeight: 900, color: '#1E293B', marginBottom: '15px' }}>{deepAnalysis.title}</h1>
+                <p style={{ fontSize: '14px', color: '#475569', lineHeight: 1.6 }}>{deepAnalysis.summary}</p>
+             </div>
+             <button 
+                onClick={() => setStep(4)}
+                style={{ width: '100%', padding: '18px', borderRadius: '18px', background: '#1E293B', color: 'white', fontWeight: 900, fontSize: '16px' }}
+             >
+                분석 데이터 저장 및 계속하기
+             </button>
           </motion.div>
         )}
       </AnimatePresence>
