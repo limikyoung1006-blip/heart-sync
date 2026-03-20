@@ -1098,7 +1098,7 @@ const ChatView = ({ userRole, setUserRole, husbandInfo, setHusbandInfo, wifeInfo
     return {
       name: 'AI 하티',
       subtitle: '개혁주의 부부상담가',
-      avatar: '/hatti_3d.png', // 3D 하티 캐릭터 이미지
+      avatar: '/hatti_3d_v2.png', // 3D 하티 캐릭터 이미지
       intro: `반갑습니다, ${userRole === 'husband' ? husbandInfo.nickname : wifeInfo.nickname}님. 하나님의 언약 안에 있는 부부를 지키는 상담가 AI 하티입니다. ${partnerLabel}분의 ${partnerInfo.mbti} 성향과 우리의 통계 데이터를 바탕으로 ${userRole === 'husband' ? '형제님' : '자매님'}께 꼭 필요한 위로와 솔루션을 드릴게요.`,
       partnerInfo,
       partnerLabel,
@@ -1720,7 +1720,7 @@ const HattiCharacter = ({ state = 'floating', size = 120, style = {} }) => {
       }}
     >
       <img 
-        src="/Users/macbook/.gemini/antigravity/brain/1f2d9bec-6ffd-4e1d-a95f-913174a3daae/hatti_3d_v2_1774008365880.png" 
+        src="/hatti_3d_v2.png" 
         alt="Hatti" 
         style={{ width: '100%', height: '100%', objectFit: 'contain', filter: 'drop-shadow(0 15px 15px rgba(0,0,0,0.1))' }}
       />
