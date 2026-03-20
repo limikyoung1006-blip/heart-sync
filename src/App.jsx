@@ -3200,7 +3200,7 @@ const OnboardingView = ({ user, userRole, setUserRole, onFinish }) => {
               <p style={{ color: '#8B7355', fontSize: '15px', fontWeight: 600 }}>당신의 정보를 입력해주세요</p>
             </div>
 
-            <div style={{ display: 'flex', gap: '15px' }}>
+            <div style={{ display: 'flex', gap: '15px', marginBottom: '30px' }}>
               <button 
                 onClick={() => { setUserRole('husband'); setStep(2); }} 
                 style={{ flex: 1, padding: '30px 15px', borderRadius: '30px', background: '#FDFCF0', border: '2px solid #F5D060', fontSize: '18px', fontWeight: 900, color: '#2D1F08', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '15px' }}
@@ -3218,6 +3218,17 @@ const OnboardingView = ({ user, userRole, setUserRole, onFinish }) => {
                   <img src="/wife.png" alt="Wife" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 </div>
                 아내입니다
+              </button>
+            </div>
+
+            {/* 🔗 Quick Link for Existing Users */}
+            <div style={{ textAlign: 'center' }}>
+              <p style={{ fontSize: '14px', color: '#8B7355', fontWeight: 600, marginBottom: '10px' }}>이미 연결된 배우자가 있으신가요?</p>
+              <button 
+                onClick={() => setStep(6)}
+                style={{ background: 'none', border: 'none', color: '#8A60FF', fontWeight: 900, fontSize: '15px', borderBottom: '1.5px solid #8A60FF', paddingBottom: '2px' }}
+              >
+                기존 연결 코드 입력하기
               </button>
             </div>
           </motion.div>
@@ -3855,9 +3866,16 @@ const App = () => {
         .single();
       
       if (myProfile) {
-        if (myProfile.user_role === 'husband') setHusbandInfo(myProfile.info);
-        else setWifeInfo(myProfile.info);
+        if (myProfile.user_role === 'husband') setHusbandInfo(myProfile.info || husbandInfo);
+        else setWifeInfo(myProfile.info || wifeInfo);
         setCoupleCode(myProfile.couple_id);
+        setUserRole(myProfile.user_role);
+        
+        // If profile was found, they are likely already set up.
+        if (myProfile.couple_id && myProfile.couple_id !== 'none') {
+           setIsSetupDone(true);
+           localStorage.setItem('isSetupDone', 'true');
+        }
       }
 
       // Fetch Signals by coupleCode
