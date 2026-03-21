@@ -4023,6 +4023,21 @@ const App = () => {
     }, { onConflict: 'id' });
   };
   
+  const updateMemo = async (text) => {
+    const baseInfo = userRole === 'husband' ? husbandInfo : wifeInfo;
+    const updatedInfo = { ...baseInfo, todayMemo: text };
+    if (userRole === 'husband') setHusbandInfo(updatedInfo);
+    else setWifeInfo(updatedInfo);
+    
+    await supabase.from('profiles').upsert({
+      id: user.id, 
+      couple_id: coupleCode, 
+      user_role: userRole, 
+      info: updatedInfo, 
+      updated_at: new Date().toISOString()
+    }, { onConflict: 'id' });
+  };
+  
   // Supabase Real-time Sync
   useEffect(() => {
     // 💡 Reset scroll position when tab changes
