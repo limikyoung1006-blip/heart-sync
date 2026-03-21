@@ -311,9 +311,18 @@ const HATTI_TODOS = [
   { id: 8, action: "휴식", text: "오늘은 배우자가 온전히 쉴 수 있도록 육아나 집안일을 도맡아 해주세요." }
 ];
 
-const HomeView = ({ userRole, coupleCode, mySignal, setMySignal, spouseSignal, partnerPrayers, onIntimacyClick, onNav, schedules }) => {
+const HomeView = ({ user, userRole, coupleCode, mySignal, setMySignal, spouseSignal, partnerPrayers, onIntimacyClick, onNav, schedules, husbandInfo, wifeInfo, onUpdateMemo }) => {
   const [showGuide, setShowGuide] = useState(false);
   const [isRevealed, setIsRevealed] = useState(false);
+  const [memoInput, setMemoInput] = useState("");
+  const [isEditingMemo, setIsEditingMemo] = useState(false);
+
+  const myInfo = userRole === 'husband' ? husbandInfo : wifeInfo;
+  const spouseInfo = userRole === 'husband' ? wifeInfo : husbandInfo;
+
+  useEffect(() => {
+    if (myInfo?.todayMemo) setMemoInput(myInfo.todayMemo);
+  }, [myInfo]);
   
   // Pick a daily todo based on the date
   const dailyTodo = useMemo(() => {
@@ -593,6 +602,74 @@ const HomeView = ({ userRole, coupleCode, mySignal, setMySignal, spouseSignal, p
         </div>
       </div>
 
+      {/* 3. 오늘 서로에게 남기는 메모 (꼭 기억해줘요) */}
+      <div style={{ 
+        padding: '22px', 
+        background: 'linear-gradient(135deg, #FFF8E1 0%, #FFFDE7 100%)', 
+        borderRadius: '24px',
+        border: '1.5px solid #FBC02D',
+        boxShadow: '0 8px 25px rgba(251, 192, 45, 0.12)',
+        marginBottom: '25px',
+        position: 'relative',
+        overflow: 'hidden'
+      }}>
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <div style={{ background: '#FBC02D', padding: '6px', borderRadius: '10px' }}>
+              <StickyNote size={18} color="white" />
+            </div>
+            <span style={{ fontSize: '14px', fontWeight: 900, color: '#5D4037' }}>이건 꼭 기억해줘요!</span>
+          </div>
+          {!isEditingMemo && (
+            <button 
+              onClick={() => setIsEditingMemo(true)}
+              style={{ fontSize: '11px', fontWeight: 800, color: '#F57F17', background: 'rgba(251, 192, 45, 0.15)', border: 'none', padding: '5px 10px', borderRadius: '8px' }}
+            >
+              메모 남기기
+            </button>
+          )}
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+          {/* Spouse's Memo (Large Display) */}
+          <div style={{ 
+            background: 'white', 
+            padding: '15px', 
+            borderRadius: '16px', 
+            border: '1px dashed #FBC02D',
+            minHeight: '60px'
+          }}>
+            <p style={{ fontSize: '12px', fontWeight: 800, color: '#9E9E9E', marginBottom: '8px' }}>배우자의 한마디</p>
+            {spouseInfo?.todayMemo ? (
+              <p style={{ fontSize: '15px', fontWeight: 700, color: '#2D1F08', lineHeight: 1.5 }}>{spouseInfo.todayMemo}</p>
+            ) : (
+              <p style={{ fontSize: '13px', color: '#BDBDBD', fontStyle: 'italic' }}>아직 배우자가 남긴 메모가 없어요.</p>
+            )}
+          </div>
+
+          {/* My Memo Editing */}
+          {isEditingMemo && (
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+              <textarea 
+                value={memoInput}
+                onChange={(e) => setMemoInput(e.target.value)}
+                placeholder="배우자에게 전달할 메모를 입력하세요 (예: 퇴근길 우유 사오기!)"
+                style={{ width: '100%', padding: '12px', borderRadius: '14px', border: '1.5px solid #FBC02D', background: '#FFF9C4', fontSize: '14px', minHeight: '80px', outline: 'none' }}
+              />
+              <div className="flex justify-end gap-2 mt-2">
+                <button onClick={() => setIsEditingMemo(false)} style={{ padding: '8px 15px', borderRadius: '10px', background: '#EEE', color: '#666', border: 'none', fontSize: '12px', fontWeight: 800 }}>취소</button>
+                <button 
+                  onClick={() => { onUpdateMemo(memoInput); setIsEditingMemo(false); }} 
+                  style={{ padding: '8px 15px', borderRadius: '10px', background: '#FBC02D', color: '#2D1F08', border: 'none', fontSize: '12px', fontWeight: 900 }}
+                >
+                  메모 저장
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </div>
+      </div>
+
       {/* 🙏 Spouse's Prayer Summary Section (Synced with WorshipView) */}
       <div className="prayer-summary-card" style={{ marginBottom: '25px' }}>
         <div className="prayer-header" style={{ marginBottom: '12px', display: 'flex', alignItems: 'center' }}>
@@ -607,7 +684,7 @@ const HomeView = ({ userRole, coupleCode, mySignal, setMySignal, spouseSignal, p
           }}>
             <Heart size={14} color="white" fill="white" /> 
           </div>
-          <span style={{ fontSize: '14px', fontWeight: 900, color: '#5D4037', marginLeft: '10px', letterSpacing: '-0.3px' }}>배우자의 최신 기도</span>
+          <span style={{ fontSize: '14px', fontWeight: 900, color: '#5D4037', marginLeft: '10px', letterSpacing: '-0.3px' }}>속마음 기도 (직접 말하기 힘든 고백)</span>
         </div>
         <div 
           className="prayer-bubble-home" 
@@ -4252,6 +4329,9 @@ const App = () => {
                   onIntimacyClick={() => setActiveTab('intimacy')}
                   onNav={(tab) => setActiveTab(tab)}
                   schedules={schedules}
+                  husbandInfo={husbandInfo}
+                  wifeInfo={wifeInfo}
+                  onUpdateMemo={updateMemo}
                 />
               )}
               {activeTab === 'calendar' && (
