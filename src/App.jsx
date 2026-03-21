@@ -2711,7 +2711,7 @@ const DeepAnalysisView = ({ onBack, myInfo, updateProfile }) => {
   };
 
   const handleSaveAndFinish = () => {
-    updateProfile('deepAnalysis', analysisResult);
+    updateProfileFallback('deepAnalysis', analysisResult);
     alert('🎉 진단 결과가 시스템에 저장되었습니다!\n\nAI 하티의 메인 두뇌(System Prompt)가 지금부터 이 심리 및 행동 패턴을 분석하여, 부부 상담 시 완전히 개인화된 맞춤 솔루션을 제시하기 시작합니다.');
     onBack();
   };
@@ -2908,7 +2908,7 @@ const SettingsView = ({
       return;
     }
     const reader = new FileReader();
-    reader.onloadend = () => updateProfile('avatar', reader.result);
+    reader.onloadend = () => updateProfileFallback('avatar', reader.result);
     reader.readAsDataURL(file);
   };
 
@@ -3008,7 +3008,7 @@ const SettingsView = ({
               </div>
               <div style={{ display: 'flex', gap: '10px' }}>
                 <div style={{ flex: 2 }}>
-                  <label style={{ fontSize: '12px', fontWeight: 800, color: '#8B7355', display: 'block', marginBottom: '6px' }}>결혼기념일</label>
+                  <label style={{ fontSize: '12px', fontWeight: 800, color: '#8B7355', display: 'block', marginBottom: '6px' }}>결혼기념일 (v2.1)</label>
                   <input type="date" value={editInfo.marriageDate || ""} onChange={(e) => setEditInfo({...editInfo, marriageDate: e.target.value})} style={{ width: '100%', padding: '12px 14px', borderRadius: '14px', background: '#F9FAFB', border: '1px solid #EEE', fontSize: '13px' }} />
                 </div>
                 <div style={{ flex: 1 }}>
