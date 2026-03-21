@@ -2959,7 +2959,22 @@ const SettingsView = ({
                 <label style={{ fontSize: '12px', fontWeight: 800, color: '#8B7355', display: 'block', marginBottom: '6px' }}>성격 유형 (MBT-H)</label>
                 <input value={myInfo.mbti} onChange={(e) => updateProfile('mbti', e.target.value)} style={{ width: '100%', padding: '12px 18px', borderRadius: '14px', background: '#F9FAFB', border: '1px solid #EEE' }} />
               </div>
-              <motion.button whileTap={{ scale: 0.95 }} onClick={() => setShowProfileEdit(false)} style={{ width: '100%', padding: '16px', borderRadius: '16px', background: '#2D1F08', color: 'white', fontWeight: 900, border: 'none', cursor: 'pointer' }}>저장 완료</motion.button>
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <div style={{ flex: 2 }}>
+                  <label style={{ fontSize: '12px', fontWeight: 800, color: '#8B7355', display: 'block', marginBottom: '6px' }}>결혼기념일</label>
+                  <input type="date" value={myInfo.marriageDate || ""} onChange={(e) => updateProfile('marriageDate', e.target.value)} style={{ width: '100%', padding: '12px 14px', borderRadius: '14px', background: '#F9FAFB', border: '1px solid #EEE', fontSize: '13px' }} />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <label style={{ fontSize: '12px', fontWeight: 800, color: '#8B7355', display: 'block', marginBottom: '6px' }}>혈액형</label>
+                  <select value={myInfo.blood} onChange={(e) => updateProfile('blood', e.target.value)} style={{ width: '100%', padding: '12px 10px', borderRadius: '14px', background: '#F9FAFB', border: '1px solid #EEE', fontSize: '13px' }}>
+                    <option value="A">A형</option>
+                    <option value="B">B형</option>
+                    <option value="O">O형</option>
+                    <option value="AB">AB형</option>
+                  </select>
+                </div>
+              </div>
+              <motion.button whileTap={{ scale: 0.95 }} onClick={() => { setShowProfileEdit(false); alert("정보가 성공적으로 저장되었습니다!"); }} style={{ width: '100%', padding: '16px', borderRadius: '16px', background: '#1E293B', color: 'white', fontWeight: 900, border: 'none', cursor: 'pointer', marginTop: '10px' }}>확인</motion.button>
             </div>
           </motion.div>
         </div>
