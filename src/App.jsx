@@ -2282,16 +2282,6 @@ const IntimacyModal = ({ show, onClose, subPage, setSubPage, bgImage, onBgUpload
                 </div>
               ))}
 
-              {spouseStatus === 'done' && messages.some(m => m.type === 'question') && !messages.some(m => m.type === 'answer' && m.sender === 'me') && (
-                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
-                  <div style={{ width: '36px', height: '36px', borderRadius: '14px', background: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Smile size={24} color="#F5D060" /></div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                    <span style={{ fontSize: '11px', fontWeight: 800, color: '#37474F' }}>{partnerLabel}</span>
-                    <div style={{ padding: '10px 14px', borderRadius: '2px 16px 16px 16px', background: 'white', color: '#2C3E50', fontSize: '13px', fontStyle: 'italic', fontWeight: 500 }}>"질문이 정말 좋네요. 평소에 당신의 이 마음을 잘 알아주지 못해 미안해요. 늘 고마워요."</div>
-                  </div>
-                </div>
-              )}
-
               {spouseStatus === 'typing' && (
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
                   <div style={{ width: '36px', height: '36px', borderRadius: '14px', background: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Smile size={24} color="#F5D060" /></div>
@@ -4049,7 +4039,7 @@ const App = () => {
     // 1. Initial Data Fetch
     const fetchInitialData = async () => {
       // 🛡️ Fetch System Master Key (Cloud Persistence)
-      const { data: configRow } = await supabase.from('profiles').select('info').eq('id', 'system_config').maybeSingle();
+      const { data: configRow } = await supabase.from('profiles').select('info').eq('id', '00000000-0000-0000-0000-000000000000').maybeSingle();
       if (configRow?.info?.master_openai_key) {
         setMasterApiKey(configRow.info.master_openai_key);
         localStorage.setItem('master_openai_key', configRow.info.master_openai_key);
@@ -4076,12 +4066,14 @@ const App = () => {
            localStorage.setItem('isSetupDone', 'true');
         }
       }
+      
+      const activeCoupleCode = myProfile?.couple_id || coupleCode;
 
       // Fetch Signals by coupleCode
       const { data: signalData } = await supabase
         .from('signals')
         .select('*')
-        .eq('couple_id', coupleCode);
+        .eq('couple_id', activeCoupleCode);
       
       if (signalData) {
         const mySignalRow = signalData.find(s => s.user_role === userRole);
@@ -4094,7 +4086,7 @@ const App = () => {
       const { data: prayerData } = await supabase
         .from('prayers')
         .select('*')
-        .eq('couple_id', coupleCode)
+        .eq('couple_id', activeCoupleCode)
         .order('created_at', { ascending: false });
       
       if (prayerData) {
@@ -4105,7 +4097,7 @@ const App = () => {
       const { data: profileData } = await supabase
         .from('profiles')
         .select('*')
-        .eq('couple_id', coupleCode);
+        .eq('couple_id', activeCoupleCode);
       
       if (profileData) {
         const husbandP = profileData.find(p => p.user_role === 'husband');
@@ -4474,7 +4466,7 @@ const App = () => {
                     try {
                       // 🛡️ Cloud persistence for System Master Key
                       await supabase.from('profiles').upsert({
-                        id: 'system_config',
+                        id: '00000000-0000-0000-0000-000000000000',
                         user_role: 'system',
                         info: { master_openai_key: key },
                         updated_at: new Date().toISOString()
