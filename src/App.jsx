@@ -2852,7 +2852,7 @@ const SettingsView = ({
     blood: myInfo.blood || "A"
   });
 
-  // Reset editInfo when modal opens
+  // Reset editInfo only when modal opens
   useEffect(() => {
     if (showProfileEdit) {
       setEditInfo({
@@ -2862,7 +2862,7 @@ const SettingsView = ({
         blood: myInfo.blood || "A"
       });
     }
-  }, [showProfileEdit, myInfo]);
+  }, [showProfileEdit]); // 🛡️ Removed myInfo to prevent reset while typing
 
   // Persist notification preferences
   useEffect(() => {
