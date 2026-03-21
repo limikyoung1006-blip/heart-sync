@@ -3484,7 +3484,12 @@ const OnboardingView = ({ user, userRole, setUserRole, onFinish }) => {
                 const { data } = await supabase.from('profiles').select('*').eq('couple_id', coupleCode);
                 
                 if (data && data.length > 0) {
-                  alert("연결 대상을 찾았습니다! (" + data.length + "명)");
+                  // Find spouse info to show a warmer message
+                  const spouse = data.find(p => p.id !== user.id);
+                  const spouseName = spouse?.info?.nickname || (spouse?.user_role === 'husband' ? '남편' : '아내') || '배우자';
+                  
+                  alert(`🎉 ${spouseName}님을 찾았습니다! 성공적으로 연결되었습니다.`);
+                  
                   // Found existing couple code
                   setIsConnected(true);
                   setTimeout(() => {
