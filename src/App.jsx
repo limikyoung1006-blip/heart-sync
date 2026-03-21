@@ -2841,8 +2841,28 @@ const SettingsView = ({
   const [newAnnivTitle, setNewAnnivTitle] = useState("");
   const [newAnnivDate, setNewAnnivDate] = useState("");
 
+  // 📝 Local states for profile editing (Prevent lag on keystrokes)
   const myInfo = userRole === 'husband' ? husbandInfo : wifeInfo;
   const setMyInfo = userRole === 'husband' ? setHusbandInfo : setWifeInfo;
+  
+  const [editInfo, setEditInfo] = useState({
+    nickname: myInfo.nickname || "",
+    mbti: myInfo.mbti || "",
+    marriageDate: myInfo.marriageDate || "",
+    blood: myInfo.blood || "A"
+  });
+
+  // Reset editInfo when modal opens
+  useEffect(() => {
+    if (showProfileEdit) {
+      setEditInfo({
+        nickname: myInfo.nickname || "",
+        mbti: myInfo.mbti || "",
+        marriageDate: myInfo.marriageDate || "",
+        blood: myInfo.blood || "A"
+      });
+    }
+  }, [showProfileEdit, myInfo]);
 
   // Persist notification preferences
   useEffect(() => {
@@ -2892,23 +2912,50 @@ const SettingsView = ({
     reader.readAsDataURL(file);
   };
 
-  const updateProfile = async (field, value) => {
+  const handleProfileSave = async () => {
+    const updatedInfo = { ...myInfo, ...editInfo };
+    setMyInfo(updatedInfo);
+    
+    try {
+      // 1. Update My Profile
+      await supabase.from('profiles').upsert({
+        id: user.id, 
+        couple_id: coupleCode, 
+        user_role: userRole, 
+        info: updatedInfo, 
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'id' });
+
+      // 2. If Marriage Date changed, sync with spouse
+      if (editInfo.marriageDate !== myInfo.marriageDate) {
+        const spouseRole = userRole === 'husband' ? 'wife' : 'husband';
+        const spouseSetter = userRole === 'husband' ? setWifeInfo : setHusbandInfo;
+        const spouseInfo = userRole === 'husband' ? wifeInfo : husbandInfo;
+        const updatedSpouseInfo = { ...spouseInfo, marriageDate: editInfo.marriageDate };
+        
+        spouseSetter(updatedSpouseInfo);
+        await supabase.from('profiles').upsert({
+          couple_id: coupleCode, 
+          user_role: spouseRole, 
+          info: updatedSpouseInfo, 
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'couple_id,user_role' });
+      }
+      
+      setShowProfileEdit(false);
+      alert("정보가 성공적으로 저장되었습니다!");
+    } catch (err) {
+      console.error("Profile save error:", err);
+      alert("저장 중 오류가 발생했습니다.");
+    }
+  };
+
+  const updateProfileFallback = async (field, value) => {
     const updatedInfo = { ...myInfo, [field]: value };
     setMyInfo(updatedInfo);
     await supabase.from('profiles').upsert({
       id: user.id, couple_id: coupleCode, user_role: userRole, info: updatedInfo, updated_at: new Date().toISOString()
     }, { onConflict: 'id' });
-
-    if (field === 'marriageDate') {
-      const spouseRole = userRole === 'husband' ? 'wife' : 'husband';
-      const spouseSetter = userRole === 'husband' ? setWifeInfo : setHusbandInfo;
-      const spouseInfo = userRole === 'husband' ? wifeInfo : husbandInfo;
-      const updatedSpouseInfo = { ...spouseInfo, marriageDate: value };
-      spouseSetter(updatedSpouseInfo);
-      await supabase.from('profiles').upsert({
-        couple_id: coupleCode, user_role: spouseRole, info: updatedSpouseInfo, updated_at: new Date().toISOString()
-      }, { onConflict: 'couple_id,user_role' });
-    }
   };
 
   const addAnniversary = () => {
@@ -2953,20 +3000,20 @@ const SettingsView = ({
             <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
               <div>
                 <label style={{ fontSize: '12px', fontWeight: 800, color: '#8B7355', display: 'block', marginBottom: '6px' }}>애칭</label>
-                <input value={myInfo.nickname} onChange={(e) => updateProfile('nickname', e.target.value)} style={{ width: '100%', padding: '12px 18px', borderRadius: '14px', background: '#F9FAFB', border: '1px solid #EEE' }} />
+                <input value={editInfo.nickname} onChange={(e) => setEditInfo({...editInfo, nickname: e.target.value})} style={{ width: '100%', padding: '12px 18px', borderRadius: '14px', background: '#F9FAFB', border: '1px solid #EEE' }} />
               </div>
               <div>
                 <label style={{ fontSize: '12px', fontWeight: 800, color: '#8B7355', display: 'block', marginBottom: '6px' }}>성격 유형 (MBT-H)</label>
-                <input value={myInfo.mbti} onChange={(e) => updateProfile('mbti', e.target.value)} style={{ width: '100%', padding: '12px 18px', borderRadius: '14px', background: '#F9FAFB', border: '1px solid #EEE' }} />
+                <input value={editInfo.mbti} onChange={(e) => setEditInfo({...editInfo, mbti: e.target.value})} style={{ width: '100%', padding: '12px 18px', borderRadius: '14px', background: '#F9FAFB', border: '1px solid #EEE' }} />
               </div>
               <div style={{ display: 'flex', gap: '10px' }}>
                 <div style={{ flex: 2 }}>
                   <label style={{ fontSize: '12px', fontWeight: 800, color: '#8B7355', display: 'block', marginBottom: '6px' }}>결혼기념일</label>
-                  <input type="date" value={myInfo.marriageDate || ""} onChange={(e) => updateProfile('marriageDate', e.target.value)} style={{ width: '100%', padding: '12px 14px', borderRadius: '14px', background: '#F9FAFB', border: '1px solid #EEE', fontSize: '13px' }} />
+                  <input type="date" value={editInfo.marriageDate || ""} onChange={(e) => setEditInfo({...editInfo, marriageDate: e.target.value})} style={{ width: '100%', padding: '12px 14px', borderRadius: '14px', background: '#F9FAFB', border: '1px solid #EEE', fontSize: '13px' }} />
                 </div>
                 <div style={{ flex: 1 }}>
                   <label style={{ fontSize: '12px', fontWeight: 800, color: '#8B7355', display: 'block', marginBottom: '6px' }}>혈액형</label>
-                  <select value={myInfo.blood} onChange={(e) => updateProfile('blood', e.target.value)} style={{ width: '100%', padding: '12px 10px', borderRadius: '14px', background: '#F9FAFB', border: '1px solid #EEE', fontSize: '13px' }}>
+                  <select value={editInfo.blood} onChange={(e) => setEditInfo({...editInfo, blood: e.target.value})} style={{ width: '100%', padding: '12px 10px', borderRadius: '14px', background: '#F9FAFB', border: '1px solid #EEE', fontSize: '13px' }}>
                     <option value="A">A형</option>
                     <option value="B">B형</option>
                     <option value="O">O형</option>
@@ -2974,7 +3021,7 @@ const SettingsView = ({
                   </select>
                 </div>
               </div>
-              <motion.button whileTap={{ scale: 0.95 }} onClick={() => { setShowProfileEdit(false); alert("정보가 성공적으로 저장되었습니다!"); }} style={{ width: '100%', padding: '16px', borderRadius: '16px', background: '#1E293B', color: 'white', fontWeight: 900, border: 'none', cursor: 'pointer', marginTop: '10px' }}>확인</motion.button>
+              <motion.button whileTap={{ scale: 0.95 }} onClick={handleProfileSave} style={{ width: '100%', padding: '16px', borderRadius: '16px', background: '#1E293B', color: 'white', fontWeight: 900, border: 'none', cursor: 'pointer', marginTop: '10px' }}>확인</motion.button>
             </div>
           </motion.div>
         </div>
@@ -3253,41 +3300,35 @@ const OnboardingView = ({ user, userRole, setUserRole, onFinish }) => {
           <motion.div key="step2" initial={{ x: 20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} exit={{ x: -20, opacity: 0 }} className="flex flex-col h-full justify-center">
             <h2 style={{ fontSize: '24px', fontWeight: 900, color: '#2D1F08', marginBottom: '10px' }}>당신의 정보를 입력해주세요</h2>
             <p style={{ color: '#8B7355', fontSize: '14px', marginBottom: '40px', fontWeight: 600 }}>부부신호등이 두 분의 성향에 맞춰 안내해 드릴게요.</p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
               <div>
                 <label style={{ fontSize: '12px', fontWeight: 800, color: '#B08D3E', display: 'block', marginBottom: '8px' }}>앱에서 불릴 이름/애칭</label>
-                <input value={nickname} onChange={(e) => setNickname(e.target.value)} placeholder="예: 사랑꾼 남편" style={{ width: '100%', padding: '16px 22px', borderRadius: '18px', border: '1.5px solid #EEE', background: '#F9FAFB', fontSize: '16px' }} />
+                <input 
+                  autoFocus
+                  value={nickname} 
+                  onChange={(e) => setNickname(e.target.value)} 
+                  placeholder="예: 사랑꾼 남편" 
+                  style={{ width: '100%', padding: '16px 22px', borderRadius: '18px', border: '1.5px solid #EEE', background: '#F9FAFB', fontSize: '16px', color: '#2D1F08', fontWeight: 700 }} 
+                />
               </div>
+              
               <div style={{ display: 'flex', gap: '15px' }}>
                 <div style={{ flex: 1 }}>
-                  <label style={{ fontSize: '12px', fontWeight: 800, color: '#B08D3E', display: 'block', marginBottom: '8px' }}>결혼기념일 (년/월/일)</label>
-                  <div style={{ display: 'flex', gap: '8px' }}>
-                    <select 
-                      value={mDate.split('-')[0]} 
-                      onChange={(e) => setMDate(`${e.target.value}-${mDate.split('-')[1]}-${mDate.split('-')[2]}`)}
-                      style={{ flex: 2, padding: '14px', borderRadius: '15px', border: '1.5px solid #EEE', background: '#F9FAFB', fontSize: '15px', appearance: 'none' }}
-                    >
-                      {Array.from({ length: 50 }, (_, i) => 2026 - i).map(year => <option key={year} value={year}>{year}년</option>)}
-                    </select>
-                    <select 
-                      value={parseInt(mDate.split('-')[1])} 
-                      onChange={(e) => setMDate(`${mDate.split('-')[0]}-${String(e.target.value).padStart(2, '0')}-${mDate.split('-')[2]}`)}
-                      style={{ flex: 1, padding: '14px', borderRadius: '15px', border: '1.5px solid #EEE', background: '#F9FAFB', fontSize: '15px', appearance: 'none' }}
-                    >
-                      {Array.from({ length: 12 }, (_, i) => i + 1).map(month => <option key={month} value={month}>{month}월</option>)}
-                    </select>
-                    <select 
-                      value={parseInt(mDate.split('-')[2])} 
-                      onChange={(e) => setMDate(`${mDate.split('-')[0]}-${mDate.split('-')[1]}-${String(e.target.value).padStart(2, '0')}`)}
-                      style={{ flex: 1, padding: '14px', borderRadius: '15px', border: '1.5px solid #EEE', background: '#F9FAFB', fontSize: '15px', appearance: 'none' }}
-                    >
-                      {Array.from({ length: 31 }, (_, i) => i + 1).map(day => <option key={day} value={day}>{day}일</option>)}
-                    </select>
-                  </div>
+                  <label style={{ fontSize: '12px', fontWeight: 800, color: '#B08D3E', display: 'block', marginBottom: '8px' }}>결혼기념일 선택</label>
+                  <input 
+                    type="date" 
+                    value={mDate} 
+                    onChange={(e) => setMDate(e.target.value)}
+                    style={{ width: '100%', padding: '16px 18px', borderRadius: '18px', border: '1.5px solid #EEE', background: '#F9FAFB', fontSize: '15px', color: '#2D1F08', fontWeight: 800, appearance: 'none' }}
+                  />
                 </div>
-                <div style={{ flex: 1 }}>
+                <div style={{ width: '100px' }}>
                   <label style={{ fontSize: '12px', fontWeight: 800, color: '#B08D3E', display: 'block', marginBottom: '8px' }}>혈액형</label>
-                  <select value={blood} onChange={(e) => setBlood(e.target.value)} style={{ width: '100%', padding: '16px 15px', borderRadius: '18px', border: '1.5px solid #EEE', background: '#F9FAFB', fontSize: '16px', appearance: 'none' }}>
+                  <select 
+                    value={blood} 
+                    onChange={(e) => setBlood(e.target.value)} 
+                    style={{ width: '100%', padding: '16px 12px', borderRadius: '18px', border: '1.5px solid #EEE', background: '#F9FAFB', fontSize: '15px', fontWeight: 800, appearance: 'none' }}
+                  >
                     <option value="A">A형</option>
                     <option value="B">B형</option>
                     <option value="O">O형</option>
@@ -3295,13 +3336,13 @@ const OnboardingView = ({ user, userRole, setUserRole, onFinish }) => {
                   </select>
                 </div>
               </div>
-              <button 
-                onClick={() => nickname && setStep(3)}
-                style={{ marginTop: '20px', padding: '18px', borderRadius: '20px', background: '#2D1F08', color: 'white', fontWeight: 900, fontSize: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
-              >
-                다음으로 <ArrowRight size={20} />
-              </button>
             </div>
+            <button 
+              onClick={() => nickname && setStep(3)}
+              style={{ marginTop: '20px', padding: '18px', borderRadius: '20px', background: '#2D1F08', color: 'white', fontWeight: 900, fontSize: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+            >
+              다음으로 <ArrowRight size={20} />
+            </button>
           </motion.div>
         )}
 
