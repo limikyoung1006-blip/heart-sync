@@ -2926,7 +2926,10 @@ const SettingsView = ({
         updated_at: new Date().toISOString()
       }, { onConflict: 'id' });
 
-      // 2. If Marriage Date changed, sync with spouse
+      // 2. Clear local cache to force refresh
+      localStorage.setItem('master_openai_key', ''); 
+
+      // 3. If Marriage Date changed, sync with spouse
       if (editInfo.marriageDate !== myInfo.marriageDate) {
         const spouseRole = userRole === 'husband' ? 'wife' : 'husband';
         const spouseSetter = userRole === 'husband' ? setWifeInfo : setHusbandInfo;
@@ -3006,22 +3009,48 @@ const SettingsView = ({
                 <label style={{ fontSize: '12px', fontWeight: 800, color: '#8B7355', display: 'block', marginBottom: '6px' }}>성격 유형 (MBT-H)</label>
                 <input value={editInfo.mbti} onChange={(e) => setEditInfo({...editInfo, mbti: e.target.value})} style={{ width: '100%', padding: '12px 18px', borderRadius: '14px', background: '#F9FAFB', border: '1px solid #EEE' }} />
               </div>
-              <div style={{ display: 'flex', gap: '10px' }}>
-                <div style={{ flex: 2 }}>
-                  <label style={{ fontSize: '12px', fontWeight: 800, color: '#8B7355', display: 'block', marginBottom: '6px' }}>결혼기념일 (v2.1)</label>
-                  <input type="date" value={editInfo.marriageDate || ""} onChange={(e) => setEditInfo({...editInfo, marriageDate: e.target.value})} style={{ width: '100%', padding: '12px 14px', borderRadius: '14px', background: '#F9FAFB', border: '1px solid #EEE', fontSize: '13px' }} />
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
+                <div style={{ flex: 1 }}>
+                  <label style={{ fontSize: '12px', fontWeight: 800, color: '#8B7355', display: 'block', marginBottom: '6px' }}>결혼 (년)</label>
+                  <select 
+                    value={editInfo.marriageDate.split('-')[0] || "2020"} 
+                    onChange={(e) => setEditInfo({...editInfo, marriageDate: `${e.target.value}-${editInfo.marriageDate.split('-')[1] || "01"}-${editInfo.marriageDate.split('-')[2] || "01"}`})}
+                    style={{ width: '100%', padding: '12px 6px', borderRadius: '14px', background: '#F9FAFB', border: '1px solid #EEE', fontSize: '13px' }}
+                  >
+                    {Array.from({ length: 50 }, (_, i) => 2026 - i).map(y => <option key={y} value={y}>{y}</option>)}
+                  </select>
                 </div>
                 <div style={{ flex: 1 }}>
-                  <label style={{ fontSize: '12px', fontWeight: 800, color: '#8B7355', display: 'block', marginBottom: '6px' }}>혈액형</label>
-                  <select value={editInfo.blood} onChange={(e) => setEditInfo({...editInfo, blood: e.target.value})} style={{ width: '100%', padding: '12px 10px', borderRadius: '14px', background: '#F9FAFB', border: '1px solid #EEE', fontSize: '13px' }}>
-                    <option value="A">A형</option>
-                    <option value="B">B형</option>
-                    <option value="O">O형</option>
-                    <option value="AB">AB형</option>
+                  <label style={{ fontSize: '12px', fontWeight: 800, color: '#8B7355', display: 'block', marginBottom: '6px' }}>월</label>
+                  <select 
+                    value={parseInt(editInfo.marriageDate.split('-')[1] || "1")} 
+                    onChange={(e) => setEditInfo({...editInfo, marriageDate: `${editInfo.marriageDate.split('-')[0] || "2020"}-${String(e.target.value).padStart(2, '0')}-${editInfo.marriageDate.split('-')[2] || "01"}`})}
+                    style={{ width: '100%', padding: '12px 6px', borderRadius: '14px', background: '#F9FAFB', border: '1px solid #EEE', fontSize: '13px' }}
+                  >
+                    {Array.from({ length: 12 }, (_, i) => i + 1).map(m => <option key={m} value={m}>{m}</option>)}
+                  </select>
+                </div>
+                <div style={{ flex: 1 }}>
+                  <label style={{ fontSize: '12px', fontWeight: 800, color: '#8B7355', display: 'block', marginBottom: '6px' }}>일</label>
+                  <select 
+                    value={parseInt(editInfo.marriageDate.split('-')[2] || "1")} 
+                    onChange={(e) => setEditInfo({...editInfo, marriageDate: `${editInfo.marriageDate.split('-')[0] || "2020"}-${editInfo.marriageDate.split('-')[1] || "01"}-${String(e.target.value).padStart(2, '0')}`})}
+                    style={{ width: '100%', padding: '12px 6px', borderRadius: '14px', background: '#F9FAFB', border: '1px solid #EEE', fontSize: '13px' }}
+                  >
+                    {Array.from({ length: 31 }, (_, i) => i + 1).map(d => <option key={d} value={d}>{d}</option>)}
                   </select>
                 </div>
               </div>
-              <motion.button whileTap={{ scale: 0.95 }} onClick={handleProfileSave} style={{ width: '100%', padding: '16px', borderRadius: '16px', background: '#1E293B', color: 'white', fontWeight: 900, border: 'none', cursor: 'pointer', marginTop: '10px' }}>확인</motion.button>
+              <div>
+                <label style={{ fontSize: '12px', fontWeight: 800, color: '#8B7355', display: 'block', marginBottom: '6px' }}>혈액형</label>
+                <select value={editInfo.blood} onChange={(e) => setEditInfo({...editInfo, blood: e.target.value})} style={{ width: '100%', padding: '12px 10px', borderRadius: '14px', background: '#F9FAFB', border: '1px solid #EEE', fontSize: '13px' }}>
+                  <option value="A">A형</option>
+                  <option value="B">B형</option>
+                  <option value="O">O형</option>
+                  <option value="AB">AB형</option>
+                </select>
+              </div>
+              <motion.button whileTap={{ scale: 0.95 }} onClick={handleProfileSave} style={{ width: '100%', padding: '16px', borderRadius: '16px', background: '#1E293B', color: 'white', fontWeight: 900, border: 'none', cursor: 'pointer', marginTop: '10px' }}>수정 완료</motion.button>
             </div>
           </motion.div>
         </div>
