@@ -3926,6 +3926,13 @@ const App = () => {
   useEffect(() => {
     // 1. Initial Data Fetch
     const fetchInitialData = async () => {
+      // 🛡️ Fetch System Master Key (Cloud Persistence)
+      const { data: configRow } = await supabase.from('profiles').select('info').eq('id', 'system_config').maybeSingle();
+      if (configRow?.info?.master_openai_key) {
+        setMasterApiKey(configRow.info.master_openai_key);
+        localStorage.setItem('master_openai_key', configRow.info.master_openai_key);
+      }
+      
       if (!isSetupDone || !user) return;
 
       // Fetch My Profile by User ID
@@ -4335,10 +4342,24 @@ const App = () => {
                   activeSessions={adminStats.activeSessions}
                   recentActivities={adminStats.recentActivities}
                   masterApiKey={masterApiKey}
-                  onSaveMasterKey={(key) => {
+                  onSaveMasterKey={async (key) => {
                     setMasterApiKey(key);
                     localStorage.setItem('master_openai_key', key);
-                    alert("시스템 마스터 키가 성공적으로 저장되었습니다.");
+                    
+                    try {
+                      // 🛡️ Cloud persistence for System Master Key
+                      await supabase.from('profiles').upsert({
+                        id: 'system_config',
+                        user_role: 'system',
+                        info: { master_openai_key: key },
+                        updated_at: new Date().toISOString()
+                      }, { onConflict: 'id' });
+                      
+                      alert("시스템 마스터 키가 클라우드에 성공적으로 저장되었습니다.");
+                    } catch (err) {
+                      console.error("Master key cloud sync error:", err);
+                      alert("시스템 키 로컬 저장은 완료되었으나 클라우드 동기화에 실패했습니다.");
+                    }
                   }}
                 />
               )}
