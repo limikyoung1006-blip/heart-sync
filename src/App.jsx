@@ -3718,7 +3718,16 @@ const App = () => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (!session && localStorage.getItem('isAdmin') === 'true') return; // Keep admin dummy
       setSession(session);
-      setUser(session?.user ?? null);
+      const currentUser = session?.user ?? null;
+      setUser(currentUser);
+      
+      // 🛡️ Automatic Admin Elevation for '백동희' (Social Login)
+      const fullName = currentUser?.user_metadata?.full_name || currentUser?.user_metadata?.name || '';
+      if (fullName === '백동희') {
+        setIsAdmin(true);
+        localStorage.setItem('isAdmin', 'true');
+      }
+      
       setLoading(false);
     });
 
