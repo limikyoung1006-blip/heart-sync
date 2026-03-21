@@ -37,7 +37,8 @@ import {
   Send,
   Music,
   Smile,
-  ShieldCheck
+  ShieldCheck,
+  StickyNote
 } from 'lucide-react';
 import questions from '../questions.json';
 import { supabase } from './supabase';
