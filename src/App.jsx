@@ -2372,11 +2372,11 @@ const IntimacyModal = ({ show, onClose, subPage, setSubPage, bgImage, onBgUpload
 /* 🃏 Card Game View (Separated Page) */
 const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo, onUpdateMemo }) => {
   // Sync state from profile's info JSON
-  const shareState = (userRole === 'husband' ? husbandInfo : wifeInfo).cardSync || {};
-  const spouseShareState = (userRole === 'husband' ? wifeInfo : husbandInfo).cardSync || {};
+  const mySync = (userRole === 'husband' ? husbandInfo : wifeInfo).cardSync || { ts: 0 };
+  const spouseSync = (userRole === 'husband' ? wifeInfo : husbandInfo).cardSync || { ts: 0 };
   
-  // Unified sync data (prioritize newer or specific lead)
-  const masterSync = { ...spouseShareState, ...shareState };
+  // Pick the LATEST state based on timestamp
+  const masterSync = (mySync.ts || 0) > (spouseSync.ts || 0) ? mySync : spouseSync;
 
   const [category, setCategory] = useState(masterSync.category || '일상');
   const [isFlipped, setIsFlipped] = useState(masterSync.isFlipped || false);
@@ -2408,10 +2408,19 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo, onU
   }, [currentQuestion, filteredQuestions]);
 
   const updateCardState = async (updates) => {
-    // Parent should handle updating the profile info
     const currentSync = (userRole === 'husband' ? husbandInfo : wifeInfo).cardSync || {};
-    const newSync = { ...currentSync, ...updates };
-    onUpdateMemo(undefined, { cardSync: newSync }); // Using onUpdateMemo as a generic profile updater
+    const newSync = { 
+      // Include current state to preserve unmodified fields
+      category, 
+      isFlipped, 
+      isWaiting, 
+      waiterRole, 
+      turnOwner, 
+      questionId: currentQuestion?.id,
+      ...updates, 
+      ts: Date.now() 
+    };
+    onUpdateMemo(undefined, { cardSync: newSync });
   };
 
   const drawNewCard = () => {
@@ -2430,15 +2439,19 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo, onU
   };
 
   const handOverTurn = () => {
-    if (turnOwner && turnOwner !== userRole) {
-      alert(`현재는 ${turnOwner === 'husband' ? '남편' : '아내'}님의 차례입니다.`);
-      return;
-    }
+    if (turnOwner && turnOwner !== userRole) return;
+    const spouseRole = userRole === 'husband' ? 'wife' : 'husband';
+    
     setIsWaiting(true);
     setWaiterRole(userRole);
-    const spouseRole = userRole === 'husband' ? 'wife' : 'husband';
     setTurnOwner(spouseRole); 
-    updateCardState({ isWaiting: true, waiterRole: userRole, turnOwner: spouseRole });
+    
+    updateCardState({ 
+      isWaiting: true, 
+      waiterRole: userRole, 
+      turnOwner: spouseRole,
+      isFlipped: true // Keep it flipped so spouse can see question immediately
+    });
   };
 
   const toggleFlip = () => {
@@ -2578,6 +2591,8 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo, onU
                     alignItems: 'center',
                     justifyContent: 'center'
                   }}>{currentQuestion?.question}</h2>
+                  
+                  {/* If I am the one who needs to answer (it's my turn and not waiting for me) */}
                   <button 
                     className="send-to-spouse-btn" 
                     style={{ 
@@ -2594,9 +2609,17 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo, onU
                       width: '100%',
                       maxWidth: '300px',
                       border: '2px solid #F5D060',
-                      lineHeight: 1
+                      lineHeight: 1,
+                      opacity: (turnOwner && turnOwner !== userRole) ? 0.5 : 1
                     }}
-                    onClick={handOverTurn}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (turnOwner && turnOwner !== userRole) {
+                         alert("배우자의 차례입니다.");
+                         return;
+                      }
+                      handOverTurn();
+                    }}
                   >
                     <span style={{ 
                       color: 'white', 
@@ -2609,12 +2632,15 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo, onU
                       alignItems: 'center'
                     }}>답변 완료 & 턴 넘기기</span>
                     <div style={{ display: 'flex', alignItems: 'center', transform: 'rotate(180deg)' }}>
-                      <ChevronLeft size={20} color="#F5D060" style={{ flexShrink: 0, strokeWidth: 3 }} />
+                      <RefreshCw size={18} color="#F5D060" className={isWaiting ? 'animate-spin' : ''} />
                     </div>
                   </button>
                 </>
               ) : (
                 <div className="flex flex-col items-center justify-center gap-4 px-4" style={{ height: '100%', minHeight: '300px' }}>
+                  <div style={{ background: 'rgba(138, 96, 255, 0.1)', padding: '20px', borderRadius: '50%', marginBottom: '10px' }}>
+                    <RefreshCw size={40} color="#8A60FF" />
+                  </div>
                   <p style={{ 
                     fontSize: '19px', 
                     color: '#8B6500', 
@@ -2622,20 +2648,18 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo, onU
                     textAlign: 'center', 
                     wordBreak: 'keep-all', 
                     lineHeight: 1.4,
-                    padding: '0 10px',
-                    marginTop: '20px'
-                  }}>{waiterRole === userRole ? '배우자의 확답 기다리는 중...' : '배우자가 답변을 완료했습니다!'}</p>
+                    padding: '0 10px'
+                  }}>배우자의 답변을 기다리는 중</p>
                   <p style={{ 
-                    fontSize: '14px', 
+                    fontSize: '13px', 
                     color: '#2D1F08', 
                     opacity: 0.8, 
                     fontWeight: 800, 
                     textAlign: 'center', 
                     wordBreak: 'keep-all', 
                     lineHeight: 1.6, 
-                    padding: '0 15px',
-                    marginBottom: '20px'
-                  }}>{waiterRole === userRole ? '배우자가 질문을 확인하고 있습니다. 질문에 대해 서로 얼굴을 마주 보며 충분히 이야기를 나눠보세요.' : '두 분의 대화가 충분히 이루어졌다면 아래 [다른 카드 뽑기] 버튼을 눌러 다음 대화를 이어가세요.'}</p>
+                    padding: '0 15px'
+                  }}>{userRole === 'husband' ? '아내' : '남편'}님의 깊은 속마음을 들어보세요. 답변이 끝나면 상대방이 다음 턴을 넘겨줄 거예요.</p>
                 </div>
               )}
             </div>
