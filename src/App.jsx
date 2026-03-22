@@ -2393,7 +2393,9 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo, onU
     if (masterSync.isWaiting !== undefined) setIsWaiting(masterSync.isWaiting);
     if (masterSync.waiterRole !== undefined) setWaiterRole(masterSync.waiterRole);
     if (masterSync.turnOwner !== undefined) setTurnOwner(masterSync.turnOwner);
-    if (masterSync.questionId) {
+    
+    // 🔥 질문 ID가 바뀌면 즉시 업데이트
+    if (masterSync.questionId && masterSync.questionId !== currentQuestion?.id) {
       const q = questions.find(item => item.id === masterSync.questionId);
       if (q) setCurrentQuestion(q);
     }
@@ -4216,6 +4218,12 @@ const App = () => {
         if (role === 'husband') setHusbandInfo(info);
         else if (role === 'wife') setWifeInfo(info);
 
+        // 🚀 자동 입장 (Auto-Navigation) 처리: 상대방 프로필에서 'requestTab' 신호 감지
+        if (info && info.requestTab && info.requestTab !== activeTabRef.current) {
+          console.log("Auto-nav triggered via profile:", info.requestTab);
+          setActiveTab(info.requestTab);
+        }
+
         // Real-time sync for shared settings
         if (info.coupleSchedules) setSchedules(info.coupleSchedules);
         if (info.worshipDays) setWorshipDays(info.worshipDays);
@@ -4229,13 +4237,7 @@ const App = () => {
       }, payload => {
         if (!payload.new || payload.new.couple_id !== coupleCode) return;
         
-        // 🚀 자동 입장 (Auto-Navigation) 처리
-        if (payload.new.active_tab && payload.new.active_tab !== activeTabRef.current) {
-          console.log("Shared navigation triggered:", payload.new.active_tab);
-          setActiveTab(payload.new.active_tab);
-        }
-
-        // 🔔 카드 호출 알림 (이미 해당 탭이 아닐 때만)
+        // 🔔 카드 호출 알림 (이미 해당 탭이 아닐 때만 - 구 버전 호환성 유지)
         if (activeTabRef.current !== 'cardGame' && payload.new.is_flipped) {
            setIncomingCardCall({ 
              category: payload.new.category, 
