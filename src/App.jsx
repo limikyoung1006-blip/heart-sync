@@ -1671,8 +1671,7 @@ const WorshipView = ({ userRole, coupleCode }) => {
   );
 };
 
-/* 🙏 Heart Prayer View (Dedicated Private Room) */
-const HeartPrayerView = ({ userRole, coupleCode, onBack, partnerPrayers, setPartnerPrayers }) => {
+const HeartPrayerView = ({ userRole, coupleCode, onBack, partnerPrayers, setPartnerPrayers, embedded = false }) => {
   const [topic, setTopic] = useState("");
   const [allPrayers, setAllPrayers] = useState([]);
   const [isRecording, setIsRecording] = useState(false);
@@ -1714,7 +1713,6 @@ const HeartPrayerView = ({ userRole, coupleCode, onBack, partnerPrayers, setPart
       setTopic("");
       fetchPrayers();
       
-      // 🚀 배우자에게 기도가 도착했음을 브로드캐스트
       const channel = supabase.channel(`couple-${coupleCode}`);
       channel.send({
         type: 'broadcast',
@@ -1726,144 +1724,140 @@ const HeartPrayerView = ({ userRole, coupleCode, onBack, partnerPrayers, setPart
   };
 
   return (
-    <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }} className="flex flex-col min-h-screen pb-20">
-      <header style={{ 
-        padding: '25px 20px', 
-        display: 'flex', 
-        alignItems: 'center', 
-        gap: '15px',
-        background: 'linear-gradient(to bottom, #FFF, transparent)'
-      }}>
-        <button onClick={onBack} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
-          <ChevronLeft size={28} color="#2D1F08" />
-        </button>
-        <div>
+    <div className={`flex flex-col ${embedded ? '' : 'min-h-screen pb-20'}`}>
+      {!embedded && (
+        <header style={{ padding: '25px 20px', display: 'flex', alignItems: 'center', gap: '15px' }}>
+          <button onClick={onBack} style={{ background: 'none', border: 'none' }}>
+            <ChevronLeft size={28} color="#2D1F08" />
+          </button>
           <h2 style={{ fontSize: '24px', fontWeight: 900, color: '#2D1F08' }}>속마음 기도</h2>
-          <p style={{ fontSize: '12px', color: '#B08D3E', fontWeight: 800 }}>PRAYER OF THE HEART</p>
-        </div>
-      </header>
+        </header>
+      )}
 
-      <div style={{ padding: '0 20px' }}>
+      <div style={{ padding: '20px' }}>
         <div style={{ 
-          background: 'white', 
-          padding: '25px', 
-          borderRadius: '32px', 
-          boxShadow: '0 15px 40px rgba(0,0,0,0.05)',
-          border: '1.5px solid rgba(212, 175, 55, 0.2)',
-          marginBottom: '30px'
+          background: 'white', padding: '25px', borderRadius: '32px', 
+          boxShadow: '0 15px 40px rgba(0,0,0,0.05)', border: '1.5px solid rgba(212, 175, 55, 0.2)', marginBottom: '30px'
         }}>
-          <p style={{ fontSize: '15px', color: '#5D4037', fontWeight: 800, lineHeight: 1.6, marginBottom: '20px', wordBreak: 'keep-all' }}>
-            입 밖으로 꺼내기 힘든 고민이나, 배우자가 꼭 기도해주길 바라는 마음을 이곳에 남겨주세요. 🙏
-          </p>
-          
+          <p style={{ fontSize: '14px', color: '#5D4037', fontWeight: 800, marginBottom: '20px' }}>말하기 힘든 고백을 이곳에 남겨주세요. 🙏</p>
           <textarea 
-            value={topic}
-            onChange={(e) => setTopic(e.target.value)}
+            value={topic} onChange={(e) => setTopic(e.target.value)}
             placeholder="기도하고 싶은 내용을 자유롭게 적어보세요..."
-            style={{ 
-              width: '100%', 
-              minHeight: '120px', 
-              border: 'none', 
-              background: '#FDFCF0', 
-              borderRadius: '20px', 
-              padding: '15px', 
-              fontSize: '15px', 
-              fontWeight: 500,
-              outline: 'none',
-              resize: 'none',
-              color: '#2D1F08'
-            }}
+            style={{ width: '100%', minHeight: '120px', border: 'none', background: '#FDFCF0', borderRadius: '20px', padding: '15px', fontSize: '15.5px', outline: 'none', resize: 'none' }}
           />
-          
-          <button 
-            onClick={handleRecord}
-            disabled={isRecording || !topic.trim()}
-            style={{ 
-              width: '100%', 
-              marginTop: '15px', 
-              padding: '16px', 
-              borderRadius: '100px', 
-              background: '#2D1F08', 
-              color: 'white', 
-              border: 'none', 
-              fontWeight: 900,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '10px',
-              opacity: isRecording || !topic.trim() ? 0.6 : 1
-            }}
-          >
+          <button onClick={handleRecord} disabled={isRecording || !topic.trim()} style={{ width: '100%', marginTop: '15px', padding: '16px', borderRadius: '100px', background: '#2D1F08', color: 'white', fontWeight: 900, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '10px' }}>
             {isRecording ? <RefreshCw size={18} className="animate-spin" /> : <Send size={18} />}
             <span>마음 전달하기</span>
           </button>
         </div>
-
-        <div className="flex flex-col gap-5">
+        
+        {/* Prayers Timeline */}
+        <div className="flex flex-col gap-4">
           <div className="flex items-center gap-2 mb-2" style={{ paddingLeft: '5px' }}>
-            <Heart size={18} color="#FF4D6D" fill="#FF4D6D" />
-            <span style={{ fontSize: '18px', fontWeight: 900, color: '#2D1F08' }}>서로의 속마음 기도</span>
+            <Heart size={16} color="#FF4D6D" fill="#FF4D6D" />
+            <span style={{ fontSize: '18px', fontWeight: 900, color: '#2D1F08' }}>기도 타임라인</span>
           </div>
-
-          {allPrayers.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '60px 0', background: 'rgba(255,255,255,0.4)', borderRadius: '32px', border: '1px dashed rgba(0,0,0,0.1)' }}>
-              <Smile size={50} color="#D4AF37" style={{ opacity: 0.3, marginBottom: '15px' }} />
-              <p style={{ color: '#8B7355', fontSize: '14px', fontWeight: 700 }}>첫 번째 기도를 남겨보세요.</p>
-            </div>
-          ) : (
-            allPrayers.map((p, i) => (
-              <motion.div 
-                key={p.id}
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.05 }}
-                style={{ 
-                  background: p.type === 'mine' ? 'rgba(255,255,255,0.9)' : 'white',
-                  padding: '20px',
-                  borderRadius: '24px',
-                  boxShadow: '0 8px 20px rgba(0,0,0,0.03)',
-                  border: p.type === 'mine' ? '1px solid rgba(212, 175, 55, 0.2)' : '1px solid rgba(138, 96, 255, 0.2)',
-                  borderLeft: p.type === 'mine' ? '5px solid #D4AF37' : '5px solid #8A60FF',
-                  position: 'relative'
-                }}
-              >
-                <div className="flex justify-between items-center mb-3">
-                  <span style={{ fontSize: '12px', fontWeight: 900, color: p.type === 'mine' ? '#B08D3E' : '#8A60FF' }}>
-                    {p.type === 'mine' ? '내가 보낸 기도' : '배우자의 기도 요청'}
-                  </span>
-                  <span style={{ fontSize: '11px', color: '#999', fontWeight: 600 }}>{p.date}</span>
-                </div>
-                <p style={{ fontSize: '15px', color: '#2D1F08', lineHeight: 1.6, fontWeight: 500 }}>{p.text}</p>
-                {p.type === 'partner' && (
-                   <motion.button 
-                    whileTap={{ scale: 0.9 }}
-                    style={{ 
-                      marginTop: '15px', 
-                      background: 'rgba(138, 96, 255, 0.1)', 
-                      padding: '8px 15px', 
-                      borderRadius: '100px', 
-                      border: 'none', 
-                      color: '#8A60FF', 
-                      fontSize: '12px', 
-                      fontWeight: 900,
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '5px'
-                    }}
-                    onClick={() => alert("배우자에게 '기도하고 있어요' 마음을 전달했습니다! ❤️")}
-                   >
-                     <Smile size={14} /> 함께 기도해요
-                   </motion.button>
-                )}
-              </motion.div>
-            ))
-          )}
+          {allPrayers.map((p, i) => (
+            <motion.div key={p.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+              style={{ background: 'white', padding: '18px', borderRadius: '24px', borderLeft: p.type === 'mine' ? '5px solid #D4AF37' : '5px solid #8A60FF', boxShadow: '0 5px 15px rgba(0,0,0,0.02)' }}
+            >
+              <div className="flex justify-between mb-2">
+                <span style={{ fontSize: '11px', fontWeight: 900, color: p.type === 'mine' ? '#B08D3E' : '#8A60FF' }}>{p.type === 'mine' ? '나의 기록' : '배우자의 기도'}</span>
+                <span style={{ fontSize: '10px', color: '#AAA' }}>{p.date}</span>
+              </div>
+              <p style={{ fontSize: '14.5px', lineHeight: 1.5, color: '#2D1F08' }}>{p.text}</p>
+            </motion.div>
+          ))}
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 };
 
+
+/* 🌹 Intimacy Hub View (Hearts Prayer & Secret Garden) */
+const IntimacyHubView = ({ userRole, coupleCode, onBack, partnerPrayers, setPartnerPrayers, bgImage, onBgUpload, partnerLabel }) => {
+  const [subTab, setSubTab] = useState('prayer'); // 'prayer' or 'garden'
+
+  return (
+    <div className="flex flex-col h-screen bg-white" style={{ position: 'fixed', inset: 0, zIndex: 1000 }}>
+      {/* Switcher Header */}
+      <div style={{
+        padding: '60px 20px 20px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '20px',
+        background: 'linear-gradient(to bottom, #FFF, #FDFCF0)',
+        boxShadow: '0 2px 10px rgba(0,0,0,0.05)'
+      }}>
+        <div className="flex items-center gap-4">
+           <button onClick={onBack} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '5px' }}>
+             <ChevronLeft size={28} color="#2D1F08" />
+           </button>
+           <h2 style={{ fontSize: '24px', fontWeight: 900, color: '#2D1F08' }}>소통의 화원</h2>
+        </div>
+        
+        <div style={{ 
+          display: 'flex', 
+          background: 'rgba(0,0,0,0.05)', 
+          borderRadius: '100px', 
+          padding: '5px',
+          border: '1px solid rgba(0,0,0,0.02)'
+        }}>
+          <button 
+            onClick={() => setSubTab('prayer')}
+            style={{ 
+              flex: 1, padding: '12px', borderRadius: '100px', fontSize: '14px', fontWeight: 900,
+              background: subTab === 'prayer' ? 'white' : 'transparent',
+              color: subTab === 'prayer' ? '#B08D3E' : '#8B7355',
+              boxShadow: subTab === 'prayer' ? '0 4px 10px rgba(0,0,0,0.08)' : 'none',
+              transition: '0.3s'
+            }}
+          >
+            속마음 기도
+          </button>
+          <button 
+            onClick={() => setSubTab('garden')}
+            style={{ 
+              flex: 1, padding: '12px', borderRadius: '100px', fontSize: '14px', fontWeight: 900,
+              background: subTab === 'garden' ? 'white' : 'transparent',
+              color: subTab === 'garden' ? '#FF4D6D' : '#8B7355',
+              boxShadow: subTab === 'garden' ? '0 4px 10px rgba(0,0,0,0.08)' : 'none',
+              transition: '0.3s'
+            }}
+          >
+            비밀의 화원
+          </button>
+        </div>
+      </div>
+
+      <div className="flex-1 overflow-y-auto">
+        {subTab === 'prayer' ? (
+          <HeartPrayerView 
+            userRole={userRole} 
+            coupleCode={coupleCode} 
+            onBack={undefined} 
+            partnerPrayers={partnerPrayers}
+            setPartnerPrayers={setPartnerPrayers}
+            embedded={true}
+          />
+        ) : (
+          <IntimacyModal 
+            show={true} 
+            onClose={() => setSubTab('prayer')}
+            onNav={() => {}} 
+            subPage=""
+            setSubPage={() => {}}
+            bgImage={bgImage}
+            onBgUpload={onBgUpload}
+            partnerLabel={partnerLabel}
+            isFullPage={true}
+          />
+        )}
+      </div>
+    </div>
+  );
+};
 
 /* 📘 Heart Sync App Guide & Tips */
 const AppGuideView = ({ onBack }) => {
@@ -4996,7 +4990,19 @@ const App = () => {
               {activeTab === 'worship' && (
                 <WorshipView key="worship" userRole={userRole} coupleCode={coupleCode} />
               )}
-              {activeTab === 'settings' && (
+               {activeTab === 'heartPrayer' && (
+                 <IntimacyHubView 
+                   userRole={userRole} 
+                   coupleCode={coupleCode} 
+                   onBack={() => setActiveTab('home')}
+                   partnerPrayers={partnerPrayers}
+                   setPartnerPrayers={setPartnerPrayers}
+                   bgImage={intimacyBg}
+                   onBgUpload={setIntimacyBg}
+                   partnerLabel={partnerLabel}
+                 />
+               )}
+               {activeTab === 'settings' && (
                 <SettingsView 
                   key="settings" 
                   user={user}
