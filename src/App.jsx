@@ -202,37 +202,48 @@ const SecretAnswerInteraction = ({
     setTimeout(() => setIsSyncing(false), 500);
   };
 
-   const handleSend = async () => {
+  const handleSend = async () => {
     if (!myAnswer) return;
-    const normalizedQ = (questionText || "").trim();
-    const answerData = {
-      couple_id: coupleCode,
-      question_text: normalizedQ,
-      user_role: userRole,
-      answer: myAnswer,
-      created_at: new Date().toISOString()
-    };
-    
-    await supabase.from('secret_answers').upsert(answerData, { onConflict: 'couple_id,question_text,user_role' });
-    
-    // 🚀 글로벌 채널인 couple-${coupleCode}로 브로드캐스트 전송
-    const channel = supabase.channel(`couple-${coupleCode}`);
-    channel.send({
-      type: 'broadcast',
-      event: 'secret-answer-update',
-      payload: answerData
-    });
+    try {
+      const normalizedQ = (questionText || "").trim();
+      const answerData = {
+        couple_id: coupleCode,
+        question_text: normalizedQ,
+        user_role: userRole,
+        answer: myAnswer,
+        created_at: new Date().toISOString()
+      };
+      
+      await supabase.from('secret_answers').upsert(answerData, { onConflict: 'couple_id,question_text,user_role' });
+      
+      // 🚀 글로벌 채널인 couple-${coupleCode}로 브로드캐스트 전송
+      const channel = supabase.channel(`couple-${coupleCode}`);
+      channel.send({
+        type: 'broadcast',
+        event: 'secret-answer-update',
+        payload: answerData
+      });
 
-    setAnswered(true);
+      setAnswered(true);
+    } catch (err) {
+      console.error("Secret answer send error:", err);
+      alert("전송 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
+    }
   };
 
   // 배우자 답변 대기 중인 경우
   if (answered && !spouseAnswer) {
     return (
       <div className="flex flex-col gap-4 w-full" style={{ marginTop: '15px' }}>
-        <div className="prayer-bubble" style={{ background: 'rgba(255,255,255,0.95)', padding: '15px', borderRadius: '24px', boxShadow: '0 4px 15px rgba(0,0,0,0.1)' }}>
+        <div className="prayer-bubble" style={{ background: 'rgba(255,255,255,0.95)', padding: '15px', borderRadius: '24px', boxShadow: '0 4px 15px rgba(0,0,0,0.1)', position: 'relative' }}>
           <p style={{ fontSize: '14px', color: '#800F2F', fontWeight: 900, marginBottom: '6px', textAlign: 'left' }}>나의 답변</p>
           <p style={{ fontSize: '16px', color: '#2D1F08', textAlign: 'left', fontWeight: 500 }}>{myAnswer}</p>
+          <button 
+            onClick={() => setAnswered(false)}
+            style={{ position: 'absolute', top: '12px', right: '15px', background: 'none', border: 'none', color: '#9CA3AF', fontSize: '11px', fontWeight: 800, cursor: 'pointer', textDecoration: 'underline' }}
+          >
+            수정하기
+          </button>
         </div>
         <div className="flex flex-col items-center gap-3" style={{ 
           marginTop: '15px', 
@@ -282,9 +293,15 @@ const SecretAnswerInteraction = ({
   if (answered && spouseAnswer) {
     return (
       <div className="flex flex-col gap-4 w-full" style={{ marginTop: '10px' }}>
-        <div className="prayer-bubble" style={{ background: 'rgba(255,255,255,0.98)', padding: '18px', borderRadius: '24px', border: '1px solid rgba(245, 208, 96, 0.3)', boxShadow: '0 8px 25px rgba(0,0,0,0.08)' }}>
+        <div className="prayer-bubble" style={{ background: 'rgba(255,255,255,0.98)', padding: '18px', borderRadius: '24px', border: '1px solid rgba(245, 208, 96, 0.3)', boxShadow: '0 8px 25px rgba(0,0,0,0.08)', position: 'relative' }}>
           <p style={{ fontSize: '14px', color: '#8B6500', fontWeight: 900, marginBottom: '8px', textAlign: 'left' }}>나의 답변</p>
           <p style={{ fontSize: '17px', color: '#2D1F08', textAlign: 'left', fontWeight: 500 }}>{myAnswer}</p>
+          <button 
+            onClick={() => setAnswered(false)}
+            style={{ position: 'absolute', top: '15px', right: '18px', background: 'none', border: 'none', color: '#B08D3E', fontSize: '11px', fontWeight: 800, cursor: 'pointer', textDecoration: 'underline' }}
+          >
+            수정
+          </button>
         </div>
         <motion.div 
           initial={{ opacity: 0, y: 10 }} 
