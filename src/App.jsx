@@ -1871,6 +1871,7 @@ const IntimacyHubView = ({ userRole, coupleCode, onBack, partnerPrayers, setPart
                 onBgUpload={onBgUpload}
                 partnerLabel={partnerLabel}
                 isFullPage={true}
+                embedded={true}
               />
             </motion.div>
           )}
@@ -2305,7 +2306,7 @@ const SolutionView = ({ onBack, userRole, husbandInfo, wifeInfo, schedules, admi
 };
 
 /* 🌸 Intimacy Modal (Secret Garden) */
-const IntimacyModal = ({ show, onClose, subPage, setSubPage, bgImage, onBgUpload, partnerLabel, isFullPage, onNav }) => {
+const IntimacyModal = ({ show, onClose, subPage, setSubPage, bgImage, onBgUpload, partnerLabel, isFullPage, onNav, embedded = false }) => {
   const [currentSecretIdx, setCurrentSecretIdx] = useState(0);
   const [inputText, setInputText] = useState('');
   const [messages, setMessages] = useState([]); 
@@ -2406,55 +2407,58 @@ const IntimacyModal = ({ show, onClose, subPage, setSubPage, bgImage, onBgUpload
     <motion.div 
       initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
       className={isFullPage ? "" : "intimacy-modal-overlay"} 
-      onClick={!isFullPage ? onClose : undefined}
+      onClick={(!isFullPage && !embedded) ? onClose : undefined}
       style={{ 
-        position: 'absolute', 
+        position: embedded ? 'relative' : 'absolute', 
         top: 0, 
         left: 0, 
         right: 0, 
-        bottom: 0, 
+        bottom: embedded ? 'auto' : 0, 
+        minHeight: embedded ? '600px' : 'auto',
         zIndex: 2000, 
         background: `url(${currentBg}) center center no-repeat`, 
         backgroundSize: 'cover', 
         display: 'flex', 
-        flexDirection: 'column',
+        flexDirection: 'column', 
         alignItems: 'center',
         padding: '0', 
         overflow: 'hidden'
       }}
     >
-      {/* 🔔 상단 아이콘 (모달 안에서 다시 표시) */}
-      <div style={{ position: 'absolute', top: '70px', right: '45px', display: 'flex', gap: '18px', zIndex: 2010 }}>
-        <Bell 
-          size={22} 
-          color="rgba(45, 31, 8, 0.4)" 
-          style={{ cursor: 'pointer' }}
-          onClick={() => alert("새로운 알림이 없습니다.")} 
-        />
-        <Settings 
-          size={22} 
-          color="rgba(45, 31, 8, 0.4)" 
-          style={{ cursor: 'pointer' }}
-          onClick={() => onNav('settings')} 
-        />
-      </div>
+      {!embedded && (
+        <div style={{ position: 'absolute', top: '70px', right: '45px', display: 'flex', gap: '18px', zIndex: 2010 }}>
+          <Bell 
+            size={22} 
+            color="rgba(45, 31, 8, 0.4)" 
+            style={{ cursor: 'pointer' }}
+            onClick={() => alert("새로운 알림이 없습니다.")} 
+          />
+          <Settings 
+            size={22} 
+            color="rgba(45, 31, 8, 0.4)" 
+            style={{ cursor: 'pointer' }}
+            onClick={() => onNav('settings')} 
+          />
+        </div>
+      )}
       <div 
         onClick={(e) => e.stopPropagation()}
         style={{ 
           width: '100%',
-          height: '100%',
+          flex: embedded ? 'none' : 1,
+          height: embedded ? 'auto' : '100%',
           background: subPage === 'secrets' ? '#B2C7DA' : 'rgba(253, 252, 240, 0.96)',
           backdropFilter: 'blur(30px) saturate(180%)', 
           display: 'flex', 
           flexDirection: 'column', 
           position: 'relative', 
-          overflow: 'hidden',
-          border: subPage === 'secrets' ? 'none' : '1.5px solid rgba(212, 175, 55, 0.25)',
-          boxShadow: '0 30px 60px rgba(0,0,0,0.25)'
+          overflow: embedded ? 'visible' : 'hidden',
+          border: (subPage === 'secrets' || embedded) ? 'none' : '1.5px solid rgba(212, 175, 55, 0.25)',
+          boxShadow: embedded ? 'none' : '0 30px 60px rgba(0,0,0,0.25)'
         }}
       >
         {subPage === 'main' && (
-          <div style={{ display: 'flex', flexDirection: 'column', height: '100%', padding: '80px 24px', overflowY: 'auto' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', height: embedded ? 'auto' : '100%', padding: embedded ? '20px 24px' : '80px 24px', overflowY: embedded ? 'visible' : 'auto' }}>
             <div style={{ textAlign: 'center', marginBottom: '50px' }}>
               <h2 style={{ 
                 background: 'linear-gradient(105deg, #7D5A00 0%, #C8970A 30%, #F5D060 50%, #D4960A 70%, #7D5A00 100%)',
@@ -2497,22 +2501,24 @@ const IntimacyModal = ({ show, onClose, subPage, setSubPage, bgImage, onBgUpload
               </button>
             </div>
             
-            <div style={{ marginTop: '50px', display: 'flex', justifyContent: 'center' }}>
-              <button 
-                onClick={isFullPage ? () => onNav('home') : onClose} 
-                style={{ 
-                  width: '80px', height: '80px', borderRadius: '50%', background: 'white', 
-                  display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', 
-                  fontSize: '14px', fontWeight: 900, border: '4px solid transparent',
-                  backgroundImage: 'linear-gradient(white, white), linear-gradient(105deg, #7D5A00 0%, #C8970A 30%, #F5D060 50%, #D4960A 70%, #7D5A00 100%)',
-                  backgroundOrigin: 'border-box', backgroundClip: 'padding-box, border-box',
-                  boxShadow: '0 15px 35px rgba(245, 208, 96, 0.25)', color: '#8B6500'
-                }}
-              >
-                <span style={{ background: 'linear-gradient(105deg, #7D5A00, #C8970A, #8B6500)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>화원</span>
-                <span style={{ background: 'linear-gradient(105deg, #7D5A00, #C8970A, #8B6500)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>나가기</span>
-              </button>
-            </div>
+            {!embedded && (
+              <div style={{ marginTop: '50px', display: 'flex', justifyContent: 'center' }}>
+                <button 
+                  onClick={isFullPage ? () => onNav('home') : onClose} 
+                  style={{ 
+                    width: '80px', height: '80px', borderRadius: '50%', background: 'white', 
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', 
+                    fontSize: '14px', fontWeight: 900, border: '4px solid transparent',
+                    backgroundImage: 'linear-gradient(white, white), linear-gradient(105deg, #7D5A00 0%, #C8970A 30%, #F5D060 50%, #D4960A 70%, #7D5A00 100%)',
+                    backgroundOrigin: 'border-box', backgroundClip: 'padding-box, border-box',
+                    boxShadow: '0 15px 35px rgba(245, 208, 96, 0.25)', color: '#8B6500'
+                  }}
+                >
+                  <span style={{ background: 'linear-gradient(105deg, #7D5A00, #C8970A, #8B6500)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>화원</span>
+                  <span style={{ background: 'linear-gradient(105deg, #7D5A00, #C8970A, #8B6500)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>나가기</span>
+                </button>
+              </div>
+            )}
           </div>
         )}
 
@@ -3378,7 +3384,9 @@ const SettingsView = ({
   setWorshipTime,
   anniversaries,
   setAnniversaries,
-  onUpdateMemo // Added onUpdateMemo prop
+  onUpdateMemo,
+  isAdmin,
+  onNav
 }) => {
   // Persistence for user preferences
   const [notifSignal, setNotifSignal] = useState(() => JSON.parse(localStorage.getItem('notif_signal') ?? 'true'));
@@ -3715,6 +3723,30 @@ const SettingsView = ({
             <p style={{ fontSize: '14px', color: '#4B5563' }}>모든 대화 내용은 기기 간 종단간 암호화로 보호됩니다.</p>
             <motion.button whileTap={{ scale: 0.95 }} onClick={() => setShowDataSecurity(false)} style={{ width: '100%', padding: '16px', marginTop: '20px', borderRadius: '16px', background: '#2D1F08', color: 'white', fontWeight: 900 }}>닫기</motion.button>
           </motion.div>
+        </div>
+      )}
+
+      {/* 🛡️ 관리자 전용 메뉴 (설정 메뉴 내부로 이동) */}
+      {isAdmin && (
+        <div style={{ marginTop: '30px', borderTop: '1px solid rgba(0,0,0,0.05)', paddingTop: '30px' }}>
+          <button 
+            onClick={() => onNav('admin')}
+            style={{ 
+              width: '100%', padding: '20px', borderRadius: '25px', 
+              background: 'linear-gradient(135deg, #FDFCF0, #FFF)', border: '1.5px solid #F5D060',
+              display: 'flex', alignItems: 'center', gap: '15px', color: '#B08D3E', fontWeight: 900,
+              boxShadow: '0 8px 20px rgba(245, 208, 96, 0.15)'
+            }}
+          >
+            <div style={{ width: '45px', height: '45px', borderRadius: '15px', background: 'rgba(245, 208, 96, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <ShieldCheck size={22} color="#D4AF37" />
+            </div>
+            <div style={{ flex: 1, textAlign: 'left' }}>
+              <div style={{ fontSize: '16px' }}>시스템 관리자 페이지</div>
+              <div style={{ fontSize: '12px', opacity: 0.6, fontWeight: 700 }}>AI 모델 및 시스템 설정 관리</div>
+            </div>
+            <ChevronRight size={18} opacity={0.4} />
+          </button>
         </div>
       )}
 
@@ -5041,6 +5073,8 @@ const App = () => {
                   setAnniversaries={setAnniversaries}
                   onReportClick={() => setShowReport(true)} 
                   onGuideClick={() => setShowGuidePage(true)}
+                  isAdmin={isAdmin}
+                  onNav={setActiveTab}
                 />
               )}
               {activeTab === 'admin' && isAdmin && (
@@ -5102,14 +5136,7 @@ const App = () => {
               icon={<Heart size={22} fill={activeTab === 'heartPrayer' ? appTheme.primary : "none"} color={activeTab === 'heartPrayer' ? appTheme.primary : undefined} />} 
               label="속마음 기도" 
             />
-            {isAdmin && (
-              <NavItem 
-                active={activeTab === 'admin'} 
-                onClick={() => setActiveTab('admin')} 
-                icon={<ShieldCheck size={22} fill={activeTab === 'admin' ? '#F5D060' : "none"} color={activeTab === 'admin' ? '#F5D060' : undefined} />} 
-                label="관리자" 
-              />
-            )}
+
           </nav>
         </>
       )}
