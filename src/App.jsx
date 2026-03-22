@@ -20,6 +20,7 @@ import {
   ChevronDown, 
   Plus, 
   Trash2, 
+  Edit2,
   RefreshCw,
   Camera,
   Upload,
@@ -1675,6 +1676,8 @@ const HeartPrayerView = ({ userRole, coupleCode, onBack, partnerPrayers, setPart
   const [topic, setTopic] = useState("");
   const [allPrayers, setAllPrayers] = useState([]);
   const [isRecording, setIsRecording] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+  const [editText, setEditText] = useState("");
 
   const fetchPrayers = async () => {
     const { data } = await supabase
@@ -1720,7 +1723,23 @@ const HeartPrayerView = ({ userRole, coupleCode, onBack, partnerPrayers, setPart
         payload: { userRole, text: topic.trim() }
       });
     }
+    setIsRecording(true); // reset
     setIsRecording(false);
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm("기도 제목을 삭제하시겠습니까?")) return;
+    const { error } = await supabase.from('prayers').delete().eq('id', id);
+    if (!error) fetchPrayers();
+  };
+
+  const handleEditSave = async (id) => {
+    if (!editText.trim()) return;
+    const { error } = await supabase.from('prayers').update({ text: editText.trim() }).eq('id', id);
+    if (!error) {
+      setEditingId(null);
+      fetchPrayers();
+    }
   };
 
   return (
@@ -1761,11 +1780,33 @@ const HeartPrayerView = ({ userRole, coupleCode, onBack, partnerPrayers, setPart
             <motion.div key={p.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
               style={{ background: 'white', padding: '18px', borderRadius: '24px', borderLeft: p.type === 'mine' ? '5px solid #D4AF37' : '5px solid #8A60FF', boxShadow: '0 5px 15px rgba(0,0,0,0.02)' }}
             >
-              <div className="flex justify-between mb-2">
-                <span style={{ fontSize: '11px', fontWeight: 900, color: p.type === 'mine' ? '#B08D3E' : '#8A60FF' }}>{p.type === 'mine' ? '나의 기록' : '배우자의 기도'}</span>
-                <span style={{ fontSize: '10px', color: '#AAA' }}>{p.date}</span>
+              <div className="flex justify-between items-start mb-2">
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <span style={{ fontSize: '11px', fontWeight: 900, color: p.type === 'mine' ? '#B08D3E' : '#8A60FF' }}>{p.type === 'mine' ? '나의 기록' : '배우자의 기도'}</span>
+                  <span style={{ fontSize: '10px', color: '#AAA' }}>{p.date}</span>
+                </div>
+                {p.type === 'mine' && (
+                  <div className="flex gap-2">
+                    <button onClick={() => { setEditingId(p.id); setEditText(p.text); }} style={{ background: 'none', border: 'none', color: '#B08D3E', opacity: 0.6 }}><Edit2 size={14} /></button>
+                    <button onClick={() => handleDelete(p.id)} style={{ background: 'none', border: 'none', color: '#FF5E5E', opacity: 0.6 }}><Trash2 size={14} /></button>
+                  </div>
+                )}
               </div>
-              <p style={{ fontSize: '14.5px', lineHeight: 1.5, color: '#2D1F08' }}>{p.text}</p>
+              
+              {editingId === p.id ? (
+                <div className="flex flex-col gap-2">
+                  <textarea 
+                    value={editText} onChange={(e) => setEditText(e.target.value)}
+                    style={{ width: '100%', padding: '10px', borderRadius: '12px', border: '1px solid #D4AF3740', background: '#FDFCF0', fontSize: '14px', outline: 'none', minHeight: '80px' }}
+                  />
+                  <div className="flex gap-2 justify-end">
+                    <button onClick={() => setEditingId(null)} style={{ padding: '6px 12px', borderRadius: '8px', fontSize: '12px', background: '#F3F4F6', fontWeight: 700 }}>취소</button>
+                    <button onClick={() => handleEditSave(p.id)} style={{ padding: '6px 12px', borderRadius: '8px', fontSize: '12px', background: '#2D1F08', color: 'white', fontWeight: 700 }}>저장</button>
+                  </div>
+                </div>
+              ) : (
+                <p style={{ fontSize: '14.5px', lineHeight: 1.5, color: '#2D1F08', wordBreak: 'break-all' }}>{p.text}</p>
+              )}
             </motion.div>
           ))}
         </div>
@@ -2505,7 +2546,7 @@ const IntimacyModal = ({ user, show, onClose, subPage, setSubPage, bgImage, onBg
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
                 fontSize: '32px', fontWeight: 900, marginBottom: '12px', letterSpacing: '-0.5px' 
-              }}>비밀의 화원</h2>
+              }}>소통의 환원</h2>
               <p style={{ color: '#8B7355', fontSize: '15px', fontWeight: 700, opacity: 0.8 }}>두 분만의 가장 깊고 은밀한 소통 공간</p>
             </div>
             
@@ -2572,7 +2613,7 @@ const IntimacyModal = ({ user, show, onClose, subPage, setSubPage, bgImage, onBg
                   <Heart size={20} color="#F5D060" fill="#F5D060" />
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
-                  <span style={{ fontSize: '16px', fontWeight: 900, color: '#2D1F08' }}>비밀의 화원 대화</span>
+                  <span style={{ fontSize: '16px', fontWeight: 900, color: '#2D1F08' }}>소통의 환원 대화</span>
                   <span style={{ fontSize: '10px', color: '#546E7A', fontWeight: 700 }}>{partnerLabel}님과 연결됨</span>
                 </div>
               </div>
