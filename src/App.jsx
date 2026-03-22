@@ -2352,7 +2352,8 @@ const IntimacyModal = ({ show, onClose, subPage, setSubPage, bgImage, onBgUpload
   useEffect(() => {
     if (!show || !supabase || !coupleCode) return;
     
-    const gardenChannel = supabase.channel(`garden:${coupleCode}`)
+    // 🌐 Use the same unified channel as the App
+    const gardenChannel = supabase.channel(`couple-${coupleCode}`)
       .on('broadcast', { event: 'garden-chat-sent' }, (payload) => {
         if (payload.sender !== userRole) {
            const partnerMsg = { 
@@ -2401,8 +2402,8 @@ const IntimacyModal = ({ show, onClose, subPage, setSubPage, bgImage, onBgUpload
     const userMsg = { id: Date.now(), text: inputText, sender: 'me', type: 'chat', time: getTime() };
     setMessages(prev => [...prev, userMsg]);
     
-    // 🌐 Broadcast to Partner
-    supabase.channel(`garden:${coupleCode}`).send({
+    // 🌐 Broadcast to Partner via Unified Channel
+    supabase.channel(`couple-${coupleCode}`).send({
       type: 'broadcast',
       event: 'garden-chat-sent',
       payload: { text: inputText, sender: userRole, time: getTime(), msgType: 'chat' }
@@ -4715,8 +4716,54 @@ const App = () => {
         table: 'prayers'
       }, payload => {
         if (!payload.new || payload.new.couple_id !== coupleCode) return;
+        
+        // 🌹 New Heart Prayer Notification (Persistent DB based)
         if (payload.new.user_role !== userRole) {
           setPartnerPrayers(prev => [payload.new, ...prev].slice(0, 10));
+          toast.custom((t) => (
+            <div 
+              onClick={() => {
+                setActiveTab('heartPrayer');
+                toast.dismiss(t.id);
+              }}
+              style={{ padding: '15px 20px', background: 'white', borderRadius: '25px', boxShadow: '0 10px 40px rgba(0,0,0,0.1)', cursor: 'pointer', border: '1.5px solid #FDFCF0' }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'rgba(255, 77, 109, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Heart size={20} color="#FF4D6D" fill="#FF4D6D" />
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <span style={{ fontSize: '13px', fontWeight: 900, color: '#2D1F08' }}>기도 제목이 도착했습니다!</span>
+                  <span style={{ fontSize: '12px', color: '#8B7355', fontWeight: 700 }}>{partnerLabel}님이 기도를 요청했어요. 🙏</span>
+                </div>
+              </div>
+            </div>
+          ));
+        }
+      })
+      .on('broadcast', { event: 'garden-chat-sent' }, ({ payload }) => {
+        // 🌹 Secret Garden Notification (Ephemeral Broadcast based)
+        if (payload.sender !== userRole) {
+          toast.custom((t) => (
+            <div 
+              onClick={() => {
+                setActiveTab('heartPrayer');
+                setTimeout(() => window.dispatchEvent(new CustomEvent('nav-to-garden')), 100);
+                toast.dismiss(t.id);
+              }}
+              style={{ padding: '15px 20px', background: 'white', borderRadius: '25px', boxShadow: '0 10px 40px rgba(0,0,0,0.1)', cursor: 'pointer', border: '1.5px solid #FDFCF0' }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'rgba(138, 96, 255, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Sparkles size={20} color="#8A60FF" />
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <span style={{ fontSize: '13px', fontWeight: 900, color: '#2D1F08' }}>비밀의 화원 대화 도착!</span>
+                  <span style={{ fontSize: '12px', color: '#8B7355', fontWeight: 700 }}>{partnerLabel}님이 소통을 기다리고 있어요. ✨</span>
+                </div>
+              </div>
+            </div>
+          ));
         }
       })
       .on('postgres_changes', {
