@@ -841,9 +841,8 @@ const HomeView = ({ user, userRole, coupleCode, mySignal, setMySignal, spouseSig
 
 
 /* 📊 Admin Dashboard View (Super Admin Only) */
-const AdminView = ({ onBack, usersCount, couplesCount, activeSessions, recentActivities, masterApiKey, onSaveMasterKey }) => {
+const AdminView = ({ onBack, usersCount, couplesCount, activeSessions, recentActivities }) => {
   const [activeAdminTab, setActiveAdminTab] = useState('overview');
-  const [tempKey, setTempKey] = useState(masterApiKey || '');
   const [userList, setUserList] = useState([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
 
@@ -1025,26 +1024,14 @@ const AdminView = ({ onBack, usersCount, couplesCount, activeSessions, recentAct
                <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
                   <div style={{ padding: '15px', borderRadius: '15px', background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                        <p style={{ fontSize: '13px', fontWeight: 700, color: '#334155' }}>AI 상담 엔진 (OpenAI API 키)</p>
-                        <p style={{ fontSize: '11px', color: masterApiKey ? '#10B981' : '#EF4444', fontWeight: 800 }}>
-                           {masterApiKey ? '● 활성 (키 등록됨)' : '● 미등록 (데모 모드)'}
+                        <p style={{ fontSize: '13px', fontWeight: 700, color: '#334155' }}>AI 상담 엔진 (OpenAI API 연동)</p>
+                        <p style={{ fontSize: '11px', color: '#10B981', fontWeight: 800 }}>
+                           ● 완벽 보안 (Vercel Serverless 활성)
                         </p>
                      </div>
-                     <div style={{ display: 'flex', gap: '8px' }}>
-                        <input 
-                           type="password" 
-                           placeholder="sk-... API 키 입력" 
-                           value={tempKey} 
-                           onChange={(e) => setTempKey(e.target.value)} 
-                           style={{ flex: 1, padding: '10px 14px', borderRadius: '12px', border: '1px solid #CBD5E1', fontSize: '13px' }}
-                        />
-                        <button 
-                           onClick={() => onSaveMasterKey(tempKey)}
-                           style={{ padding: '0 16px', borderRadius: '12px', background: '#8A60FF', color: 'white', border: 'none', fontWeight: 800, fontSize: '12px', cursor: 'pointer' }}
-                        >
-                           저장
-                        </button>
-                     </div>
+                     <p style={{ fontSize: '12px', color: '#64748B', lineHeight: 1.5 }}>
+                        오픈AI 키는 현재 Vercel 서버의 환경 변수(Environment Variables)에서 안전하게 관리되고 있습니다. 클라이언트 측에서 키를 저장하거나 노출할 필요가 없으므로 해당 입력창은 영구적으로 제거되었습니다.
+                     </p>
                   </div>
                   <div style={{ padding: '15px', borderRadius: '15px', background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                      <p style={{ fontSize: '13px', fontWeight: 700, color: '#334155', marginBottom: '4px' }}>데이터 보안</p>
@@ -1077,15 +1064,14 @@ const ChatView = ({ userRole, setUserRole, husbandInfo, setHusbandInfo, wifeInfo
     const p = hattiInfo.partnerInfo;
     const pl = hattiInfo.partnerLabel;
 
-    // IF OpenAI Key is available (provided by admin), use REAL AI
-    if (masterApiKey) {
+    // Use Serverless API for Real AI
+    if (true) {
       try {
         setIsAiLoading(true);
         const response = await fetch("/api/chat", {
           method: "POST",
           headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${masterApiKey}`
+            "Content-Type": "application/json"
           },
           body: JSON.stringify({
             model: "gpt-4o-mini", // 비용 효율적인 mini 모델 사용 권장
@@ -1846,7 +1832,6 @@ const SolutionView = ({ onBack, userRole, husbandInfo, wifeInfo, schedules, admi
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${masterApiKey}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
@@ -3832,7 +3817,6 @@ const App = () => {
   const [logoClickCount, setLogoClickCount] = useState(0);
   const [showAdminLogin, setShowAdminLogin] = useState(false);
   const [isSetupDone, setIsSetupDone] = useState(() => localStorage.getItem('isSetupDone') === 'true');
-  const [masterApiKey, setMasterApiKey] = useState(localStorage.getItem('master_openai_key') || '');
   const [userRole, setUserRole] = useState(() => localStorage.getItem('userRole') || 'husband');
   const [coupleCode, setCoupleCode] = useState(() => localStorage.getItem('coupleCode') || 'HS-7289');
   const [husbandInfo, setHusbandInfo] = useState(() => JSON.parse(localStorage.getItem('husbandInfo') || '{"nickname":"김남편", "mbti":"ISTJ", "blood":"A", "marriageDate":"2020-05-23"}'));
@@ -4038,24 +4022,6 @@ const App = () => {
   useEffect(() => {
     // 1. Initial Data Fetch
     const fetchInitialData = async () => {
-      // 🛡️ Fetch System Master Key (Cloud Persistence)
-      const { data: configRow } = await supabase.from('profiles').select('info').eq('id', '00000000-0000-0000-0000-000000000000').maybeSingle();
-      if (configRow?.info?.master_openai_key) {
-        setMasterApiKey(configRow.info.master_openai_key);
-        localStorage.setItem('master_openai_key', configRow.info.master_openai_key);
-      } else {
-        // Auto-heal: If cloud lacks the key but PC local has it, upload it immediately
-        const localKey = localStorage.getItem('master_openai_key');
-        if (localKey && localKey.startsWith('sk-')) {
-           await supabase.from('profiles').upsert({
-              id: '00000000-0000-0000-0000-000000000000',
-              couple_id: 'system',
-              user_role: 'system',
-              info: { master_openai_key: localKey },
-              updated_at: new Date().toISOString()
-           }, { onConflict: 'id' });
-        }
-      }
       
       if (!isSetupDone || !user) return;
 
@@ -4470,26 +4436,6 @@ const App = () => {
                   couplesCount={adminStats.couples}
                   activeSessions={adminStats.activeSessions}
                   recentActivities={adminStats.recentActivities}
-                  masterApiKey={masterApiKey}
-                  onSaveMasterKey={async (key) => {
-                    setMasterApiKey(key);
-                    localStorage.setItem('master_openai_key', key);
-                    
-                    try {
-                      // 🛡️ Cloud persistence for System Master Key
-                      await supabase.from('profiles').upsert({
-                        id: '00000000-0000-0000-0000-000000000000',
-                        user_role: 'system',
-                        info: { master_openai_key: key },
-                        updated_at: new Date().toISOString()
-                      }, { onConflict: 'id' });
-                      
-                      alert("시스템 마스터 키가 클라우드에 성공적으로 저장되었습니다.");
-                    } catch (err) {
-                      console.error("Master key cloud sync error:", err);
-                      alert("시스템 키 로컬 저장은 완료되었으나 클라우드 동기화에 실패했습니다.");
-                    }
-                  }}
                 />
               )}
               {activeTab === 'intimacy' && (
