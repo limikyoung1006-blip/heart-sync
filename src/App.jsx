@@ -1776,9 +1776,15 @@ const HeartPrayerView = ({ userRole, coupleCode, onBack, partnerPrayers, setPart
 
 
 /* 🌹 Intimacy Hub View (Hearts Prayer & Secret Garden) */
-const IntimacyHubView = ({ userRole, coupleCode, onBack, partnerPrayers, setPartnerPrayers, bgImage, onBgUpload, partnerLabel }) => {
+const IntimacyHubView = ({ userRole, coupleCode, supabase, onBack, partnerPrayers, setPartnerPrayers, bgImage, onBgUpload, partnerLabel }) => {
   const [subTab, setSubTab] = useState('prayer'); // 'prayer' or 'garden'
   const [modalSubPage, setModalSubPage] = useState('main');
+
+  useEffect(() => {
+    const handleNavToGarden = () => setSubTab('garden');
+    window.addEventListener('nav-to-garden', handleNavToGarden);
+    return () => window.removeEventListener('nav-to-garden', handleNavToGarden);
+  }, []);
 
   return (
     <div className="flex flex-col min-h-screen bg-white" style={{ position: 'relative', zIndex: 10 }}>
@@ -1870,6 +1876,9 @@ const IntimacyHubView = ({ userRole, coupleCode, onBack, partnerPrayers, setPart
                 bgImage={bgImage}
                 onBgUpload={onBgUpload}
                 partnerLabel={partnerLabel}
+                userRole={userRole}
+                coupleCode={coupleCode}
+                supabase={supabase}
                 isFullPage={true}
                 embedded={true}
               />
@@ -2306,7 +2315,7 @@ const SolutionView = ({ onBack, userRole, husbandInfo, wifeInfo, schedules, admi
 };
 
 /* 🌸 Intimacy Modal (Secret Garden) */
-const IntimacyModal = ({ show, onClose, subPage, setSubPage, bgImage, onBgUpload, partnerLabel, isFullPage, onNav, embedded = false }) => {
+const IntimacyModal = ({ show, onClose, subPage, setSubPage, bgImage, onBgUpload, partnerLabel, userRole, coupleCode, supabase, isFullPage, onNav, embedded = false }) => {
   const [currentSecretIdx, setCurrentSecretIdx] = useState(0);
   const [inputText, setInputText] = useState('');
   const [messages, setMessages] = useState([]); 
@@ -2341,10 +2350,26 @@ const IntimacyModal = ({ show, onClose, subPage, setSubPage, bgImage, onBgUpload
   );
 
   useEffect(() => {
-    if (chatEndRef.current) {
-      chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, [messages, spouseStatus]);
+    if (!show || !supabase || !coupleCode) return;
+    
+    const gardenChannel = supabase.channel(`garden:${coupleCode}`)
+      .on('broadcast', { event: 'garden-chat-sent' }, (payload) => {
+        if (payload.sender !== userRole) {
+           const partnerMsg = { 
+             id: Date.now(), 
+             text: payload.text, 
+             sender: 'partner', 
+             type: payload.msgType || 'chat', 
+             time: payload.time 
+           };
+           setMessages(prev => [...prev, partnerMsg]);
+           setSpouseStatus('done');
+        }
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(gardenChannel); };
+  }, [show, coupleCode, userRole, supabase]);
 
   if (!show) return null;
 
@@ -2375,22 +2400,16 @@ const IntimacyModal = ({ show, onClose, subPage, setSubPage, bgImage, onBgUpload
     if (!inputText.trim()) return;
     const userMsg = { id: Date.now(), text: inputText, sender: 'me', type: 'chat', time: getTime() };
     setMessages(prev => [...prev, userMsg]);
-    setInputText('');
     
-    setTimeout(() => {
-      setSpouseStatus('typing');
-      setTimeout(() => {
-        const partnerMsg = { 
-          id: Date.now() + 1, 
-          text: "정말 좋은 생각이에요. 우리 더 많은 이야기를 나눠봐요. 😊", 
-          sender: 'partner', 
-          type: 'chat', 
-          time: getTime() 
-        };
-        setMessages(prev => [...prev, partnerMsg]);
-        setSpouseStatus('done');
-      }, 2500);
-    }, 1000);
+    // 🌐 Broadcast to Partner
+    supabase.channel(`garden:${coupleCode}`).send({
+      type: 'broadcast',
+      event: 'garden-chat-sent',
+      payload: { text: inputText, sender: userRole, time: getTime(), msgType: 'chat' }
+    });
+    
+    setInputText('');
+    setSpouseStatus('done'); // Real-time chat, no typing simulation needed for real broadcast
   };
 
   const handleAnswerSubmit = () => {
@@ -4418,6 +4437,17 @@ const App = () => {
     return () => subscription.unsubscribe();
   }, []);
   
+  // 🛡️ Admin Authorization Sync (Force update if session exists)
+  useEffect(() => {
+    if (session?.user?.email === 'beak0403@gmail.com') {
+      setIsAdmin(true);
+      localStorage.setItem('isAdmin', 'true');
+    } else if (session) {
+      setIsAdmin(false);
+      localStorage.setItem('isAdmin', 'false');
+    }
+  }, [session]);
+
   // Admin Statistics Fetcher
   useEffect(() => {
     if (!isAdmin) return;
@@ -4729,11 +4759,37 @@ const App = () => {
         }
       })
       .on('broadcast', { event: 'secret-revealed' }, ({ payload }) => {
-        if (payload.userRole !== userRole) {
+        if (payload?.sender !== userRole) {
+           toast.success("배우자가 카드를 뒤집었습니다! 대화에 참여하세요. 🔓");
            setIncomingCardCall({ 
              type: 'secret-revealed',
              sender: payload.userRole === 'husband' ? '남편' : '아내'
            });
+        }
+      })
+      .on('broadcast', { event: 'garden-chat-sent' }, ({ payload }) => {
+        if (payload.sender !== userRole) {
+          // 🌹 Secret Garden Notification
+          toast.custom((t) => (
+            <div 
+              onClick={() => {
+                setActiveTab('heartPrayer');
+                setTimeout(() => window.dispatchEvent(new CustomEvent('nav-to-garden')), 100);
+                toast.dismiss(t.id);
+              }}
+              style={{ padding: '15px 20px', background: 'white', borderRadius: '25px', boxShadow: '0 10px 40px rgba(0,0,0,0.1)', cursor: 'pointer', border: '1.5px solid #FDFCF0' }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'rgba(138, 96, 255, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Sparkles size={20} color="#8A60FF" />
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <span style={{ fontSize: '13px', fontWeight: 900, color: '#2D1F08' }}>비밀의 화원 대화 도착!</span>
+                  <span style={{ fontSize: '12px', color: '#8B7355', fontWeight: 700 }}>{partnerLabel}님이 소통을 기다리고 있어요. ✨</span>
+                </div>
+              </div>
+            </div>
+          ));
         }
       })
       .on('broadcast', { event: 'secret-answer-update' }, ({ payload }) => {
