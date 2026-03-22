@@ -151,7 +151,7 @@ const SettingsToggle = ({ icon, label, active, onToggle }) => (
   </div>
 );
 
-const SecretAnswerInteraction = ({ userRole, coupleCode, questionText }) => {
+const SecretAnswerInteraction = ({ userRole, coupleCode, questionText, supabase }) => {
   const [myAnswer, setMyAnswer] = useState("");
   const [spouseAnswer, setSpouseAnswer] = useState(null);
   const [answered, setAnswered] = useState(false);
@@ -177,17 +177,26 @@ const SecretAnswerInteraction = ({ userRole, coupleCode, questionText }) => {
     };
     fetchAnswers();
 
-    // 2. Real-time Subscription
+    // 2. Real-time Subscription (Postgres + Broadcast for speed)
     const channel = supabase
-      .channel('realtime-secret-answers')
+      .channel(`secret-answer-${coupleCode}`)
+      .on('broadcast', { event: 'secret-answer-update' }, ({ payload }) => {
+        if (payload.question_text === questionText) {
+          if (payload.user_role === userRole) {
+            setMyAnswer(payload.answer);
+            setAnswered(true);
+          } else {
+            console.log("Broadcast secret spouse answer:", payload.answer);
+            setSpouseAnswer(payload.answer);
+          }
+        }
+      })
       .on('postgres_changes', { 
         event: '*', 
         schema: 'public', 
         table: 'secret_answers'
-        // Postgres 필터 버그 우회를 위해 JS 단에서 직접 필터링
       }, payload => {
         if (!payload.new || payload.new.couple_id !== coupleCode) return;
-        
         if (payload.new.question_text === questionText) {
           if (payload.new.user_role === userRole) {
             setMyAnswer(payload.new.answer);
@@ -204,15 +213,30 @@ const SecretAnswerInteraction = ({ userRole, coupleCode, questionText }) => {
     };
   }, [userRole, coupleCode, questionText]);
 
-  const handleSend = async () => {
+   const handleSend = async () => {
     if (!myAnswer) return;
-    await supabase.from('secret_answers').upsert({
+    const answerData = {
       couple_id: coupleCode,
       question_text: questionText,
       user_role: userRole,
       answer: myAnswer,
       created_at: new Date().toISOString()
-    }, { onConflict: 'couple_id,question_text,user_role' });
+    };
+    
+    await supabase.from('secret_answers').upsert(answerData, { onConflict: 'couple_id,question_text,user_role' });
+    
+    // 🚀 즉시 브로드캐스트로 전파 (속도!)
+    const channel = supabase.channel(`secret-answer-${coupleCode}`);
+    channel.subscribe((status) => {
+      if (status === 'SUBSCRIBED') {
+        channel.send({
+          type: 'broadcast',
+          event: 'secret-answer-update',
+          payload: answerData
+        });
+      }
+    });
+
     setAnswered(true);
   };
 
@@ -498,15 +522,28 @@ const HomeView = ({ user, userRole, coupleCode, mySignal, setMySignal, spouseSig
         <div className="card-layer card-layer-2" />
         
         <div className="glass-card-wrap">
-          <div className="glass-card" onClick={() => !isRevealed && setIsRevealed(true)}>
-            
+          <div className="glass-card">
             <AnimatePresence mode="wait">
               {!isRevealed ? (
                 <motion.div 
                    key="locked"
                   initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                   className="flex flex-col items-center"
-                  style={{ paddingTop: '30px' }} // 위쪽으로 배치하여 배경 그림 보호
+                  style={{ paddingTop: '30px', cursor: 'pointer' }} 
+                  onClick={() => {
+                    setIsRevealed(true);
+                    // 🔔 배우자에게 '질문 확인 중' 알림 보내기
+                    const channel = supabase.channel(`home-broadcast-${coupleCode}`);
+                    channel.subscribe((status) => {
+                      if (status === 'SUBSCRIBED') {
+                        channel.send({
+                          type: 'broadcast',
+                          event: 'secret-revealed',
+                          payload: { userRole, ts: Date.now() }
+                        });
+                      }
+                    });
+                  }}
                 >
                   <span style={{ 
                     fontSize: '11px', 
@@ -574,6 +611,7 @@ const HomeView = ({ user, userRole, coupleCode, mySignal, setMySignal, spouseSig
                     userRole={userRole}
                     coupleCode={coupleCode}
                     questionText={todaySecretQuestion}
+                    supabase={supabase}
                   />
                   
                   <button 
@@ -4351,10 +4389,10 @@ const App = () => {
         }
 
         // Real-time sync for shared settings
-        if (info.coupleSchedules) setSchedules(info.coupleSchedules);
-        if (info.worshipDays) setWorshipDays(info.worshipDays);
-        if (info.worshipTime) setWorshipTime(info.worshipTime);
-        if (info.anniversaries) setAnniversaries(info.anniversaries);
+        if (info && info.coupleSchedules) setSchedules(info.coupleSchedules);
+        if (info && info.worshipDays) setWorshipDays(info.worshipDays);
+        if (info && info.worshipTime) setWorshipTime(info.worshipTime);
+        if (info && info.anniversaries) setAnniversaries(info.anniversaries);
       })
       .on('postgres_changes', {
         event: '*', 
@@ -4366,8 +4404,17 @@ const App = () => {
         // 🔔 카드 호출 알림 (이미 해당 탭이 아닐 때만 - 구 버전 호환성 유지)
         if (activeTabRef.current !== 'cardGame' && payload.new.is_flipped) {
            setIncomingCardCall({ 
+             type: 'card',
              category: payload.new.category, 
              questionId: payload.new.current_question_id 
+           });
+        }
+      })
+      .on('broadcast', { event: 'secret-revealed' }, ({ payload }) => {
+        if (payload.userRole !== userRole) {
+           setIncomingCardCall({ 
+             type: 'secret-revealed',
+             sender: payload.userRole === 'husband' ? '남편' : '아내'
            });
         }
       })
