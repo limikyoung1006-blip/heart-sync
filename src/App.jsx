@@ -2350,27 +2350,27 @@ const IntimacyModal = ({ show, onClose, subPage, setSubPage, bgImage, onBgUpload
   );
 
   useEffect(() => {
-    if (!show || !supabase || !coupleCode) return;
+    if (!show) return;
     
-    // 🌐 Use the same unified channel as the App
-    const gardenChannel = supabase.channel(`couple-${coupleCode}`)
-      .on('broadcast', { event: 'garden-chat-sent' }, (payload) => {
-        if (payload.sender !== userRole) {
-           const partnerMsg = { 
-             id: Date.now(), 
-             text: payload.text, 
-             sender: 'partner', 
-             type: payload.msgType || 'chat', 
-             time: payload.time 
-           };
-           setMessages(prev => [...prev, partnerMsg]);
-           setSpouseStatus('done');
-        }
-      })
-      .subscribe();
+    // 🌐 Internal Message Bus via CustomEvent from Global App Listener
+    const handleIncoming = (e) => {
+      const payload = e.detail;
+      if (payload.sender !== userRole) {
+          const partnerMsg = { 
+            id: Date.now(), 
+            text: payload.text, 
+            sender: 'partner', 
+            type: payload.msgType || 'chat', 
+            time: payload.time 
+          };
+          setMessages(prev => [...prev, partnerMsg]);
+          setSpouseStatus('done');
+      }
+    };
 
-    return () => { supabase.removeChannel(gardenChannel); };
-  }, [show, coupleCode, userRole, supabase]);
+    window.addEventListener('garden-incoming-msg', handleIncoming);
+    return () => window.removeEventListener('garden-incoming-msg', handleIncoming);
+  }, [show, userRole]);
 
   if (!show) return null;
 
@@ -4742,28 +4742,34 @@ const App = () => {
         }
       })
       .on('broadcast', { event: 'garden-chat-sent' }, ({ payload }) => {
-        // 🌹 Secret Garden Notification (Ephemeral Broadcast based)
         if (payload.sender !== userRole) {
-          toast.custom((t) => (
-            <div 
-              onClick={() => {
-                setActiveTab('heartPrayer');
-                setTimeout(() => window.dispatchEvent(new CustomEvent('nav-to-garden')), 100);
-                toast.dismiss(t.id);
-              }}
-              style={{ padding: '15px 20px', background: 'white', borderRadius: '25px', boxShadow: '0 10px 40px rgba(0,0,0,0.1)', cursor: 'pointer', border: '1.5px solid #FDFCF0' }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'rgba(138, 96, 255, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <Sparkles size={20} color="#8A60FF" />
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                  <span style={{ fontSize: '13px', fontWeight: 900, color: '#2D1F08' }}>비밀의 화원 대화 도착!</span>
-                  <span style={{ fontSize: '12px', color: '#8B7355', fontWeight: 700 }}>{partnerLabel}님이 소통을 기다리고 있어요. ✨</span>
+          // 📡 Internal Sync for open Chat Modal (High-speed internal event bus)
+          window.dispatchEvent(new CustomEvent('garden-incoming-msg', { detail: payload }));
+          
+          // 🌹 Show Toast only if NOT currently in the garden chat
+          const isAtGarden = activeTabRef.current === 'heartPrayer'; 
+          if (!isAtGarden) {
+            toast.custom((t) => (
+              <div 
+                onClick={() => {
+                  setActiveTab('heartPrayer');
+                  setTimeout(() => window.dispatchEvent(new CustomEvent('nav-to-garden')), 100);
+                  toast.dismiss(t.id);
+                }}
+                style={{ padding: '15px 20px', background: 'white', borderRadius: '25px', boxShadow: '0 10px 40px rgba(0,0,0,0.1)', cursor: 'pointer', border: '1.5px solid #FDFCF0' }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'rgba(138, 96, 255, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Sparkles size={20} color="#8A60FF" />
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    <span style={{ fontSize: '13px', fontWeight: 900, color: '#2D1F08' }}>비밀의 화원 대화 도착!</span>
+                    <span style={{ fontSize: '12px', color: '#8B7355', fontWeight: 700 }}>{partnerLabel}님이 소통을 기다리고 있어요. ✨</span>
+                  </div>
                 </div>
               </div>
-            </div>
-          ));
+            ));
+          }
         }
       })
       .on('postgres_changes', {
@@ -4812,31 +4818,6 @@ const App = () => {
              type: 'secret-revealed',
              sender: payload.userRole === 'husband' ? '남편' : '아내'
            });
-        }
-      })
-      .on('broadcast', { event: 'garden-chat-sent' }, ({ payload }) => {
-        if (payload.sender !== userRole) {
-          // 🌹 Secret Garden Notification
-          toast.custom((t) => (
-            <div 
-              onClick={() => {
-                setActiveTab('heartPrayer');
-                setTimeout(() => window.dispatchEvent(new CustomEvent('nav-to-garden')), 100);
-                toast.dismiss(t.id);
-              }}
-              style={{ padding: '15px 20px', background: 'white', borderRadius: '25px', boxShadow: '0 10px 40px rgba(0,0,0,0.1)', cursor: 'pointer', border: '1.5px solid #FDFCF0' }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'rgba(138, 96, 255, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <Sparkles size={20} color="#8A60FF" />
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                  <span style={{ fontSize: '13px', fontWeight: 900, color: '#2D1F08' }}>비밀의 화원 대화 도착!</span>
-                  <span style={{ fontSize: '12px', color: '#8B7355', fontWeight: 700 }}>{partnerLabel}님이 소통을 기다리고 있어요. ✨</span>
-                </div>
-              </div>
-            </div>
-          ));
         }
       })
       .on('broadcast', { event: 'secret-answer-update' }, ({ payload }) => {
