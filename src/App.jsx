@@ -157,14 +157,19 @@ const SecretAnswerInteraction = ({ userRole, coupleCode, questionText, supabase 
   const [answered, setAnswered] = useState(false);
   
   useEffect(() => {
-    // 1. Initial Fetch
+    // 🔔 실시간 채널 통합 관리용
+    let channel;
+
+    // 1. 초기 데이터 가져오기 (Refetch 가능하도록 함수화)
     const fetchAnswers = async () => {
-      const { data } = await supabase
+      console.log("Fetching secret answers for:", questionText);
+      const { data, error } = await supabase
         .from('secret_answers')
         .select('*')
         .eq('couple_id', coupleCode)
         .eq('question_text', questionText);
       
+      if (error) console.error("Fetch error:", error);
       if (data) {
         const myRow = data.find(r => r.user_role === userRole);
         const spouseRow = data.find(r => r.user_role !== userRole);
@@ -172,21 +177,22 @@ const SecretAnswerInteraction = ({ userRole, coupleCode, questionText, supabase 
           setMyAnswer(myRow.answer);
           setAnswered(true);
         }
-        if (spouseRow) setSpouseAnswer(spouseRow.answer);
+        if (spouseRow) {
+          console.log("Spouse answer found in DB:", spouseRow.answer);
+          setSpouseAnswer(spouseRow.answer);
+        }
       }
     };
+
     fetchAnswers();
 
     // 2. Real-time Subscription (통합 채널 사용)
-    const channel = supabase
-      .channel(`couple-${coupleCode}`)
+    channel = supabase
+      .channel(`couple-${coupleCode}-secret`) 
       .on('broadcast', { event: 'secret-answer-update' }, ({ payload }) => {
+        console.log("Answer Broadcast Received:", payload);
         if (payload.question_text === questionText) {
-          if (payload.user_role === userRole) {
-            setMyAnswer(payload.answer);
-            setAnswered(true);
-          } else {
-            console.log("Broadcast received:", payload.answer);
+          if (payload.user_role !== userRole) {
             setSpouseAnswer(payload.answer);
           }
         }
@@ -196,22 +202,38 @@ const SecretAnswerInteraction = ({ userRole, coupleCode, questionText, supabase 
         schema: 'public', 
         table: 'secret_answers'
       }, payload => {
+        console.log("Postgres change detected:", payload);
         if (!payload.new || payload.new.couple_id !== coupleCode) return;
         if (payload.new.question_text === questionText) {
-          if (payload.new.user_role === userRole) {
-            setMyAnswer(payload.new.answer);
-            setAnswered(true);
-          } else {
+          if (payload.new.user_role !== userRole) {
             setSpouseAnswer(payload.new.answer);
           }
         }
       })
-      .subscribe();
+      .subscribe((status) => {
+        console.log(`Secret Channel Status: ${status}`);
+      });
+
+    // 수동 새로고침을 위해 함수 노출 (옵션)
+    window.refreshSecretAnswers = fetchAnswers;
 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [userRole, coupleCode, questionText]);
+  }, [userRole, coupleCode, questionText, supabase]);
+
+  const handleManualRefresh = async () => {
+    const { data } = await supabase
+      .from('secret_answers')
+      .select('*')
+      .eq('couple_id', coupleCode)
+      .eq('question_text', questionText);
+    
+    if (data) {
+      const spouseRow = data.find(r => r.user_role !== userRole);
+      if (spouseRow) setSpouseAnswer(spouseRow.answer);
+    }
+  };
 
    const handleSend = async () => {
     if (!myAnswer) return;
@@ -225,8 +247,8 @@ const SecretAnswerInteraction = ({ userRole, coupleCode, questionText, supabase 
     
     await supabase.from('secret_answers').upsert(answerData, { onConflict: 'couple_id,question_text,user_role' });
     
-    // 🚀 통합 채널로 브로드캐스트 전송
-    const channel = supabase.channel(`couple-${coupleCode}`);
+    // 🚀 독립 채널로 브로드캐스트 전송
+    const channel = supabase.channel(`couple-${coupleCode}-secret`);
     channel.subscribe((status) => {
       if (status === 'SUBSCRIBED') {
         channel.send({
@@ -255,7 +277,8 @@ const SecretAnswerInteraction = ({ userRole, coupleCode, questionText, supabase 
           backdropFilter: 'blur(10px)',
           borderRadius: '24px', 
           border: '1.5px dashed #D4AF37',
-          boxShadow: '0 4px 20px rgba(212, 175, 55, 0.15)'
+          boxShadow: '0 4px 20px rgba(212, 175, 55, 0.15)',
+          position: 'relative'
         }}>
           <RefreshCw className="animate-spin" size={28} color="#D4AF37" />
           <p style={{ 
@@ -264,6 +287,25 @@ const SecretAnswerInteraction = ({ userRole, coupleCode, questionText, supabase 
             fontWeight: 900,
             textShadow: '0 1px 2px rgba(255,255,255,0.8)'
           }}>배우자의 답변을 기다리고 있어요...</p>
+          
+          <button 
+            onClick={handleManualRefresh}
+            style={{
+              marginTop: '10px',
+              background: '#D4AF3720',
+              border: '1px solid #D4AF3740',
+              color: '#B08D3E',
+              padding: '8px 15px',
+              borderRadius: '10px',
+              fontSize: '11px',
+              fontWeight: 800,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px'
+            }}
+          >
+            <RefreshCw size={12} /> 답변 확인 새로고침
+          </button>
         </div>
       </div>
     );
