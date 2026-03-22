@@ -433,12 +433,22 @@ const HomeView = ({ user, userRole, coupleCode, mySignal, setMySignal, spouseSig
 
   const todaySecretQuestion = useMemo(() => {
     // 날짜 기반 시드 생성 (매일 같은 질문)
-    const dateStr = new Date().toLocaleDateString('ko-KR'); // 로컬 날짜 기준
-    const secretQs = GLOBAL_QUESTIONS.filter(q => q.category === '시크릿');
+    const now = new Date();
+    // 로컬 날짜 문자열 (예: "2024. 3. 22.") 분해 및 숫자 합산
+    const dateParts = now.toLocaleDateString('ko-KR').split('.');
     
-    // 시드 생성 로직 보강 (날짜 문자열을 숫자로 변환)
-    const seed = dateStr.split('.').reduce((acc, part) => acc + parseInt(part.trim()), 0);
-    return secretQs[seed % secretQs.length].question;
+    // 시드 생성 로직 보강 (빈 문자열 제외 및 NaN 방지)
+    const seed = dateParts
+      .map(p => p.trim())
+      .filter(p => p.length > 0)
+      .reduce((acc, part) => acc + (parseInt(part) || 0), 0);
+      
+    const secretQs = GLOBAL_QUESTIONS.filter(q => q.category === '시크릿');
+    if (secretQs.length === 0) return "서로에게 궁금한 비밀을 물어보세요.";
+    
+    // 안전한 인덱스 접근
+    const index = isNaN(seed) ? 0 : seed % secretQs.length;
+    return secretQs[index].question;
   }, []);
 
   return (
