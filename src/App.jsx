@@ -2658,91 +2658,63 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo, onU
           </div>
           <div className="card-face card-back" style={{ background: "url('/card_bg.png') no-repeat center center", backgroundSize: 'cover', borderRadius: '32px', overflow: 'hidden' }}>
             <div className="card-pattern-box" style={{ background: 'rgba(255,255,255,0.6)', margin: '20px', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.8)', backdropFilter: 'blur(8px)' }}>
-              {(!isWaiting || waiterRole !== userRole) ? (
-                <>
-                  <span className="compat-badge" style={{ marginBottom: '12px', background: '#FF4D6D', color: 'white' }}>{currentQuestion?.category}</span>
-                  <h2 className="card-question" style={{ 
-                    fontSize: '22px', 
-                    padding: '0 15px', 
-                    color: '#2D1F08', 
-                    textShadow: 'none', 
-                    lineHeight: 1.6,
-                    textAlign: 'center',
-                    wordBreak: 'keep-all',
-                    flex: 1,
+              <span className="compat-badge" style={{ marginBottom: '12px', background: '#FF4D6D', color: 'white' }}>{category}</span>
+              <h2 className="card-question" style={{ 
+                fontSize: '22px', 
+                padding: '0 15px', 
+                color: '#2D1F08', 
+                textShadow: 'none', 
+                lineHeight: 1.6,
+                textAlign: 'center',
+                wordBreak: 'keep-all',
+                flex: 1,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}>{currentQuestion?.question}</h2>
+              
+              {turnOwner === userRole ? (
+                <button 
+                  className="send-to-spouse-btn" 
+                  style={{ 
+                    marginTop: '40px', 
+                    background: '#2D1F08', 
+                    borderRadius: '100px', 
+                    height: '62px',
                     display: 'flex',
                     alignItems: 'center',
-                    justifyContent: 'center'
-                  }}>{currentQuestion?.question}</h2>
-                  
-                  {/* If I am the one who needs to answer (it's my turn and not waiting for me) */}
-                  <button 
-                    className="send-to-spouse-btn" 
-                    style={{ 
-                      marginTop: '40px', 
-                      background: '#2D1F08', 
-                      borderRadius: '100px', 
-                      height: '62px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '12px',
-                      padding: '0 30px',
-                      boxShadow: '0 10px 30px rgba(0,0,0,0.4)',
-                      width: '100%',
-                      maxWidth: '300px',
-                      border: '2px solid #F5D060',
-                      lineHeight: 1,
-                      opacity: (turnOwner && turnOwner !== userRole) ? 0.5 : 1
-                    }}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (turnOwner && turnOwner !== userRole) {
-                         alert("배우자의 차례입니다.");
-                         return;
-                      }
-                      handOverTurn();
-                    }}
-                  >
-                    <span style={{ 
-                      color: 'white', 
-                      fontWeight: 900, 
-                      fontSize: '16px', 
-                      whiteSpace: 'nowrap', 
-                      letterSpacing: '-0.3px',
-                      lineHeight: 1,
-                      display: 'flex',
-                      alignItems: 'center'
-                    }}>답변 완료 & 턴 넘기기</span>
-                    <div style={{ display: 'flex', alignItems: 'center', transform: 'rotate(180deg)' }}>
-                      <RefreshCw size={18} color="#F5D060" className={isWaiting ? 'animate-spin' : ''} />
-                    </div>
-                  </button>
-                </>
+                    justifyContent: 'center',
+                    gap: '12px',
+                    padding: '0 30px',
+                    boxShadow: '0 10px 30px rgba(0,0,0,0.4)',
+                    width: '100%',
+                    maxWidth: '300px',
+                    border: '2px solid #F5D060',
+                    lineHeight: 1
+                  }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handOverTurn();
+                  }}
+                >
+                  <span style={{ color: 'white', fontWeight: 900, fontSize: '16px' }}>답변 완료 & 턴 넘기기</span>
+                  <RefreshCw size={18} color="#F5D060" />
+                </button>
               ) : (
-                <div className="flex flex-col items-center justify-center gap-4 px-4" style={{ height: '100%', minHeight: '300px' }}>
-                  <div style={{ background: 'rgba(138, 96, 255, 0.1)', padding: '20px', borderRadius: '50%', marginBottom: '10px' }}>
-                    <RefreshCw size={40} color="#8A60FF" />
-                  </div>
-                  <p style={{ 
-                    fontSize: '19px', 
-                    color: '#8B6500', 
-                    fontWeight: 900, 
-                    textAlign: 'center', 
-                    wordBreak: 'keep-all', 
-                    lineHeight: 1.4,
-                    padding: '0 10px'
-                  }}>지금은 {userRole === 'husband' ? '아내' : '남편'}님 차례입니다</p>
-                  <p style={{ 
-                    fontSize: '13px', 
-                    color: '#2D1F08', 
-                    opacity: 0.8, 
-                    fontWeight: 800, 
-                    textAlign: 'center', 
-                    wordBreak: 'keep-all', 
-                    lineHeight: 1.6, 
-                    padding: '0 15px'
-                  }}>{userRole === 'husband' ? '아내' : '남편'}님이 새로운 질문에 답하고 계십니다. 답변이 끝나면 다음 질문이 도착할 거예요.</p>
+                <div style={{ 
+                  marginTop: '40px', 
+                  background: 'rgba(138, 96, 255, 0.1)', 
+                  padding: '15px 25px', 
+                  borderRadius: '100px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  border: '1px solid #8A60FF40'
+                }}>
+                  <div className="animate-pulse" style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#8A60FF' }} />
+                  <span style={{ fontSize: '15px', color: '#8A60FF', fontWeight: 900 }}>
+                    {turnOwner === 'husband' ? '남편' : '아내'}님의 답변에 귀 기울여주세요
+                  </span>
                 </div>
               )}
             </div>
