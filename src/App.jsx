@@ -2712,7 +2712,7 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo, onU
                     wordBreak: 'keep-all', 
                     lineHeight: 1.4,
                     padding: '0 10px'
-                  }}>배우자의 답변을 기다리는 중</p>
+                  }}>지금은 {userRole === 'husband' ? '아내' : '남편'}님 차례입니다</p>
                   <p style={{ 
                     fontSize: '13px', 
                     color: '#2D1F08', 
@@ -2722,7 +2722,7 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo, onU
                     wordBreak: 'keep-all', 
                     lineHeight: 1.6, 
                     padding: '0 15px'
-                  }}>{userRole === 'husband' ? '아내' : '남편'}님의 깊은 속마음을 들어보세요. 답변이 끝나면 상대방이 다음 턴을 넘겨줄 거예요.</p>
+                  }}>{userRole === 'husband' ? '아내' : '남편'}님이 새로운 질문에 답하고 계십니다. 답변이 끝나면 다음 질문이 도착할 거예요.</p>
                 </div>
               )}
             </div>
