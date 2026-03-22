@@ -377,9 +377,8 @@ const HATTI_TODOS = [
   { id: 8, action: "휴식", text: "오늘은 배우자가 온전히 쉴 수 있도록 육아나 집안일을 도맡아 해주세요." }
 ];
 
-const HomeView = ({ user, userRole, coupleCode, mySignal, setMySignal, spouseSignal, partnerPrayers, onIntimacyClick, onNav, schedules, husbandInfo, wifeInfo, onUpdateMemo, activeTab, spouseSecretAnswer, setSpouseSecretAnswer, mySecretAnswer, setMySecretAnswer, isMySecretAnswered, setIsMySecretAnswered }) => {
+const HomeView = ({ user, userRole, coupleCode, mySignal, setMySignal, spouseSignal, partnerPrayers, onIntimacyClick, onNav, schedules, husbandInfo, wifeInfo, onUpdateMemo, activeTab, spouseSecretAnswer, setSpouseSecretAnswer, mySecretAnswer, setMySecretAnswer, isMySecretAnswered, setIsMySecretAnswered, isRevealed, setIsRevealed }) => {
   const [showGuide, setShowGuide] = useState(false);
-  const [isRevealed, setIsRevealed] = useState(false);
   const [memoInput, setMemoInput] = useState("");
   const [isEditingMemo, setIsEditingMemo] = useState(false);
 
@@ -4112,11 +4111,10 @@ const App = () => {
   const [adminStats, setAdminStats] = useState({ users: 0, couples: 0, activeSessions: 0, recentActivities: [] });
   const [coupleStats, setCoupleStats] = useState({ totalInteractions: 0 });
   const [syncStatus, setSyncStatus] = useState('WAITING'); // WAITING, SUBSCRIBED, ERROR
-  const [logoClickCount, setLogoClickCount] = useState(0);
-  const [showAdminLogin, setShowAdminLogin] = useState(false);
-  const [spouseSecretAnswer, setSpouseSecretAnswer] = useState(null); // 🗝️ 글로벌 시크릿 답변 상태
-  const [mySecretAnswer, setMySecretAnswer] = useState(""); // 🗝️ 글로벌 나의 답변 상태
-  const [isMySecretAnswered, setIsMySecretAnswered] = useState(false); // 🗝️ 글로벌 나의 답변 완료 여부
+  const [spouseSecretAnswer, setSpouseSecretAnswer] = useState(() => localStorage.getItem('spouseSecretAnswer')); // 🗝️ 글로벌 시크릿 답변 상태
+  const [mySecretAnswer, setMySecretAnswer] = useState(() => localStorage.getItem('mySecretAnswer') || ""); // 🗝️ 글로벌 나의 답변 상태
+  const [isMySecretAnswered, setIsMySecretAnswered] = useState(() => localStorage.getItem('isMySecretAnswered') === 'true'); // 🗝️ 글로벌 나의 답변 완료 여부
+  const [isSecretRevealed, setIsSecretRevealed] = useState(() => localStorage.getItem('isSecretRevealed') === 'true'); // 🗝️ 글로벌 카드 뒤집기 상태
   const [isSetupDone, setIsSetupDone] = useState(() => localStorage.getItem('isSetupDone') === 'true');
   const [userRole, setUserRole] = useState(() => localStorage.getItem('userRole') || 'husband');
   const [coupleCode, setCoupleCode] = useState(() => localStorage.getItem('coupleCode') || 'HS-7289');
@@ -4130,6 +4128,22 @@ const App = () => {
   useEffect(() => {
     activeTabRef.current = activeTab;
   }, [activeTab]);
+
+  // 🕒 날짜가 바뀌었는지 체크하여 비밀 카드 초기화
+  useEffect(() => {
+    const lastDate = localStorage.getItem('secretLastDate');
+    const today = new Date().toDateString();
+    if (lastDate && lastDate !== today) {
+       localStorage.removeItem('mySecretAnswer');
+       localStorage.removeItem('isMySecretAnswered');
+       localStorage.removeItem('spouseSecretAnswer');
+       localStorage.removeItem('isSecretRevealed');
+       setMySecretAnswer("");
+       setIsMySecretAnswered(false);
+       setSpouseSecretAnswer(null);
+       setIsSecretRevealed(false);
+    }
+  }, []);
 
   // Auth Session Listener
   useEffect(() => {
@@ -4245,7 +4259,14 @@ const App = () => {
     localStorage.setItem('worshipDays', JSON.stringify(worshipDays));
     localStorage.setItem('worshipTime', worshipTime);
     localStorage.setItem('anniversaries', JSON.stringify(anniversaries));
-  }, [husbandInfo, wifeInfo, userRole, isSetupDone, schedules, worshipDays, worshipTime, anniversaries]);
+    
+    // 🗝️ 비밀 카드 상태 저장
+    localStorage.setItem('mySecretAnswer', mySecretAnswer);
+    localStorage.setItem('isMySecretAnswered', isMySecretAnswered);
+    localStorage.setItem('spouseSecretAnswer', spouseSecretAnswer || "");
+    localStorage.setItem('isSecretRevealed', isSecretRevealed);
+    localStorage.setItem('secretLastDate', new Date().toDateString());
+  }, [husbandInfo, wifeInfo, userRole, isSetupDone, schedules, worshipDays, worshipTime, anniversaries, mySecretAnswer, isMySecretAnswered, spouseSecretAnswer, isSecretRevealed]);
 
   const handleOnboardingFinish = async (info) => {
     let finalCode = info.coupleCode || coupleCode;
@@ -4673,6 +4694,8 @@ const App = () => {
                   setMySecretAnswer={setMySecretAnswer}
                   isMySecretAnswered={isMySecretAnswered}
                   setIsMySecretAnswered={setIsMySecretAnswered}
+                  isRevealed={isSecretRevealed}
+                  setIsRevealed={setIsSecretRevealed}
                 />
               )}
               {activeTab === 'calendar' && (
