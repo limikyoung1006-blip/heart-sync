@@ -151,10 +151,12 @@ const SettingsToggle = ({ icon, label, active, onToggle }) => (
   </div>
 );
 
-const SecretAnswerInteraction = ({ userRole, coupleCode, questionText, supabase, spouseAnswer, setSpouseAnswer }) => {
-  const [myAnswer, setMyAnswer] = useState("");
-  const [answered, setAnswered] = useState(false);
-  
+const SecretAnswerInteraction = ({ 
+  userRole, coupleCode, questionText, supabase, 
+  spouseAnswer, setSpouseAnswer, 
+  myAnswer, setMyAnswer, 
+  answered, setAnswered 
+}) => {
   useEffect(() => {
     // 1. 초기 데이터 가져오기
     const fetchAnswers = async () => {
@@ -177,7 +179,6 @@ const SecretAnswerInteraction = ({ userRole, coupleCode, questionText, supabase,
     };
 
     fetchAnswers();
-    // 🔔 구독은 부모 App.jsx의 글로벌 채널에서 통합 관리함
   }, [userRole, coupleCode, questionText, supabase]);
 
   const [isSyncing, setIsSyncing] = useState(false);
@@ -358,7 +359,7 @@ const HATTI_TODOS = [
   { id: 8, action: "휴식", text: "오늘은 배우자가 온전히 쉴 수 있도록 육아나 집안일을 도맡아 해주세요." }
 ];
 
-const HomeView = ({ user, userRole, coupleCode, mySignal, setMySignal, spouseSignal, partnerPrayers, onIntimacyClick, onNav, schedules, husbandInfo, wifeInfo, onUpdateMemo, activeTab, spouseSecretAnswer, setSpouseSecretAnswer }) => {
+const HomeView = ({ user, userRole, coupleCode, mySignal, setMySignal, spouseSignal, partnerPrayers, onIntimacyClick, onNav, schedules, husbandInfo, wifeInfo, onUpdateMemo, activeTab, spouseSecretAnswer, setSpouseSecretAnswer, mySecretAnswer, setMySecretAnswer, isMySecretAnswered, setIsMySecretAnswered }) => {
   const [showGuide, setShowGuide] = useState(false);
   const [isRevealed, setIsRevealed] = useState(false);
   const [memoInput, setMemoInput] = useState("");
@@ -643,6 +644,10 @@ const HomeView = ({ user, userRole, coupleCode, mySignal, setMySignal, spouseSig
                     supabase={supabase}
                     spouseAnswer={spouseSecretAnswer}
                     setSpouseAnswer={setSpouseSecretAnswer}
+                    myAnswer={mySecretAnswer}
+                    setMyAnswer={setMySecretAnswer}
+                    answered={isMySecretAnswered}
+                    setAnswered={setIsMySecretAnswered}
                   />
                   
                   <button 
@@ -4092,6 +4097,8 @@ const App = () => {
   const [logoClickCount, setLogoClickCount] = useState(0);
   const [showAdminLogin, setShowAdminLogin] = useState(false);
   const [spouseSecretAnswer, setSpouseSecretAnswer] = useState(null); // 🗝️ 글로벌 시크릿 답변 상태
+  const [mySecretAnswer, setMySecretAnswer] = useState(""); // 🗝️ 글로벌 나의 답변 상태
+  const [isMySecretAnswered, setIsMySecretAnswered] = useState(false); // 🗝️ 글로벌 나의 답변 완료 여부
   const [isSetupDone, setIsSetupDone] = useState(() => localStorage.getItem('isSetupDone') === 'true');
   const [userRole, setUserRole] = useState(() => localStorage.getItem('userRole') || 'husband');
   const [coupleCode, setCoupleCode] = useState(() => localStorage.getItem('coupleCode') || 'HS-7289');
@@ -4451,10 +4458,14 @@ const App = () => {
         }
       })
       .on('broadcast', { event: 'secret-answer-update' }, ({ payload }) => {
-        // 🚀 글로벌 채널에서 배우자의 답변 수신 시 상태 업데이트
+        // 🚀 글로벌 채널에서 배우자의 답변 수신 시 상태 업데이트 및 알림
         if (payload.user_role !== userRole) {
            console.log("Global secret answer received:", payload.answer);
            setSpouseSecretAnswer(payload.answer);
+           setIncomingCardCall({ 
+             type: 'secret-answer-received',
+             sender: payload.user_role === 'husband' ? '남편' : '아내'
+           });
         }
       })
       .subscribe((status) => {
@@ -4640,6 +4651,10 @@ const App = () => {
                   onUpdateMemo={updateMemo}
                   spouseSecretAnswer={spouseSecretAnswer}
                   setSpouseSecretAnswer={setSpouseSecretAnswer}
+                  mySecretAnswer={mySecretAnswer}
+                  setMySecretAnswer={setMySecretAnswer}
+                  isMySecretAnswered={isMySecretAnswered}
+                  setIsMySecretAnswered={setIsMySecretAnswered}
                 />
               )}
               {activeTab === 'calendar' && (
@@ -4860,7 +4875,7 @@ const App = () => {
         )}
       </AnimatePresence>
 
-      {/* 🔔 Card Game Real-time Toast Notification (배우자 카드 호출 알림) */}
+      {/* 🔔 Card Game & Secret Card Real-time Toast Notification */}
       <AnimatePresence>
          {incomingCardCall && (
             <motion.div 
@@ -4875,25 +4890,41 @@ const App = () => {
                 display: 'flex', alignItems: 'center', gap: '15px'
               }}
             >
-              <div style={{ background: '#8A60FF', padding: '12px', borderRadius: '16px' }}>
-                 <Sparkles size={24} color="white" />
+              <div style={{ 
+                background: incomingCardCall.type?.startsWith('secret') ? '#D4AF37' : '#8A60FF', 
+                padding: '12px', 
+                borderRadius: '16px' 
+              }}>
+                 {incomingCardCall.type?.startsWith('secret') ? <Lock size={24} color="white" /> : <Sparkles size={24} color="white" />}
               </div>
               <div style={{ flex: 1 }}>
-                 <p style={{ fontSize: '15px', fontWeight: 900, marginBottom: '2px' }}>{partnerLabel}님이 대화 카드를 뽑았습니다!</p>
-                 <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.6)', fontWeight: 700 }}>지금 수락해서 함께 깊은 대화를 나눠보세요.</p>
+                 <p style={{ fontSize: '15px', fontWeight: 900, marginBottom: '2px' }}>
+                   {incomingCardCall.type === 'secret-answer-received' 
+                     ? `${incomingCardCall.sender}님이 비밀 답변을 남겼습니다! 🎁`
+                     : incomingCardCall.type === 'secret-revealed'
+                     ? `${incomingCardCall.sender}님이 비밀 질문을 확인했습니다! ✨`
+                     : `${incomingCardCall.sender}님이 대화 카드를 뽑았습니다! 🃏`}
+                 </p>
+                 <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.6)', fontWeight: 700 }}>
+                   {incomingCardCall.type?.startsWith('secret') ? '지금 바로 정답을 확인해보세요.' : '지금 수락해서 함께 깊은 대화를 나눠보세요.'}
+                 </p>
               </div>
               <button 
                 onClick={() => {
-                  setActiveTab('cardGame');
+                  if (incomingCardCall.type?.startsWith('secret')) {
+                    setActiveTab('home');
+                  } else {
+                    setActiveTab('cardGame');
+                  }
                   setIncomingCardCall(null);
                 }}
                 style={{ background: 'white', color: '#1E293B', padding: '10px 18px', borderRadius: '12px', border: 'none', fontWeight: 900, fontSize: '13px' }}
               >
-                수락
+                {incomingCardCall.type?.startsWith('secret') ? '확인' : '수락'}
               </button>
               <button 
                 onClick={() => setIncomingCardCall(null)}
-                style={{ background: 'rgba(255,255,255,0.1)', color: 'white', padding: '10px', borderRadius: '12px', border: 'none' }}
+                style={{ background: 'rgba(255,255,255,0.1)', color: 'white', padding: '10px', borderRadius: '12px', border: 'none', display: 'flex' }}
               >
                 <X size={18} />
               </button>
