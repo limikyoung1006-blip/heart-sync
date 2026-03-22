@@ -1084,10 +1084,32 @@ body {
   gap: 12px;
   width: 100%;
   overflow-x: auto;
-  padding: 10px 20px 15px;
+  padding: 10px 20px 25px; /* 하단 패딩 늘려 스크롤 힌트 공간 확보 */
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
-  justify-content: flex-start; /* 스크롤 가능하게 왼쪽 정렬 고정 */
+  justify-content: flex-start;
+}
+
+.category-row-container {
+  position: relative;
+  width: 100%;
+}
+
+.scroll-hint {
+  position: absolute;
+  bottom: 0px;
+  right: 20px;
+  font-size: 11px;
+  font-weight: 900;
+  color: #D4AF37;
+  opacity: 0.6;
+  pointer-events: none;
+  animation: hint-bounce 2s infinite;
+}
+
+@keyframes hint-bounce {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(-5px); }
 }
 
 .category-row::-webkit-scrollbar {

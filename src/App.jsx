@@ -2376,6 +2376,7 @@ const CardGameView = ({ onBack, coupleCode, userRole }) => {
   const [currentQuestion, setCurrentQuestion] = useState(filteredQuestions[0]);
   const [isWaiting, setIsWaiting] = useState(false);
   const [waiterRole, setWaiterRole] = useState(null);
+  const [turnOwner, setTurnOwner] = useState(null);
 
   // Supabase Sync for Card Game
   useEffect(() => {
@@ -2391,8 +2392,16 @@ const CardGameView = ({ onBack, coupleCode, userRole }) => {
         setIsFlipped(data.is_flipped);
         setIsWaiting(data.is_waiting);
         setWaiterRole(data.waiter_role);
+        setTurnOwner(data.turn_owner);
         const q = questions.find(q => q.id === data.current_question_id);
         if (q) setCurrentQuestion(q);
+      } else {
+        // DB에 데이터가 없으면 랜덤하게 하나 골라두기 (턴 주인도 정해줌)
+        const initialIdx = Math.floor(Math.random() * filteredQuestions.length);
+        const randomQ = filteredQuestions[initialIdx];
+        setCurrentQuestion(randomQ);
+        setTurnOwner(userRole); // 처음 연 사람이 일단 주도권
+        updateCardState({ current_question_id: randomQ.id, turn_owner: userRole });
       }
     };
     fetchCardState();
@@ -2406,11 +2415,12 @@ const CardGameView = ({ onBack, coupleCode, userRole }) => {
         // Postgres 필터 우회
       }, payload => {
         if (!payload.new || payload.new.couple_id !== coupleCode) return;
-        const { category: cat, is_flipped, is_waiting, current_question_id, waiter_role } = payload.new;
+        const { category: cat, is_flipped, is_waiting, current_question_id, waiter_role, turn_owner } = payload.new;
         setCategory(cat);
         setIsFlipped(is_flipped);
         setIsWaiting(is_waiting);
         setWaiterRole(waiter_role);
+        setTurnOwner(turn_owner);
         const q = questions.find(q => q.id === current_question_id);
         if (q) setCurrentQuestion(q);
       })
@@ -2429,6 +2439,7 @@ const CardGameView = ({ onBack, coupleCode, userRole }) => {
         is_flipped: isFlipped,
         is_waiting: isWaiting,
         waiter_role: waiterRole,
+        turn_owner: turnOwner,
         current_question_id: currentQuestion?.id,
         updated_at: new Date().toISOString(),
         ...updates
@@ -2451,16 +2462,26 @@ const CardGameView = ({ onBack, coupleCode, userRole }) => {
   const handOverTurn = () => {
     setIsWaiting(true);
     setWaiterRole(userRole);
-    updateCardState({ is_waiting: true, waiter_role: userRole });
+    const spouseRole = userRole === 'husband' ? 'wife' : 'husband';
+    setTurnOwner(spouseRole); // 답변 마치면 상대방에게 주도권 넘김
+    updateCardState({ is_waiting: true, waiter_role: userRole, turn_owner: spouseRole });
   };
 
   const toggleFlip = () => {
+    if (turnOwner !== userRole) {
+      alert("현재는 배우자의 차례입니다. 배우자의 답변을 기다려주세요!");
+      return;
+    }
     const nextFlip = !isFlipped;
     setIsFlipped(nextFlip);
     updateCardState({ is_flipped: nextFlip });
   };
 
   const changeCategory = (cat) => {
+    if (turnOwner !== userRole && turnOwner !== null) {
+      alert("배우자가 질문을 선택 중입니다.");
+      return;
+    }
     setCategory(cat);
     setIsFlipped(false);
     updateCardState({ category: cat, is_flipped: false });
@@ -2475,12 +2496,17 @@ const CardGameView = ({ onBack, coupleCode, userRole }) => {
         </button>
       </div>
 
-      <div className="category-row">
-          {['일상', '상상', '추억', '관계', '신앙'].map(cat => (
-            <div key={cat} className={`category-chip ${category === cat ? 'active' : ''}`} onClick={() => changeCategory(cat)}>
-              {cat}
-            </div>
-          ))}
+      <div className="w-full flex flex-col items-center mb-6">
+        <div className="category-row-container w-full relative">
+          <div className="category-row">
+              {['일상', '상상', '추억', '관계', '신앙'].map(cat => (
+                <div key={cat} className={`category-chip ${category === cat ? 'active' : ''}`} onClick={() => changeCategory(cat)}>
+                  {cat}
+                </div>
+              ))}
+          </div>
+          <div className="scroll-hint">옆으로 밀어보기 ➔</div>
+        </div>
       </div>
       <div className="flex flex-col items-center" style={{ marginTop: '5px', marginBottom: '15px' }}>
         <p className="card-subtitle" style={{ 
@@ -2630,7 +2656,13 @@ const CardGameView = ({ onBack, coupleCode, userRole }) => {
       </div>
     </div>
 
-      <button className="draw-btn" onClick={drawNewCard} style={{ marginTop: '40px' }}>다른 카드 뽑기</button>
+      <button 
+        className={`draw-btn ${turnOwner !== userRole ? 'disabled' : ''}`} 
+        onClick={drawNewCard} 
+        style={{ marginTop: '40px', opacity: turnOwner !== userRole ? 0.5 : 1 }}
+      >
+        {turnOwner !== userRole ? '배우자의 턴 기다리기' : '다른 카드 뽑기'}
+      </button>
     </motion.div>
   );
 };
