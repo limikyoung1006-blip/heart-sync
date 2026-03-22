@@ -1776,7 +1776,7 @@ const HeartPrayerView = ({ userRole, coupleCode, onBack, partnerPrayers, setPart
 
 
 /* 🌹 Intimacy Hub View (Hearts Prayer & Secret Garden) */
-const IntimacyHubView = ({ userRole, coupleCode, supabase, onBack, partnerPrayers, setPartnerPrayers, bgImage, onBgUpload, partnerLabel }) => {
+const IntimacyHubView = ({ userRole, coupleCode, supabase, mainChannel, onBack, partnerPrayers, setPartnerPrayers, bgImage, onBgUpload, partnerLabel }) => {
   const [subTab, setSubTab] = useState('prayer'); // 'prayer' or 'garden'
   const [modalSubPage, setModalSubPage] = useState('main');
 
@@ -1879,6 +1879,7 @@ const IntimacyHubView = ({ userRole, coupleCode, supabase, onBack, partnerPrayer
                 userRole={userRole}
                 coupleCode={coupleCode}
                 supabase={supabase}
+                mainChannel={mainChannel} // 📡 Pass live channel
                 isFullPage={true}
                 embedded={true}
               />
@@ -2315,7 +2316,7 @@ const SolutionView = ({ onBack, userRole, husbandInfo, wifeInfo, schedules, admi
 };
 
 /* 🌸 Intimacy Modal (Secret Garden) */
-const IntimacyModal = ({ show, onClose, subPage, setSubPage, bgImage, onBgUpload, partnerLabel, userRole, coupleCode, supabase, isFullPage, onNav, embedded = false }) => {
+const IntimacyModal = ({ show, onClose, subPage, setSubPage, bgImage, onBgUpload, partnerLabel, userRole, coupleCode, supabase, mainChannel, isFullPage, onNav, embedded = false }) => {
   const [currentSecretIdx, setCurrentSecretIdx] = useState(0);
   const [inputText, setInputText] = useState('');
   const [messages, setMessages] = useState([]); 
@@ -2402,12 +2403,22 @@ const IntimacyModal = ({ show, onClose, subPage, setSubPage, bgImage, onBgUpload
     const userMsg = { id: Date.now(), text: inputText, sender: 'me', type: 'chat', time: getTime() };
     setMessages(prev => [...prev, userMsg]);
     
-    // 🌐 Broadcast to Partner via Unified Channel
-    supabase.channel(`couple-${coupleCode}`).send({
-      type: 'broadcast',
-      event: 'garden-chat-sent',
-      payload: { text: inputText, sender: userRole, time: getTime(), msgType: 'chat' }
-    });
+    // 🌐 Broadcast to Partner via Shared Persistent Channel
+    if (mainChannel) {
+      mainChannel.send({
+        type: 'broadcast',
+        event: 'garden-chat-sent',
+        payload: { text: inputText, sender: userRole, time: getTime(), msgType: 'chat' }
+      });
+    } else {
+      console.warn("Main channel not ready for broadcast");
+      // Fallback: try one-time sending
+      supabase.channel(`couple-${coupleCode}`).send({
+        type: 'broadcast',
+        event: 'garden-chat-sent',
+        payload: { text: inputText, sender: userRole, time: getTime(), msgType: 'chat' }
+      });
+    }
     
     setInputText('');
     setSpouseStatus('done'); // Real-time chat, no typing simulation needed for real broadcast
@@ -4381,6 +4392,7 @@ const App = () => {
   const [husbandInfo, setHusbandInfo] = useState(() => JSON.parse(localStorage.getItem('husbandInfo') || '{"nickname":"김남편", "mbti":"ISTJ", "blood":"A", "marriageDate":"2020-05-23"}'));
   const [wifeInfo, setWifeInfo] = useState(() => JSON.parse(localStorage.getItem('wifeInfo') || '{"nickname":"박아내", "mbti":"ENFP", "blood":"B", "marriageDate":"2020-05-23"}'));
   const appTheme = { id: 'warm', primary: '#D4AF37', bg: '#FDFCF0' };
+  const [mainChannel, setMainChannel] = useState(null); // 📡 Persistent Shared Channel
 
   // Ref for activeTab to avoid stale closures in global real-time listeners
   const activeTabRef = React.useRef(activeTab);
@@ -4845,10 +4857,12 @@ const App = () => {
         if (status === 'SUBSCRIBED') {
           console.log(`Connected to couple-${coupleCode}`);
           setSyncStatus('SUBSCRIBED');
+          setMainChannel(channel); // 📡 Save live channel for global use
         }
         if (status === 'CLOSED' || status === 'CHANNEL_ERROR') {
           console.warn('Realtime connection issues');
           setSyncStatus('ERROR');
+          setMainChannel(null);
         }
       });
 
@@ -5129,7 +5143,8 @@ const App = () => {
               )}
                {activeTab === 'heartPrayer' && (
                  <IntimacyHubView 
-                   userRole={userRole} 
+                   supabase={supabase}
+                   mainChannel={mainChannel}                   userRole={userRole} 
                    coupleCode={coupleCode} 
                    onBack={() => setActiveTab('home')}
                    partnerPrayers={partnerPrayers}
