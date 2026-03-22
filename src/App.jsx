@@ -2409,8 +2409,9 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo, onU
 
   const updateCardState = async (updates) => {
     const currentSync = (userRole === 'husband' ? husbandInfo : wifeInfo).cardSync || {};
+    // Give my update a slightly unique timestamp to avoid ties
+    const myTs = Date.now() + (userRole === 'husband' ? 1 : 0);
     const newSync = { 
-      // Include current state to preserve unmodified fields
       category, 
       isFlipped, 
       isWaiting, 
@@ -2418,7 +2419,7 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo, onU
       turnOwner, 
       questionId: currentQuestion?.id,
       ...updates, 
-      ts: Date.now() 
+      ts: myTs 
     };
     onUpdateMemo(undefined, { cardSync: newSync });
   };
@@ -2428,14 +2429,29 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo, onU
       alert(`현재는 ${turnOwner === 'husband' ? '남편' : '아내'}님의 차례입니다.`);
       return;
     }
-    const idx = Math.floor(Math.random() * filteredQuestions.length);
-    const newQ = filteredQuestions[idx];
+    
+    // Pick a DIFFERENT question from the current one
+    let availableQuestions = filteredQuestions;
+    if (availableQuestions.length > 1 && currentQuestion) {
+      availableQuestions = availableQuestions.filter(q => q.id !== currentQuestion.id);
+    }
+    
+    const idx = Math.floor(Math.random() * availableQuestions.length);
+    const newQ = availableQuestions[idx];
+    
     setCurrentQuestion(newQ);
     setIsFlipped(false);
     setIsWaiting(false);
     setWaiterRole(null);
     setTurnOwner(userRole);
-    updateCardState({ questionId: newQ.id, isFlipped: false, isWaiting: false, waiterRole: null, turnOwner: userRole });
+    
+    updateCardState({ 
+      questionId: newQ.id, 
+      isFlipped: false, 
+      isWaiting: false, 
+      waiterRole: null, 
+      turnOwner: userRole 
+    });
   };
 
   const handOverTurn = () => {
@@ -2450,7 +2466,7 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo, onU
       isWaiting: true, 
       waiterRole: userRole, 
       turnOwner: spouseRole,
-      isFlipped: true // Keep it flipped so spouse can see question immediately
+      isFlipped: true 
     });
   };
 
