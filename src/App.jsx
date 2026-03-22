@@ -2703,16 +2703,33 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo, onU
               ) : (
                 <div style={{ 
                   marginTop: '40px', 
-                  background: 'rgba(138, 96, 255, 0.1)', 
-                  padding: '15px 25px', 
-                  borderRadius: '100px',
+                  background: 'rgba(138, 96, 255, 0.08)', 
+                  padding: '12px 20px', 
+                  borderRadius: '24px',
                   display: 'flex',
+                  flexDirection: 'column',
                   alignItems: 'center',
-                  gap: '10px',
-                  border: '1px solid #8A60FF40'
+                  gap: '6px',
+                  border: '1.5px solid #8A60FF30',
+                  boxShadow: '0 4px 15px rgba(138, 96, 255, 0.05)',
+                  width: '90%'
                 }}>
-                  <div className="animate-pulse" style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#8A60FF' }} />
-                  <span style={{ fontSize: '15px', color: '#8A60FF', fontWeight: 900 }}>
+                  <div className="flex items-center gap-2">
+                    <motion.div 
+                      animate={{ scale: [1, 1.3, 1], opacity: [0.4, 0.8, 0.4] }}
+                      transition={{ duration: 1.5, repeat: Infinity }}
+                      style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#8A60FF' }} 
+                    />
+                    <span style={{ fontSize: '11px', color: '#8A60FF', fontWeight: 900, letterSpacing: '2px' }}>LISTENING...</span>
+                  </div>
+                  <span style={{ 
+                    fontSize: '15px', 
+                    color: '#4B2691', 
+                    fontWeight: 900, 
+                    textAlign: 'center',
+                    wordBreak: 'keep-all',
+                    lineHeight: 1.3
+                  }}>
                     {turnOwner === 'husband' ? '남편' : '아내'}님의 답변에 귀 기울여주세요
                   </span>
                 </div>
