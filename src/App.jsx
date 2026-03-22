@@ -2388,20 +2388,21 @@ const CardGameView = ({ onBack, coupleCode, userRole }) => {
         .single();
       
       if (data) {
-        setCategory(data.category);
-        setIsFlipped(data.is_flipped);
-        setIsWaiting(data.is_waiting);
-        setWaiterRole(data.waiter_role);
-        setTurnOwner(data.turn_owner);
+        setCategory(data.category || '일상');
+        setIsFlipped(data.is_flipped || false);
+        setIsWaiting(data.is_waiting || false);
+        setWaiterRole(data.waiter_role || null);
+        setTurnOwner(data.turn_owner || null);
         const q = questions.find(q => q.id === data.current_question_id);
         if (q) setCurrentQuestion(q);
       } else {
-        // DB에 데이터가 없으면 랜덤하게 하나 골라두기 (턴 주인도 정해줌)
+        // DB에 데이터가 없으면 랜덤하게 하나 골라두기
         const initialIdx = Math.floor(Math.random() * filteredQuestions.length);
         const randomQ = filteredQuestions[initialIdx];
         setCurrentQuestion(randomQ);
-        setTurnOwner(userRole); // 처음 연 사람이 일단 주도권
-        updateCardState({ current_question_id: randomQ.id, turn_owner: userRole });
+        // 초기에는 턴 주인이 없을 수 있으므로 null 유지 (누구든 먼저 누르는 사람 차례)
+        setTurnOwner(null);
+        updateCardState({ current_question_id: randomQ.id, turn_owner: null });
       }
     };
     fetchCardState();
@@ -2468,23 +2469,26 @@ const CardGameView = ({ onBack, coupleCode, userRole }) => {
   };
 
   const toggleFlip = () => {
-    if (turnOwner !== userRole) {
-      alert("현재는 배우자의 차례입니다. 배우자의 답변을 기다려주세요!");
+    if (turnOwner && turnOwner !== userRole) {
+      alert(`현재는 ${turnOwner === 'husband' ? '남편' : '아내'}님의 차례입니다.`);
       return;
     }
     const nextFlip = !isFlipped;
     setIsFlipped(nextFlip);
-    updateCardState({ is_flipped: nextFlip });
+    // 뒤집는 사람이 턴을 갖게 됨
+    setTurnOwner(userRole);
+    updateCardState({ is_flipped: nextFlip, turn_owner: userRole });
   };
 
   const changeCategory = (cat) => {
-    if (turnOwner !== userRole && turnOwner !== null) {
+    if (turnOwner && turnOwner !== userRole) {
       alert("배우자가 질문을 선택 중입니다.");
       return;
     }
     setCategory(cat);
     setIsFlipped(false);
-    updateCardState({ category: cat, is_flipped: false });
+    setTurnOwner(userRole);
+    updateCardState({ category: cat, is_flipped: false, turn_owner: userRole });
   };
 
   return (
@@ -2523,6 +2527,9 @@ const CardGameView = ({ onBack, coupleCode, userRole }) => {
           fontWeight: 700, 
           letterSpacing: '-0.2px' 
         }}>질문 주제를 먼저 고르세요</p>
+        <div style={{ marginTop: '10px', fontSize: '10px', color: '#B08D3E', fontWeight: 800 }}>
+          내 역할: {userRole === 'husband' ? '남편' : '아내'} | 주도권: {turnOwner ? (turnOwner === 'husband' ? '남편' : '아내') : '자유'}
+        </div>
       </div>
 
       <div className="card-deck">
@@ -2657,11 +2664,11 @@ const CardGameView = ({ onBack, coupleCode, userRole }) => {
     </div>
 
       <button 
-        className={`draw-btn ${turnOwner !== userRole ? 'disabled' : ''}`} 
+        className={`draw-btn ${(turnOwner && turnOwner !== userRole) ? 'disabled' : ''}`} 
         onClick={drawNewCard} 
-        style={{ marginTop: '40px', opacity: turnOwner !== userRole ? 0.5 : 1 }}
+        style={{ marginTop: '40px', opacity: (turnOwner && turnOwner !== userRole) ? 0.5 : 1 }}
       >
-        {turnOwner !== userRole ? '배우자의 턴 기다리기' : '다른 카드 뽑기'}
+        {(turnOwner && turnOwner !== userRole) ? '배우자의 턴 기다리기' : '다른 카드 뽑기'}
       </button>
     </motion.div>
   );
