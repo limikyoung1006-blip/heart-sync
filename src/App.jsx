@@ -39,7 +39,8 @@ import {
   Music,
   Smile,
   ShieldCheck,
-  StickyNote
+  StickyNote,
+  X
 } from 'lucide-react';
 import questions from '../questions.json';
 import { supabase } from './supabase';
