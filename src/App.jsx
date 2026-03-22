@@ -1054,7 +1054,7 @@ const AdminView = ({ onBack, usersCount, couplesCount, activeSessions, recentAct
 };
 
 /* 💬 Chat View (AI Personalized Hatti Counseling) */
-const ChatView = ({ userRole, setUserRole, husbandInfo, setHusbandInfo, wifeInfo, setWifeInfo, onBack, masterApiKey, adminStats, schedules }) => {
+const ChatView = ({ userRole, setUserRole, husbandInfo, setHusbandInfo, wifeInfo, setWifeInfo, onBack, adminStats, schedules }) => {
   const [msg, setMsg] = useState("");
   const [showSettings, setShowSettings] = useState(false);
   const [isAiLoading, setIsAiLoading] = useState(false);
@@ -1782,7 +1782,7 @@ const HattiCharacter = ({ state = 'floating', size = 120, style = {} }) => {
 };
 
 /* 📊 Solution (AI Records) */
-const SolutionView = ({ onBack, userRole, husbandInfo, wifeInfo, schedules, adminStats, coupleStats, masterApiKey }) => {
+const SolutionView = ({ onBack, userRole, husbandInfo, wifeInfo, schedules, adminStats, coupleStats }) => {
   const myInfo = userRole === 'husband' ? husbandInfo : wifeInfo;
   const spouseInfo = userRole === 'husband' ? wifeInfo : husbandInfo;
   
@@ -1799,11 +1799,6 @@ const SolutionView = ({ onBack, userRole, husbandInfo, wifeInfo, schedules, admi
   }, []);
 
   const handleDeepAnalysis = async () => {
-    if (!masterApiKey) {
-      alert("시스템 마스터 키가 설정되지 않았습니다. 관리자에게 문의하세요.");
-      return;
-    }
-    
     setIsAnalyzing(true);
     try {
       const prompt = `
@@ -3825,6 +3820,12 @@ const App = () => {
   const [wifeInfo, setWifeInfo] = useState(() => JSON.parse(localStorage.getItem('wifeInfo') || '{"nickname":"박아내", "mbti":"ENFP", "blood":"B", "marriageDate":"2020-05-23"}'));
   const appTheme = { id: 'warm', primary: '#D4AF37', bg: '#FDFCF0' };
 
+  // Ref for activeTab to avoid stale closures in global real-time listeners
+  const activeTabRef = React.useRef(activeTab);
+  useEffect(() => {
+    activeTabRef.current = activeTab;
+  }, [activeTab]);
+
   // Auth Session Listener
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
@@ -4142,8 +4143,8 @@ const App = () => {
         table: 'card_game_state'
       }, payload => {
         if (!payload.new || payload.new.couple_id !== coupleCode) return;
-        // Only trigger if we are NOT on the card game tab and it's a "waiting" or "flipped" state (partner signaling)
-        if (activeTab !== 'cardGame' && payload.new.is_flipped) {
+        // Check current tab via Ref to bypass stale closure from initial component mount
+        if (activeTabRef.current !== 'cardGame' && payload.new.is_flipped) {
            setIncomingCardCall({ 
              category: payload.new.category, 
              questionId: payload.new.current_question_id 
@@ -4385,7 +4386,6 @@ const App = () => {
                         setHusbandInfo={setHusbandInfo}
                         wifeInfo={wifeInfo} 
                         setWifeInfo={setWifeInfo}
-                        masterApiKey={masterApiKey}
                         adminStats={adminStats}
                         schedules={schedules}
                         onBack={() => setActiveTab('home')} 
@@ -4523,7 +4523,6 @@ const App = () => {
                 schedules={schedules}
                 adminStats={adminStats}
                 coupleStats={coupleStats}
-                masterApiKey={masterApiKey}
                 onBack={() => setShowReport(false)} 
               />
             </div>
