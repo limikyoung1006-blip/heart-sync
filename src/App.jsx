@@ -383,6 +383,17 @@ const SecretAnswerInteraction = ({ userRole, coupleCode, questionText, supabase 
 
 /* 🏠 Home View Component */
 // AI Hatti's Daily Instructions
+// 📚 Global Question Database (Shared across all components)
+const GLOBAL_QUESTIONS = [
+  { id: 's1', category: '시크릿', question: "나만 알고 있는 나의 작은 습관 중에 배우자가 알게 되면 깜짝 놀랄 만한 것은?" },
+  { id: 's2', category: '시크릿', question: "최근 배우자에게 말하지 못했지만 정말 고맙다고 느꼈던 아주 사소한 순간은?" },
+  { id: 's3', category: '시크릿', question: "우리가 처음 만났을 때, 첫인상 외에 마음속으로만 생각했던 나의 진짜 속마음은?" },
+  { id: 's4', category: '시크릿', question: "만약 우리에게 자유로운 24시간과 무제한 예산이 생긴다면, 가장 먼저 함께 하고 싶은 일은?" },
+  { id: 's5', category: '시크릿', question: "최근 꿈속에서 배우자와 함께했던 장면 중 가장 기억에 남는 것은?" },
+  { id: 's6', category: '시크릿', question: "배우자의 모습 중 내가 가장 사랑하지만 쑥스러워서 자주 말하지 못하는 부분은?" },
+  { id: 's7', category: '시크릿', question: "살면서 가장 힘들었던 순간, 배우자의 어떤 말이나 행동이 가장 큰 위로가 되었나요?" }
+];
+
 const HATTI_TODOS = [
   { id: 1, action: "말하기", text: "배우자에게 '오늘 하루도 정말 고생 많았어'라고 눈을 맞추며 말해주세요." },
   { id: 2, action: "행동", text: "오늘 저녁 설거지나 청소 중 하나를 배우자 몰래 미리 끝내두세요." },
@@ -422,10 +433,11 @@ const HomeView = ({ user, userRole, coupleCode, mySignal, setMySignal, spouseSig
 
   const todaySecretQuestion = useMemo(() => {
     // 날짜 기반 시드 생성 (매일 같은 질문)
-    const dateStr = new Date().toISOString().slice(0, 10);
-    const secretQs = (questions || []).filter(q => q.category === '시크릿');
-    if (secretQs.length === 0) return "서로에게 궁금한 비밀을 물어보세요.";
-    const seed = dateStr.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    const dateStr = new Date().toLocaleDateString('ko-KR'); // 로컬 날짜 기준
+    const secretQs = GLOBAL_QUESTIONS.filter(q => q.category === '시크릿');
+    
+    // 시드 생성 로직 보강 (날짜 문자열을 숫자로 변환)
+    const seed = dateStr.split('.').reduce((acc, part) => acc + parseInt(part.trim()), 0);
     return secretQs[seed % secretQs.length].question;
   }, []);
 
