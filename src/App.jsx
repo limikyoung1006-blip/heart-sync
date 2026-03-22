@@ -1778,30 +1778,34 @@ const HeartPrayerView = ({ userRole, coupleCode, onBack, partnerPrayers, setPart
 /* 🌹 Intimacy Hub View (Hearts Prayer & Secret Garden) */
 const IntimacyHubView = ({ userRole, coupleCode, onBack, partnerPrayers, setPartnerPrayers, bgImage, onBgUpload, partnerLabel }) => {
   const [subTab, setSubTab] = useState('prayer'); // 'prayer' or 'garden'
+  const [modalSubPage, setModalSubPage] = useState('main');
 
   return (
-    <div className="flex flex-col h-screen bg-white" style={{ position: 'fixed', inset: 0, zIndex: 1000 }}>
-      {/* Switcher Header */}
+    <div className="flex flex-col min-h-screen bg-white" style={{ position: 'relative', zIndex: 10 }}>
+      {/* Hub Header (Standalone) */}
       <div style={{
-        padding: '60px 20px 20px',
+        padding: '25px 20px 20px',
         display: 'flex',
         flexDirection: 'column',
         gap: '20px',
         background: 'linear-gradient(to bottom, #FFF, #FDFCF0)',
-        boxShadow: '0 2px 10px rgba(0,0,0,0.05)'
+        boxShadow: '0 2px 10px rgba(0,0,0,0.03)'
       }}>
         <div className="flex items-center gap-4">
-           <button onClick={onBack} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '5px' }}>
+           <button onClick={onBack} style={{ background: 'none', border: 'none', cursor: 'pointer', outline: 'none' }}>
              <ChevronLeft size={28} color="#2D1F08" />
            </button>
-           <h2 style={{ fontSize: '24px', fontWeight: 900, color: '#2D1F08' }}>소통의 화원</h2>
+           <div className="flex flex-col">
+              <h2 style={{ fontSize: '24px', fontWeight: 900, color: '#2D1F08' }}>소통의 화원</h2>
+              <span style={{ fontSize: '11px', color: '#B08D3E', fontWeight: 800, letterSpacing: '1px' }}>HUB OF INTIMACY</span>
+           </div>
         </div>
         
         <div style={{ 
           display: 'flex', 
-          background: 'rgba(0,0,0,0.05)', 
+          background: 'rgba(0,0,0,0.06)', 
           borderRadius: '100px', 
-          padding: '5px',
+          padding: '6px',
           border: '1px solid rgba(0,0,0,0.02)'
         }}>
           <button 
@@ -1810,8 +1814,8 @@ const IntimacyHubView = ({ userRole, coupleCode, onBack, partnerPrayers, setPart
               flex: 1, padding: '12px', borderRadius: '100px', fontSize: '14px', fontWeight: 900,
               background: subTab === 'prayer' ? 'white' : 'transparent',
               color: subTab === 'prayer' ? '#B08D3E' : '#8B7355',
-              boxShadow: subTab === 'prayer' ? '0 4px 10px rgba(0,0,0,0.08)' : 'none',
-              transition: '0.3s'
+              boxShadow: subTab === 'prayer' ? '0 4px 12px rgba(0,0,0,0.1)' : 'none',
+              transition: 'all 0.3s ease'
             }}
           >
             속마음 기도
@@ -1822,8 +1826,8 @@ const IntimacyHubView = ({ userRole, coupleCode, onBack, partnerPrayers, setPart
               flex: 1, padding: '12px', borderRadius: '100px', fontSize: '14px', fontWeight: 900,
               background: subTab === 'garden' ? 'white' : 'transparent',
               color: subTab === 'garden' ? '#FF4D6D' : '#8B7355',
-              boxShadow: subTab === 'garden' ? '0 4px 10px rgba(0,0,0,0.08)' : 'none',
-              transition: '0.3s'
+              boxShadow: subTab === 'garden' ? '0 4px 12px rgba(0,0,0,0.1)' : 'none',
+              transition: 'all 0.3s ease'
             }}
           >
             비밀의 화원
@@ -1831,29 +1835,46 @@ const IntimacyHubView = ({ userRole, coupleCode, onBack, partnerPrayers, setPart
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto">
-        {subTab === 'prayer' ? (
-          <HeartPrayerView 
-            userRole={userRole} 
-            coupleCode={coupleCode} 
-            onBack={undefined} 
-            partnerPrayers={partnerPrayers}
-            setPartnerPrayers={setPartnerPrayers}
-            embedded={true}
-          />
-        ) : (
-          <IntimacyModal 
-            show={true} 
-            onClose={() => setSubTab('prayer')}
-            onNav={() => {}} 
-            subPage=""
-            setSubPage={() => {}}
-            bgImage={bgImage}
-            onBgUpload={onBgUpload}
-            partnerLabel={partnerLabel}
-            isFullPage={true}
-          />
-        )}
+      <div className="flex-1 overflow-y-auto" style={{ background: '#FDFCF0' }}>
+        <AnimatePresence mode="wait">
+          {subTab === 'prayer' ? (
+            <motion.div 
+              key="prayer-view"
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -10 }}
+            >
+              <HeartPrayerView 
+                userRole={userRole} 
+                coupleCode={coupleCode} 
+                onBack={undefined} 
+                partnerPrayers={partnerPrayers}
+                setPartnerPrayers={setPartnerPrayers}
+                embedded={true}
+              />
+            </motion.div>
+          ) : (
+            <motion.div 
+              key="garden-view"
+              initial={{ opacity: 0, x: 10 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 10 }}
+              className="h-full"
+            >
+              <IntimacyModal 
+                show={true} 
+                onClose={() => setSubTab('prayer')}
+                onNav={() => {}} 
+                subPage={modalSubPage}
+                setSubPage={setModalSubPage}
+                bgImage={bgImage}
+                onBgUpload={onBgUpload}
+                partnerLabel={partnerLabel}
+                isFullPage={true}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );
@@ -4830,7 +4851,7 @@ const App = () => {
           
           {/* Top Bar */}
           <div className="top-bar" style={{ 
-            visibility: activeTab === 'intimacy' ? 'hidden' : 'visible',
+            visibility: (activeTab === 'intimacy' || activeTab === 'heartPrayer') ? 'hidden' : 'visible',
             borderBottom: `1px solid ${appTheme.primary}20`,
             background: 'rgba(255, 255, 255, 0.4)',
             backdropFilter: 'blur(10px)'
