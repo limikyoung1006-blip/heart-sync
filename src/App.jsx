@@ -2369,12 +2369,13 @@ const IntimacyModal = ({ show, onClose, subPage, setSubPage, bgImage, onBgUpload
 
 
 /* 🃏 Card Game View (Separated Page) */
-const CardGameView = ({ onBack, coupleCode }) => {
+const CardGameView = ({ onBack, coupleCode, userRole }) => {
   const [category, setCategory] = useState('일상');
   const [isFlipped, setIsFlipped] = useState(false);
   const filteredQuestions = useMemo(() => questions.filter(q => q.category === category), [category]);
   const [currentQuestion, setCurrentQuestion] = useState(filteredQuestions[0]);
   const [isWaiting, setIsWaiting] = useState(false);
+  const [waiterRole, setWaiterRole] = useState(null);
 
   // Supabase Sync for Card Game
   useEffect(() => {
@@ -2389,6 +2390,7 @@ const CardGameView = ({ onBack, coupleCode }) => {
         setCategory(data.category);
         setIsFlipped(data.is_flipped);
         setIsWaiting(data.is_waiting);
+        setWaiterRole(data.waiter_role);
         const q = questions.find(q => q.id === data.current_question_id);
         if (q) setCurrentQuestion(q);
       }
@@ -2404,10 +2406,11 @@ const CardGameView = ({ onBack, coupleCode }) => {
         // Postgres 필터 우회
       }, payload => {
         if (!payload.new || payload.new.couple_id !== coupleCode) return;
-        const { category: cat, is_flipped, is_waiting, current_question_id } = payload.new;
+        const { category: cat, is_flipped, is_waiting, current_question_id, waiter_role } = payload.new;
         setCategory(cat);
         setIsFlipped(is_flipped);
         setIsWaiting(is_waiting);
+        setWaiterRole(waiter_role);
         const q = questions.find(q => q.id === current_question_id);
         if (q) setCurrentQuestion(q);
       })
@@ -2425,6 +2428,7 @@ const CardGameView = ({ onBack, coupleCode }) => {
         category,
         is_flipped: isFlipped,
         is_waiting: isWaiting,
+        waiter_role: waiterRole,
         current_question_id: currentQuestion?.id,
         updated_at: new Date().toISOString(),
         ...updates
@@ -2446,7 +2450,8 @@ const CardGameView = ({ onBack, coupleCode }) => {
 
   const handOverTurn = () => {
     setIsWaiting(true);
-    updateCardState({ is_waiting: true });
+    setWaiterRole(userRole);
+    updateCardState({ is_waiting: true, waiter_role: userRole });
   };
 
   const toggleFlip = () => {
@@ -2543,7 +2548,7 @@ const CardGameView = ({ onBack, coupleCode }) => {
           </div>
           <div className="card-face card-back" style={{ background: "url('/card_bg.png') no-repeat center center", backgroundSize: 'cover', borderRadius: '32px', overflow: 'hidden' }}>
             <div className="card-pattern-box" style={{ background: 'rgba(255,255,255,0.6)', margin: '20px', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.8)', backdropFilter: 'blur(8px)' }}>
-              {!isWaiting ? (
+              {(!isWaiting || waiterRole !== userRole) ? (
                 <>
                   <span className="compat-badge" style={{ marginBottom: '12px', background: '#FF4D6D', color: 'white' }}>{currentQuestion?.category}</span>
                   <h2 className="card-question" style={{ 
@@ -2605,7 +2610,7 @@ const CardGameView = ({ onBack, coupleCode }) => {
                     lineHeight: 1.4,
                     padding: '0 10px',
                     marginTop: '20px'
-                  }}>배우자의 화면과 연결 중...</p>
+                  }}>{waiterRole === userRole ? '배우자의 확답 기다리는 중...' : '배우자가 답변을 완료했습니다!'}</p>
                   <p style={{ 
                     fontSize: '14px', 
                     color: '#2D1F08', 
@@ -2616,7 +2621,7 @@ const CardGameView = ({ onBack, coupleCode }) => {
                     lineHeight: 1.6, 
                     padding: '0 15px',
                     marginBottom: '20px'
-                  }}>배우자가 질문을 확인하고 있습니다. 질문에 대해 서로 얼굴을 마주 보며 충분히 이야기를 나눠보세요.</p>
+                  }}>{waiterRole === userRole ? '배우자가 질문을 확인하고 있습니다. 질문에 대해 서로 얼굴을 마주 보며 충분히 이야기를 나눠보세요.' : '두 분의 대화가 충분히 이루어졌다면 아래 [다른 카드 뽑기] 버튼을 눌러 다음 대화를 이어가세요.'}</p>
                 </div>
               )}
             </div>
@@ -4330,7 +4335,7 @@ const App = () => {
                 />
               )}
               {activeTab === 'cardGame' && (
-                <CardGameView key="cardGame" coupleCode={coupleCode} onBack={() => setActiveTab('home')} />
+                <CardGameView key="cardGame" coupleCode={coupleCode} userRole={userRole} onBack={() => setActiveTab('home')} />
               )}
               {activeTab === 'counseling' && (
                  <div className={`flex flex-col pt-4 ${counselingMode === 'chat' ? 'flex-1 min-h-0' : ''}`}>
