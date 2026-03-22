@@ -2494,15 +2494,26 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo, onU
     if (turnOwner && turnOwner !== userRole) return;
     const spouseRole = userRole === 'husband' ? 'wife' : 'husband';
     
+    // 🔥 배우자를 위한 '새로운 질문' 미리 뽑기
+    let pool = filteredQuestions;
+    if (pool.length > 1 && currentQuestion) {
+      pool = pool.filter(q => String(q.id) !== String(currentQuestion.id));
+    }
+    const nextQForSpouse = pool[Math.floor(Math.random() * pool.length)];
+
+    // 내 화면은 '대기 상태'로 전환
     setIsWaiting(true);
     setWaiterRole(userRole);
     setTurnOwner(spouseRole); 
     
+    // 배우자에게는 '새 질문'과 함께 턴을 넘김 (뒤집히지 않은 카드 상태로)
     updateCardState({ 
-      isWaiting: true, 
+      questionId: nextQForSpouse.id,
+      isFlipped: false, 
+      isWaiting: false, 
       waiterRole: userRole, 
       turnOwner: spouseRole,
-      isFlipped: true 
+      roundId: Math.random() 
     });
   };
 
