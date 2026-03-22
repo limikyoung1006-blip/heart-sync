@@ -1776,7 +1776,7 @@ const HeartPrayerView = ({ userRole, coupleCode, onBack, partnerPrayers, setPart
 
 
 /* 🌹 Intimacy Hub View (Hearts Prayer & Secret Garden) */
-const IntimacyHubView = ({ userRole, coupleCode, supabase, mainChannel, onBack, partnerPrayers, setPartnerPrayers, bgImage, onBgUpload, partnerLabel }) => {
+const IntimacyHubView = ({ user, userRole, coupleCode, supabase, mainChannel, onBack, partnerPrayers, setPartnerPrayers, bgImage, onBgUpload, partnerLabel }) => {
   const [subTab, setSubTab] = useState('prayer'); // 'prayer' or 'garden'
   const [modalSubPage, setModalSubPage] = useState('main');
 
@@ -1802,7 +1802,7 @@ const IntimacyHubView = ({ userRole, coupleCode, supabase, mainChannel, onBack, 
              <ChevronLeft size={28} color="#2D1F08" />
            </button>
            <div className="flex flex-col">
-              <h2 style={{ fontSize: '24px', fontWeight: 900, color: '#2D1F08' }}>소통의 화원</h2>
+              <h2 style={{ fontSize: '24px', fontWeight: 900, color: '#2D1F08' }}>비밀의 화원</h2>
               <span style={{ fontSize: '11px', color: '#B08D3E', fontWeight: 800, letterSpacing: '1px' }}>HUB OF INTIMACY</span>
            </div>
         </div>
@@ -1836,7 +1836,7 @@ const IntimacyHubView = ({ userRole, coupleCode, supabase, mainChannel, onBack, 
               transition: 'all 0.3s ease'
             }}
           >
-            비밀의 화원
+            소통의 화원
           </button>
         </div>
       </div>
@@ -1875,6 +1875,7 @@ const IntimacyHubView = ({ userRole, coupleCode, supabase, mainChannel, onBack, 
                 setSubPage={setModalSubPage}
                 bgImage={bgImage}
                 onBgUpload={onBgUpload}
+                user={user}
                 partnerLabel={partnerLabel}
                 userRole={userRole}
                 coupleCode={coupleCode}
@@ -2316,7 +2317,7 @@ const SolutionView = ({ onBack, userRole, husbandInfo, wifeInfo, schedules, admi
 };
 
 /* 🌸 Intimacy Modal (Secret Garden) */
-const IntimacyModal = ({ show, onClose, subPage, setSubPage, bgImage, onBgUpload, partnerLabel, userRole, coupleCode, supabase, mainChannel, isFullPage, onNav, embedded = false }) => {
+const IntimacyModal = ({ user, show, onClose, subPage, setSubPage, bgImage, onBgUpload, partnerLabel, userRole, coupleCode, supabase, mainChannel, isFullPage, onNav, embedded = false }) => {
   const [currentSecretIdx, setCurrentSecretIdx] = useState(0);
   const [inputText, setInputText] = useState('');
   const [messages, setMessages] = useState([]); 
@@ -2404,21 +2405,30 @@ const IntimacyModal = ({ show, onClose, subPage, setSubPage, bgImage, onBgUpload
     setMessages(prev => [...prev, userMsg]);
     
     // 🌐 Multi-Layer Sync: Broadcast (High speed) + Profile Sync (100% Reliability)
-    const chatMsg = { text: inputText, sender: userRole, time: getTime(), msgType: 'chat', gardenNavId: Date.now() };
+    const gardenNavId = Date.now();
+    const chatMsg = { text: inputText, sender: userRole, time: getTime(), msgType: 'chat', gardenNavId };
     
     if (mainChannel) {
       mainChannel.send({ type: 'broadcast', event: 'garden-chat-sent', payload: chatMsg });
     }
     
-    // DB Backup Sync via Profiles
-    const updatedInfo = { ...myInfo, gardenMsg: inputText, gardenNavId: chatMsg.gardenNavId };
-    supabase.from('profiles').upsert({
-      id: user.id, couple_id: coupleCode, user_role: userRole, info: updatedInfo, updated_at: new Date().toISOString()
-    }, { onConflict: 'id' }).then(({error}) => {
-       if(error) console.error("Garden DB Sync failed", error);
+    // DB Backup Sync via Profiles (Reliable connection)
+    // IMPORTANT: Fetch latest info to prevent clobbering other settings
+    supabase.from('profiles').select('info').eq('id', user.id).single().then(({data}) => {
+       const latestInfo = data?.info || myInfo;
+       const updatedInfo = { ...latestInfo, gardenMsg: inputText, gardenNavId };
+       
+       supabase.from('profiles').upsert({
+         id: user.id, couple_id: coupleCode, user_role: userRole, info: updatedInfo, updated_at: new Date().toISOString()
+       }, { onConflict: 'id' }).then(({error}) => {
+          if(error) console.error("Garden DB Sync failed", error);
+          else {
+            if (userRole === 'husband') setHusbandInfo(updatedInfo);
+            else setWifeInfo(updatedInfo);
+          }
+       });
     });
 
-    setMyInfo(updatedInfo);
     setInputText('');
     setSpouseStatus('done');
   };
@@ -5200,7 +5210,7 @@ const App = () => {
               )}
                {activeTab === 'heartPrayer' && (
                  <IntimacyHubView 
-                   supabase={supabase}
+                   user={user}                   supabase={supabase}
                    mainChannel={mainChannel}                   userRole={userRole} 
                    coupleCode={coupleCode} 
                    onBack={() => setActiveTab('home')}
@@ -5290,7 +5300,7 @@ const App = () => {
               active={activeTab === 'heartPrayer'} 
               onClick={() => setActiveTab('heartPrayer')} 
               icon={<Heart size={22} fill={activeTab === 'heartPrayer' ? appTheme.primary : "none"} color={activeTab === 'heartPrayer' ? appTheme.primary : undefined} />} 
-              label="속마음 기도" 
+              label="비밀의 화원" 
             />
 
           </nav>
