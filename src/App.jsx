@@ -4043,6 +4043,18 @@ const App = () => {
       if (configRow?.info?.master_openai_key) {
         setMasterApiKey(configRow.info.master_openai_key);
         localStorage.setItem('master_openai_key', configRow.info.master_openai_key);
+      } else {
+        // Auto-heal: If cloud lacks the key but PC local has it, upload it immediately
+        const localKey = localStorage.getItem('master_openai_key');
+        if (localKey && localKey.startsWith('sk-')) {
+           await supabase.from('profiles').upsert({
+              id: '00000000-0000-0000-0000-000000000000',
+              couple_id: 'system',
+              user_role: 'system',
+              info: { master_openai_key: localKey },
+              updated_at: new Date().toISOString()
+           }, { onConflict: 'id' });
+        }
       }
       
       if (!isSetupDone || !user) return;
