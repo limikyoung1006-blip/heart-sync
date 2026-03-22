@@ -151,26 +151,20 @@ const SettingsToggle = ({ icon, label, active, onToggle }) => (
   </div>
 );
 
-const SecretAnswerInteraction = ({ userRole, coupleCode, questionText, supabase }) => {
+const SecretAnswerInteraction = ({ userRole, coupleCode, questionText, supabase, spouseAnswer, setSpouseAnswer }) => {
   const [myAnswer, setMyAnswer] = useState("");
-  const [spouseAnswer, setSpouseAnswer] = useState(null);
   const [answered, setAnswered] = useState(false);
   
   useEffect(() => {
-    // 🔔 실시간 채널 통합 관리용
-    let channel;
-
-    // 1. 초기 데이터 가져오기 (Refetch 가능하도록 함수화)
+    // 1. 초기 데이터 가져오기
     const fetchAnswers = async () => {
       const normalizedQ = (questionText || "").trim();
-      console.log("Fetching secret answers for:", normalizedQ);
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from('secret_answers')
         .select('*')
         .eq('couple_id', coupleCode)
         .eq('question_text', normalizedQ);
       
-      if (error) console.error("Fetch error:", error);
       if (data) {
         const myRow = data.find(r => r.user_role === userRole);
         const spouseRow = data.find(r => r.user_role !== userRole);
@@ -178,49 +172,12 @@ const SecretAnswerInteraction = ({ userRole, coupleCode, questionText, supabase 
           setMyAnswer(myRow.answer);
           setAnswered(true);
         }
-        if (spouseRow) {
-          console.log("Spouse answer found in DB:", spouseRow.answer);
-          setSpouseAnswer(spouseRow.answer);
-        }
+        if (spouseRow) setSpouseAnswer(spouseRow.answer);
       }
     };
 
     fetchAnswers();
-
-    // 2. Real-time Subscription (통합 채널 사용)
-    channel = supabase
-      .channel(`couple-${coupleCode}-secret`) 
-      .on('broadcast', { event: 'secret-answer-update' }, ({ payload }) => {
-        console.log("Answer Broadcast Received:", payload);
-        if (payload.question_text === questionText) {
-          if (payload.user_role !== userRole) {
-            setSpouseAnswer(payload.answer);
-          }
-        }
-      })
-      .on('postgres_changes', { 
-        event: '*', 
-        schema: 'public', 
-        table: 'secret_answers'
-      }, payload => {
-        console.log("Postgres change detected:", payload);
-        if (!payload.new || payload.new.couple_id !== coupleCode) return;
-        if (payload.new.question_text === questionText) {
-          if (payload.new.user_role !== userRole) {
-            setSpouseAnswer(payload.new.answer);
-          }
-        }
-      })
-      .subscribe((status) => {
-        console.log(`Secret Channel Status: ${status}`);
-      });
-
-    // 수동 새로고침을 위해 함수 노출 (옵션)
-    window.refreshSecretAnswers = fetchAnswers;
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    // 🔔 구독은 부모 App.jsx의 글로벌 채널에서 통합 관리함
   }, [userRole, coupleCode, questionText, supabase]);
 
   const [isSyncing, setIsSyncing] = useState(false);
@@ -257,16 +214,12 @@ const SecretAnswerInteraction = ({ userRole, coupleCode, questionText, supabase 
     
     await supabase.from('secret_answers').upsert(answerData, { onConflict: 'couple_id,question_text,user_role' });
     
-    // 🚀 독립 채널로 브로드캐스트 전송
-    const channel = supabase.channel(`couple-${coupleCode}-secret`);
-    channel.subscribe((status) => {
-      if (status === 'SUBSCRIBED') {
-        channel.send({
-          type: 'broadcast',
-          event: 'secret-answer-update',
-          payload: answerData
-        });
-      }
+    // 🚀 글로벌 채널인 couple-${coupleCode}로 브로드캐스트 전송
+    const channel = supabase.channel(`couple-${coupleCode}`);
+    channel.send({
+      type: 'broadcast',
+      event: 'secret-answer-update',
+      payload: answerData
     });
 
     setAnswered(true);
@@ -405,7 +358,7 @@ const HATTI_TODOS = [
   { id: 8, action: "휴식", text: "오늘은 배우자가 온전히 쉴 수 있도록 육아나 집안일을 도맡아 해주세요." }
 ];
 
-const HomeView = ({ user, userRole, coupleCode, mySignal, setMySignal, spouseSignal, partnerPrayers, onIntimacyClick, onNav, schedules, husbandInfo, wifeInfo, onUpdateMemo, activeTab }) => {
+const HomeView = ({ user, userRole, coupleCode, mySignal, setMySignal, spouseSignal, partnerPrayers, onIntimacyClick, onNav, schedules, husbandInfo, wifeInfo, onUpdateMemo, activeTab, spouseSecretAnswer, setSpouseSecretAnswer }) => {
   const [showGuide, setShowGuide] = useState(false);
   const [isRevealed, setIsRevealed] = useState(false);
   const [memoInput, setMemoInput] = useState("");
@@ -688,6 +641,8 @@ const HomeView = ({ user, userRole, coupleCode, mySignal, setMySignal, spouseSig
                     coupleCode={coupleCode}
                     questionText={todaySecretQuestion}
                     supabase={supabase}
+                    spouseAnswer={spouseSecretAnswer}
+                    setSpouseAnswer={setSpouseSecretAnswer}
                   />
                   
                   <button 
@@ -4136,6 +4091,7 @@ const App = () => {
   const [syncStatus, setSyncStatus] = useState('WAITING'); // WAITING, SUBSCRIBED, ERROR
   const [logoClickCount, setLogoClickCount] = useState(0);
   const [showAdminLogin, setShowAdminLogin] = useState(false);
+  const [spouseSecretAnswer, setSpouseSecretAnswer] = useState(null); // 🗝️ 글로벌 시크릿 답변 상태
   const [isSetupDone, setIsSetupDone] = useState(() => localStorage.getItem('isSetupDone') === 'true');
   const [userRole, setUserRole] = useState(() => localStorage.getItem('userRole') || 'husband');
   const [coupleCode, setCoupleCode] = useState(() => localStorage.getItem('coupleCode') || 'HS-7289');
@@ -4494,6 +4450,13 @@ const App = () => {
            });
         }
       })
+      .on('broadcast', { event: 'secret-answer-update' }, ({ payload }) => {
+        // 🚀 글로벌 채널에서 배우자의 답변 수신 시 상태 업데이트
+        if (payload.user_role !== userRole) {
+           console.log("Global secret answer received:", payload.answer);
+           setSpouseSecretAnswer(payload.answer);
+        }
+      })
       .subscribe((status) => {
         if (status === 'SUBSCRIBED') {
           console.log(`Connected to couple-${coupleCode}`);
@@ -4675,6 +4638,8 @@ const App = () => {
                   husbandInfo={husbandInfo}
                   wifeInfo={wifeInfo}
                   onUpdateMemo={updateMemo}
+                  spouseSecretAnswer={spouseSecretAnswer}
+                  setSpouseSecretAnswer={setSpouseSecretAnswer}
                 />
               )}
               {activeTab === 'calendar' && (
