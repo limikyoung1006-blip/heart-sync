@@ -783,7 +783,7 @@ const HomeView = ({ user, userRole, coupleCode, mySignal, setMySignal, spouseSig
         </div>
         <div 
           className="prayer-bubble-home" 
-          onClick={() => onNav('worship')}
+          onClick={() => onNav('heartPrayer')}
           style={{ 
             background: 'linear-gradient(135deg, rgba(255, 252, 240, 0.7), rgba(255, 241, 190, 0.4))', 
             backdropFilter: 'blur(12px)',
@@ -1665,6 +1665,199 @@ const WorshipView = ({ userRole, coupleCode }) => {
                </motion.div>
              ))
            )}
+        </div>
+      </div>
+    </motion.div>
+  );
+};
+
+/* 🙏 Heart Prayer View (Dedicated Private Room) */
+const HeartPrayerView = ({ userRole, coupleCode, onBack, partnerPrayers, setPartnerPrayers }) => {
+  const [topic, setTopic] = useState("");
+  const [allPrayers, setAllPrayers] = useState([]);
+  const [isRecording, setIsRecording] = useState(false);
+
+  const fetchPrayers = async () => {
+    const { data } = await supabase
+      .from('prayers')
+      .select('*')
+      .eq('couple_id', coupleCode)
+      .order('created_at', { ascending: false });
+    
+    if (data) {
+      const processed = data.map(p => ({
+        ...p,
+        type: p.user_role === userRole ? 'mine' : 'partner',
+        date: new Date(p.created_at).toLocaleDateString('ko-KR')
+      }));
+      setAllPrayers(processed);
+      setPartnerPrayers(processed.filter(p => p.type === 'partner'));
+    }
+  };
+
+  useEffect(() => {
+    fetchPrayers();
+  }, [coupleCode, userRole]);
+
+  const handleRecord = async () => {
+    if (!topic.trim()) return;
+    setIsRecording(true);
+    
+    const { error } = await supabase.from('prayers').insert({
+      couple_id: coupleCode,
+      user_role: userRole,
+      text: topic.trim(),
+      created_at: new Date().toISOString()
+    });
+
+    if (!error) {
+      setTopic("");
+      fetchPrayers();
+      
+      // 🚀 배우자에게 기도가 도착했음을 브로드캐스트
+      const channel = supabase.channel(`couple-${coupleCode}`);
+      channel.send({
+        type: 'broadcast',
+        event: 'heart-prayer-sent',
+        payload: { userRole, text: topic.trim() }
+      });
+    }
+    setIsRecording(false);
+  };
+
+  return (
+    <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }} className="flex flex-col min-h-screen pb-20">
+      <header style={{ 
+        padding: '25px 20px', 
+        display: 'flex', 
+        alignItems: 'center', 
+        gap: '15px',
+        background: 'linear-gradient(to bottom, #FFF, transparent)'
+      }}>
+        <button onClick={onBack} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
+          <ChevronLeft size={28} color="#2D1F08" />
+        </button>
+        <div>
+          <h2 style={{ fontSize: '24px', fontWeight: 900, color: '#2D1F08' }}>속마음 기도</h2>
+          <p style={{ fontSize: '12px', color: '#B08D3E', fontWeight: 800 }}>PRAYER OF THE HEART</p>
+        </div>
+      </header>
+
+      <div style={{ padding: '0 20px' }}>
+        <div style={{ 
+          background: 'white', 
+          padding: '25px', 
+          borderRadius: '32px', 
+          boxShadow: '0 15px 40px rgba(0,0,0,0.05)',
+          border: '1.5px solid rgba(212, 175, 55, 0.2)',
+          marginBottom: '30px'
+        }}>
+          <p style={{ fontSize: '15px', color: '#5D4037', fontWeight: 800, lineHeight: 1.6, marginBottom: '20px', wordBreak: 'keep-all' }}>
+            입 밖으로 꺼내기 힘든 고민이나, 배우자가 꼭 기도해주길 바라는 마음을 이곳에 남겨주세요. 🙏
+          </p>
+          
+          <textarea 
+            value={topic}
+            onChange={(e) => setTopic(e.target.value)}
+            placeholder="기도하고 싶은 내용을 자유롭게 적어보세요..."
+            style={{ 
+              width: '100%', 
+              minHeight: '120px', 
+              border: 'none', 
+              background: '#FDFCF0', 
+              borderRadius: '20px', 
+              padding: '15px', 
+              fontSize: '15px', 
+              fontWeight: 500,
+              outline: 'none',
+              resize: 'none',
+              color: '#2D1F08'
+            }}
+          />
+          
+          <button 
+            onClick={handleRecord}
+            disabled={isRecording || !topic.trim()}
+            style={{ 
+              width: '100%', 
+              marginTop: '15px', 
+              padding: '16px', 
+              borderRadius: '100px', 
+              background: '#2D1F08', 
+              color: 'white', 
+              border: 'none', 
+              fontWeight: 900,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '10px',
+              opacity: isRecording || !topic.trim() ? 0.6 : 1
+            }}
+          >
+            {isRecording ? <RefreshCw size={18} className="animate-spin" /> : <Send size={18} />}
+            <span>마음 전달하기</span>
+          </button>
+        </div>
+
+        <div className="flex flex-col gap-5">
+          <div className="flex items-center gap-2 mb-2" style={{ paddingLeft: '5px' }}>
+            <Heart size={18} color="#FF4D6D" fill="#FF4D6D" />
+            <span style={{ fontSize: '18px', fontWeight: 900, color: '#2D1F08' }}>서로의 속마음 기도</span>
+          </div>
+
+          {allPrayers.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '60px 0', background: 'rgba(255,255,255,0.4)', borderRadius: '32px', border: '1px dashed rgba(0,0,0,0.1)' }}>
+              <Smile size={50} color="#D4AF37" style={{ opacity: 0.3, marginBottom: '15px' }} />
+              <p style={{ color: '#8B7355', fontSize: '14px', fontWeight: 700 }}>첫 번째 기도를 남겨보세요.</p>
+            </div>
+          ) : (
+            allPrayers.map((p, i) => (
+              <motion.div 
+                key={p.id}
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.05 }}
+                style={{ 
+                  background: p.type === 'mine' ? 'rgba(255,255,255,0.9)' : 'white',
+                  padding: '20px',
+                  borderRadius: '24px',
+                  boxShadow: '0 8px 20px rgba(0,0,0,0.03)',
+                  border: p.type === 'mine' ? '1px solid rgba(212, 175, 55, 0.2)' : '1px solid rgba(138, 96, 255, 0.2)',
+                  borderLeft: p.type === 'mine' ? '5px solid #D4AF37' : '5px solid #8A60FF',
+                  position: 'relative'
+                }}
+              >
+                <div className="flex justify-between items-center mb-3">
+                  <span style={{ fontSize: '12px', fontWeight: 900, color: p.type === 'mine' ? '#B08D3E' : '#8A60FF' }}>
+                    {p.type === 'mine' ? '내가 보낸 기도' : '배우자의 기도 요청'}
+                  </span>
+                  <span style={{ fontSize: '11px', color: '#999', fontWeight: 600 }}>{p.date}</span>
+                </div>
+                <p style={{ fontSize: '15px', color: '#2D1F08', lineHeight: 1.6, fontWeight: 500 }}>{p.text}</p>
+                {p.type === 'partner' && (
+                   <motion.button 
+                    whileTap={{ scale: 0.9 }}
+                    style={{ 
+                      marginTop: '15px', 
+                      background: 'rgba(138, 96, 255, 0.1)', 
+                      padding: '8px 15px', 
+                      borderRadius: '100px', 
+                      border: 'none', 
+                      color: '#8A60FF', 
+                      fontSize: '12px', 
+                      fontWeight: 900,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '5px'
+                    }}
+                    onClick={() => alert("배우자에게 '기도하고 있어요' 마음을 전달했습니다! ❤️")}
+                   >
+                     <Smile size={14} /> 함께 기도해요
+                   </motion.button>
+                )}
+              </motion.div>
+            ))
+          )}
         </div>
       </div>
     </motion.div>
@@ -4507,6 +4700,16 @@ const App = () => {
            });
         }
       })
+      .on('broadcast', { event: 'heart-prayer-sent' }, ({ payload }) => {
+        // 🚀 속마음 기도 수신 알림
+        if (payload.userRole !== userRole) {
+           setIncomingCardCall({ 
+             type: 'heart-prayer-sent',
+             sender: payload.userRole === 'husband' ? '남편' : '아내',
+             text: payload.text
+           });
+        }
+      })
       .subscribe((status) => {
         if (status === 'SUBSCRIBED') {
           console.log(`Connected to couple-${coupleCode}`);
@@ -4867,10 +5070,10 @@ const App = () => {
               label="가정예배" 
             />
             <NavItem 
-              active={activeTab === 'intimacy'} 
-              onClick={() => setActiveTab('intimacy')} 
-              icon={<Heart size={22} fill={activeTab === 'intimacy' ? appTheme.primary : "none"} color={activeTab === 'intimacy' ? appTheme.primary : undefined} />} 
-              label="비밀화원" 
+              active={activeTab === 'heartPrayer'} 
+              onClick={() => setActiveTab('heartPrayer')} 
+              icon={<Heart size={22} fill={activeTab === 'heartPrayer' ? appTheme.primary : "none"} color={activeTab === 'heartPrayer' ? appTheme.primary : undefined} />} 
+              label="속마음 기도" 
             />
             {isAdmin && (
               <NavItem 
@@ -4932,27 +5135,34 @@ const App = () => {
               }}
             >
               <div style={{ 
-                background: incomingCardCall.type?.startsWith('secret') ? '#D4AF37' : '#8A60FF', 
+                background: (incomingCardCall.type?.startsWith('secret') || incomingCardCall.type === 'heart-prayer-sent') ? '#D4AF37' : '#8A60FF', 
                 padding: '12px', 
                 borderRadius: '16px' 
               }}>
-                 {incomingCardCall.type?.startsWith('secret') ? <Lock size={24} color="white" /> : <Sparkles size={24} color="white" />}
+                 {incomingCardCall.type?.startsWith('secret') ? <Lock size={24} color="white" /> : 
+                  incomingCardCall.type === 'heart-prayer-sent' ? <Heart size={24} color="white" fill="white" /> :
+                  <Sparkles size={24} color="white" />}
               </div>
               <div style={{ flex: 1 }}>
                  <p style={{ fontSize: '15px', fontWeight: 900, marginBottom: '2px' }}>
                    {incomingCardCall.type === 'secret-answer-received' 
                      ? `${incomingCardCall.sender}님이 비밀 답변을 남겼습니다! 🎁`
+                     : incomingCardCall.type === 'heart-prayer-sent'
+                     ? `${incomingCardCall.sender}님이 기도를 요청했습니다! 🙏`
                      : incomingCardCall.type === 'secret-revealed'
                      ? `${incomingCardCall.sender}님이 비밀 질문을 확인했습니다! ✨`
                      : `${incomingCardCall.sender}님이 대화 카드를 뽑았습니다! 🃏`}
                  </p>
                  <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.6)', fontWeight: 700 }}>
-                   {incomingCardCall.type?.startsWith('secret') ? '지금 바로 정답을 확인해보세요.' : '지금 수락해서 함께 깊은 대화를 나눠보세요.'}
+                   {incomingCardCall.type === 'heart-prayer-sent' ? '지금 바로 기도제목을 확인해보세요.' :
+                    incomingCardCall.type?.startsWith('secret') ? '지금 바로 정답을 확인해보세요.' : '지금 수락해서 함께 깊은 대화를 나눠보세요.'}
                  </p>
               </div>
               <button 
                 onClick={() => {
-                  if (incomingCardCall.type?.startsWith('secret')) {
+                  if (incomingCardCall.type === 'heart-prayer-sent') {
+                    setActiveTab('heartPrayer');
+                  } else if (incomingCardCall.type?.startsWith('secret')) {
                     setActiveTab('home');
                   } else {
                     setActiveTab('cardGame');
@@ -4961,7 +5171,7 @@ const App = () => {
                 }}
                 style={{ background: 'white', color: '#1E293B', padding: '10px 18px', borderRadius: '12px', border: 'none', fontWeight: 900, fontSize: '13px' }}
               >
-                {incomingCardCall.type?.startsWith('secret') ? '확인' : '수락'}
+                확인
               </button>
               <button 
                 onClick={() => setIncomingCardCall(null)}
