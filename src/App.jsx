@@ -2657,83 +2657,108 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo, onU
             </div>
           </div>
           <div className="card-face card-back" style={{ background: "url('/card_bg.png') no-repeat center center", backgroundSize: 'cover', borderRadius: '32px', overflow: 'hidden' }}>
-            <div className="card-pattern-box" style={{ background: 'rgba(255,255,255,0.6)', margin: '20px', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.8)', backdropFilter: 'blur(8px)' }}>
-              <span className="compat-badge" style={{ marginBottom: '12px', background: '#FF4D6D', color: 'white' }}>{category}</span>
-              <h2 className="card-question" style={{ 
-                fontSize: '22px', 
-                padding: '0 15px', 
-                color: '#2D1F08', 
-                textShadow: 'none', 
-                lineHeight: 1.6,
-                textAlign: 'center',
-                wordBreak: 'keep-all',
-                flex: 1,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}>{currentQuestion?.question}</h2>
+            {/* 흰색 반투명 컨테이너 - 전체 카드 크기에 맞춤 */}
+            <div className="card-pattern-box" style={{ 
+              background: 'rgba(255,255,255,0.7)', 
+              margin: '15px', 
+              borderRadius: '24px', 
+              border: '1px solid rgba(255,255,255,0.8)', 
+              backdropFilter: 'blur(10px)',
+              padding: '24px 15px',
+              height: 'calc(100% - 30px)',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              boxSizing: 'border-box'
+            }}>
+              {/* 상단: 카테고리 */}
+              <div style={{ flexShrink: 0 }}>
+                <span className="compat-badge" style={{ background: '#FF4D6D', color: 'white', fontWeight: 900, padding: '5px 15px', borderRadius: '100px', fontSize: '11px' }}>{category}</span>
+              </div>
+
+              {/* 중단: 질문 (가장 넓은 공간 차지) */}
+              <div style={{ 
+                flex: 1, 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center',
+                width: '100%',
+                padding: '10px 0'
+              }}>
+                <h2 className="card-question" style={{ 
+                  fontSize: (currentQuestion?.question?.length > 30) ? '18px' : '20px', 
+                  color: '#2D1F08', 
+                  lineHeight: 1.5,
+                  textAlign: 'center',
+                  wordBreak: 'keep-all',
+                  fontWeight: 800,
+                  margin: 0
+                }}>{currentQuestion?.question}</h2>
+              </div>
               
-              {turnOwner === userRole ? (
-                <button 
-                  className="send-to-spouse-btn" 
-                  style={{ 
-                    marginTop: '40px', 
-                    background: '#2D1F08', 
-                    borderRadius: '100px', 
-                    height: '62px',
+              {/* 하단: 액션 버튼 또는 안내 메시지 */}
+              <div style={{ flexShrink: 0, width: '100%', display: 'flex', justifyContent: 'center' }}>
+                {turnOwner === userRole ? (
+                  <button 
+                    className="send-to-spouse-btn" 
+                    style={{ 
+                      background: '#2D1F08', 
+                      borderRadius: '100px', 
+                      height: '54px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '10px',
+                      padding: '0 24px',
+                      boxShadow: '0 8px 20px rgba(0,0,0,0.3)',
+                      width: '100%',
+                      maxWidth: '220px',
+                      border: '2px solid #F5D060',
+                      cursor: 'pointer'
+                    }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handOverTurn();
+                    }}
+                  >
+                    <span style={{ color: 'white', fontWeight: 900, fontSize: '14px' }}>답변 완료 & 턴 넘기기</span>
+                    <RefreshCw size={16} color="#F5D060" />
+                  </button>
+                ) : (
+                  <div style={{ 
+                    background: 'rgba(138, 96, 255, 0.08)', 
+                    padding: '12px 15px', 
+                    borderRadius: '20px',
                     display: 'flex',
+                    flexDirection: 'column',
                     alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '12px',
-                    padding: '0 30px',
-                    boxShadow: '0 10px 30px rgba(0,0,0,0.4)',
+                    gap: '4px',
+                    border: '1.5px solid #8A60FF30',
                     width: '100%',
-                    maxWidth: '300px',
-                    border: '2px solid #F5D060',
-                    lineHeight: 1
-                  }}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handOverTurn();
-                  }}
-                >
-                  <span style={{ color: 'white', fontWeight: 900, fontSize: '16px' }}>답변 완료 & 턴 넘기기</span>
-                  <RefreshCw size={18} color="#F5D060" />
-                </button>
-              ) : (
-                <div style={{ 
-                  marginTop: '40px', 
-                  background: 'rgba(138, 96, 255, 0.08)', 
-                  padding: '12px 20px', 
-                  borderRadius: '24px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  gap: '6px',
-                  border: '1.5px solid #8A60FF30',
-                  boxShadow: '0 4px 15px rgba(138, 96, 255, 0.05)',
-                  width: '90%'
-                }}>
-                  <div className="flex items-center gap-2">
-                    <motion.div 
-                      animate={{ scale: [1, 1.3, 1], opacity: [0.4, 0.8, 0.4] }}
-                      transition={{ duration: 1.5, repeat: Infinity }}
-                      style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#8A60FF' }} 
-                    />
-                    <span style={{ fontSize: '11px', color: '#8A60FF', fontWeight: 900, letterSpacing: '2px' }}>LISTENING...</span>
-                  </div>
-                  <span style={{ 
-                    fontSize: '15px', 
-                    color: '#4B2691', 
-                    fontWeight: 900, 
-                    textAlign: 'center',
-                    wordBreak: 'keep-all',
-                    lineHeight: 1.3
+                    maxWidth: '240px'
                   }}>
-                    {turnOwner === 'husband' ? '남편' : '아내'}님의 답변에 귀 기울여주세요
-                  </span>
-                </div>
-              )}
+                    <div className="flex items-center gap-2">
+                      <motion.div 
+                        animate={{ scale: [1, 1.2, 1], opacity: [0.4, 0.8, 0.4] }}
+                        transition={{ duration: 1.5, repeat: Infinity }}
+                        style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#8A60FF' }} 
+                      />
+                      <span style={{ fontSize: '10px', color: '#8A60FF', fontWeight: 900, letterSpacing: '1px' }}>LISTENING...</span>
+                    </div>
+                    <span style={{ 
+                      fontSize: '14px', 
+                      color: '#4B2691', 
+                      fontWeight: 900, 
+                      textAlign: 'center',
+                      wordBreak: 'keep-all',
+                      lineHeight: 1.3
+                    }}>
+                      {turnOwner === 'husband' ? '남편' : '아내'}님의 답변에 귀 기울여주세요
+                    </span>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
           </div>
