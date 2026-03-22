@@ -177,16 +177,16 @@ const SecretAnswerInteraction = ({ userRole, coupleCode, questionText, supabase 
     };
     fetchAnswers();
 
-    // 2. Real-time Subscription (Postgres + Broadcast for speed)
+    // 2. Real-time Subscription (통합 채널 사용)
     const channel = supabase
-      .channel(`secret-answer-${coupleCode}`)
+      .channel(`couple-${coupleCode}`)
       .on('broadcast', { event: 'secret-answer-update' }, ({ payload }) => {
         if (payload.question_text === questionText) {
           if (payload.user_role === userRole) {
             setMyAnswer(payload.answer);
             setAnswered(true);
           } else {
-            console.log("Broadcast secret spouse answer:", payload.answer);
+            console.log("Broadcast received:", payload.answer);
             setSpouseAnswer(payload.answer);
           }
         }
@@ -225,8 +225,8 @@ const SecretAnswerInteraction = ({ userRole, coupleCode, questionText, supabase 
     
     await supabase.from('secret_answers').upsert(answerData, { onConflict: 'couple_id,question_text,user_role' });
     
-    // 🚀 즉시 브로드캐스트로 전파 (속도!)
-    const channel = supabase.channel(`secret-answer-${coupleCode}`);
+    // 🚀 통합 채널로 브로드캐스트 전송
+    const channel = supabase.channel(`couple-${coupleCode}`);
     channel.subscribe((status) => {
       if (status === 'SUBSCRIBED') {
         channel.send({
@@ -532,8 +532,8 @@ const HomeView = ({ user, userRole, coupleCode, mySignal, setMySignal, spouseSig
                   style={{ paddingTop: '30px', cursor: 'pointer' }} 
                   onClick={() => {
                     setIsRevealed(true);
-                    // 🔔 배우자에게 '질문 확인 중' 알림 보내기
-                    const channel = supabase.channel(`home-broadcast-${coupleCode}`);
+                    // 🔔 통합 채널인 couple-${coupleCode}로 전송해야 함
+                    const channel = supabase.channel(`couple-${coupleCode}`);
                     channel.subscribe((status) => {
                       if (status === 'SUBSCRIBED') {
                         channel.send({
