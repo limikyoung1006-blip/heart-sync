@@ -162,12 +162,13 @@ const SecretAnswerInteraction = ({ userRole, coupleCode, questionText, supabase 
 
     // 1. 초기 데이터 가져오기 (Refetch 가능하도록 함수화)
     const fetchAnswers = async () => {
-      console.log("Fetching secret answers for:", questionText);
+      const normalizedQ = (questionText || "").trim();
+      console.log("Fetching secret answers for:", normalizedQ);
       const { data, error } = await supabase
         .from('secret_answers')
         .select('*')
         .eq('couple_id', coupleCode)
-        .eq('question_text', questionText);
+        .eq('question_text', normalizedQ);
       
       if (error) console.error("Fetch error:", error);
       if (data) {
@@ -222,24 +223,33 @@ const SecretAnswerInteraction = ({ userRole, coupleCode, questionText, supabase 
     };
   }, [userRole, coupleCode, questionText, supabase]);
 
+  const [isSyncing, setIsSyncing] = useState(false);
   const handleManualRefresh = async () => {
+    setIsSyncing(true);
+    const normalizedQ = (questionText || "").trim();
     const { data } = await supabase
       .from('secret_answers')
       .select('*')
       .eq('couple_id', coupleCode)
-      .eq('question_text', questionText);
+      .eq('question_text', normalizedQ);
     
     if (data) {
       const spouseRow = data.find(r => r.user_role !== userRole);
-      if (spouseRow) setSpouseAnswer(spouseRow.answer);
+      if (spouseRow) {
+        setSpouseAnswer(spouseRow.answer);
+      } else {
+        alert("배우자가 아직 답변을 작성하지 않았습니다.");
+      }
     }
+    setTimeout(() => setIsSyncing(false), 500);
   };
 
    const handleSend = async () => {
     if (!myAnswer) return;
+    const normalizedQ = (questionText || "").trim();
     const answerData = {
       couple_id: coupleCode,
-      question_text: questionText,
+      question_text: normalizedQ,
       user_role: userRole,
       answer: myAnswer,
       created_at: new Date().toISOString()
@@ -290,21 +300,24 @@ const SecretAnswerInteraction = ({ userRole, coupleCode, questionText, supabase 
           
           <button 
             onClick={handleManualRefresh}
+            disabled={isSyncing}
             style={{
               marginTop: '10px',
-              background: '#D4AF3720',
+              background: isSyncing ? '#EEE' : '#D4AF3720',
               border: '1px solid #D4AF3740',
-              color: '#B08D3E',
+              color: isSyncing ? '#999' : '#B08D3E',
               padding: '8px 15px',
               borderRadius: '10px',
               fontSize: '11px',
               fontWeight: 800,
               display: 'flex',
               alignItems: 'center',
-              gap: '6px'
+              gap: '6px',
+              cursor: isSyncing ? 'not-allowed' : 'pointer'
             }}
           >
-            <RefreshCw size={12} /> 답변 확인 새로고침
+            <RefreshCw size={12} className={isSyncing ? "animate-spin" : ""} /> 
+            {isSyncing ? "확인 중..." : "답변 확인 새로고침"}
           </button>
         </div>
       </div>
