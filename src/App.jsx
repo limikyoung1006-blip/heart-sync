@@ -2403,25 +2403,24 @@ const IntimacyModal = ({ show, onClose, subPage, setSubPage, bgImage, onBgUpload
     const userMsg = { id: Date.now(), text: inputText, sender: 'me', type: 'chat', time: getTime() };
     setMessages(prev => [...prev, userMsg]);
     
-    // 🌐 Broadcast to Partner via Shared Persistent Channel
+    // 🌐 Multi-Layer Sync: Broadcast (High speed) + Profile Sync (100% Reliability)
+    const chatMsg = { text: inputText, sender: userRole, time: getTime(), msgType: 'chat', gardenNavId: Date.now() };
+    
     if (mainChannel) {
-      mainChannel.send({
-        type: 'broadcast',
-        event: 'garden-chat-sent',
-        payload: { text: inputText, sender: userRole, time: getTime(), msgType: 'chat' }
-      });
-    } else {
-      console.warn("Main channel not ready for broadcast");
-      // Fallback: try one-time sending
-      supabase.channel(`couple-${coupleCode}`).send({
-        type: 'broadcast',
-        event: 'garden-chat-sent',
-        payload: { text: inputText, sender: userRole, time: getTime(), msgType: 'chat' }
-      });
+      mainChannel.send({ type: 'broadcast', event: 'garden-chat-sent', payload: chatMsg });
     }
     
+    // DB Backup Sync via Profiles
+    const updatedInfo = { ...myInfo, gardenMsg: inputText, gardenNavId: chatMsg.gardenNavId };
+    supabase.from('profiles').upsert({
+      id: user.id, couple_id: coupleCode, user_role: userRole, info: updatedInfo, updated_at: new Date().toISOString()
+    }, { onConflict: 'id' }).then(({error}) => {
+       if(error) console.error("Garden DB Sync failed", error);
+    });
+
+    setMyInfo(updatedInfo);
     setInputText('');
-    setSpouseStatus('done'); // Real-time chat, no typing simulation needed for real broadcast
+    setSpouseStatus('done');
   };
 
   const handleAnswerSubmit = () => {
@@ -4393,6 +4392,7 @@ const App = () => {
   const [wifeInfo, setWifeInfo] = useState(() => JSON.parse(localStorage.getItem('wifeInfo') || '{"nickname":"박아내", "mbti":"ENFP", "blood":"B", "marriageDate":"2020-05-23"}'));
   const appTheme = { id: 'warm', primary: '#D4AF37', bg: '#FDFCF0' };
   const [mainChannel, setMainChannel] = useState(null); // 📡 Persistent Shared Channel
+  const lastGardenNavIdRef = React.useRef(null);
 
   // Ref for activeTab to avoid stale closures in global real-time listeners
   const activeTabRef = React.useRef(activeTab);
@@ -4625,6 +4625,26 @@ const App = () => {
       updated_at: new Date().toISOString()
     }, { onConflict: 'id' });
   };
+
+  const handleGardenMessageSend = async (message) => {
+    const baseInfo = userRole === 'husband' ? husbandInfo : wifeInfo;
+    const updatedInfo = {
+      ...baseInfo,
+      gardenMsg: message,
+      gardenNavId: Date.now() // Unique ID for navigation trigger
+    };
+
+    if (userRole === 'husband') setHusbandInfo(updatedInfo);
+    else setWifeInfo(updatedInfo);
+
+    await supabase.from('profiles').upsert({
+      id: user.id,
+      couple_id: coupleCode,
+      user_role: userRole,
+      info: updatedInfo,
+      updated_at: new Date().toISOString()
+    }, { onConflict: 'id' });
+  };
   
   // Supabase Real-time Sync
   useEffect(() => {
@@ -4794,7 +4814,40 @@ const App = () => {
         if (role === 'husband') setHusbandInfo(info);
         else if (role === 'wife') setWifeInfo(info);
 
-        // 🚀 자동 입장 (Auto-Navigation) 처리: navId가 바뀔 때만 실행
+        // 🚀 자동 입장 (Auto-Navigation) 및 비밀의 화원 실시간 연동 처리
+        if (info && info.gardenNavId && info.gardenNavId !== lastGardenNavIdRef.current) {
+          lastGardenNavIdRef.current = info.gardenNavId;
+          
+          if (role !== userRole) {
+            // 📡 Internal Sync for open Chat Modal
+            window.dispatchEvent(new CustomEvent('garden-incoming-msg', { detail: { text: info.gardenMsg, sender: role, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) } }));
+            
+            // 🌹 Show Toast only if NOT currently in the garden chat
+            if (activeTabRef.current !== 'heartPrayer') {
+              toast.custom((t) => (
+                <div 
+                  onClick={() => {
+                    setActiveTab('heartPrayer');
+                    setTimeout(() => window.dispatchEvent(new CustomEvent('nav-to-garden')), 100);
+                    toast.dismiss(t.id);
+                  }}
+                  style={{ padding: '15px 20px', background: 'white', borderRadius: '25px', boxShadow: '0 10px 40px rgba(0,0,0,0.1)', cursor: 'pointer', border: '1.5px solid #FDFCF0' }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'rgba(138, 96, 255, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <Sparkles size={20} color="#8A60FF" />
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                      <span style={{ fontSize: '13px', fontWeight: 900, color: '#2D1F08' }}>비밀의 화원 대화 도착!</span>
+                      <span style={{ fontSize: '12px', color: '#8B7355', fontWeight: 700 }}>{partnerLabel}님이 소통을 기다리고 있어요. ✨</span>
+                    </div>
+                  </div>
+                </div>
+              ));
+            }
+          }
+        }
+
         if (info && info.requestTab && info.navId !== lastNavIdRef.current) {
           console.log("Auto-nav triggered via profile with ID:", info.navId);
           lastNavIdRef.current = info.navId;
@@ -5011,8 +5064,12 @@ const App = () => {
             <div className="top-bar-icons">
               <Bell size={22} color={appTheme.primary} style={{ opacity: 0.7 }} />
               <button 
-                onClick={() => setActiveTab('settings')}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex' }}
+                id="top-settings-btn"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setActiveTab('settings');
+                }}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '8px', display: 'flex' }}
               >
                 <Settings size={22} color={appTheme.primary} style={{ opacity: 0.7 }} />
               </button>
