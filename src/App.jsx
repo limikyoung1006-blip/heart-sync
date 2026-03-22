@@ -4258,6 +4258,21 @@ const App = () => {
     }
   };
 
+  // 🚀 공유 화면 전환 (내가 이동할 때 배우자도 이동 시점 동기화)
+  const handleSharedNavigate = async (tabName) => {
+    setActiveTab(tabName);
+    try {
+      // card_game_state에 이동할 탭 기록하여 배우자에게 신호 보냄
+      await supabase.from('card_game_state').upsert({
+        couple_id: coupleCode,
+        active_tab: tabName,
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'couple_id' });
+    } catch (err) {
+      console.warn("Shared navigation sync failed:", err);
+    }
+  };
+
   return (
     <div className="h-full flex flex-col relative w-full" style={{ '--gold': appTheme.primary, '--gold-glow': `${appTheme.primary}40` }}>
       {loading && (
