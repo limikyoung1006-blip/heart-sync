@@ -2371,96 +2371,122 @@ const IntimacyModal = ({ show, onClose, subPage, setSubPage, bgImage, onBgUpload
 
 /* 🃏 Card Game View (Separated Page) */
 const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo, onUpdateMemo }) => {
-  // Sync state from profile's info JSON
-  const mySync = (userRole === 'husband' ? husbandInfo : wifeInfo).cardSync || { ts: 0 };
-  const spouseSync = (userRole === 'husband' ? wifeInfo : husbandInfo).cardSync || { ts: 0 };
-  
-  // Pick the LATEST state based on timestamp
-  const masterSync = (mySync.ts || 0) > (spouseSync.ts || 0) ? mySync : spouseSync;
-
-  const [category, setCategory] = useState(masterSync.category || '일상');
-  const [isFlipped, setIsFlipped] = useState(masterSync.isFlipped || false);
+  const [category, setCategory] = useState('일상');
+  const [isFlipped, setIsFlipped] = useState(false);
   const filteredQuestions = useMemo(() => questions.filter(q => q.category === category), [category]);
   const [currentQuestion, setCurrentQuestion] = useState(null);
-  const [isWaiting, setIsWaiting] = useState(masterSync.isWaiting || false);
-  const [waiterRole, setWaiterRole] = useState(masterSync.waiterRole || null);
-  const [turnOwner, setTurnOwner] = useState(masterSync.turnOwner || null);
+  const [isWaiting, setIsWaiting] = useState(false);
+  const [waiterRole, setWaiterRole] = useState(null);
+  const [turnOwner, setTurnOwner] = useState(null);
 
-  // Sync with MasterData when it changes
+  // 🚀 초고속 브로드캐스트 채널 설정
+  const broadcastRef = useRef(null);
+
   useEffect(() => {
-    if (!masterSync.ts) return; // Wait for real data
-
-    if (masterSync.category) setCategory(masterSync.category);
-    if (masterSync.isFlipped !== undefined) setIsFlipped(masterSync.isFlipped);
-    if (masterSync.isWaiting !== undefined) setIsWaiting(masterSync.isWaiting);
-    if (masterSync.waiterRole !== undefined) setWaiterRole(masterSync.waiterRole);
-    if (masterSync.turnOwner !== undefined) setTurnOwner(masterSync.turnOwner);
+    const channel = supabase.channel(`card-broadcast-${coupleCode}`)
+      .on('broadcast', { event: 'game-update' }, ({ payload }) => {
+        console.log("Broadcast received:", payload);
+        if (payload.category) setCategory(payload.category);
+        if (payload.isFlipped !== undefined) setIsFlipped(payload.isFlipped);
+        if (payload.isWaiting !== undefined) setIsWaiting(payload.isWaiting);
+        if (payload.waiterRole !== undefined) setWaiterRole(payload.waiterRole);
+        if (payload.turnOwner !== undefined) setTurnOwner(payload.turnOwner);
+        if (payload.questionId) {
+          const q = questions.find(item => String(item.id) === String(payload.questionId));
+          if (q) setCurrentQuestion(q);
+        }
+      })
+      .subscribe();
     
-    // 🔥 질문 동기화 강화 (ID와 텍스트 대조)
-    if (masterSync.questionId) {
-      const q = questions.find(item => String(item.id) === String(masterSync.questionId));
-      if (q) {
-        setCurrentQuestion(q);
-      } else if (masterSync.questionText) {
-        // ID로 못 찾으면 텍스트로 임시 객체 생성 (안전망)
-        setCurrentQuestion({ id: masterSync.questionId, category: masterSync.category, question: masterSync.questionText });
-      }
-    }
-  }, [JSON.stringify(masterSync)]);
+    broadcastRef.current = channel;
+    return () => { supabase.removeChannel(channel); };
+  }, [coupleCode]);
 
-  // If no question is set yet, pick one at random (locally first)
+  // Initial Sync from Table (Persistence)
   useEffect(() => {
-    if (!currentQuestion && filteredQuestions.length > 0) {
-      const initialIdx = Math.floor(Math.random() * filteredQuestions.length);
-      setCurrentQuestion(filteredQuestions[initialIdx]);
+    const fetchDB = async () => {
+      const { data } = await supabase.from('card_game_state').select('*').eq('couple_id', coupleCode).single();
+      if (data) {
+        setCategory(data.category || '일상');
+        setIsFlipped(data.is_flipped || false);
+        setIsWaiting(data.is_waiting || false);
+        setWaiterRole(data.waiter_role || null);
+        setTurnOwner(data.turn_owner || null);
+        const q = questions.find(item => String(item.id) === String(data.current_question_id));
+        if (q) setCurrentQuestion(q);
+      }
+    };
+    fetchDB();
+  }, [coupleCode]);
+
+  const sendBroadcast = (updates) => {
+    if (broadcastRef.current) {
+      broadcastRef.current.send({
+        type: 'broadcast',
+        event: 'game-update',
+        payload: { ...updates, ts: Date.now() }
+      });
     }
-  }, [currentQuestion, filteredQuestions]);
+  };
 
   const updateCardState = async (updates) => {
-    const currentSync = (userRole === 'husband' ? husbandInfo : wifeInfo).cardSync || {};
-    // Give my update a slightly unique timestamp to avoid ties
-    const myTs = Date.now() + (userRole === 'husband' ? 1 : 0);
-    const newSync = { 
-      category, 
-      isFlipped, 
-      isWaiting, 
-      waiterRole, 
-      turnOwner, 
-      questionId: currentQuestion?.id,
-      ...updates, 
-      ts: myTs 
-    };
-    onUpdateMemo(undefined, { cardSync: newSync });
+    // 1. Local state update immediately
+    if (updates.category) setCategory(updates.category);
+    if (updates.isFlipped !== undefined) setIsFlipped(updates.isFlipped);
+    if (updates.isWaiting !== undefined) setIsWaiting(updates.isWaiting);
+    if (updates.waiterRole !== undefined) setWaiterRole(updates.waiterRole);
+    if (updates.turnOwner !== undefined) setTurnOwner(updates.turnOwner);
+    if (updates.questionId) {
+      const q = questions.find(item => String(item.id) === String(updates.questionId));
+      if (q) setCurrentQuestion(q);
+    }
+
+    // 2. 브로드캐스트로 즉시 전송 (속도!)
+    sendBroadcast(updates);
+    
+    // 3. 백그라운드 DB 저장 (영속성)
+    try {
+      supabase.from('card_game_state').upsert({
+        couple_id: coupleCode,
+        category: updates.category || category,
+        is_flipped: updates.isFlipped !== undefined ? updates.isFlipped : isFlipped,
+        is_waiting: updates.isWaiting !== undefined ? updates.isWaiting : isWaiting,
+        waiter_role: updates.waiterRole !== undefined ? updates.waiterRole : waiterRole,
+        turn_owner: updates.turnOwner !== undefined ? updates.turnOwner : turnOwner,
+        current_question_id: updates.questionId || currentQuestion?.id,
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'couple_id' }).then(({ error }) => {
+        if (error) console.warn("Background sync failed:", error.message);
+      });
+    } catch (e) {}
   };
 
   const drawNewCard = () => {
-    if (turnOwner && turnOwner !== userRole) {
-      alert(`현재는 ${turnOwner === 'husband' ? '남편' : '아내'}님의 차례입니다.`);
-      return;
+    if (turnOwner && turnOwner !== userRole) return;
+    
+    // 🔥 확실하게 다른 질문 고르기
+    let pool = filteredQuestions;
+    if (pool.length > 1 && currentQuestion) {
+      pool = pool.filter(q => String(q.id) !== String(currentQuestion.id));
     }
     
-    // Pick a DIFFERENT question from the current one
-    let availableQuestions = filteredQuestions;
-    if (availableQuestions.length > 1 && currentQuestion) {
-      availableQuestions = availableQuestions.filter(q => q.id !== currentQuestion.id);
-    }
+    const nextQ = pool[Math.floor(Math.random() * pool.length)];
     
-    const idx = Math.floor(Math.random() * availableQuestions.length);
-    const newQ = availableQuestions[idx];
-    
-    setCurrentQuestion(newQ);
+    // 로컬 즉시 반영
+    setCurrentQuestion(nextQ);
     setIsFlipped(false);
     setIsWaiting(false);
     setWaiterRole(null);
     setTurnOwner(userRole);
     
+    // 즉시 전파
     updateCardState({ 
-      questionId: newQ.id, 
-      questionText: newQ.question, // Text 같이 전달
+      questionId: nextQ.id, 
       isFlipped: false, 
       isWaiting: false, 
       waiterRole: null, 
-      turnOwner: userRole 
+      turnOwner: userRole,
+      roundId: Math.random() // 강제 새로고침용 ID
     });
   };
 
