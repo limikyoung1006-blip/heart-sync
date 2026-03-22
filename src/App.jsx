@@ -1081,7 +1081,7 @@ const ChatView = ({ userRole, setUserRole, husbandInfo, setHusbandInfo, wifeInfo
     if (masterApiKey) {
       try {
         setIsAiLoading(true);
-        const response = await fetch("https://api.openai.com/v1/chat/completions", {
+        const response = await fetch("/api/chat", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -1843,7 +1843,7 @@ const SolutionView = ({ onBack, userRole, husbandInfo, wifeInfo, schedules, admi
         마크다운 형식은 제외하고 텍스트 줄바꿈을 활용해주세요.
       `;
 
-      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      const response = await fetch('/api/chat', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${masterApiKey}`,
