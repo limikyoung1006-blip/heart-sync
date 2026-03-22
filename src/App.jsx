@@ -2370,103 +2370,75 @@ const IntimacyModal = ({ show, onClose, subPage, setSubPage, bgImage, onBgUpload
 
 
 /* 🃏 Card Game View (Separated Page) */
-const CardGameView = ({ onBack, coupleCode, userRole }) => {
-  const [category, setCategory] = useState('일상');
-  const [isFlipped, setIsFlipped] = useState(false);
+const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo, onUpdateMemo }) => {
+  // Sync state from profile's info JSON
+  const shareState = (userRole === 'husband' ? husbandInfo : wifeInfo).cardSync || {};
+  const spouseShareState = (userRole === 'husband' ? wifeInfo : husbandInfo).cardSync || {};
+  
+  // Unified sync data (prioritize newer or specific lead)
+  const masterSync = { ...spouseShareState, ...shareState };
+
+  const [category, setCategory] = useState(masterSync.category || '일상');
+  const [isFlipped, setIsFlipped] = useState(masterSync.isFlipped || false);
   const filteredQuestions = useMemo(() => questions.filter(q => q.category === category), [category]);
-  const [currentQuestion, setCurrentQuestion] = useState(filteredQuestions[0]);
-  const [isWaiting, setIsWaiting] = useState(false);
-  const [waiterRole, setWaiterRole] = useState(null);
-  const [turnOwner, setTurnOwner] = useState(null);
+  const [currentQuestion, setCurrentQuestion] = useState(null);
+  const [isWaiting, setIsWaiting] = useState(masterSync.isWaiting || false);
+  const [waiterRole, setWaiterRole] = useState(masterSync.waiterRole || null);
+  const [turnOwner, setTurnOwner] = useState(masterSync.turnOwner || null);
 
-  // Supabase Sync for Card Game
+  // Sync with MasterData when it changes
   useEffect(() => {
-    const fetchCardState = async () => {
-      const { data } = await supabase
-        .from('card_game_state')
-        .select('*')
-        .eq('couple_id', coupleCode)
-        .single();
-      
-      if (data) {
-        setCategory(data.category || '일상');
-        setIsFlipped(data.is_flipped || false);
-        setIsWaiting(data.is_waiting || false);
-        setWaiterRole(data.waiter_role || null);
-        setTurnOwner(data.turn_owner || null);
-        const q = questions.find(q => q.id === data.current_question_id);
-        if (q) setCurrentQuestion(q);
-      } else {
-        // DB에 데이터가 없으면 랜덤하게 하나 골라두기
-        const initialIdx = Math.floor(Math.random() * filteredQuestions.length);
-        const randomQ = filteredQuestions[initialIdx];
-        setCurrentQuestion(randomQ);
-        // 초기에는 턴 주인이 없을 수 있으므로 null 유지 (누구든 먼저 누르는 사람 차례)
-        setTurnOwner(null);
-        updateCardState({ current_question_id: randomQ.id, turn_owner: null });
-      }
-    };
-    fetchCardState();
+    if (masterSync.category) setCategory(masterSync.category);
+    if (masterSync.isFlipped !== undefined) setIsFlipped(masterSync.isFlipped);
+    if (masterSync.isWaiting !== undefined) setIsWaiting(masterSync.isWaiting);
+    if (masterSync.waiterRole !== undefined) setWaiterRole(masterSync.waiterRole);
+    if (masterSync.turnOwner !== undefined) setTurnOwner(masterSync.turnOwner);
+    if (masterSync.questionId) {
+      const q = questions.find(item => item.id === masterSync.questionId);
+      if (q) setCurrentQuestion(q);
+    }
+  }, [JSON.stringify(masterSync)]);
 
-    const channel = supabase
-      .channel(`card-game-${coupleCode}`)
-      .on('postgres_changes', { 
-        event: '*', 
-        schema: 'public', 
-        table: 'card_game_state'
-        // Postgres 필터 우회
-      }, payload => {
-        if (!payload.new || payload.new.couple_id !== coupleCode) return;
-        const { category: cat, is_flipped, is_waiting, current_question_id, waiter_role, turn_owner } = payload.new;
-        if (cat) setCategory(cat);
-        setIsFlipped(is_flipped);
-        setIsWaiting(is_waiting);
-        setWaiterRole(waiter_role);
-        setTurnOwner(turn_owner);
-        const q = questions.find(q => q.id === current_question_id);
-        if (q) setCurrentQuestion(q);
-      })
-      .subscribe((status) => {
-        if (status === 'SUBSCRIBED') console.log(`Card game sync active for ${coupleCode}`);
-      });
-
-    return () => supabase.removeChannel(channel);
-  }, [coupleCode]);
+  // If no question is set yet, pick one at random (locally first)
+  useEffect(() => {
+    if (!currentQuestion && filteredQuestions.length > 0) {
+      const initialIdx = Math.floor(Math.random() * filteredQuestions.length);
+      setCurrentQuestion(filteredQuestions[initialIdx]);
+    }
+  }, [currentQuestion, filteredQuestions]);
 
   const updateCardState = async (updates) => {
-    try {
-      const { error } = await supabase.from('card_game_state').upsert({
-        couple_id: coupleCode,
-        category,
-        is_flipped: isFlipped,
-        is_waiting: isWaiting,
-        waiter_role: waiterRole,
-        turn_owner: turnOwner,
-        current_question_id: currentQuestion?.id,
-        updated_at: new Date().toISOString(),
-        ...updates
-      }, { onConflict: 'couple_id' });
-      if (error) throw error;
-    } catch (err) {
-      console.error("Card game sync error:", err);
-    }
+    // Parent should handle updating the profile info
+    const currentSync = (userRole === 'husband' ? husbandInfo : wifeInfo).cardSync || {};
+    const newSync = { ...currentSync, ...updates };
+    onUpdateMemo(undefined, { cardSync: newSync }); // Using onUpdateMemo as a generic profile updater
   };
 
   const drawNewCard = () => {
+    if (turnOwner && turnOwner !== userRole) {
+      alert(`현재는 ${turnOwner === 'husband' ? '남편' : '아내'}님의 차례입니다.`);
+      return;
+    }
     const idx = Math.floor(Math.random() * filteredQuestions.length);
     const newQ = filteredQuestions[idx];
     setCurrentQuestion(newQ);
     setIsFlipped(false);
     setIsWaiting(false);
-    updateCardState({ current_question_id: newQ.id, is_flipped: false, is_waiting: false });
+    setWaiterRole(null);
+    setTurnOwner(userRole);
+    updateCardState({ questionId: newQ.id, isFlipped: false, isWaiting: false, waiterRole: null, turnOwner: userRole });
   };
 
   const handOverTurn = () => {
+    if (turnOwner && turnOwner !== userRole) {
+      alert(`현재는 ${turnOwner === 'husband' ? '남편' : '아내'}님의 차례입니다.`);
+      return;
+    }
     setIsWaiting(true);
     setWaiterRole(userRole);
     const spouseRole = userRole === 'husband' ? 'wife' : 'husband';
-    setTurnOwner(spouseRole); // 답변 마치면 상대방에게 주도권 넘김
-    updateCardState({ is_waiting: true, waiter_role: userRole, turn_owner: spouseRole });
+    setTurnOwner(spouseRole); 
+    updateCardState({ isWaiting: true, waiterRole: userRole, turnOwner: spouseRole });
   };
 
   const toggleFlip = () => {
@@ -2476,9 +2448,8 @@ const CardGameView = ({ onBack, coupleCode, userRole }) => {
     }
     const nextFlip = !isFlipped;
     setIsFlipped(nextFlip);
-    // 뒤집는 사람이 턴을 갖게 됨
     setTurnOwner(userRole);
-    updateCardState({ is_flipped: nextFlip, turn_owner: userRole });
+    updateCardState({ isFlipped: nextFlip, turnOwner: userRole });
   };
 
   const changeCategory = (cat) => {
@@ -2489,7 +2460,16 @@ const CardGameView = ({ onBack, coupleCode, userRole }) => {
     setCategory(cat);
     setIsFlipped(false);
     setTurnOwner(userRole);
-    updateCardState({ category: cat, is_flipped: false, turn_owner: userRole });
+    updateCardState({ category: cat, isFlipped: false, turnOwner: userRole });
+  };
+
+  const claimTurn = () => {
+    if (!turnOwner) { // Only claim if turn is free
+      setTurnOwner(userRole);
+      updateCardState({ turnOwner: userRole });
+    } else if (turnOwner !== userRole) {
+      alert(`현재는 ${turnOwner === 'husband' ? '남편' : '아내'}님의 차례입니다.`);
+    }
   };
 
   return (
@@ -2660,9 +2640,9 @@ const CardGameView = ({ onBack, coupleCode, userRole }) => {
               )}
             </div>
           </div>
+          </div>
         </div>
       </div>
-    </div>
 
       <button 
         className={`draw-btn ${(turnOwner && turnOwner !== userRole) ? 'disabled' : ''}`} 
@@ -2671,6 +2651,23 @@ const CardGameView = ({ onBack, coupleCode, userRole }) => {
       >
         {(turnOwner && turnOwner !== userRole) ? '배우자의 턴 기다리기' : '다른 카드 뽑기'}
       </button>
+
+      {turnOwner && (
+        <button 
+          onClick={() => { setTurnOwner(null); updateCardState({ turnOwner: null }); }}
+          style={{ marginTop: '10px', background: 'none', border: 'none', color: '#B08D3E', fontSize: '11px', fontWeight: 800, textDecoration: 'underline' }}
+        >
+          턴 주도권 초기화하기 (자유 모드)
+        </button>
+      )}
+      {!turnOwner && (
+        <button 
+          onClick={claimTurn}
+          style={{ marginTop: '10px', background: 'none', border: 'none', color: '#8A60FF', fontSize: '11px', fontWeight: 800, textDecoration: 'underline' }}
+        >
+          턴 주도권 가져오기
+        </button>
+      )}
     </motion.div>
   );
 };
@@ -2915,7 +2912,8 @@ const SettingsView = ({
   worshipTime,
   setWorshipTime,
   anniversaries,
-  setAnniversaries
+  setAnniversaries,
+  onUpdateMemo // Added onUpdateMemo prop
 }) => {
   // Persistence for user preferences
   const [notifSignal, setNotifSignal] = useState(() => JSON.parse(localStorage.getItem('notif_signal') ?? 'true'));
@@ -3003,7 +3001,7 @@ const SettingsView = ({
       return;
     }
     const reader = new FileReader();
-    reader.onloadend = () => updateProfileFallback('avatar', reader.result);
+    reader.onloadend = () => onUpdateMemo('avatar', reader.result);
     reader.readAsDataURL(file);
   };
 
@@ -3195,7 +3193,7 @@ const SettingsView = ({
           <DeepAnalysisView 
             onBack={() => setShowDeepAnalysis(false)}
             myInfo={myInfo}
-            updateProfile={updateProfile}
+            updateProfile={onUpdateMemo} // Use onUpdateMemo here
           />
         )}
       </AnimatePresence>
@@ -4045,9 +4043,11 @@ const App = () => {
     }, { onConflict: 'id' });
   };
   
-  const updateMemo = async (text) => {
+  const updateMemo = async (text, extraInfo = {}) => {
     const baseInfo = userRole === 'husband' ? husbandInfo : wifeInfo;
-    const updatedInfo = { ...baseInfo, todayMemo: text };
+    const updatedInfo = { ...baseInfo, ...extraInfo };
+    if (text !== undefined) updatedInfo.todayMemo = text;
+
     if (userRole === 'husband') setHusbandInfo(updatedInfo);
     else setWifeInfo(updatedInfo);
     
@@ -4258,19 +4258,16 @@ const App = () => {
     }
   };
 
-  // 🚀 공유 화면 전환 (내가 이동할 때 배우자도 이동 시점 동기화)
+  // 🚀 공유 화면 전환 (Profile 기반 견고한 동기화)
   const handleSharedNavigate = async (tabName) => {
     setActiveTab(tabName);
-    try {
-      // card_game_state에 이동할 탭 기록하여 배우자에게 신호 보냄
-      await supabase.from('card_game_state').upsert({
-        couple_id: coupleCode,
-        active_tab: tabName,
-        updated_at: new Date().toISOString()
-      }, { onConflict: 'couple_id' });
-    } catch (err) {
-      console.warn("Shared navigation sync failed:", err);
-    }
+    // 내 프로필의 info에 'requestTab'을 실어 배우자 기기에 신호를 보냄
+    await updateMemo(undefined, { requestTab: tabName, updated_at: Date.now() });
+    
+    // 잠시 후에 신호를 초기화 (반복 클릭 허용을 위해)
+    setTimeout(() => {
+      updateMemo(undefined, { requestTab: null });
+    }, 2000);
   };
 
   return (
@@ -4397,7 +4394,15 @@ const App = () => {
                 />
               )}
               {activeTab === 'cardGame' && (
-                <CardGameView key="cardGame" coupleCode={coupleCode} userRole={userRole} onBack={() => setActiveTab('home')} />
+                <CardGameView 
+                  key="cardGame" 
+                  coupleCode={coupleCode} 
+                  userRole={userRole} 
+                  onBack={() => setActiveTab('home')} 
+                  husbandInfo={husbandInfo}
+                  wifeInfo={wifeInfo}
+                  onUpdateMemo={updateMemo}
+                />
               )}
               {activeTab === 'counseling' && (
                  <div className={`flex flex-col pt-4 ${counselingMode === 'chat' ? 'flex-1 min-h-0' : ''}`}>
