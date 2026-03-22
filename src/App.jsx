@@ -2518,13 +2518,19 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo, onU
   };
 
   const toggleFlip = () => {
-    if (turnOwner && turnOwner !== userRole) {
-      alert(`현재는 ${turnOwner === 'husband' ? '남편' : '아내'}님의 차례입니다.`);
+    // 턴 주인이 없으면 내가 가짐
+    let currentOwner = turnOwner;
+    if (!currentOwner) {
+      currentOwner = userRole;
+      setTurnOwner(userRole);
+    }
+    
+    if (currentOwner !== userRole) {
+      alert(`현재는 ${currentOwner === 'husband' ? '남편' : '아내'}님의 차례입니다.`);
       return;
     }
     const nextFlip = !isFlipped;
     setIsFlipped(nextFlip);
-    setTurnOwner(userRole);
     updateCardState({ isFlipped: nextFlip, turnOwner: userRole });
   };
 
@@ -2656,28 +2662,36 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo, onU
               </div>
             </div>
           </div>
-          <div className="card-face card-back" style={{ background: "url('/card_bg.png') no-repeat center center", backgroundSize: 'cover', borderRadius: '32px', overflow: 'hidden' }}>
-            {/* 흰색 반투명 컨테이너 - 전체 카드 크기에 맞춤 */}
+          <div className="card-face card-back" style={{ 
+            background: "url('/card_bg.png') no-repeat center center", 
+            backgroundSize: 'cover', 
+            borderRadius: '32px', 
+            overflow: 'hidden',
+            padding: 0 // 기존 CSS 패딩 강제 제거
+          }}>
+            {/* 흰색 반투명 컨테이너 - 전체 카드 크기에 꽉 채움 */}
             <div className="card-pattern-box" style={{ 
-              background: 'rgba(255,255,255,0.7)', 
-              margin: '15px', 
+              background: 'rgba(255,255,255,0.85)', 
+              margin: '12px', 
               borderRadius: '24px', 
               border: '1px solid rgba(255,255,255,0.8)', 
-              backdropFilter: 'blur(10px)',
-              padding: '24px 15px',
-              height: 'calc(100% - 30px)',
+              backdropFilter: 'blur(12px)',
+              padding: '24px 18px',
+              height: 'calc(100% - 24px)',
+              width: 'calc(100% - 24px)',
               display: 'flex',
               flexDirection: 'column',
               justifyContent: 'space-between',
               alignItems: 'center',
-              boxSizing: 'border-box'
+              boxSizing: 'border-box',
+              position: 'relative'
             }}>
               {/* 상단: 카테고리 */}
-              <div style={{ flexShrink: 0 }}>
-                <span className="compat-badge" style={{ background: '#FF4D6D', color: 'white', fontWeight: 900, padding: '5px 15px', borderRadius: '100px', fontSize: '11px' }}>{category}</span>
+              <div style={{ flexShrink: 0, marginBottom: '8px' }}>
+                <span className="compat-badge" style={{ background: '#FF4D6D', color: 'white', fontWeight: 900, padding: '6px 16px', borderRadius: '100px', fontSize: '11px' }}>{category}</span>
               </div>
 
-              {/* 중단: 질문 (가장 넓은 공간 차지) */}
+              {/* 중단: 질문 (시원하게 노출) */}
               <div style={{ 
                 flex: 1, 
                 display: 'flex', 
@@ -2687,9 +2701,9 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo, onU
                 padding: '10px 0'
               }}>
                 <h2 className="card-question" style={{ 
-                  fontSize: (currentQuestion?.question?.length > 30) ? '18px' : '20px', 
-                  color: '#2D1F08', 
-                  lineHeight: 1.5,
+                  fontSize: '20px', 
+                  color: '#1a1a1a', 
+                  lineHeight: 1.55,
                   textAlign: 'center',
                   wordBreak: 'keep-all',
                   fontWeight: 800,
@@ -2698,14 +2712,14 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo, onU
               </div>
               
               {/* 하단: 액션 버튼 또는 안내 메시지 */}
-              <div style={{ flexShrink: 0, width: '100%', display: 'flex', justifyContent: 'center' }}>
-                {turnOwner === userRole ? (
+              <div style={{ flexShrink: 0, width: '100%', display: 'flex', justifyContent: 'center', marginTop: '10px' }}>
+                {(!turnOwner || turnOwner === userRole) ? (
                   <button 
                     className="send-to-spouse-btn" 
                     style={{ 
                       background: '#2D1F08', 
                       borderRadius: '100px', 
-                      height: '54px',
+                      height: '52px',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -2727,16 +2741,15 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo, onU
                   </button>
                 ) : (
                   <div style={{ 
-                    background: 'rgba(138, 96, 255, 0.08)', 
-                    padding: '12px 15px', 
+                    background: 'rgba(138, 96, 255, 0.12)', 
+                    padding: '12px 18px', 
                     borderRadius: '20px',
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
                     gap: '4px',
-                    border: '1.5px solid #8A60FF30',
-                    width: '100%',
-                    maxWidth: '240px'
+                    border: '1.5px solid #8A60FF40',
+                    width: '90%'
                   }}>
                     <div className="flex items-center gap-2">
                       <motion.div 
@@ -2744,15 +2757,14 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo, onU
                         transition={{ duration: 1.5, repeat: Infinity }}
                         style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#8A60FF' }} 
                       />
-                      <span style={{ fontSize: '10px', color: '#8A60FF', fontWeight: 900, letterSpacing: '1px' }}>LISTENING...</span>
+                      <span style={{ fontSize: '10px', color: '#8A60FF', fontWeight: 900, letterSpacing: '1.5px' }}>LISTENING...</span>
                     </div>
                     <span style={{ 
                       fontSize: '14px', 
                       color: '#4B2691', 
                       fontWeight: 900, 
                       textAlign: 'center',
-                      wordBreak: 'keep-all',
-                      lineHeight: 1.3
+                      wordBreak: 'keep-all'
                     }}>
                       {turnOwner === 'husband' ? '남편' : '아내'}님의 답변에 귀 기울여주세요
                     </span>
