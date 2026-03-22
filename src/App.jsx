@@ -182,9 +182,11 @@ const SecretAnswerInteraction = ({ userRole, coupleCode, questionText }) => {
       .on('postgres_changes', { 
         event: '*', 
         schema: 'public', 
-        table: 'secret_answers',
-        filter: `couple_id=eq.${coupleCode}`
+        table: 'secret_answers'
+        // Postgres 필터 버그 우회를 위해 JS 단에서 직접 필터링
       }, payload => {
+        if (!payload.new || payload.new.couple_id !== coupleCode) return;
+        
         if (payload.new.question_text === questionText) {
           if (payload.new.user_role === userRole) {
             setMyAnswer(payload.new.answer);
@@ -2403,10 +2405,10 @@ const CardGameView = ({ onBack, coupleCode }) => {
       .on('postgres_changes', { 
         event: '*', 
         schema: 'public', 
-        table: 'card_game_state',
-        filter: `couple_id=eq.${coupleCode}`
+        table: 'card_game_state'
+        // Postgres 필터 우회
       }, payload => {
-        if (!payload.new) return;
+        if (!payload.new || payload.new.couple_id !== coupleCode) return;
         const { category: cat, is_flipped, is_waiting, current_question_id } = payload.new;
         setCategory(cat);
         setIsFlipped(is_flipped);
@@ -4101,10 +4103,9 @@ const App = () => {
       .on('postgres_changes', { 
         event: '*', 
         schema: 'public', 
-        table: 'signals',
-        filter: `couple_id=eq.${coupleCode}` 
+        table: 'signals'
       }, payload => {
-        if (!payload.new) return;
+        if (!payload.new || payload.new.couple_id !== coupleCode) return;
         const { user_role: role, signal } = payload.new;
         if (role !== userRole) setSpouseSignal(signal);
         else setMySignal(signal);
@@ -4112,9 +4113,9 @@ const App = () => {
       .on('postgres_changes', {
         event: 'INSERT',
         schema: 'public',
-        table: 'prayers',
-        filter: `couple_id=eq.${coupleCode}`
+        table: 'prayers'
       }, payload => {
+        if (!payload.new || payload.new.couple_id !== coupleCode) return;
         if (payload.new.user_role !== userRole) {
           setPartnerPrayers(prev => [payload.new, ...prev].slice(0, 10));
         }
@@ -4122,10 +4123,9 @@ const App = () => {
       .on('postgres_changes', {
         event: '*',
         schema: 'public',
-        table: 'profiles',
-        filter: `couple_id=eq.${coupleCode}`
+        table: 'profiles'
       }, payload => {
-        if (!payload.new) return;
+        if (!payload.new || payload.new.couple_id !== coupleCode) return;
         const { user_role: role, info } = payload.new;
         if (role === 'husband') setHusbandInfo(info);
         else if (role === 'wife') setWifeInfo(info);
@@ -4139,10 +4139,9 @@ const App = () => {
       .on('postgres_changes', {
         event: '*', 
         schema: 'public', 
-        table: 'card_game_state',
-        filter: `couple_id=eq.${coupleCode}`
+        table: 'card_game_state'
       }, payload => {
-        if (!payload.new) return;
+        if (!payload.new || payload.new.couple_id !== coupleCode) return;
         // Only trigger if we are NOT on the card game tab and it's a "waiting" or "flipped" state (partner signaling)
         if (activeTab !== 'cardGame' && payload.new.is_flipped) {
            setIncomingCardCall({ 
