@@ -2584,6 +2584,26 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo, onU
           fontWeight: 700, 
           letterSpacing: '-0.2px' 
         }}>질문 주제를 먼저 고르세요</p>
+        
+        {/* 상태 배지 추가 */}
+        {isWaiting && (
+          <motion.div 
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="flex items-center gap-2"
+            style={{ 
+              marginTop: '10px', 
+              background: 'rgba(255, 77, 109, 0.15)', 
+              padding: '6px 15px', 
+              borderRadius: '20px',
+              border: '1px solid #FF4D6D40'
+            }}
+          >
+            <div className="animate-pulse" style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#FF4D6D' }} />
+            <span style={{ fontSize: '12px', color: '#FF4D6D', fontWeight: 900 }}>배우자가 답변 중입니다...</span>
+          </motion.div>
+        )}
+
         <div style={{ marginTop: '10px', fontSize: '10px', color: '#B08D3E', fontWeight: 800, background: 'rgba(255,255,255,0.5)', padding: '5px 12px', borderRadius: '10px', border: '1px solid #D4AF3740' }}>
           코드: <span style={{ color: '#D4AF37' }}>{coupleCode}</span> | {userRole === 'husband' ? '남편' : '아내'} | 턴: {turnOwner ? (turnOwner === 'husband' ? '남편' : '아내') : '자유'}
         </div>
@@ -2731,29 +2751,34 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo, onU
         </div>
       </div>
 
-      <button 
-        className={`draw-btn ${(turnOwner && turnOwner !== userRole) ? 'disabled' : ''}`} 
-        onClick={drawNewCard} 
-        style={{ marginTop: '40px', opacity: (turnOwner && turnOwner !== userRole) ? 0.5 : 1 }}
-      >
-        {(turnOwner && turnOwner !== userRole) ? '배우자의 턴 기다리기' : '다른 카드 뽑기'}
-      </button>
+      {/* 겹침 방지: 대기 중일 때만 하단 버튼 숨김 */}
+      {!isWaiting && (
+        <>
+          <button 
+            className={`draw-btn ${(turnOwner && turnOwner !== userRole) ? 'disabled' : ''}`} 
+            onClick={drawNewCard} 
+            style={{ marginTop: '40px', opacity: (turnOwner && turnOwner !== userRole) ? 0.5 : 1 }}
+          >
+            {(turnOwner && turnOwner !== userRole) ? '배우자의 턴 기다리기' : '다른 카드 뽑기'}
+          </button>
 
-      {turnOwner && (
-        <button 
-          onClick={() => { setTurnOwner(null); updateCardState({ turnOwner: null }); }}
-          style={{ marginTop: '10px', background: 'none', border: 'none', color: '#B08D3E', fontSize: '11px', fontWeight: 800, textDecoration: 'underline' }}
-        >
-          턴 주도권 초기화하기 (자유 모드)
-        </button>
-      )}
-      {!turnOwner && (
-        <button 
-          onClick={claimTurn}
-          style={{ marginTop: '10px', background: 'none', border: 'none', color: '#8A60FF', fontSize: '11px', fontWeight: 800, textDecoration: 'underline' }}
-        >
-          턴 주도권 가져오기
-        </button>
+          {turnOwner && (
+            <button 
+              onClick={() => { setTurnOwner(null); updateCardState({ turnOwner: null }); }}
+              style={{ marginTop: '10px', background: 'none', border: 'none', color: '#B08D3E', fontSize: '11px', fontWeight: 800, textDecoration: 'underline' }}
+            >
+              턴 주도권 초기화하기 (자유 모드)
+            </button>
+          )}
+          {!turnOwner && (
+            <button 
+              onClick={claimTurn}
+              style={{ marginTop: '10px', background: 'none', border: 'none', color: '#8A60FF', fontSize: '11px', fontWeight: 800, textDecoration: 'underline' }}
+            >
+              턴 주도권 가져오기
+            </button>
+          )}
+        </>
       )}
     </motion.div>
   );
