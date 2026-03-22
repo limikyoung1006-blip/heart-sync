@@ -2777,34 +2777,62 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo, onU
         </div>
       </div>
 
-      {/* 겹침 방지: 대기 중일 때만 하단 버튼 숨김 */}
+      {/* 하단 액션 버튼 영역 - 겹침 방지 및 상태별 명확한 UI */}
       {!isWaiting && (
-        <>
-          <button 
-            className={`draw-btn ${(turnOwner && turnOwner !== userRole) ? 'disabled' : ''}`} 
-            onClick={drawNewCard} 
-            style={{ marginTop: '40px', opacity: (turnOwner && turnOwner !== userRole) ? 0.5 : 1 }}
-          >
-            {(turnOwner && turnOwner !== userRole) ? '배우자의 턴 기다리기' : '다른 카드 뽑기'}
-          </button>
-
-          {turnOwner && (
+        <div key={`bottom-actions-${turnOwner}`} className="flex flex-col items-center w-full" style={{ marginTop: '40px' }}>
+          {turnOwner === userRole ? (
             <button 
-              onClick={() => { setTurnOwner(null); updateCardState({ turnOwner: null }); }}
-              style={{ marginTop: '10px', background: 'none', border: 'none', color: '#B08D3E', fontSize: '11px', fontWeight: 800, textDecoration: 'underline' }}
+              key="draw-active"
+              className="draw-btn" 
+              onClick={drawNewCard} 
+              style={{ width: '100%', maxWidth: '300px' }}
             >
-              턴 주도권 초기화하기 (자유 모드)
+              다른 카드 뽑기
             </button>
-          )}
-          {!turnOwner && (
+          ) : turnOwner ? (
+            <div 
+              key="wait-passive"
+              style={{ 
+                background: 'rgba(0,0,0,0.05)', 
+                padding: '18px 45px', 
+                borderRadius: '100px', 
+                color: '#8B7355', 
+                fontWeight: 800, 
+                fontSize: '16px',
+                border: '1.5px dashed rgba(138, 96, 255, 0.2)',
+                textAlign: 'center',
+                width: '100%',
+                maxWidth: '300px'
+              }}
+            >
+              배우자의 답변을 기다리는 중
+            </div>
+          ) : (
             <button 
+              key="claim-initial"
+              className="draw-btn"
               onClick={claimTurn}
-              style={{ marginTop: '10px', background: 'none', border: 'none', color: '#8A60FF', fontSize: '11px', fontWeight: 800, textDecoration: 'underline' }}
+              style={{ width: '100%', maxWidth: '300px', background: 'linear-gradient(135deg, #F5D060, #C8970A)' }}
             >
-              턴 주도권 가져오기
+              먼저 질문 뽑기
             </button>
           )}
-        </>
+
+          {/* 보조 액션 (턴 초기화 등) */}
+          <div style={{ marginTop: '15px' }}>
+            {turnOwner && (
+              <button 
+                onClick={() => { setTurnOwner(null); updateCardState({ turnOwner: null }); }}
+                style={{ background: 'none', border: 'none', color: '#B08D3E', fontSize: '12px', fontWeight: 800, textDecoration: 'underline' }}
+              >
+                턴 주도권 초기화하기 (자유 모드)
+              </button>
+            )}
+            {!turnOwner && (
+              <p style={{ fontSize: '11px', color: '#8B7355', fontWeight: 700, opacity: 0.6 }}>카드를 터치하여 턴을 가져올 수 있습니다</p>
+            )}
+          </div>
+        </div>
       )}
     </motion.div>
   );
