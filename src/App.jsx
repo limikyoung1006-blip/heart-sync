@@ -2388,16 +2388,23 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo, onU
 
   // Sync with MasterData when it changes
   useEffect(() => {
+    if (!masterSync.ts) return; // Wait for real data
+
     if (masterSync.category) setCategory(masterSync.category);
     if (masterSync.isFlipped !== undefined) setIsFlipped(masterSync.isFlipped);
     if (masterSync.isWaiting !== undefined) setIsWaiting(masterSync.isWaiting);
     if (masterSync.waiterRole !== undefined) setWaiterRole(masterSync.waiterRole);
     if (masterSync.turnOwner !== undefined) setTurnOwner(masterSync.turnOwner);
     
-    // 🔥 질문 ID가 바뀌면 즉시 업데이트
-    if (masterSync.questionId && masterSync.questionId !== currentQuestion?.id) {
-      const q = questions.find(item => item.id === masterSync.questionId);
-      if (q) setCurrentQuestion(q);
+    // 🔥 질문 동기화 강화 (ID와 텍스트 대조)
+    if (masterSync.questionId) {
+      const q = questions.find(item => String(item.id) === String(masterSync.questionId));
+      if (q) {
+        setCurrentQuestion(q);
+      } else if (masterSync.questionText) {
+        // ID로 못 찾으면 텍스트로 임시 객체 생성 (안전망)
+        setCurrentQuestion({ id: masterSync.questionId, category: masterSync.category, question: masterSync.questionText });
+      }
     }
   }, [JSON.stringify(masterSync)]);
 
@@ -2449,6 +2456,7 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo, onU
     
     updateCardState({ 
       questionId: newQ.id, 
+      questionText: newQ.question, // Text 같이 전달
       isFlipped: false, 
       isWaiting: false, 
       waiterRole: null, 
@@ -3907,6 +3915,7 @@ const App = () => {
 
   // Ref for activeTab to avoid stale closures in global real-time listeners
   const activeTabRef = React.useRef(activeTab);
+  const lastNavIdRef = React.useRef(null); // 중복 이동 방지용 ID 저장소
   useEffect(() => {
     activeTabRef.current = activeTab;
   }, [activeTab]);
@@ -4218,9 +4227,10 @@ const App = () => {
         if (role === 'husband') setHusbandInfo(info);
         else if (role === 'wife') setWifeInfo(info);
 
-        // 🚀 자동 입장 (Auto-Navigation) 처리: 상대방 프로필에서 'requestTab' 신호 감지
-        if (info && info.requestTab && info.requestTab !== activeTabRef.current) {
-          console.log("Auto-nav triggered via profile:", info.requestTab);
+        // 🚀 자동 입장 (Auto-Navigation) 처리: navId가 바뀔 때만 실행
+        if (info && info.requestTab && info.navId !== lastNavIdRef.current) {
+          console.log("Auto-nav triggered via profile with ID:", info.navId);
+          lastNavIdRef.current = info.navId;
           setActiveTab(info.requestTab);
         }
 
@@ -4300,16 +4310,18 @@ const App = () => {
     }
   };
 
-  // 🚀 공유 화면 전환 (Profile 기반 견고한 동기화)
+  // 🚀 공유 화면 전환 (UUID 기반으로 확실하게 트리거)
   const handleSharedNavigate = async (tabName) => {
     setActiveTab(tabName);
-    // 내 프로필의 info에 'requestTab'을 실어 배우자 기기에 신호를 보냄
-    await updateMemo(undefined, { requestTab: tabName, updated_at: Date.now() });
+    const navId = Math.random().toString(36).substring(7); // 랜덤 ID 생성
+    lastNavIdRef.current = navId; // 내 기기에서는 중복 반응 안 하도록 저장
     
-    // 잠시 후에 신호를 초기화 (반복 클릭 허용을 위해)
-    setTimeout(() => {
-      updateMemo(undefined, { requestTab: null });
-    }, 2000);
+    // 내 프로필의 info에 'requestTab'과 'navId'를 실어 배우자에게 보냄
+    await updateMemo(undefined, { 
+      requestTab: tabName, 
+      navId: navId,
+      updated_at: Date.now() 
+    });
   };
 
   return (
