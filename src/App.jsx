@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+// Last Update: Shared Navigation & Turn Sync - 2026-03-22 21:20
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Heart, 
@@ -314,7 +315,7 @@ const HATTI_TODOS = [
   { id: 8, action: "휴식", text: "오늘은 배우자가 온전히 쉴 수 있도록 육아나 집안일을 도맡아 해주세요." }
 ];
 
-const HomeView = ({ user, userRole, coupleCode, mySignal, setMySignal, spouseSignal, partnerPrayers, onIntimacyClick, onNav, schedules, husbandInfo, wifeInfo, onUpdateMemo }) => {
+const HomeView = ({ user, userRole, coupleCode, mySignal, setMySignal, spouseSignal, partnerPrayers, onIntimacyClick, onNav, schedules, husbandInfo, wifeInfo, onUpdateMemo, activeTab }) => {
   const [showGuide, setShowGuide] = useState(false);
   const [isRevealed, setIsRevealed] = useState(false);
   const [memoInput, setMemoInput] = useState("");
@@ -427,7 +428,7 @@ const HomeView = ({ user, userRole, coupleCode, mySignal, setMySignal, spouseSig
                   </div>
                   <p style={{ fontSize: '14px', color: '#2D1F08', lineHeight: 1.6, wordBreak: 'keep-all', paddingLeft: '45px' }}>
                     {spouseSignal === 'red' && "배우자분이 지금 많이 지쳐 계신 것 같아요. 오늘은 집안일을 조금 나눠서 하거나, 따뜻한 물로 족욕을 도와주며 정적을 지켜주는 건 어떨까요?"}
-                    {spouseSignal === 'amber' && "지금 배우자분은 당신과의 깊은 소통을 원하고 있어요. 스마트폰을 잠시 내려놓고 눈을 맞추며 오늘 하루는 어땠인지 먼저 물어봐 주세요."}
+                    {spouseSignal === 'amber' && "지금 배우자분은 당신과의 깊은 소통을 원하고 있어요. 스마트폰을 잠시 내려놓고 눈을 맞추며 오늘 하루는 어땠는지 먼저 물어봐 주세요."}
                     {spouseSignal === 'green' && "상대방의 기분이 아주 좋습니다! 지금이 바로 평소 하고 싶었던 부탁이나 밝은 미래 계획을 이야기하기 가장 좋은 타이밍이에요."}
                   </p>
                 </div>
@@ -2417,7 +2418,7 @@ const CardGameView = ({ onBack, coupleCode, userRole }) => {
       }, payload => {
         if (!payload.new || payload.new.couple_id !== coupleCode) return;
         const { category: cat, is_flipped, is_waiting, current_question_id, waiter_role, turn_owner } = payload.new;
-        setCategory(cat);
+        if (cat) setCategory(cat);
         setIsFlipped(is_flipped);
         setIsWaiting(is_waiting);
         setWaiterRole(waiter_role);
@@ -2527,8 +2528,8 @@ const CardGameView = ({ onBack, coupleCode, userRole }) => {
           fontWeight: 700, 
           letterSpacing: '-0.2px' 
         }}>질문 주제를 먼저 고르세요</p>
-        <div style={{ marginTop: '10px', fontSize: '10px', color: '#B08D3E', fontWeight: 800 }}>
-          내 역할: {userRole === 'husband' ? '남편' : '아내'} | 주도권: {turnOwner ? (turnOwner === 'husband' ? '남편' : '아내') : '자유'}
+        <div style={{ marginTop: '10px', fontSize: '10px', color: '#B08D3E', fontWeight: 800, background: 'rgba(255,255,255,0.5)', padding: '5px 12px', borderRadius: '10px', border: '1px solid #D4AF3740' }}>
+          코드: <span style={{ color: '#D4AF37' }}>{coupleCode}</span> | {userRole === 'husband' ? '남편' : '아내'} | 턴: {turnOwner ? (turnOwner === 'husband' ? '남편' : '아내') : '자유'}
         </div>
       </div>
 
@@ -4187,7 +4188,14 @@ const App = () => {
         table: 'card_game_state'
       }, payload => {
         if (!payload.new || payload.new.couple_id !== coupleCode) return;
-        // Check current tab via Ref to bypass stale closure from initial component mount
+        
+        // 🚀 자동 입장 (Auto-Navigation) 처리
+        if (payload.new.active_tab && payload.new.active_tab !== activeTabRef.current) {
+          console.log("Shared navigation triggered:", payload.new.active_tab);
+          setActiveTab(payload.new.active_tab);
+        }
+
+        // 🔔 카드 호출 알림 (이미 해당 탭이 아닐 때만)
         if (activeTabRef.current !== 'cardGame' && payload.new.is_flipped) {
            setIncomingCardCall({ 
              category: payload.new.category, 
@@ -4502,7 +4510,7 @@ const App = () => {
           <nav className="bottom-nav">
             <NavItem 
               active={activeTab === 'cardGame'} 
-              onClick={() => setActiveTab('cardGame')} 
+              onClick={() => handleSharedNavigate('cardGame')} 
               icon={<MessageSquare size={22} fill={activeTab === 'cardGame' ? appTheme.primary : "none"} color={activeTab === 'cardGame' ? appTheme.primary : undefined} />} 
               label="대화카드" 
             />
