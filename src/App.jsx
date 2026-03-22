@@ -432,22 +432,21 @@ const HomeView = ({ user, userRole, coupleCode, mySignal, setMySignal, spouseSig
   const [isAdviceOpen, setIsAdviceOpen] = useState(false);
 
   const todaySecretQuestion = useMemo(() => {
-    // 날짜 기반 시드 생성 (매일 같은 질문)
+    // 📅 날짜 기반의 절대적인 시드 생성 (기기 언어/설정 상관없이 동일)
     const now = new Date();
-    // 로컬 날짜 문자열 (예: "2024. 3. 22.") 분해 및 숫자 합산
-    const dateParts = now.toLocaleDateString('ko-KR').split('.');
+    // 한국 시간(KST) 기준으로 날짜 추출 (UTC+9)
+    // 기기 시간이 다르더라도 연/월/일 숫자를 직접 사용하여 시드 생성
+    const year = now.getFullYear();
+    const month = now.getMonth() + 1;
+    const date = now.getDate();
     
-    // 시드 생성 로직 보강 (빈 문자열 제외 및 NaN 방지)
-    const seed = dateParts
-      .map(p => p.trim())
-      .filter(p => p.length > 0)
-      .reduce((acc, part) => acc + (parseInt(part) || 0), 0);
+    // YYYYMMDD 형식의 숫자를 시드로 사용
+    const seed = (year * 10000) + (month * 100) + date;
       
     const secretQs = GLOBAL_QUESTIONS.filter(q => q.category === '시크릿');
     if (secretQs.length === 0) return "서로에게 궁금한 비밀을 물어보세요.";
     
-    // 안전한 인덱스 접근
-    const index = isNaN(seed) ? 0 : seed % secretQs.length;
+    const index = seed % secretQs.length;
     return secretQs[index].question;
   }, []);
 
