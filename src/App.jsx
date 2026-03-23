@@ -157,7 +157,8 @@ const SecretAnswerInteraction = ({
   userRole, coupleCode, questionText, supabase, 
   spouseAnswer, setSpouseAnswer, 
   myAnswer, setMyAnswer, 
-  answered, setAnswered 
+  answered, setAnswered,
+  mainChannel
 }) => {
   useEffect(() => {
     // 1. 초기 데이터 가져오기
@@ -218,13 +219,14 @@ const SecretAnswerInteraction = ({
       
       await supabase.from('secret_answers').upsert(answerData, { onConflict: 'couple_id,question_text,user_role' });
       
-      // 🚀 글로벌 채널인 couple-${coupleCode}로 브로드캐스트 전송
-      const channel = supabase.channel(`couple-${coupleCode}`);
-      channel.send({
-        type: 'broadcast',
-        event: 'secret-answer-update',
-        payload: answerData
-      });
+      // 🚀 Global Channel Broadcast (Use existing mainChannel for reliability)
+      if (mainChannel) {
+        mainChannel.send({
+          type: 'broadcast',
+          event: 'secret-answer-update',
+          payload: answerData
+        });
+      }
 
       setAnswered(true);
     } catch (err) {
@@ -378,7 +380,7 @@ const HATTI_TODOS = [
   { id: 8, action: "휴식", text: "오늘은 배우자가 온전히 쉴 수 있도록 육아나 집안일을 도맡아 해주세요." }
 ];
 
-const HomeView = ({ user, userRole, coupleCode, mySignal, setMySignal, spouseSignal, partnerPrayers, onIntimacyClick, onNav, schedules, husbandInfo, wifeInfo, onUpdateMemo, activeTab, spouseSecretAnswer, setSpouseSecretAnswer, mySecretAnswer, setMySecretAnswer, isMySecretAnswered, setIsMySecretAnswered, isRevealed, setIsRevealed, notifPermission }) => {
+const HomeView = ({ user, userRole, coupleCode, mySignal, setMySignal, spouseSignal, partnerPrayers, onIntimacyClick, onNav, schedules, husbandInfo, wifeInfo, onUpdateMemo, activeTab, spouseSecretAnswer, setSpouseSecretAnswer, mySecretAnswer, setMySecretAnswer, isMySecretAnswered, setIsMySecretAnswered, isRevealed, setIsRevealed, notifPermission, mainChannel }) => {
   const [showGuide, setShowGuide] = useState(false);
   const [memoInput, setMemoInput] = useState("");
   const [isEditingMemo, setIsEditingMemo] = useState(false);
@@ -625,17 +627,15 @@ const HomeView = ({ user, userRole, coupleCode, mySignal, setMySignal, spouseSig
                   style={{ paddingTop: '30px', cursor: 'pointer' }} 
                   onClick={() => {
                     setIsRevealed(true);
-                    // 🔔 통합 채널인 couple-${coupleCode}로 전송해야 함
-                    const channel = supabase.channel(`couple-${coupleCode}`);
-                    channel.subscribe((status) => {
-                      if (status === 'SUBSCRIBED') {
-                        channel.send({
-                          type: 'broadcast',
-                          event: 'secret-revealed',
-                          payload: { userRole, ts: Date.now() }
-                        });
-                      }
-                    });
+                    setIsRevealed(true);
+                    // 🔔 Use Master Channel for reliability
+                    if (mainChannel) {
+                      mainChannel.send({
+                        type: 'broadcast',
+                        event: 'secret-revealed',
+                        payload: { sender: userRole, ts: Date.now() }
+                      });
+                    }
                   }}
                 >
                   <span style={{ 
@@ -705,6 +705,7 @@ const HomeView = ({ user, userRole, coupleCode, mySignal, setMySignal, spouseSig
                     coupleCode={coupleCode}
                     questionText={todaySecretQuestion}
                     supabase={supabase}
+                    mainChannel={mainChannel}
                     spouseAnswer={spouseSecretAnswer}
                     setSpouseAnswer={setSpouseSecretAnswer}
                     myAnswer={mySecretAnswer}
@@ -2956,7 +2957,7 @@ const IntimacyModal = ({ user, show, onClose, subPage, setSubPage, bgImage, onBg
 
 
 /* 🃏 Card Game View (Separated Page) */
-const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo, onUpdateMemo }) => {
+const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo, onUpdateMemo, mainChannel }) => {
   const [category, setCategory] = useState('일상');
   const [isFlipped, setIsFlipped] = useState(false);
   const filteredQuestions = useMemo(() => questions.filter(q => q.category === category), [category]);
@@ -2969,24 +2970,27 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo, onU
   const broadcastRef = useRef(null);
 
   useEffect(() => {
-    const channel = supabase.channel(`card-broadcast-${coupleCode}`)
-      .on('broadcast', { event: 'game-update' }, ({ payload }) => {
-        console.log("Broadcast received:", payload);
-        if (payload.category) setCategory(payload.category);
-        if (payload.isFlipped !== undefined) setIsFlipped(payload.isFlipped);
-        if (payload.isWaiting !== undefined) setIsWaiting(payload.isWaiting);
-        if (payload.waiterRole !== undefined) setWaiterRole(payload.waiterRole);
-        if (payload.turnOwner !== undefined) setTurnOwner(payload.turnOwner);
-        if (payload.questionId) {
-          const q = questions.find(item => String(item.id) === String(payload.questionId));
-          if (q) setCurrentQuestion(q);
-        }
-      })
-      .subscribe();
+    if (!mainChannel) return;
     
-    broadcastRef.current = channel;
-    return () => { supabase.removeChannel(channel); };
-  }, [coupleCode]);
+    // 🚀 Use the Master Channel from App for broad stability
+    const sub = mainChannel.on('broadcast', { event: 'game-update' }, ({ payload }) => {
+      console.log("Card Game Update received:", payload);
+      if (payload.category) setCategory(payload.category);
+      if (payload.isFlipped !== undefined) setIsFlipped(payload.isFlipped);
+      if (payload.isWaiting !== undefined) setIsWaiting(payload.isWaiting);
+      if (payload.waiterRole !== undefined) setWaiterRole(payload.waiterRole);
+      if (payload.turnOwner !== undefined) setTurnOwner(payload.turnOwner);
+      if (payload.questionId) {
+        const q = (GLOBAL_QUESTIONS || questions).find(item => String(item.id) === String(payload.questionId));
+        if (q) setCurrentQuestion(q);
+      }
+    });
+
+    return () => {
+       // We don't unsubscribe from mainChannel here as App manages it
+       // but we could remove the listener if Supabase allowed explicit listener removal
+    };
+  }, [mainChannel]);
 
   // Initial Sync from Table (Persistence)
   useEffect(() => {
@@ -4919,14 +4923,24 @@ const App = () => {
   }, [husbandInfo, wifeInfo, userRole, isSetupDone, schedules, worshipDays, worshipTime, anniversaries, mySecretAnswer, isMySecretAnswered, spouseSecretAnswer, isSecretRevealed, notifications]);
 
   const handleOnboardingFinish = async (info) => {
-    let finalCode = info.coupleCode || coupleCode;
-    if (info.coupleCode) { setCoupleCode(info.coupleCode); localStorage.setItem('coupleCode', info.coupleCode); }
+    let finalCode = (info.coupleCode || coupleCode || "").toLowerCase().trim();
+    if (finalCode) { 
+      setCoupleCode(finalCode); 
+      localStorage.setItem('coupleCode', finalCode); 
+    }
     const baseInfo = userRole === 'husband' ? husbandInfo : wifeInfo;
-    const updatedInfo = { ...baseInfo, ...info };
-    delete updatedInfo.coupleCode;
+    const updatedInfo = { ...baseInfo, ...info, coupleCode: finalCode };
     if (userRole === 'husband') setHusbandInfo(updatedInfo);
     else setWifeInfo(updatedInfo);
-    await supabase.from('profiles').upsert({ id: user.id, couple_id: finalCode, user_role: userRole, info: updatedInfo, updated_at: new Date().toISOString() }, { onConflict: 'id' });
+    
+    await supabase.from('profiles').upsert({ 
+      id: user.id, 
+      couple_id: finalCode, 
+      user_role: userRole, 
+      info: updatedInfo, 
+      updated_at: new Date().toISOString() 
+    }, { onConflict: 'id' });
+
     localStorage.setItem('userRole', userRole);
     localStorage.setItem('isSetupDone', 'true');
     setIsSetupDone(true);
@@ -4965,7 +4979,14 @@ const App = () => {
     if (text !== undefined) updatedInfo.todayMemo = text;
     if (mainChannel) mainChannel.send({ type: 'broadcast', event: 'memo-updated', payload: { sender: userRole, text, extraInfo } });
     if (userRole === 'husband') setHusbandInfo(updatedInfo); else setWifeInfo(updatedInfo);
-    await supabase.from('profiles').upsert({ id: user.id, couple_id: coupleCode, user_role: userRole, info: updatedInfo, updated_at: new Date().toISOString() }, { onConflict: 'id' });
+    const finalCode = (coupleCode || "").toLowerCase().trim();
+    await supabase.from('profiles').upsert({ 
+      id: user.id, 
+      couple_id: finalCode, 
+      user_role: userRole, 
+      info: updatedInfo, 
+      updated_at: new Date().toISOString() 
+    }, { onConflict: 'id' });
   };
    
   useEffect(() => {
@@ -5002,9 +5023,12 @@ const App = () => {
     };
     fetchInitialData();
 
-    const channel = supabase.channel(`couple-${coupleCode}`)
+    const final_code = (coupleCode || "").toLowerCase().trim();
+    if (!final_code) return;
+
+    const channel = supabase.channel(`couple-${final_code}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, payload => {
-        if (!payload.new || payload.new.couple_id !== coupleCode) return;
+        if (!payload.new || payload.new.couple_id?.toLowerCase() !== final_code) return;
         const { user_role: role, info } = payload.new;
         if (role === 'husband') setHusbandInfo(info || {}); else if (role === 'wife') setWifeInfo(info || {});
         if (info?.signal && role !== userRole) {
@@ -5422,6 +5446,7 @@ const App = () => {
                   key="home"
                   userRole={userRole}
                   coupleCode={coupleCode}
+                  mainChannel={mainChannel}
                   mySignal={mySignal} 
                   setMySignal={handleSetMySignal}
                   spouseSignal={spouseSignal}
@@ -5457,6 +5482,7 @@ const App = () => {
                   key="cardGame" 
                   coupleCode={coupleCode} 
                   userRole={userRole} 
+                  mainChannel={mainChannel}
                   onBack={() => setActiveTab('home')} 
                   husbandInfo={husbandInfo}
                   wifeInfo={wifeInfo}
