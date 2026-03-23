@@ -43,7 +43,41 @@ import {
   StickyNote,
   X
 } from 'lucide-react';
-import questions from '../questions.json';
+// Consolidated Question Pool (Unified for Secret & Main Game)
+const CARD_DATA = [
+  { id: 1, category: "일상", question: "오늘 하루 중 가장 행복했던 순간은 언제인가요?" },
+  { id: 2, category: "일상", question: "최근에 본 영화나 책 중에서 가장 기억에 남는 장면은?" },
+  { id: 3, category: "일상", question: "요즘 당신을 가장 웃게 만드는 것은 무엇인가요?" },
+  { id: 4, category: "상상", question: "우리에게 갑자기 1,000만 원이 생긴다면 어디에 가장 먼저 쓰고 싶나요?" },
+  { id: 5, category: "상상", question: "만약 우리가 하루 동안 서로의 몸이 바뀐다면 가장 해보고 싶은 일은?" },
+  { id: 6, category: "추억", question: "우리의 연애 시절 중 가장 다시 가보고 싶은 데이트 장소는?" },
+  { id: 7, category: "추억", question: "당신이 기억하는 우리의 첫 키스는 어떤 느낌이었나요?" },
+  { id: 8, category: "관계", question: "내가 해주는 행동 중 당신이 가장 사랑받고 있다고 느끼는 순간은?" },
+  { id: 9, category: "관계", question: "우리가 앞으로 10년 뒤에 어떤 모습으로 살고 있을 것 같나요?" },
+  { id: "s1", category: "시크릿", question: "나만 알고 있는 나의 작은 습관 중에 배우자가 알게 되면 깜짝 놀랄 만한 것은?" },
+  { id: "s2", category: "시크릿", question: "최근 배우자에게 말하지 못했지만 정말 고맙다고 느꼈던 아주 사소한 순간은?" },
+  { id: "s3", category: "시크릿", question: "우리가 처음 만났을 때, 첫인상 외에 마음속으로만 생각했던 나의 진짜 속마음은?" },
+  { id: "s4", category: "시크릿", question: "만약 우리에게 자유로운 24시간과 무제한 예산이 생긴다면, 가장 먼저 함께 하고 싶은 일은?" },
+  { id: "s5", category: "시크릿", question: "최근 꿈속에서 배우자와 함께했던 장면 중 가장 기억에 남는 것은?" },
+  { id: 10, category: "일상", question: "오늘 점심 메뉴 중 가장 맛있었던 건 뭐야?" },
+  { id: 11, category: "상상", question: "무인도에 딱 세 가지만 가져갈 수 있다면 무엇을 선택할까?" },
+  { id: 12, category: "추억", question: "결혼식 날 가장 긴장됐던 순간이나 기억 남는 에피소드는?" },
+  { id: 13, category: "관계", question: "요즘 나에게 서운했던 점이 있다면 사소한 거라도 말해줄래?" },
+  { id: 14, category: "신앙", question: "오늘 하루 주님이 주신 가장 큰 은혜의 순간은 언제였나요?" },
+  { id: 15, category: "신앙", question: "우리가 자녀에게 물려주고 싶은 가장 소중한 신앙의 가치는?" },
+  { id: 16, category: "신앙", question: "힘든 순간, 당신을 일으켜 세웠던 말씀 구절이 있나요?" },
+  { id: 17, category: "추억", question: "우리가 처음 만났을 때 나의 첫인상은 어땠어?" },
+  { id: 18, category: "관계", question: "당신에게 '가족'이란 어떤 의미야?" },
+  { id: 19, category: "일상", question: "지금 당장 먹고 싶은 야식은?" }
+];
+
+const HATTI_TODOS = [
+  { id: 1, action: "말하기", text: "배우자에게 '오늘 하루도 정말 고생 많았어'라고 눈을 맞추며 말해주세요." },
+  { id: 2, action: "행동", text: "오늘 저녁 설거지나 청소 중 하나를 배우자 몰래 미리 끝내두세요." },
+  { id: 3, action: "스킨십", text: "배우자가 퇴근하고 돌아오면 5초간 따뜻하게 안아주세요." },
+  { id: 4, action: "선물", text: "퇴근길에 배우자가 좋아하는 편의점 간식을 하나 사서 건네보세요." },
+  { id: 5, action: "경청", text: "오늘 배우자의 이야기를 10분 동안 조언 없이 온전히 들어주세요." }
+];
 import { supabase } from './supabase';
 
 // Initial configuration removed - now managed via state and onboarding
@@ -356,30 +390,6 @@ const SecretAnswerInteraction = ({
   );
 };
 
-/* 🏠 Home View Component */
-// AI Hatti's Daily Instructions
-// 📚 Global Question Database (Shared across all components)
-const GLOBAL_QUESTIONS = [
-  { id: 's1', category: '시크릿', question: "나만 알고 있는 나의 작은 습관 중에 배우자가 알게 되면 깜짝 놀랄 만한 것은?" },
-  { id: 's2', category: '시크릿', question: "최근 배우자에게 말하지 못했지만 정말 고맙다고 느꼈던 아주 사소한 순간은?" },
-  { id: 's3', category: '시크릿', question: "우리가 처음 만났을 때, 첫인상 외에 마음속으로만 생각했던 나의 진짜 속마음은?" },
-  { id: 's4', category: '시크릿', question: "만약 우리에게 자유로운 24시간과 무제한 예산이 생긴다면, 가장 먼저 함께 하고 싶은 일은?" },
-  { id: 's5', category: '시크릿', question: "최근 꿈속에서 배우자와 함께했던 장면 중 가장 기억에 남는 것은?" },
-  { id: 's6', category: '시크릿', question: "배우자의 모습 중 내가 가장 사랑하지만 쑥스러워서 자주 말하지 못하는 부분은?" },
-  { id: 's7', category: '시크릿', question: "살면서 가장 힘들었던 순간, 배우자의 어떤 말이나 행동이 가장 큰 위로가 되었나요?" }
-];
-
-const HATTI_TODOS = [
-  { id: 1, action: "말하기", text: "배우자에게 '오늘 하루도 정말 고생 많았어'라고 눈을 맞추며 말해주세요." },
-  { id: 2, action: "행동", text: "오늘 저녁 설거지나 청소 중 하나를 배우자 몰래 미리 끝내두세요." },
-  { id: 3, action: "스킨십", text: "배우자가 퇴근하고 돌아오면 5초간 따뜻하게 안아주세요." },
-  { id: 4, action: "선물", text: "퇴근길에 배우자가 좋아하는 편의점 간식을 하나 사서 건네보세요." },
-  { id: 5, action: "경청", text: "오늘 배우자의 이야기를 10분 동안 조언 없이 온전히 들어주세요." },
-  { id: 6, action: "행동", text: "배우자가 좋아하는 따뜻한 차나 커피를 직접 타서 건네주세요." },
-  { id: 7, action: "말하기", text: "배우자의 장점을 하나 찾아서 구체적으로 칭찬해주는 메시지를 보내보세요." },
-  { id: 8, action: "휴식", text: "오늘은 배우자가 온전히 쉴 수 있도록 육아나 집안일을 도맡아 해주세요." }
-];
-
 const HomeView = ({ user, userRole, coupleCode, mySignal, setMySignal, spouseSignal, partnerPrayers, onIntimacyClick, onNav, schedules, husbandInfo, wifeInfo, onUpdateMemo, activeTab, spouseSecretAnswer, setSpouseSecretAnswer, mySecretAnswer, setMySecretAnswer, isMySecretAnswered, setIsMySecretAnswered, isRevealed, setIsRevealed, notifPermission, mainChannel }) => {
   const [showGuide, setShowGuide] = useState(false);
   const [memoInput, setMemoInput] = useState("");
@@ -395,7 +405,7 @@ const HomeView = ({ user, userRole, coupleCode, mySignal, setMySignal, spouseSig
   // Pick a daily todo based on the date
   const dailyTodo = useMemo(() => {
     const today = new Date();
-    const seed = today.getFullYear() + today.getMonth() + today.getDate();
+    const seed = today.getFullYear() + (today.getMonth() + 1) * 100 + today.getDate();
     return HATTI_TODOS[seed % HATTI_TODOS.length];
   }, []);
 
@@ -403,21 +413,17 @@ const HomeView = ({ user, userRole, coupleCode, mySignal, setMySignal, spouseSig
     const todayStr = new Date().toISOString().split('T')[0];
     return schedules.filter(s => s.date === todayStr);
   }, [schedules]);
+  
   const [isAdviceOpen, setIsAdviceOpen] = useState(false);
 
   const todaySecretQuestion = useMemo(() => {
-    // 📅 날짜 기반의 절대적인 시드 생성 (기기 언어/설정 상관없이 동일)
     const now = new Date();
-    // 한국 시간(KST) 기준으로 날짜 추출 (UTC+9)
-    // 기기 시간이 다르더라도 연/월/일 숫자를 직접 사용하여 시드 생성
     const year = now.getFullYear();
     const month = now.getMonth() + 1;
     const date = now.getDate();
-    
-    // YYYYMMDD 형식의 숫자를 시드로 사용
     const seed = (year * 10000) + (month * 100) + date;
       
-    const secretQs = GLOBAL_QUESTIONS.filter(q => q.category === '시크릿');
+    const secretQs = CARD_DATA.filter(q => q.category === '시크릿');
     if (secretQs.length === 0) return "서로에게 궁금한 비밀을 물어보세요.";
     
     const index = seed % secretQs.length;
@@ -2960,7 +2966,7 @@ const IntimacyModal = ({ user, show, onClose, subPage, setSubPage, bgImage, onBg
 const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo, onUpdateMemo, mainChannel }) => {
   const [category, setCategory] = useState('일상');
   const [isFlipped, setIsFlipped] = useState(false);
-  const filteredQuestions = useMemo(() => questions.filter(q => q.category === category), [category]);
+  const filteredQuestions = useMemo(() => CARD_DATA.filter(q => q.category === category), [category]);
   const [currentQuestion, setCurrentQuestion] = useState(null);
   const [isWaiting, setIsWaiting] = useState(false);
   const [waiterRole, setWaiterRole] = useState(null);
@@ -2981,15 +2987,12 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo, onU
       if (payload.waiterRole !== undefined) setWaiterRole(payload.waiterRole);
       if (payload.turnOwner !== undefined) setTurnOwner(payload.turnOwner);
       if (payload.questionId) {
-        const q = (GLOBAL_QUESTIONS || questions).find(item => String(item.id) === String(payload.questionId));
+        const q = CARD_DATA.find(item => String(item.id) === String(payload.questionId));
         if (q) setCurrentQuestion(q);
       }
     });
 
-    return () => {
-       // We don't unsubscribe from mainChannel here as App manages it
-       // but we could remove the listener if Supabase allowed explicit listener removal
-    };
+    return () => { };
   }, [mainChannel]);
 
   // Initial Sync from Table (Persistence)
@@ -2997,13 +3000,30 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo, onU
     const fetchDB = async () => {
       const { data } = await supabase.from('card_game_state').select('*').eq('couple_id', coupleCode).single();
       if (data) {
-        setCategory(data.category || '일상');
+        const cat = data.category || '일상';
+        setCategory(cat);
         setIsFlipped(data.is_flipped || false);
         setIsWaiting(data.is_waiting || false);
         setWaiterRole(data.waiter_role || null);
         setTurnOwner(data.turn_owner || null);
-        const q = questions.find(item => String(item.id) === String(data.current_question_id));
-        if (q) setCurrentQuestion(q);
+        
+        const q = CARD_DATA.find(item => String(item.id) === String(data.current_question_id));
+        if (q) {
+          setCurrentQuestion(q);
+        } else {
+          // No current question in DB? Pick one based on category
+          const pool = CARD_DATA.filter(item => item.category === cat);
+          if (pool.length > 0) {
+            const randomQ = pool[Math.floor(Math.random() * pool.length)];
+            setCurrentQuestion(randomQ);
+          }
+        }
+      } else {
+        // First time entry? Pick a random everyday question
+        const pool = CARD_DATA.filter(item => item.category === '일상');
+        if (pool.length > 0) {
+          setCurrentQuestion(pool[Math.floor(Math.random() * pool.length)]);
+        }
       }
     };
     fetchDB();
@@ -3036,7 +3056,7 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo, onU
     if (updates.waiterRole !== undefined) setWaiterRole(updates.waiterRole);
     if (updates.turnOwner !== undefined) setTurnOwner(updates.turnOwner);
     if (updates.questionId) {
-      const q = questions.find(item => String(item.id) === String(updates.questionId));
+      const q = CARD_DATA.find(item => String(item.id) === String(updates.questionId));
       if (q) setCurrentQuestion(q);
     }
 
@@ -3141,7 +3161,16 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo, onU
     setCategory(cat);
     setIsFlipped(false);
     setTurnOwner(userRole);
-    updateCardState({ category: cat, isFlipped: false, turnOwner: userRole });
+    
+    // 🔥 카테고리 변경 시 즉시 새 질문 하나 뽑아두기
+    const pool = CARD_DATA.filter(q => q.category === cat);
+    if (pool.length > 0) {
+      const nextQ = pool[Math.floor(Math.random() * pool.length)];
+      setCurrentQuestion(nextQ);
+      updateCardState({ category: cat, isFlipped: false, turnOwner: userRole, questionId: nextQ.id });
+    } else {
+      updateCardState({ category: cat, isFlipped: false, turnOwner: userRole });
+    }
   };
 
   const claimTurn = () => {
@@ -3300,14 +3329,26 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo, onU
                 padding: '10px 0'
               }}>
                 <h2 className="card-question" style={{ 
-                  fontSize: '20px', 
+                  fontSize: currentQuestion?.question?.length > 40 ? '16px' : '20px', 
                   color: '#1a1a1a', 
-                  lineHeight: 1.55,
+                  lineHeight: 1.5,
                   textAlign: 'center',
                   wordBreak: 'keep-all',
                   fontWeight: 800,
-                  margin: 0
-                }}>{currentQuestion?.question}</h2>
+                  margin: '0 10px'
+                }}>
+                  {currentQuestion?.question || (
+                    <div style={{ opacity: 0.5, fontSize: '14px' }}>
+                      질문 카드가 비어있습니다.<br/>
+                      <button 
+                        onClick={() => changeCategory(category)}
+                        style={{ marginTop: '10px', background: '#D4AF37', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '10px', fontWeight: 900 }}
+                      >
+                        주제 다시 고르기
+                      </button>
+                    </div>
+                  )}
+                </h2>
               </div>
               
               {/* 하단: 액션 버튼 또는 안내 메시지 */}
