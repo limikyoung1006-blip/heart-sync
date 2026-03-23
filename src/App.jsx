@@ -3945,6 +3945,57 @@ const SettingsView = ({
           />
         )}
       </AnimatePresence>
+ 
+      {showWorshipSet && (
+        <div onClick={() => setShowWorshipSet(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 5000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+          <motion.div onClick={(e) => e.stopPropagation()} initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} style={{ background: 'white', borderRadius: '32px', padding: '30px', width: '100%', maxWidth: '340px' }}>
+            <h3 style={{ fontSize: '18px', fontWeight: 900, color: '#2D1F08', marginBottom: '10px' }}>가정예배 주기 설정</h3>
+            <p style={{ fontSize: '13px', color: '#8B7355', marginBottom: '20px', fontWeight: 600 }}>예배를 드리는 요일을 모두 선택해주세요.</p>
+            
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '25px' }}>
+              {['일', '월', '화', '수', '목', '금', '토'].map(day => {
+                const isSelected = worshipDays.includes(day);
+                return (
+                  <button 
+                    key={day}
+                    onClick={() => {
+                      if (isSelected) setWorshipDays(worshipDays.filter(d => d !== day));
+                      else setWorshipDays([...worshipDays, day]);
+                    }}
+                    style={{
+                      width: '40px', height: '40px', borderRadius: '12px', border: '1px solid #EEE',
+                      background: isSelected ? '#F5D060' : 'white',
+                      color: isSelected ? 'white' : '#717171',
+                      fontWeight: 900, fontSize: '14px', cursor: 'pointer'
+                    }}
+                  >
+                    {day}
+                  </button>
+                );
+              })}
+            </div>
+
+            <label style={{ fontSize: '12px', fontWeight: 800, color: '#B08D3E', display: 'block', marginBottom: '8px' }}>예정 시간</label>
+            <input 
+              type="time" 
+              value={worshipTime} 
+              onChange={(e) => setWorshipTime(e.target.value)}
+              style={{ width: '100%', padding: '14px', borderRadius: '15px', border: '1px solid #EEE', background: '#F9FAFB', fontSize: '16px', fontWeight: 800, marginBottom: '25px' }}
+            />
+
+            <motion.button 
+              whileTap={{ scale: 0.95 }} 
+              onClick={() => {
+                setShowWorshipSet(false);
+                alert("설정이 저장되었습니다. 실시간으로 반영됩니다!");
+              }} 
+              style={{ width: '100%', padding: '16px', borderRadius: '18px', background: '#2D1F08', color: 'white', fontWeight: 900, border: 'none' }}
+            >
+              저장 및 닫기
+            </motion.button>
+          </motion.div>
+        </div>
+      )}
 
       {showAnnivSet && (
         <div onClick={() => setShowAnnivSet(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 5000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
