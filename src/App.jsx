@@ -4919,14 +4919,22 @@ const App = () => {
         if (payload.sender !== userRole) {
           window.dispatchEvent(new CustomEvent('garden-incoming-msg', { detail: payload }));
           
+          // 📬 System Push Notification
+          const senderLabel = payload.sender === 'husband' ? '남편' : '아내';
+          sendNativeNotification(
+            `${senderLabel}님의 화원 메시지 도착 🌿`,
+            payload.text?.substring(0, 50) || '새로운 메시지가 정원에 도착했습니다.',
+            'heartPrayer'
+          );
+
           // 🌹 Show Popup Alert if NOT currently in the garden chat
           if (activeTabRef.current !== 'heartPrayer') {
-             setIncomingCardCall({ 
-               type: 'garden',
-               sender: payload.sender === 'husband' ? '남편' : '아내',
-               text: payload.text,
-               msgType: payload.msgType // 'question' or 'answer' or 'chat'
-             });
+            setIncomingCardCall({ 
+              type: 'garden',
+              sender: senderLabel,
+              text: payload.text,
+              msgType: payload.msgType // 'question' or 'answer' or 'chat'
+            });
           }
         }
       })
