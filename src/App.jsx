@@ -378,7 +378,7 @@ const HATTI_TODOS = [
   { id: 8, action: "휴식", text: "오늘은 배우자가 온전히 쉴 수 있도록 육아나 집안일을 도맡아 해주세요." }
 ];
 
-const HomeView = ({ user, userRole, coupleCode, mySignal, setMySignal, spouseSignal, partnerPrayers, onIntimacyClick, onNav, schedules, husbandInfo, wifeInfo, onUpdateMemo, activeTab, spouseSecretAnswer, setSpouseSecretAnswer, mySecretAnswer, setMySecretAnswer, isMySecretAnswered, setIsMySecretAnswered, isRevealed, setIsRevealed }) => {
+const HomeView = ({ user, userRole, coupleCode, mySignal, setMySignal, spouseSignal, partnerPrayers, onIntimacyClick, onNav, schedules, husbandInfo, wifeInfo, onUpdateMemo, activeTab, spouseSecretAnswer, setSpouseSecretAnswer, mySecretAnswer, setMySecretAnswer, isMySecretAnswered, setIsMySecretAnswered, isRevealed, setIsRevealed, notifPermission }) => {
   const [showGuide, setShowGuide] = useState(false);
   const [memoInput, setMemoInput] = useState("");
   const [isEditingMemo, setIsEditingMemo] = useState(false);
@@ -438,8 +438,44 @@ const HomeView = ({ user, userRole, coupleCode, mySignal, setMySignal, spouseSig
       </header>
 
 
+      {/* 🔔 Notification Prompt Banner */}
+      {notifPermission !== 'granted' && (
+        <motion.div 
+          initial={{ opacity: 0, y: -10 }} 
+          animate={{ opacity: 1, y: 0 }}
+          style={{ 
+            margin: '0 20px 20px', padding: '15px 20px', 
+            background: 'linear-gradient(135deg, #2D1F08, #4D3A1A)', 
+            borderRadius: '18px', display: 'flex', alignItems: 'center', 
+            justifyContent: 'space-between', boxShadow: '0 10px 25px rgba(0,0,0,0.1)' 
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'rgba(212, 175, 55, 0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Bell size={18} color="#D4AF37" />
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <span style={{ fontSize: '13px', fontWeight: 900, color: 'white' }}>알림이 꺼져있어요</span>
+              <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.7)', fontWeight: 600 }}>중요한 소식을 놓치지 않으려면 알림을 켜주세요.</span>
+            </div>
+          </div>
+          <button 
+            onClick={() => {
+              if ("Notification" in window) {
+                Notification.requestPermission().then(permission => {
+                   window.location.reload(); // Re-trigger App level setup
+                });
+              }
+            }}
+            style={{ padding: '8px 14px', borderRadius: '10px', background: '#D4AF37', color: 'white', border: 'none', fontSize: '12px', fontWeight: 900 }}
+          >
+            켜기
+          </button>
+        </motion.div>
+      )}
+
       {/* Signal Status Section */}
-      <div className="flex flex-col gap-4 mb-4" style={{ marginTop: '25px' }}>
+      <div className="flex flex-col gap-4 mb-4" style={{ marginTop: '0px' }}>
         {/* 1. 배우자의 신호 (Monitoring Zone) */}
         <div 
           onClick={() => setIsAdviceOpen(!isAdviceOpen)}
@@ -1945,6 +1981,7 @@ const IntimacyHubView = ({ user, userRole, coupleCode, supabase, mainChannel, on
                 setHusbandInfo={setHusbandInfo}
                 setWifeInfo={setWifeInfo}
                 myInfo={userRole === 'husband' ? husbandInfo : wifeInfo}
+                onResetChat={handleResetChat}
               />
             </motion.div>
           )}
@@ -2379,7 +2416,7 @@ const SolutionView = ({ onBack, userRole, husbandInfo, wifeInfo, schedules, admi
 };
 
 /* 🌸 Intimacy Modal (Secret Garden) */
-const IntimacyModal = ({ user, show, onClose, subPage, setSubPage, bgImage, onBgUpload, partnerLabel, userRole, coupleCode, supabase, mainChannel, isFullPage, onNav, embedded = false, setHusbandInfo, setWifeInfo, myInfo }) => {
+const IntimacyModal = ({ user, show, onClose, subPage, setSubPage, bgImage, onBgUpload, partnerLabel, userRole, coupleCode, supabase, mainChannel, isFullPage, onNav, embedded = false, setHusbandInfo, setWifeInfo, myInfo, onResetChat }) => {
   const [currentSecretIdx, setCurrentSecretIdx] = useState(0);
   const [inputText, setInputText] = useState('');
   const [messages, setMessages] = useState([]); 
@@ -2458,8 +2495,17 @@ const IntimacyModal = ({ user, show, onClose, subPage, setSubPage, bgImage, onBg
       }
     };
 
+    const handleReset = () => {
+      setMessages([]);
+      setIsTopicFinished(false);
+    };
+
     window.addEventListener('garden-incoming-msg', handleIncoming);
-    return () => window.removeEventListener('garden-incoming-msg', handleIncoming);
+    window.addEventListener('garden-chat-reset', handleReset);
+    return () => {
+      window.removeEventListener('garden-incoming-msg', handleIncoming);
+      window.removeEventListener('garden-chat-reset', handleReset);
+    };
   }, [show, userRole]);
 
   if (!show) return null;
@@ -2562,6 +2608,32 @@ const IntimacyModal = ({ user, show, onClose, subPage, setSubPage, bgImage, onBg
 
     setMyAnswerInput('');
     setIsTopicFinished(true);
+  };
+
+  const handleResetChat = async () => {
+    if (!window.confirm("대화 내용을 초기화하고 새로운 대화를 시작하시겠습니까?")) return;
+    
+    // 📡 Global Broadcast
+    if (mainChannel) {
+      mainChannel.send({
+        type: 'broadcast',
+        event: 'garden-chat-reset'
+      });
+    }
+
+    // 🔄 DB Profile Sync (Clear Message)
+    const { data } = await supabase.from('profiles').select('info').eq('id', user.id).single();
+    if (data) {
+       const updatedInfo = { ...data.info, gardenMsg: null, gardenMsgType: null, gardenNavId: null, gardenAnswer: null };
+       await supabase.from('profiles').upsert({
+         id: user.id, couple_id: coupleCode, user_role: userRole, info: updatedInfo, updated_at: new Date().toISOString()
+       }, { onConflict: 'id' });
+       if (userRole === 'husband') setHusbandInfo(updatedInfo);
+       else setWifeInfo(updatedInfo);
+    }
+    setMessages([]);
+    setTopic("");
+    setIsTopicFinished(false);
   };
 
   const currentBg = bgImage || '/garden_bg_premium.png';
@@ -2699,7 +2771,7 @@ const IntimacyModal = ({ user, show, onClose, subPage, setSubPage, bgImage, onBg
                   <span style={{ fontSize: '10px', color: '#546E7A', fontWeight: 700 }}>{partnerLabel}님과 연결됨</span>
                 </div>
               </div>
-              <button onClick={() => setMessages([])} style={{ background: 'none', border: 'none', color: '#2D1F08', opacity: 0.5 }}><RefreshCw size={18} /></button>
+              <button onClick={onResetChat} style={{ background: 'none', border: 'none', color: '#2D1F08', opacity: 0.5 }}><RefreshCw size={18} /></button>
             </div>
 
             {/* Chat Area */}
@@ -4543,6 +4615,7 @@ const App = () => {
   const lastNotifiedCardQIdRef = React.useRef(null); // 중복 대화 카드 알림 방지용
   const activeTabRef = React.useRef(activeTab);
   const lastNavIdRef = React.useRef(null); // 중복 이동 방지용 ID 저장소
+  const [notifPermission, setNotifPermission] = useState(typeof window !== 'undefined' ? Notification.permission : 'default');
 
   // 🔔 Native Push Notification Helper
   const sendNativeNotification = (title, body, tab = null, eventName = null) => {
@@ -4570,6 +4643,7 @@ const App = () => {
     if ("Notification" in window) {
       if (Notification.permission !== "granted" && Notification.permission !== "denied") {
         Notification.requestPermission().then(permission => {
+          setNotifPermission(permission);
           if (permission === 'granted') {
             console.log("Push notifications enabled!");
           }
@@ -5103,6 +5177,10 @@ const App = () => {
            }
         }
       })
+      .on('broadcast', { event: 'garden-chat-reset' }, () => {
+        // 📡 파트너의 대화 초기화 수신
+        window.dispatchEvent(new CustomEvent('garden-chat-reset'));
+      })
       .on('broadcast', { event: 'card-game-call' }, ({ payload }) => {
         if (payload.sender !== userRole && activeTabRef.current !== 'cardGame') {
            // 🔔 Native Push
@@ -5337,6 +5415,7 @@ const App = () => {
                   husbandInfo={husbandInfo}
                   wifeInfo={wifeInfo}
                   onUpdateMemo={updateMemo}
+                  notifPermission={notifPermission}
                   spouseSecretAnswer={spouseSecretAnswer}
                   setSpouseSecretAnswer={setSpouseSecretAnswer}
                   mySecretAnswer={mySecretAnswer}
