@@ -1832,7 +1832,7 @@ const HeartPrayerView = ({ userRole, coupleCode, onBack, partnerPrayers, setPart
 };
 
 /* 🌹 Intimacy Hub View (Hearts Prayer & Secret Garden) */
-const IntimacyHubView = ({ user, userRole, coupleCode, supabase, mainChannel, onBack, partnerPrayers, setPartnerPrayers, bgImage, onBgUpload, partnerLabel, husbandInfo, wifeInfo }) => {
+const IntimacyHubView = ({ user, userRole, coupleCode, supabase, mainChannel, onBack, partnerPrayers, setPartnerPrayers, bgImage, onBgUpload, partnerLabel, husbandInfo, wifeInfo, setHusbandInfo, setWifeInfo }) => {
   const [subTab, setSubTab] = useState('prayer'); // 'prayer' or 'garden'
   const [modalSubPage, setModalSubPage] = useState('main');
 
@@ -5337,8 +5337,10 @@ const App = () => {
               )}
                {activeTab === 'heartPrayer' && (
                  <IntimacyHubView 
-                   user={user}                   supabase={supabase}
-                   mainChannel={mainChannel}                   userRole={userRole} 
+                   user={user}
+                   supabase={supabase}
+                   mainChannel={mainChannel}
+                   userRole={userRole} 
                    coupleCode={coupleCode} 
                    onBack={() => setActiveTab('home')}
                    partnerPrayers={partnerPrayers}
@@ -5346,6 +5348,10 @@ const App = () => {
                    bgImage={intimacyBg}
                    onBgUpload={setIntimacyBg}
                    partnerLabel={partnerLabel}
+                   husbandInfo={husbandInfo}
+                   wifeInfo={wifeInfo}
+                   setHusbandInfo={setHusbandInfo}
+                   setWifeInfo={setWifeInfo}
                  />
                )}
                {activeTab === 'settings' && (
