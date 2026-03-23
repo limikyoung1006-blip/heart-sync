@@ -4971,7 +4971,22 @@ const App = () => {
         const { user_role: role, info } = payload.new;
         if (role === 'husband') setHusbandInfo(info || {}); else if (role === 'wife') setWifeInfo(info || {});
         if (info?.signal) {
-           if (role !== userRole) setSpouseSignal(info.signal);
+           if (role !== userRole) {
+              // 🔔 Send push notification only if signal actually changed
+              if (info.signal !== spouseSignal) {
+                const signalMsgMap = {
+                   green: "오늘 제 마음은 초록색이에요! 아주 좋은 상태입니다. 🟢",
+                   amber: "오늘은 조금 정적인 편이에요. 부드러운 관심이 필요해요. 🟡",
+                   red: "지금은 제 마음의 정체기예요. 충분한 공감과 대화가 필요합니다. 🔴"
+                };
+                sendNativeNotification(
+                  `${role === 'husband' ? '남편' : '아내'}님의 현재 마음 신호 🚦`,
+                  signalMsgMap[info.signal] || "새로운 마음 신호가 도착했습니다.",
+                  'home'
+                );
+              }
+              setSpouseSignal(info.signal);
+           }
            else if (!signalLockRef.current) setMySignal(info.signal);
         }
         // 🚀 배우자의 화면 전환 요청 수신
