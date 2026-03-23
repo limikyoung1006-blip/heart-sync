@@ -1705,25 +1705,41 @@ const HeartPrayerView = ({ userRole, coupleCode, onBack, partnerPrayers, setPart
     if (!topic.trim()) return;
     setIsRecording(true);
     
-    const { error } = await supabase.from('prayers').insert({
+    const newPrayer = {
+      id: Date.now(),
       couple_id: coupleCode,
       user_role: userRole,
       text: topic.trim(),
-      created_at: new Date().toISOString()
+      created_at: new Date().toISOString(),
+      type: 'mine',
+      date: new Date().toLocaleDateString('ko-KR')
+    };
+
+    setAllPrayers(prev => [newPrayer, ...prev]);
+    const originalTopic = topic;
+    setTopic("");
+
+    const { error } = await supabase.from('prayers').insert({
+      couple_id: coupleCode,
+      user_role: userRole,
+      text: originalTopic.trim(),
+      created_at: newPrayer.created_at
     });
 
     if (!error) {
-      setTopic("");
       fetchPrayers();
-      
-      const channel = supabase.channel(`couple-${coupleCode}`);
-      channel.send({
-        type: 'broadcast',
-        event: 'heart-prayer-sent',
-        payload: { userRole, text: topic.trim() }
-      });
+      if (mainChannel) {
+        mainChannel.send({
+          type: 'broadcast',
+          event: 'heart-prayer-sent',
+          payload: { userRole, text: originalTopic.trim() }
+        });
+      }
+    } else {
+      setAllPrayers(prev => prev.filter(p => p.id !== newPrayer.id));
+      setTopic(originalTopic);
+      console.error("Error recording prayer:", error);
     }
-    setIsRecording(true); // reset
     setIsRecording(false);
   };
 
@@ -1843,7 +1859,7 @@ const IntimacyHubView = ({ user, userRole, coupleCode, supabase, mainChannel, on
              <ChevronLeft size={28} color="#2D1F08" />
            </button>
            <div className="flex flex-col">
-              <h2 style={{ fontSize: '24px', fontWeight: 900, color: '#2D1F08' }}>비밀의 화원</h2>
+              <h2 style={{ fontSize: '24px', fontWeight: 900, color: '#2D1F08' }}>소통의 화원</h2>
               <span style={{ fontSize: '11px', color: '#B08D3E', fontWeight: 800, letterSpacing: '1px' }}>HUB OF INTIMACY</span>
            </div>
         </div>
@@ -1877,7 +1893,7 @@ const IntimacyHubView = ({ user, userRole, coupleCode, supabase, mainChannel, on
               transition: 'all 0.3s ease'
             }}
           >
-            소통의 화원
+            소통의 환원
           </button>
         </div>
       </div>
@@ -2396,6 +2412,31 @@ const IntimacyModal = ({ user, show, onClose, subPage, setSubPage, bgImage, onBg
     if (!show) return;
     
     // 🌐 Internal Message Bus via CustomEvent from Global App Listener
+    if (show) {
+      // 🔄 Sync latest message from DB when opening
+      const syncLatest = async () => {
+        const { data } = await supabase.from('profiles').select('info').eq('couple_id', coupleCode);
+        if (data) {
+          const partner = data.find(p => p.id !== user.id);
+          if (partner?.info?.gardenNavId && partner.info.gardenNavId !== lastGardenNavIdRef.current) {
+            lastGardenNavIdRef.current = partner.info.gardenNavId;
+            const msg = { 
+              id: partner.info.gardenNavId, 
+              text: partner.info.gardenMsg, 
+              sender: 'partner', 
+              type: 'chat', 
+              time: partner.info.gardenTime || '방금 전' 
+            };
+            setMessages(prev => {
+              if (prev.some(m => m.id === msg.id)) return prev;
+              return [...prev, msg];
+            });
+          }
+        }
+      };
+      syncLatest();
+    }
+
     const handleIncoming = (e) => {
       const payload = e.detail;
       if (payload.sender !== userRole) {
@@ -4794,15 +4835,22 @@ const App = () => {
         else setMySignal(signal);
       })
       .on('postgres_changes', {
-        event: 'INSERT',
+        event: '*',
         schema: 'public',
         table: 'prayers'
-      }, payload => {
-        if (!payload.new || payload.new.couple_id !== coupleCode) return;
+      }, async (payload) => {
+        if (!payload.new && !payload.old) return;
+        const target = payload.new || payload.old;
+        if (target.couple_id !== coupleCode) return;
         
-        // 🌹 New Heart Prayer Notification (Persistent DB based)
-        if (payload.new.user_role !== userRole) {
-          setPartnerPrayers(prev => [payload.new, ...prev].slice(0, 10));
+        // 🌹 Refresh all prayers to ensure home sync is perfect (Edit/Delete as well)
+        const { data } = await supabase.from('prayers').select('*').eq('couple_id', coupleCode).order('created_at', { ascending: false });
+        if (data) {
+          setPartnerPrayers(data.filter(p => p.user_role !== userRole));
+        }
+
+        // Add notification for NEW prayers only
+        if (payload.event === 'INSERT' && target.user_role !== userRole) {
           toast.custom((t) => (
             <div 
               onClick={() => {
