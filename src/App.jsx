@@ -4631,7 +4631,7 @@ const App = () => {
       notification.onclick = (e) => {
         e.preventDefault();
         window.focus();
-        if (tab) setActiveTab(tab);
+        if (tab && activeTabRef.current !== tab) setActiveTab(tab);
         if (eventName) setTimeout(() => window.dispatchEvent(new CustomEvent(eventName)), 400);
         notification.close();
       };
@@ -5181,7 +5181,7 @@ const App = () => {
         window.dispatchEvent(new CustomEvent('garden-chat-reset'));
       })
       .on('broadcast', { event: 'card-game-call' }, ({ payload }) => {
-        if (payload.sender !== userRole && activeTabRef.current !== 'cardGame') {
+        if (payload.sender !== userRole && activeTabRef.current !== 'cardGame' && activeTabRef.current !== 'heartPrayer') {
            // 🔔 Native Push
            sendNativeNotification(
              `${payload.sender === 'husband' ? '남편' : '아내'}님의 대화 요청  Jokers`,
@@ -5659,7 +5659,7 @@ const App = () => {
 
       {/* 🔔 Card Game & Secret Card Real-time Toast Notification */}
       <AnimatePresence>
-         {incomingCardCall && (
+         {incomingCardCall && activeTab !== 'heartPrayer' && activeTab !== 'cardGame' && (
             <motion.div 
               initial={{ opacity: 0, y: 100, scale: 0.9 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
