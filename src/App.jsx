@@ -5335,16 +5335,20 @@ const App = () => {
   const handleSetMySignal = async (newSignal) => {
     setMySignal(newSignal);
     try {
-      const { error } = await supabase.from('signals').upsert({
+      // 1. Update Signals table
+      await supabase.from('signals').upsert({
         couple_id: coupleCode,
         user_role: userRole,
         signal: newSignal,
         updated_at: new Date().toISOString()
       }, { onConflict: 'couple_id,user_role' });
-      if (error) throw error;
+      
+      // 2. Update Profiles table (Persistence master)
+      const baseInfo = (userRole === 'husband' ? husbandInfo : wifeInfo) || {};
+      const updatedInfo = { ...baseInfo, signal: newSignal };
+      await updateProfileInfo(updatedInfo); // Shared helper
     } catch (err) {
       console.error("Signal sync error:", err);
-      // Fallback: alert the user if sync failed
     }
   };
 
@@ -5641,6 +5645,14 @@ const App = () => {
                   bgImage={intimacyBg}
                   onBgUpload={setIntimacyBg}
                   partnerLabel={partnerLabel}
+                  user={user}
+                  userRole={userRole}
+                  coupleCode={coupleCode}
+                  supabase={supabase}
+                  mainChannel={mainChannel}
+                  setHusbandInfo={setHusbandInfo}
+                  setWifeInfo={setWifeInfo}
+                  myInfo={userRole === 'husband' ? husbandInfo : wifeInfo}
                   isFullPage={true}
                 />
               )}
