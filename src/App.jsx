@@ -2543,7 +2543,7 @@ const IntimacyModal = ({ user, show, onClose, subPage, setSubPage, bgImage, onBg
     setMessages([newMsg]);
     setSpouseStatus('typing');
     
-    // 📡 Global Broadcast
+    // 📡 Global Broadcast (High Speed)
     if (mainChannel) {
       mainChannel.send({
         type: 'broadcast',
@@ -2551,6 +2551,21 @@ const IntimacyModal = ({ user, show, onClose, subPage, setSubPage, bgImage, onBg
         payload: { text: q, sender: userRole, time: getTime(), msgType: 'question', gardenNavId }
       });
     }
+
+    // 🔄 DB Profile Sync (Fail-safe reliability)
+    supabase.from('profiles').select('info').eq('id', user.id).single().then(({data}) => {
+       const latestInfo = data?.info || myInfo;
+       const updatedInfo = { ...latestInfo, gardenMsg: q, gardenMsgType: 'question', gardenNavId, gardenTime: getTime() };
+       
+       supabase.from('profiles').upsert({
+         id: user.id, couple_id: coupleCode, user_role: userRole, info: updatedInfo, updated_at: new Date().toISOString()
+       }, { onConflict: 'id' }).then(({error}) => {
+          if(!error) {
+            if (userRole === 'husband') setHusbandInfo(updatedInfo);
+            else setWifeInfo(updatedInfo);
+          }
+       });
+    });
     
     setTimeout(() => setSpouseStatus('done'), 2000);
   };
@@ -2572,7 +2587,7 @@ const IntimacyModal = ({ user, show, onClose, subPage, setSubPage, bgImage, onBg
     // IMPORTANT: Fetch latest info to prevent clobbering other settings
     supabase.from('profiles').select('info').eq('id', user.id).single().then(({data}) => {
        const latestInfo = data?.info || myInfo;
-       const updatedInfo = { ...latestInfo, gardenMsg: inputText, gardenNavId };
+       const updatedInfo = { ...latestInfo, gardenMsg: inputText, gardenMsgType: 'chat', gardenNavId, gardenTime: getTime() };
        
        supabase.from('profiles').upsert({
          id: user.id, couple_id: coupleCode, user_role: userRole, info: updatedInfo, updated_at: new Date().toISOString()
