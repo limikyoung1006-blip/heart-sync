@@ -4543,6 +4543,40 @@ const App = () => {
   const lastNotifiedCardQIdRef = React.useRef(null); // 중복 대화 카드 알림 방지용
   const activeTabRef = React.useRef(activeTab);
   const lastNavIdRef = React.useRef(null); // 중복 이동 방지용 ID 저장소
+
+  // 🔔 Native Push Notification Helper
+  const sendNativeNotification = (title, body, tab = null, eventName = null) => {
+    if (!("Notification" in window)) return;
+    
+    if (Notification.permission === "granted") {
+      const notification = new Notification(title, {
+        body: body,
+        icon: '/hatti_3d_v2.png',
+        tag: tab || 'general',
+        badge: '/hatti_3d_v2.png'
+      });
+
+      notification.onclick = (e) => {
+        e.preventDefault();
+        window.focus();
+        if (tab) setActiveTab(tab);
+        if (eventName) setTimeout(() => window.dispatchEvent(new CustomEvent(eventName)), 400);
+        notification.close();
+      };
+    }
+  };
+
+  useEffect(() => {
+    if ("Notification" in window) {
+      if (Notification.permission !== "granted" && Notification.permission !== "denied") {
+        Notification.requestPermission().then(permission => {
+          if (permission === 'granted') {
+            console.log("Push notifications enabled!");
+          }
+        });
+      }
+    }
+  }, []);
   useEffect(() => {
     activeTabRef.current = activeTab;
   }, [activeTab]);
@@ -4995,6 +5029,14 @@ const App = () => {
             // 📡 Internal Sync for open Chat Modal
             window.dispatchEvent(new CustomEvent('garden-incoming-msg', { detail: { text: info.gardenMsg, sender: role, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) } }));
             
+            // 🔔 Native Push
+            sendNativeNotification(
+              `${role === 'husband' ? '남편' : '아내'}님의 메시지 🌹`,
+              info.gardenMsg?.substring(0, 50) || '새 메시지가 도착했습니다.',
+              'heartPrayer',
+              'nav-to-garden'
+            );
+
             // 🌹 Show Toast only if NOT currently in the garden chat
             if (activeTabRef.current !== 'heartPrayer') {
               toast.custom((t) => (
@@ -5039,6 +5081,15 @@ const App = () => {
         if (payload.new && payload.new.couple_id === coupleCode) {
            fetchGlobalPrayers(); // 🕒 Re-fetch state globally
            window.dispatchEvent(new CustomEvent('prayers-updated')); // Notify embedded views
+           
+           if (payload.new.user_role !== userRole) {
+             const senderLabel = payload.new.user_role === 'husband' ? '남편' : '아내';
+             sendNativeNotification(
+               `${senderLabel}님의 속마음 기도 🙏`,
+               payload.new.text?.substring(0, 50) || '새로운 기도 제목이 도착했습니다.',
+               'heartPrayer'
+             );
+           }
         }
       })
       .on('broadcast', { event: 'memo-updated' }, ({ payload }) => {
@@ -5054,6 +5105,13 @@ const App = () => {
       })
       .on('broadcast', { event: 'card-game-call' }, ({ payload }) => {
         if (payload.sender !== userRole && activeTabRef.current !== 'cardGame') {
+           // 🔔 Native Push
+           sendNativeNotification(
+             `${payload.sender === 'husband' ? '남편' : '아내'}님의 대화 요청  Jokers`,
+             '함께 깊은 대화를 나누고 싶어해요! 카드 게임으로 오세요.',
+             'cardGame'
+           );
+
            setIncomingCardCall({ 
              type: 'card',
              category: payload.category, 
