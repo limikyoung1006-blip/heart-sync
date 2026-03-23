@@ -4648,16 +4648,21 @@ const App = () => {
   const lastNavIdRef = React.useRef(null); // 중복 이동 방지용 ID 저장소
   const [notifPermission, setNotifPermission] = useState(typeof window !== 'undefined' ? Notification.permission : 'default');
 
-  // 🔔 Native Push Notification Helper
+  // 🔔 Native Push Notification Helper (with Haptic Vibration)
   const sendNativeNotification = (title, body, tab = null, eventName = null) => {
     if (!("Notification" in window)) return;
     
+    // 📳 Haptic Vibration for smartphone interaction
+    if ("vibrate" in navigator) {
+      navigator.vibrate([200, 100, 200]);
+    }
+
     if (Notification.permission === "granted") {
       const notification = new Notification(title, {
         body: body,
-        icon: '/hatti_3d_v2.png',
+        icon: '/logo_main.png',
         tag: tab || 'general',
-        badge: '/hatti_3d_v2.png'
+        badge: '/logo_main.png'
       });
 
       notification.onclick = (e) => {
