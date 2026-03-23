@@ -3920,9 +3920,12 @@ const SettingsView = ({
           whileTap={{ scale: 0.95 }}
           onClick={async () => {
             if(window.confirm("로그아웃 하시겠습니까?")) {
-              await supabase.auth.signOut();
               localStorage.clear();
-              window.location.reload();
+              supabase.auth.signOut().then(() => {
+                window.location.href = '/'; 
+              });
+              // Fallback redirect if signout hangs
+              setTimeout(() => { window.location.href = '/'; }, 800);
             }
           }}
           style={{ width: '100%', padding: '16px', borderRadius: '20px', background: 'rgba(239, 68, 68, 0.1)', color: '#EF4444', fontWeight: 800, border: '1px solid rgba(239, 68, 68, 0.2)', cursor: 'pointer', marginBottom: '10px' }}
@@ -5182,7 +5185,7 @@ const App = () => {
                   <User size={16} color={appTheme.primary} />
                 </div>
                 <span style={{ fontSize: '13px', fontWeight: 900, color: appTheme.primary }}>
-                  {isAdmin ? '백동희 관리자님' : `${userRole === 'husband' ? husbandInfo.nickname : wifeInfo.nickname}님`}
+                  {isAdmin ? '백동희 관리자님' : `${userRole === 'husband' ? (husbandInfo?.nickname || '남편') : (wifeInfo?.nickname || '아내')}님`}
                 </span>
               </div>
               {/* Sync Status Dot */}
