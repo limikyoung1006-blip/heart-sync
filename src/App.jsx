@@ -5086,19 +5086,37 @@ const App = () => {
       })
       .on('broadcast', { event: 'card-game-call' }, ({ payload }) => {
         if (payload.sender !== userRole && activeTabRef.current !== 'cardGame' && activeTabRef.current !== 'heartPrayer') {
-           // 🔔 Native Push
-           sendNativeNotification(
-             `${payload.sender === 'husband' ? '남편' : '아내'}님의 대화 요청  Jokers`,
-             '함께 깊은 대화를 나누고 싶어해요! 카드 게임으로 오세요.',
-             'cardGame'
-           );
+           const senderLabel = payload.sender === 'husband' ? '남편' : '아내';
+           
+           if (payload.type === 'mood-signal') {
+              // 🌸 Garden Mood Signal Chip Notification
+              sendNativeNotification(
+                `${senderLabel}님의 마음 신호 ✨`,
+                `"${payload.title}" 신호가 도착했습니다. 화원에서 확인해보세요!`,
+                'heartPrayer'
+              );
 
-           setIncomingCardCall({ 
-             type: 'card',
-             category: payload.category, 
-             questionId: payload.questionId,
-             sender: payload.sender === 'husband' ? '남편' : '아내'
-           });
+              setIncomingCardCall({ 
+                type: 'garden',
+                sender: senderLabel,
+                text: payload.title,
+                msgType: 'chat'
+              });
+           } else {
+              // 🃏 General Card Game Call
+              sendNativeNotification(
+                `${senderLabel}님의 대화 요청 🃏`,
+                '함께 깊은 대화를 나누고 싶어해요! 카드 게임으로 오세요.',
+                'cardGame'
+              );
+
+              setIncomingCardCall({ 
+                type: 'card',
+                category: payload.category, 
+                questionId: payload.questionId,
+                sender: senderLabel
+              });
+           }
         }
       })
       .on('broadcast', { event: 'secret-revealed' }, ({ payload }) => {
