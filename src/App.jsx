@@ -1699,6 +1699,9 @@ const HeartPrayerView = ({ userRole, coupleCode, onBack, partnerPrayers, setPart
 
   useEffect(() => {
     fetchPrayers();
+    const handlePrayersUpdate = () => fetchPrayers();
+    window.addEventListener('prayers-updated', handlePrayersUpdate);
+    return () => window.removeEventListener('prayers-updated', handlePrayersUpdate);
   }, [coupleCode, userRole]);
 
   const handleRecord = async () => {
@@ -4725,6 +4728,32 @@ const App = () => {
     setIsSetupDone(true);
   };
 
+  // 🔔 Global Prayer Fetcher (Shared between Home & Garden)
+  const fetchGlobalPrayers = async () => {
+    if (!coupleCode) return;
+    const { data } = await supabase
+      .from('prayers')
+      .select('*')
+      .eq('couple_id', coupleCode)
+      .order('created_at', { ascending: false });
+    
+    if (data) {
+      const partnerRole = userRole === 'husband' ? 'wife' : 'husband';
+      const processed = data
+        .filter(p => p.user_role === partnerRole)
+        .map(p => ({
+          ...p,
+          type: 'partner',
+          date: new Date(p.created_at).toLocaleDateString('ko-KR')
+        }));
+      setPartnerPrayers(processed);
+    }
+  };
+
+  useEffect(() => {
+    if (isSetupDone && coupleCode) fetchGlobalPrayers();
+  }, [isSetupDone, coupleCode, userRole]);
+
   const addSchedule = async (s) => {
     const newSchedules = [...schedules, s];
     setSchedules(newSchedules);
@@ -4756,6 +4785,15 @@ const App = () => {
     const baseInfo = userRole === 'husband' ? husbandInfo : wifeInfo;
     const updatedInfo = { ...baseInfo, ...extraInfo };
     if (text !== undefined) updatedInfo.todayMemo = text;
+
+    // 📡 Broadcast for instant sync (even before DB propagates)
+    if (mainChannel) {
+      mainChannel.send({
+        type: 'broadcast',
+        event: 'memo-updated',
+        payload: { sender: userRole, text, extraInfo }
+      });
+    }
 
     if (userRole === 'husband') setHusbandInfo(updatedInfo);
     else setWifeInfo(updatedInfo);
@@ -4990,10 +5028,29 @@ const App = () => {
         }
 
         // Real-time sync for shared settings
-        if (info && info.coupleSchedules) setSchedules(info.coupleSchedules);
-        if (info && info.worshipDays) setWorshipDays(info.worshipDays);
         if (info && info.worshipTime) setWorshipTime(info.worshipTime);
         if (info && info.anniversaries) setAnniversaries(info.anniversaries);
+      })
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'prayers'
+      }, payload => {
+        if (payload.new && payload.new.couple_id === coupleCode) {
+           fetchGlobalPrayers(); // 🕒 Re-fetch state globally
+           window.dispatchEvent(new CustomEvent('prayers-updated')); // Notify embedded views
+        }
+      })
+      .on('broadcast', { event: 'memo-updated' }, ({ payload }) => {
+        if (payload.sender !== userRole) {
+           // 즉각 메모 갱신 (DB 전파 전 우선 반영)
+           const isHusband = payload.sender === 'husband';
+           if (isHusband) {
+              setHusbandInfo(prev => ({ ...prev, ...payload.extraInfo, todayMemo: payload.text }));
+           } else {
+              setWifeInfo(prev => ({ ...prev, ...payload.extraInfo, todayMemo: payload.text }));
+           }
+        }
       })
       .on('broadcast', { event: 'card-game-call' }, ({ payload }) => {
         if (payload.sender !== userRole && activeTabRef.current !== 'cardGame') {
