@@ -509,7 +509,11 @@ const HomeView = ({ user, userRole, coupleCode, mySignal, setMySignal, spouseSig
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <div className={`dot dot-${spouseSignal}`} style={{ width: '18px', height: '18px', boxShadow: `0 0 10px var(--signal-${spouseSignal})` }} />
+              <div className={`dot dot-${spouseSignal}`} style={{ 
+                width: '18px', height: '18px', 
+                backgroundColor: spouseSignal === 'red' ? '#FF4D6D' : spouseSignal === 'amber' ? '#FFD166' : '#06D6A0',
+                boxShadow: `0 0 10px ${spouseSignal === 'red' ? '#FF4D6D' : spouseSignal === 'amber' ? '#FFD166' : '#06D6A0'}`
+              }} />
               <div style={{ transform: isAdviceOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: '0.3s', display: 'flex' }}>
                 <ChevronDown size={22} color="#8A60FF" />
               </div>
@@ -4829,6 +4833,7 @@ const App = () => {
     }
   });
   const [showNotificationList, setShowNotificationList] = useState(false);
+  const signalLockRef = useRef(null); // 🚥 Race Condition Protection Gate
   
   // Persistence
   useEffect(() => {
@@ -5085,6 +5090,7 @@ const App = () => {
         // Derive signals from profile info dynamically
         if (info?.signal) {
            if (role !== userRole) setSpouseSignal(info.signal);
+           else if (!signalLockRef.current) setMySignal(info.signal); // 🛡️ Race Condition Gate
         }
 
         // 🚀 자동 입장 (Auto-Navigation) 및 비밀의 화원 실시간 연동 처리
@@ -5326,12 +5332,19 @@ const App = () => {
   // Update My Signal to Supabase
   // 🚥 Master Signal Sync (Single Channel Persistence)
   const handleSetMySignal = async (newSignal) => {
-    setMySignal(newSignal); // UI Optimistic Update
+    if (mySignal === newSignal) return;
+    
+    // 🛡️ Lock local state to prevent real-time listener race
+    signalLockRef.current = newSignal;
+    setMySignal(newSignal); 
+    
     try {
-      // We only update the Profiles table info field to ensure atomicity and prevent loops.
       await updateProfileInfo(undefined, { signal: newSignal });
     } catch (err) {
       console.error("Signal Sync Error:", err);
+    } finally {
+      // 🛡️ Release gate with a small buffer to absorb latencies
+      setTimeout(() => { signalLockRef.current = null; }, 1200);
     }
   };
 
