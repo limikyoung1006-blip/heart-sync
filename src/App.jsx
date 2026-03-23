@@ -501,11 +501,6 @@ const HomeView = ({ user, userRole, coupleCode, mySignal, setMySignal, spouseSig
                 <span style={{ fontSize: '17px', fontWeight: 900, color: '#2D1F08', whiteSpace: 'nowrap' }}>
                   {spouseSignal === 'red' ? '휴식이 필요해요' : spouseSignal === 'amber' ? '대화가 필요해요' : '기분 최고예요!'}
                 </span>
-                {(userRole === 'husband' ? wifeInfo : husbandInfo)?.moodSignal && (
-                   <span style={{ fontSize: '12px', color: '#B08D3E', fontWeight: 700, marginTop: '4px' }}>
-                     💌 {(userRole === 'husband' ? wifeInfo : husbandInfo).moodSignal}
-                   </span>
-                )}
                 {spouseMoodSignal && (
                    <span style={{ fontSize: '12px', color: '#B08D3E', fontWeight: 700, marginTop: '4px' }}>
                      💌 {spouseMoodSignal}
@@ -4814,6 +4809,7 @@ const App = () => {
   
   const [mySignal, setMySignal] = useState('green');
   const [spouseSignal, setSpouseSignal] = useState('green');
+  const spouseMoodSignal = (userRole === 'husband' ? wifeInfo : husbandInfo)?.moodSignal || null;
   const [schedules, setSchedules] = useState(() => JSON.parse(localStorage.getItem('coupleSchedules') || '[]'));
   const [partnerPrayers, setPartnerPrayers] = useState([]);
   const [incomingCardCall, setIncomingCardCall] = useState(null); // { category, questionId }
@@ -4821,8 +4817,22 @@ const App = () => {
   // Shared Settings Lifted from SettingsView
   const [worshipDays, setWorshipDays] = useState(() => JSON.parse(localStorage.getItem('worshipDays') || '["일", "수"]'));
   const [worshipTime, setWorshipTime] = useState(() => localStorage.getItem('worshipTime') || '21:00');
-  const [anniversaries, setAnniversaries] = useState(() => JSON.parse(localStorage.getItem('anniversaries') || '[]'));
-  const [notifications, setNotifications] = useState(() => JSON.parse(localStorage.getItem('notifications') || '[]'));
+  const [anniversaries, setAnniversaries] = useState(() => {
+    try {
+      const saved = localStorage.getItem('anniversaries');
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      return [];
+    }
+  });
+  const [notifications, setNotifications] = useState(() => {
+    try {
+      const saved = localStorage.getItem('notifications');
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      return [];
+    }
+  });
   const [showNotificationList, setShowNotificationList] = useState(false);
   
   // Persistence
