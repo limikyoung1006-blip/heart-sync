@@ -4863,6 +4863,7 @@ const App = () => {
   const [notifications, setNotifications] = useState(() => { try { const saved = localStorage.getItem('notifications'); return saved ? JSON.parse(saved) : []; } catch (e) { return []; } });
   const [showNotificationList, setShowNotificationList] = useState(false);
   const signalLockRef = useRef(null);
+  const lastSpouseSignalRef = useRef(null);
 
   // Persistence
   useEffect(() => {
@@ -4970,30 +4971,49 @@ const App = () => {
         if (!payload.new || payload.new.couple_id !== coupleCode) return;
         const { user_role: role, info } = payload.new;
         if (role === 'husband') setHusbandInfo(info || {}); else if (role === 'wife') setWifeInfo(info || {});
-        if (info?.signal) {
-           if (role !== userRole) {
-              // 🔔 Send push notification only if signal actually changed
-              if (info.signal !== spouseSignal) {
-                const signalMsgMap = {
-                   green: "오늘 제 마음은 초록색이에요! 아주 좋은 상태입니다. 🟢",
-                   amber: "오늘은 조금 정적인 편이에요. 부드러운 관심이 필요해요. 🟡",
-                   red: "지금은 제 마음의 정체기예요. 충분한 공감과 대화가 필요합니다. 🔴"
-                };
-                sendNativeNotification(
-                  `${role === 'husband' ? '남편' : '아내'}님의 현재 마음 신호 🚦`,
-                  signalMsgMap[info.signal] || "새로운 마음 신호가 도착했습니다.",
-                  'home'
-                );
-              }
-              setSpouseSignal(info.signal);
+        if (info?.signal && role !== userRole) {
+           // 🛡️ Use Ref to prevent stale closure comparison issues
+           if (info.signal !== lastSpouseSignalRef.current) {
+              lastSpouseSignalRef.current = info.signal;
+              const signalMsgMap = {
+                 green: "오늘 제 마음은 초록색이에요! 아주 좋은 상태입니다. 🟢",
+                 amber: "오늘은 조금 정적인 편이에요. 부드러운 관심이 필요해요. 🟡",
+                 red: "지금은 제 마음의 정체기예요. 충분한 공감과 대화가 필요합니다. 🔴"
+              };
+              sendNativeNotification(
+                `${role === 'husband' ? '남편' : '아내'}님의 현재 마음 신호 🚦`,
+                signalMsgMap[info.signal] || "새로운 마음 신호가 도착했습니다.",
+                'home'
+              );
            }
-           else if (!signalLockRef.current) setMySignal(info.signal);
+           setSpouseSignal(info.signal);
+        } else if (info?.signal && role === userRole && !signalLockRef.current) {
+           setMySignal(info.signal);
         }
+        
         // 🚀 배우자의 화면 전환 요청 수신
         if (payload.new.requestTab && payload.new.navId !== lastNavIdRef.current && payload.new.user_role !== userRole) {
-          setActiveTab(payload.new.requestTab);
-          lastNavIdRef.current = payload.new.navId; // 중복 방지
-          toast.info(`${payload.new.user_role === 'husband' ? '남편' : '아내'}님이 ${payload.new.requestTab} 탭으로 이동했어요!`);
+           setActiveTab(payload.new.requestTab);
+           lastNavIdRef.current = payload.new.navId; // 중복 방지
+           toast.info(`${payload.new.user_role === 'husband' ? '남편' : '아내'}님이 ${payload.new.requestTab} 탭으로 이동했어요!`);
+        }
+      })
+      .on('broadcast', { event: 'signal-changed' }, ({ payload }) => {
+        if (payload.sender !== userRole) {
+           if (payload.signal !== lastSpouseSignalRef.current) {
+              lastSpouseSignalRef.current = payload.signal;
+              const signalMsgMap = {
+                 green: "오늘 제 마음은 초록색이에요! 아주 좋은 상태입니다. 🟢",
+                 amber: "오늘은 조금 정적인 편이에요. 부드러운 관심이 필요해요. 🟡",
+                 red: "지금은 제 마음의 정체기예요. 충분한 공감과 대화가 필요합니다. 🔴"
+              };
+              sendNativeNotification(
+                `${payload.sender === 'husband' ? '남편' : '아내'}님의 현재 마음 신호 🚦`,
+                signalMsgMap[payload.signal] || "새로운 마음 신호가 도착했습니다.",
+                'home'
+              );
+              setSpouseSignal(payload.signal);
+           }
         }
       })
       .on('broadcast', { event: 'garden-chat-sent' }, ({ payload }) => {
@@ -5186,6 +5206,15 @@ const App = () => {
     signalLockRef.current = newSignal;
     setMySignal(newSignal); 
     
+    // 📡 빠른 브로드캐스트 알림 발신
+    if (mainChannel) {
+       mainChannel.send({
+         type: 'broadcast',
+         event: 'signal-changed',
+         payload: { sender: userRole, signal: newSignal }
+       });
+    }
+
     try {
       await updateProfileInfo(undefined, { signal: newSignal });
     } catch (err) {
