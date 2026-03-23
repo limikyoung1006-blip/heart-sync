@@ -2623,15 +2623,18 @@ const IntimacyModal = ({ user, show, onClose, subPage, setSubPage, bgImage, onBg
       });
     }
 
-    // 🔄 DB Profile Sync (Clear Message)
-    const { data } = await supabase.from('profiles').select('info').eq('id', user.id).single();
-    if (data) {
-       const updatedInfo = { ...data.info, gardenMsg: null, gardenMsgType: null, gardenNavId: null, gardenAnswer: null };
-       await supabase.from('profiles').upsert({
-         id: user.id, couple_id: coupleCode, user_role: userRole, info: updatedInfo, updated_at: new Date().toISOString()
-       }, { onConflict: 'id' });
-       if (userRole === 'husband') setHusbandInfo(updatedInfo);
-       else setWifeInfo(updatedInfo);
+    // 🔄 DB Profile Sync (Clear Message for BOTH)
+    const { data: allProfiles } = await supabase.from('profiles').select('id, info, user_role').eq('couple_id', coupleCode);
+    if (allProfiles) {
+      for (const p of allProfiles) {
+        const updatedInfo = { ...p.info, gardenMsg: null, gardenMsgType: null, gardenNavId: null, gardenAnswer: null };
+        await supabase.from('profiles').upsert({
+          id: p.id, couple_id: coupleCode, user_role: p.user_role, info: updatedInfo, updated_at: new Date().toISOString()
+        }, { onConflict: 'id' });
+        
+        if (p.user_role === 'husband') setHusbandInfo(updatedInfo);
+        else if (p.user_role === 'wife') setWifeInfo(updatedInfo);
+      }
     }
     setMessages([]);
     setTopic("");
@@ -5139,7 +5142,11 @@ const App = () => {
         if (info && info.requestTab && info.navId !== lastNavIdRef.current) {
           console.log("Auto-nav triggered via profile with ID:", info.navId);
           lastNavIdRef.current = info.navId;
-          setActiveTab(info.requestTab);
+          
+          // 🛡️ Safe Auto-nav: Only if not in a high-priority session
+          if (activeTabRef.current !== 'cardGame' && activeTabRef.current !== 'heartPrayer') {
+            setActiveTab(info.requestTab);
+          }
         }
 
         // Real-time sync for shared settings
