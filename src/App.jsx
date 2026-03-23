@@ -4771,8 +4771,17 @@ const App = () => {
   const [showReport, setShowReport] = useState(false);
   const [showGuidePage, setShowGuidePage] = useState(false);
   
-  const [mySignal, setMySignal] = useState('green');
-  const [spouseSignal, setSpouseSignal] = useState('green');
+  const [mySignal, setMySignal] = useState(() => {
+    const role = localStorage.getItem('userRole') || 'husband';
+    const info = JSON.parse(localStorage.getItem(role === 'husband' ? 'husbandInfo' : 'wifeInfo') || '{}');
+    return info.signal || 'green';
+  });
+  const [spouseSignal, setSpouseSignal] = useState(() => {
+    const role = localStorage.getItem('userRole') || 'husband';
+    const partnerRole = role === 'husband' ? 'wife' : 'husband';
+    const info = JSON.parse(localStorage.getItem(partnerRole === 'husband' ? 'husbandInfo' : 'wifeInfo') || '{}');
+    return info.signal || 'green';
+  });
   const [schedules, setSchedules] = useState(() => JSON.parse(localStorage.getItem('coupleSchedules') || '[]'));
   const [partnerPrayers, setPartnerPrayers] = useState([]);
   const [incomingCardCall, setIncomingCardCall] = useState(null);
@@ -5073,7 +5082,16 @@ const App = () => {
     const navId = Math.random().toString(36).substring(7); // 랜덤 ID 생성
     lastNavIdRef.current = navId; // 내 기기에서는 중복 반응 안 하도록 저장
     
-    // 내 프로필의 info에 'requestTab'과 'navId'를 실어 배우자에게 보냄
+    // 🔔 대화카드 요청일 경우 배우자에게 직접 방송 알림 발신
+    if (tabName === 'cardGame' && mainChannel) {
+      mainChannel.send({
+        type: 'broadcast',
+        event: 'card-game-call',
+        payload: { sender: userRole, category: 'general' }
+      });
+    }
+
+    // 내 프로필의 info에 'requestTab'과 'navId'를 실어 배우자에게 보냄 (화면 전환 유도)
     await updateProfileInfo(undefined, { 
       requestTab: tabName, 
       navId: navId,
