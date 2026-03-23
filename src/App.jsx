@@ -5068,30 +5068,56 @@ const App = () => {
       })
       .on('broadcast', { event: 'secret-revealed' }, ({ payload }) => {
         if (payload?.sender !== userRole) {
-           toast.success("배우자가 카드를 뒤집었습니다! 대화에 참여하세요. 🔓");
+           const senderLabel = payload.userRole === 'husband' ? '남편' : '아내';
+           toast.success(`${senderLabel}님께서 비밀 질문의 정답을 확인했습니다! 🔓`);
+           
+           // 📬 System Push
+           sendNativeNotification(
+             `비밀 질문 공개! 🔓`,
+             `${senderLabel}님께서 당신의 비밀 답변을 확인했습니다. 대화를 나눠보세요!`,
+             'intimacy'
+           );
+
            setIncomingCardCall({ 
              type: 'secret-revealed',
-             sender: payload.userRole === 'husband' ? '남편' : '아내'
+             sender: senderLabel
            });
         }
       })
       .on('broadcast', { event: 'secret-answer-update' }, ({ payload }) => {
         // 🚀 글로벌 채널에서 배우자의 답변 수신 시 상태 업데이트 및 알림
         if (payload.user_role !== userRole) {
-           console.log("Global secret answer received:", payload.answer);
+           const senderLabel = payload.user_role === 'husband' ? '남편' : '아내';
            setSpouseSecretAnswer(payload.answer);
+           
+           // 📬 System Push
+           sendNativeNotification(
+             `비밀 답변 도착! 🎁`,
+             `${senderLabel}님께서 오늘의 비밀 질문에 답변했습니다. 지금 확인해보세요!`,
+             'intimacy'
+           );
+
            setIncomingCardCall({ 
              type: 'secret-answer-received',
-             sender: payload.user_role === 'husband' ? '남편' : '아내'
+             sender: senderLabel
            });
         }
       })
       .on('broadcast', { event: 'heart-prayer-sent' }, ({ payload }) => {
         // 🚀 속마음 기도 수신 알림
         if (payload.userRole !== userRole) {
+           const senderLabel = payload.userRole === 'husband' ? '남편' : '아내';
+           
+           // 📬 System Push
+           sendNativeNotification(
+             `속마음 기도 요청 🙏`,
+             `${senderLabel}님께서 새로운 기도 제목을 남겼습니다.`,
+             'heartPrayer'
+           );
+
            setIncomingCardCall({ 
              type: 'heart-prayer-sent',
-             sender: payload.userRole === 'husband' ? '남편' : '아내',
+             sender: senderLabel,
              text: payload.text
            });
         }
