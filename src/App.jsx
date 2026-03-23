@@ -4538,8 +4538,6 @@ const App = () => {
   const [mainChannel, setMainChannel] = useState(null); // 📡 Persistent Shared Channel
   const lastGardenNavIdRef = React.useRef(null);
   const lastNotifiedCardQIdRef = React.useRef(null); // 중복 대화 카드 알림 방지용
-
-  // Ref for activeTab to avoid stale closures in global real-time listeners
   const activeTabRef = React.useRef(activeTab);
   const lastNavIdRef = React.useRef(null); // 중복 이동 방지용 ID 저장소
   useEffect(() => {
@@ -5482,11 +5480,13 @@ const App = () => {
               }}
             >
               <div style={{ 
-                background: (incomingCardCall.type?.startsWith('secret') || incomingCardCall.type === 'heart-prayer-sent') ? '#D4AF37' : '#8A60FF', 
+                background: (incomingCardCall.type?.startsWith('secret') || incomingCardCall.type === 'heart-prayer-sent') ? '#D4AF37' : 
+                            incomingCardCall.type === 'garden' ? '#FF4D6D' : '#8A60FF', 
                 padding: '12px', 
                 borderRadius: '16px' 
               }}>
-                 {incomingCardCall.type?.startsWith('secret') ? <Lock size={24} color="white" /> : 
+                 {incomingCardCall.type === 'garden' ? "🌹" :
+                  incomingCardCall.type?.startsWith('secret') ? <Lock size={24} color="white" /> : 
                   incomingCardCall.type === 'heart-prayer-sent' ? <Heart size={24} color="white" fill="white" /> :
                   <Sparkles size={24} color="white" />}
               </div>
@@ -5498,16 +5498,19 @@ const App = () => {
                      ? `${incomingCardCall.sender}님이 기도를 요청했습니다! 🙏`
                      : incomingCardCall.type === 'secret-revealed'
                      ? `${incomingCardCall.sender}님이 비밀 질문을 확인했습니다! ✨`
+                     : incomingCardCall.type === 'garden'
+                     ? `${incomingCardCall.sender}님이 소통의 화원에서 메시지를 보냈습니다! 🌹`
                      : `${incomingCardCall.sender}님이 대화 카드를 뽑았습니다! 🃏`}
                  </p>
                  <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.6)', fontWeight: 700 }}>
                    {incomingCardCall.type === 'heart-prayer-sent' ? '지금 바로 기도제목을 확인해보세요.' :
+                    incomingCardCall.type === 'garden' ? (incomingCardCall.msgType === 'question' ? '배우자가 새로운 질문을 보냈습니다.' : '배우자와의 은밀한 소통을 이어가세요.') :
                     incomingCardCall.type?.startsWith('secret') ? '지금 바로 정답을 확인해보세요.' : '지금 수락해서 함께 깊은 대화를 나눠보세요.'}
                  </p>
               </div>
               <button 
                 onClick={() => {
-                  if (incomingCardCall.type === 'heart-prayer-sent') {
+                  if (incomingCardCall.type === 'heart-prayer-sent' || incomingCardCall.type === 'garden') {
                     setActiveTab('heartPrayer');
                   } else if (incomingCardCall.type?.startsWith('secret')) {
                     setActiveTab('home');
