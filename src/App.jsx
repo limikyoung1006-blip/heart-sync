@@ -5099,9 +5099,6 @@ const App = () => {
           lastGardenNavIdRef.current = info.gardenNavId;
           
           if (role !== userRole) {
-            // 📡 Internal Sync for open Chat Modal
-            window.dispatchEvent(new CustomEvent('garden-incoming-msg', { detail: { text: info.gardenMsg, sender: role, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) } }));
-            
             // 🔔 Native Push
             sendNativeNotification(
               `${role === 'husband' ? '남편' : '아내'}님의 메시지 🌹`,
@@ -5176,9 +5173,20 @@ const App = () => {
            }
         }
       })
-      .on('broadcast', { event: 'garden-chat-reset' }, () => {
+      .on('broadcast', { event: 'garden-chat-reset' }, async () => {
         // 📡 파트너의 대화 초기화 수신
         window.dispatchEvent(new CustomEvent('garden-chat-reset'));
+        
+        // 🔄 내 프로필의 과거 메시지도 함께 소생 (재수신 방지 및 DB 클린업)
+        const { data } = await supabase.from('profiles').select('info').eq('id', user.id).single();
+        if (data) {
+           const updatedInfo = { ...data.info, gardenMsg: null, gardenMsgType: null, gardenNavId: null, gardenAnswer: null };
+           await supabase.from('profiles').upsert({
+             id: user.id, couple_id: coupleCode, user_role: userRole, info: updatedInfo, updated_at: new Date().toISOString()
+           }, { onConflict: 'id' });
+           if (userRole === 'husband') setHusbandInfo(updatedInfo);
+           else setWifeInfo(updatedInfo);
+        }
       })
       .on('broadcast', { event: 'card-game-call' }, ({ payload }) => {
         if (payload.sender !== userRole && activeTabRef.current !== 'cardGame' && activeTabRef.current !== 'heartPrayer') {
