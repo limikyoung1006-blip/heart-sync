@@ -4512,7 +4512,7 @@ const OnboardingView = ({ user, userRole, setUserRole, onFinish }) => {
         {step === 8 && deepAnalysis && (
           <motion.div key="step8" initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="flex flex-col h-full justify-center">
              <div style={{ background: 'white', padding: '30px 20px', borderRadius: '24px', boxShadow: '0 10px 30px rgba(0,0,0,0.05)', border: '2px solid #8A60FF', marginBottom: '30px' }}>
-                <p style={{ fontSize: '12px', fontWeight: 900, color: '#8A60FF', marginBottom: '10px' }}>진단 완료!</p>
+                <p style={{ fontSize: '12px', fontWeight: 900, color: '#8A60FF' }}>진단 완료!</p>
                 <h1 style={{ fontSize: '19px', fontWeight: 900, color: '#1E293B', marginBottom: '15px' }}>{deepAnalysis.title}</h1>
                 <p style={{ fontSize: '14px', color: '#475569', lineHeight: 1.6 }}>{deepAnalysis.summary}</p>
              </div>
@@ -5071,16 +5071,71 @@ const App = () => {
     // 2. Real-time Subscription (Unique Channel per Couple)
     const channel = supabase
       .channel(`couple-${coupleCode}`)
-      .on('postgres_changes', { 
-        event: '*', 
-        schema: 'public', 
-        table: 'signals'
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'profiles'
       }, payload => {
+        // We now handle signals through the profiles info sync
         if (!payload.new || payload.new.couple_id !== coupleCode) return;
-        const { user_role: role, signal } = payload.new;
-        if (role !== userRole) setSpouseSignal(signal);
-        // Important: We ignore self-updates (role === userRole) to prevent redundant state flips or loops
-        // since handleSetMySignal already handles the local UI state.
+        const { user_role: role, info } = payload.new;
+        if (role === 'husband') setHusbandInfo(info || {});
+        else if (role === 'wife') setWifeInfo(info || {});
+        
+        // Derive signals from profile info dynamically
+        if (info?.signal) {
+           if (role !== userRole) setSpouseSignal(info.signal);
+        }
+
+        // 🚀 자동 입장 (Auto-Navigation) 및 비밀의 화원 실시간 연동 처리
+        if (info && info.gardenNavId && info.gardenNavId !== lastGardenNavIdRef.current) {
+          lastGardenNavIdRef.current = info.gardenNavId;
+          
+          if (role !== userRole) {
+            // 🔔 Native Push
+            sendNativeNotification(
+              `${role === 'husband' ? '남편' : '아내'}님의 메시지 🌹`,
+              info.gardenMsg?.substring(0, 50) || '새 메시지가 도착했습니다.',
+              'heartPrayer',
+              'nav-to-garden'
+            );
+
+            // 🌹 Show Toast only if NOT currently in the garden chat
+            if (activeTabRef.current !== 'heartPrayer') {
+              toast.custom((t) => (
+                <div 
+                  onClick={() => {
+                    setActiveTab('heartPrayer');
+                    setTimeout(() => window.dispatchEvent(new CustomEvent('nav-to-garden')), 100);
+                    toast.dismiss(t.id);
+                  }}
+                  style={{ padding: '15px 20px', background: 'white', borderRadius: '25px', boxShadow: '0 10px 40px rgba(0,0,0,0.1)', cursor: 'pointer', border: '1.5px solid #FDFCF0' }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'rgba(138, 96, 255, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <Sparkles size={20} color="#8A60FF" />
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                      <span style={{ fontSize: '13px', fontWeight: 900, color: '#2D1F08' }}>비밀의 화원 대화 도착!</span>
+                      <span style={{ fontSize: '12px', color: '#8B7355', fontWeight: 700 }}>{partnerLabel}님이 소통을 기다리고 있어요. ✨</span>
+                    </div>
+                  </div>
+                </div>
+              ));
+            }
+          }
+        }
+
+        if (info && info.requestTab && info.navId !== lastNavIdRef.current) {
+          console.log("Auto-nav triggered via profile with ID:", info.navId);
+          lastNavIdRef.current = info.navId;
+          if (activeTabRef.current !== 'cardGame' && activeTabRef.current !== 'heartPrayer') {
+            setActiveTab(info.requestTab);
+          }
+        }
+
+        if (info && info.worshipTime) setWorshipTime(info.worshipTime);
+        if (info && info.anniversaries) setAnniversaries(info.anniversaries);
       })
       .on('postgres_changes', {
         event: '*',
@@ -5135,69 +5190,6 @@ const App = () => {
              });
           }
         }
-      })
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'profiles'
-      }, payload => {
-        if (!payload.new || payload.new.couple_id !== coupleCode) return;
-        const { user_role: role, info } = payload.new;
-        if (role === 'husband') setHusbandInfo(info || {});
-        else if (role === 'wife') setWifeInfo(info || {});
-
-        // 🚀 자동 입장 (Auto-Navigation) 및 비밀의 화원 실시간 연동 처리
-        if (info && info.gardenNavId && info.gardenNavId !== lastGardenNavIdRef.current) {
-          lastGardenNavIdRef.current = info.gardenNavId;
-          
-          if (role !== userRole) {
-            // 🔔 Native Push
-            sendNativeNotification(
-              `${role === 'husband' ? '남편' : '아내'}님의 메시지 🌹`,
-              info.gardenMsg?.substring(0, 50) || '새 메시지가 도착했습니다.',
-              'heartPrayer',
-              'nav-to-garden'
-            );
-
-            // 🌹 Show Toast only if NOT currently in the garden chat
-            if (activeTabRef.current !== 'heartPrayer') {
-              toast.custom((t) => (
-                <div 
-                  onClick={() => {
-                    setActiveTab('heartPrayer');
-                    setTimeout(() => window.dispatchEvent(new CustomEvent('nav-to-garden')), 100);
-                    toast.dismiss(t.id);
-                  }}
-                  style={{ padding: '15px 20px', background: 'white', borderRadius: '25px', boxShadow: '0 10px 40px rgba(0,0,0,0.1)', cursor: 'pointer', border: '1.5px solid #FDFCF0' }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'rgba(138, 96, 255, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <Sparkles size={20} color="#8A60FF" />
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column' }}>
-                      <span style={{ fontSize: '13px', fontWeight: 900, color: '#2D1F08' }}>비밀의 화원 대화 도착!</span>
-                      <span style={{ fontSize: '12px', color: '#8B7355', fontWeight: 700 }}>{partnerLabel}님이 소통을 기다리고 있어요. ✨</span>
-                    </div>
-                  </div>
-                </div>
-              ));
-            }
-          }
-        }
-
-        if (info && info.requestTab && info.navId !== lastNavIdRef.current) {
-          console.log("Auto-nav triggered via profile with ID:", info.navId);
-          lastNavIdRef.current = info.navId;
-          
-          // 🛡️ Safe Auto-nav: Only if not in a high-priority session
-          if (activeTabRef.current !== 'cardGame' && activeTabRef.current !== 'heartPrayer') {
-            setActiveTab(info.requestTab);
-          }
-        }
-
-        // Real-time sync for shared settings
-        if (info && info.worshipTime) setWorshipTime(info.worshipTime);
-        if (info && info.anniversaries) setAnniversaries(info.anniversaries);
       })
       .on('postgres_changes', {
         event: '*',
@@ -5332,24 +5324,14 @@ const App = () => {
   }, [userRole, coupleCode, isSetupDone]);
 
   // Update My Signal to Supabase
-  // 🚥 Unified Signal Persistence (Single Source of Truth)
+  // 🚥 Master Signal Sync (Single Channel Persistence)
   const handleSetMySignal = async (newSignal) => {
-    setMySignal(newSignal); // 1. Instant UI Feedback
+    setMySignal(newSignal); // UI Optimistic Update
     try {
-      // 2. Main Profile Record (The real master state)
+      // We only update the Profiles table info field to ensure atomicity and prevent loops.
       await updateProfileInfo(undefined, { signal: newSignal });
-      
-      // 3. Optional: Sync to signals table for analytics/history (Safe Catch)
-      supabase.from('signals').upsert({
-        couple_id: coupleCode,
-        user_role: userRole,
-        signal: newSignal,
-        updated_at: new Date().toISOString()
-      }, { onConflict: 'couple_id,user_role' }).then(({ error }) => {
-         if (error) console.warn("Background signal sync failed:", error);
-      });
     } catch (err) {
-      console.error("Critical Signal Sync Error:", err);
+      console.error("Signal Sync Error:", err);
     }
   };
 
