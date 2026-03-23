@@ -501,6 +501,16 @@ const HomeView = ({ user, userRole, coupleCode, mySignal, setMySignal, spouseSig
                 <span style={{ fontSize: '17px', fontWeight: 900, color: '#2D1F08', whiteSpace: 'nowrap' }}>
                   {spouseSignal === 'red' ? '휴식이 필요해요' : spouseSignal === 'amber' ? '대화가 필요해요' : '기분 최고예요!'}
                 </span>
+                {(userRole === 'husband' ? wifeInfo : husbandInfo)?.moodSignal && (
+                   <span style={{ fontSize: '12px', color: '#B08D3E', fontWeight: 700, marginTop: '4px' }}>
+                     💌 {(userRole === 'husband' ? wifeInfo : husbandInfo).moodSignal}
+                   </span>
+                )}
+                {spouseMoodSignal && (
+                   <span style={{ fontSize: '12px', color: '#B08D3E', fontWeight: 700, marginTop: '4px' }}>
+                     💌 {spouseMoodSignal}
+                   </span>
+                )}
               </div>
             </div>
             <div className="flex items-center gap-3">
@@ -2671,7 +2681,7 @@ const IntimacyModal = ({ user, show, onClose, subPage, setSubPage, bgImage, onBg
             size={22} 
             color="rgba(45, 31, 8, 0.4)" 
             style={{ cursor: 'pointer' }}
-            onClick={() => alert("새로운 알림이 없습니다.")} 
+            onClick={() => setShowNotificationList(true)} 
           />
           <Settings 
             size={22} 
@@ -2888,7 +2898,29 @@ const IntimacyModal = ({ user, show, onClose, subPage, setSubPage, bgImage, onBg
               <div className="signal-list" style={{ display: 'flex', flexDirection: 'column', gap: '14px', paddingBottom: '40px' }}>
                  {randomMoods.map((mood, idx) => (
                    <motion.div key={idx} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: idx * 0.08 }}
-                     onClick={() => { alert(`'${mood.title}' 신호를 보냈습니다!`); setSubPage('main'); }}
+                     onClick={async () => { 
+                       const baseInfo = (userRole === 'husband' ? husbandInfo : wifeInfo) || {};
+                       const updatedInfo = { ...baseInfo, moodSignal: mood.title };
+                       if (userRole === 'husband') setHusbandInfo(updatedInfo);
+                       else setWifeInfo(updatedInfo);
+
+                       // 📡 Broadcast (Real-time Overlay)
+                       if (mainChannel) {
+                         mainChannel.send({
+                           type: 'broadcast',
+                           event: 'card-game-call',
+                           payload: { sender: userRole, type: 'mood-signal', title: mood.title }
+                         });
+                       }
+                       
+                       // 🔄 DB Persist
+                       await supabase.from('profiles').upsert({
+                         id: user.id, couple_id: coupleCode, user_role: userRole, info: updatedInfo, updated_at: new Date().toISOString()
+                       }, { onConflict: 'id' });
+
+                       alert(`'${mood.title}' 신호를 보냈습니다!`); 
+                       setSubPage('main'); 
+                     }}
                      style={{ cursor: 'pointer' }}
                    >
                      <SignalOptV2 title={mood.title} desc={mood.desc} />
@@ -4790,6 +4822,8 @@ const App = () => {
   const [worshipDays, setWorshipDays] = useState(() => JSON.parse(localStorage.getItem('worshipDays') || '["일", "수"]'));
   const [worshipTime, setWorshipTime] = useState(() => localStorage.getItem('worshipTime') || '21:00');
   const [anniversaries, setAnniversaries] = useState(() => JSON.parse(localStorage.getItem('anniversaries') || '[]'));
+  const [notifications, setNotifications] = useState(() => JSON.parse(localStorage.getItem('notifications') || '[]'));
+  const [showNotificationList, setShowNotificationList] = useState(false);
   
   // Persistence
   useEffect(() => {
@@ -5765,6 +5799,40 @@ const App = () => {
             }}
           >
             <AppGuideView onBack={() => setShowGuidePage(false)} />
+          </motion.div>
+        )}
+      </AnimatePresence>
+      {/* 🔔 Notification List Overlay */}
+      <AnimatePresence>
+        {showNotificationList && (
+          <motion.div 
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            onClick={() => setShowNotificationList(false)}
+            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(10px)', zIndex: 1000000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}
+          >
+            <motion.div 
+              initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              style={{ width: '100%', maxWidth: '400px', background: 'white', borderRadius: '32px', overflow: 'hidden', boxShadow: '0 25px 50px rgba(0,0,0,0.3)' }}
+            >
+              <div style={{ padding: '20px', borderBottom: '1px solid #F0F0F0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '18px', fontWeight: 900, color: '#2D1F08' }}>최근 알림</span>
+                <button onClick={() => setNotifications([])} style={{ background: 'none', border: 'none', color: '#8B7355', fontSize: '12px', fontWeight: 800 }}>전체 삭제</button>
+              </div>
+              <div style={{ maxHeight: '400px', overflowY: 'auto', padding: '10px' }}>
+                {notifications.length === 0 ? (
+                   <div style={{ padding: '40px 20px', textAlign: 'center', color: '#8B7355', opacity: 0.6 }}>새로운 알림이 없습니다.</div>
+                ) : (
+                  notifications.map((notif, i) => (
+                    <div key={i} style={{ padding: '15px', borderRadius: '16px', marginBottom: '8px', background: '#FDFCF0', border: '1px solid rgba(212, 175, 55, 0.1)' }}>
+                      <p style={{ fontSize: '14px', fontWeight: 800, color: '#2D1F08', marginBottom: '4px' }}>{notif.title}</p>
+                      <p style={{ fontSize: '12px', color: '#8B7355', fontWeight: 600 }}>{notif.body}</p>
+                      <span style={{ fontSize: '10px', color: '#BDBDBD', marginTop: '6px', display: 'block' }}>{notif.time}</span>
+                    </div>
+                  ))
+                )}
+              </div>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
