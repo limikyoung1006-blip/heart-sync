@@ -5019,7 +5019,9 @@ const App = () => {
       
       const activeCoupleCode = myProfile?.couple_id || coupleCode;
 
-      // Fetch Signals by coupleCode
+      // Fetch Signals (Priority: Profile Info > signals table)
+      if (myProfile?.info?.signal) setMySignal(myProfile.info.signal);
+      
       const { data: signalData } = await supabase
         .from('signals')
         .select('*')
@@ -5028,7 +5030,7 @@ const App = () => {
       if (signalData) {
         const mySignalRow = signalData.find(s => s.user_role === userRole);
         const spouseSignalRow = signalData.find(s => s.user_role !== userRole);
-        if (mySignalRow) setMySignal(mySignalRow.signal);
+        if (mySignalRow && !myProfile?.info?.signal) setMySignal(mySignalRow.signal);
         if (spouseSignalRow) setSpouseSignal(spouseSignalRow.signal);
       }
 
@@ -5445,21 +5447,11 @@ const App = () => {
               />
             </div>
             <div className="top-bar-icons">
-              <Bell 
-                size={22} 
-                color={appTheme.primary} 
-                style={{ opacity: 0.7, cursor: 'pointer' }} 
-                onClick={() => setShowNotificationList(true)}
-              />
-              <button 
-                id="top-settings-btn"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setActiveTab('settings');
-                }}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '8px', display: 'flex' }}
-              >
-                <Settings size={22} color={appTheme.primary} style={{ opacity: 0.7 }} />
+              <button className="icon-btn-top" onClick={() => setShowNotificationList(true)}>
+                <Bell size={22} color={appTheme.primary} style={{ opacity: 0.8 }} />
+              </button>
+              <button className="icon-btn-top" onClick={(e) => { e.stopPropagation(); setActiveTab('settings'); }}>
+                <Settings size={22} color={appTheme.primary} style={{ opacity: 0.8 }} />
               </button>
             </div>
           </div>
