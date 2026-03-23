@@ -2423,7 +2423,7 @@ const SolutionView = ({ onBack, userRole, husbandInfo, wifeInfo, schedules, admi
 };
 
 /* 🌸 Intimacy Modal (Secret Garden) */
-const IntimacyModal = ({ user, show, onClose, subPage, setSubPage, bgImage, onBgUpload, partnerLabel, userRole, coupleCode, supabase, mainChannel, isFullPage, onNav, embedded = false, setHusbandInfo, setWifeInfo, husbandInfo, wifeInfo, myInfo }) => {
+const IntimacyModal = ({ user, show, onClose, subPage, setSubPage, bgImage, onBgUpload, partnerLabel, userRole, coupleCode, supabase, mainChannel, isFullPage, onNav, embedded = false, setHusbandInfo, setWifeInfo, husbandInfo, wifeInfo, myInfo, onUpdateProfile }) => {
   const [currentSecretIdx, setCurrentSecretIdx] = useState(0);
   const [inputText, setInputText] = useState('');
   const [messages, setMessages] = useState([]); 
@@ -2894,12 +2894,7 @@ const IntimacyModal = ({ user, show, onClose, subPage, setSubPage, bgImage, onBg
                  {randomMoods.map((mood, idx) => (
                    <motion.div key={idx} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: idx * 0.08 }}
                      onClick={async () => { 
-                       const baseInfo = (userRole === 'husband' ? husbandInfo : wifeInfo) || {};
-                       const updatedInfo = { ...baseInfo, moodSignal: mood.title };
-                       if (userRole === 'husband') setHusbandInfo(updatedInfo);
-                       else setWifeInfo(updatedInfo);
-
-                       // 📡 Broadcast (Real-time Overlay)
+                       // 📡 Global Broadcast
                        if (mainChannel) {
                          mainChannel.send({
                            type: 'broadcast',
@@ -2908,10 +2903,10 @@ const IntimacyModal = ({ user, show, onClose, subPage, setSubPage, bgImage, onBg
                          });
                        }
                        
-                       // 🔄 DB Persist
-                       await supabase.from('profiles').upsert({
-                         id: user.id, couple_id: coupleCode, user_role: userRole, info: updatedInfo, updated_at: new Date().toISOString()
-                       }, { onConflict: 'id' });
+                       // 🔄 Master Profile Sync (Centralized & Safe)
+                       if (onUpdateProfile) {
+                         await onUpdateProfile(undefined, { moodSignal: mood.title });
+                       }
 
                        alert(`'${mood.title}' 신호를 보냈습니다!`); 
                        setSubPage('main'); 
@@ -4939,6 +4934,10 @@ const App = () => {
   };
   
   const updateProfileInfo = async (text, extraInfo = {}) => {
+    if (!user?.id) {
+       console.warn("Update attempt without valid session - skipping sync.");
+       return;
+    }
     const baseInfo = userRole === 'husband' ? husbandInfo : wifeInfo;
     const updatedInfo = { ...baseInfo, ...extraInfo };
     if (text !== undefined) updatedInfo.todayMemo = text;
@@ -5332,23 +5331,24 @@ const App = () => {
   }, [userRole, coupleCode, isSetupDone]);
 
   // Update My Signal to Supabase
+  // 🚥 Unified Signal Persistence (Single Source of Truth)
   const handleSetMySignal = async (newSignal) => {
-    setMySignal(newSignal);
+    setMySignal(newSignal); // 1. Instant UI Feedback
     try {
-      // 1. Update Signals table
-      await supabase.from('signals').upsert({
+      // 2. Main Profile Record (The real master state)
+      await updateProfileInfo(undefined, { signal: newSignal });
+      
+      // 3. Optional: Sync to signals table for analytics/history (Safe Catch)
+      supabase.from('signals').upsert({
         couple_id: coupleCode,
         user_role: userRole,
         signal: newSignal,
         updated_at: new Date().toISOString()
-      }, { onConflict: 'couple_id,user_role' });
-      
-      // 2. Update Profiles table (Persistence master)
-      const baseInfo = (userRole === 'husband' ? husbandInfo : wifeInfo) || {};
-      const updatedInfo = { ...baseInfo, signal: newSignal };
-      await updateProfileInfo(undefined, { signal: newSignal });
+      }, { onConflict: 'couple_id,user_role' }).then(({ error }) => {
+         if (error) console.warn("Background signal sync failed:", error);
+      });
     } catch (err) {
-      console.error("Signal sync error:", err);
+      console.error("Critical Signal Sync Error:", err);
     }
   };
 
@@ -5654,6 +5654,7 @@ const App = () => {
                   setWifeInfo={setWifeInfo}
                   husbandInfo={husbandInfo}
                   wifeInfo={wifeInfo}
+                  onUpdateProfile={updateProfileInfo}
                   myInfo={userRole === 'husband' ? husbandInfo : wifeInfo}
                   isFullPage={true}
                 />
