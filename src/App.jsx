@@ -501,9 +501,9 @@ const HomeView = ({ user, userRole, coupleCode, mySignal, setMySignal, spouseSig
                 <span style={{ fontSize: '17px', fontWeight: 900, color: '#2D1F08', whiteSpace: 'nowrap' }}>
                   {spouseSignal === 'red' ? '휴식이 필요해요' : spouseSignal === 'amber' ? '대화가 필요해요' : '기분 최고예요!'}
                 </span>
-                {spouseMoodSignal && (
+                {spouseInfo?.moodSignal && (
                    <span style={{ fontSize: '12px', color: '#B08D3E', fontWeight: 700, marginTop: '4px' }}>
-                     💌 {spouseMoodSignal}
+                     💌 {spouseInfo.moodSignal}
                    </span>
                 )}
               </div>
@@ -5445,7 +5445,12 @@ const App = () => {
               />
             </div>
             <div className="top-bar-icons">
-              <Bell size={22} color={appTheme.primary} style={{ opacity: 0.7 }} />
+              <Bell 
+                size={22} 
+                color={appTheme.primary} 
+                style={{ opacity: 0.7, cursor: 'pointer' }} 
+                onClick={() => setShowNotificationList(true)}
+              />
               <button 
                 id="top-settings-btn"
                 onClick={(e) => {
