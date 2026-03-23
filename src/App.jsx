@@ -1876,7 +1876,10 @@ const IntimacyHubView = ({ user, userRole, coupleCode, supabase, mainChannel, on
   const [modalSubPage, setModalSubPage] = useState('main');
 
   useEffect(() => {
-    const handleNavToGarden = () => setSubTab('garden');
+    const handleNavToGarden = () => {
+      setSubTab('garden');
+      setModalSubPage('secrets');
+    };
     window.addEventListener('nav-to-garden', handleNavToGarden);
     return () => window.removeEventListener('nav-to-garden', handleNavToGarden);
   }, []);
