@@ -5079,7 +5079,8 @@ const App = () => {
         if (!payload.new || payload.new.couple_id !== coupleCode) return;
         const { user_role: role, signal } = payload.new;
         if (role !== userRole) setSpouseSignal(signal);
-        else setMySignal(signal);
+        // Important: We ignore self-updates (role === userRole) to prevent redundant state flips or loops
+        // since handleSetMySignal already handles the local UI state.
       })
       .on('postgres_changes', {
         event: '*',
