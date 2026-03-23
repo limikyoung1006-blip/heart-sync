@@ -1981,7 +1981,6 @@ const IntimacyHubView = ({ user, userRole, coupleCode, supabase, mainChannel, on
                 setHusbandInfo={setHusbandInfo}
                 setWifeInfo={setWifeInfo}
                 myInfo={userRole === 'husband' ? husbandInfo : wifeInfo}
-                onResetChat={handleResetChat}
               />
             </motion.div>
           )}
@@ -2416,7 +2415,7 @@ const SolutionView = ({ onBack, userRole, husbandInfo, wifeInfo, schedules, admi
 };
 
 /* 🌸 Intimacy Modal (Secret Garden) */
-const IntimacyModal = ({ user, show, onClose, subPage, setSubPage, bgImage, onBgUpload, partnerLabel, userRole, coupleCode, supabase, mainChannel, isFullPage, onNav, embedded = false, setHusbandInfo, setWifeInfo, myInfo, onResetChat }) => {
+const IntimacyModal = ({ user, show, onClose, subPage, setSubPage, bgImage, onBgUpload, partnerLabel, userRole, coupleCode, supabase, mainChannel, isFullPage, onNav, embedded = false, setHusbandInfo, setWifeInfo, myInfo }) => {
   const [currentSecretIdx, setCurrentSecretIdx] = useState(0);
   const [inputText, setInputText] = useState('');
   const [messages, setMessages] = useState([]); 
@@ -2771,7 +2770,7 @@ const IntimacyModal = ({ user, show, onClose, subPage, setSubPage, bgImage, onBg
                   <span style={{ fontSize: '10px', color: '#546E7A', fontWeight: 700 }}>{partnerLabel}님과 연결됨</span>
                 </div>
               </div>
-              <button onClick={onResetChat} style={{ background: 'none', border: 'none', color: '#2D1F08', opacity: 0.5 }}><RefreshCw size={18} /></button>
+              <button onClick={handleResetChat} style={{ background: 'none', border: 'none', color: '#2D1F08', opacity: 0.5 }}><RefreshCw size={18} /></button>
             </div>
 
             {/* Chat Area */}
