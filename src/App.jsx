@@ -2895,6 +2895,15 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo, onU
   };
 
   const updateCardState = async (updates) => {
+    // 🔔 Send Call Broadcast explicitly for notifications
+    if (updates.isFlipped === false && updates.questionId && broadcastRef.current) {
+      broadcastRef.current.send({
+        type: 'broadcast',
+        event: 'card-game-call',
+        payload: { category: updates.category || category, questionId: updates.questionId, sender: userRole }
+      });
+    }
+
     // 1. Local state update immediately
     if (updates.category) setCategory(updates.category);
     if (updates.isFlipped !== undefined) setIsFlipped(updates.isFlipped);
@@ -4921,29 +4930,14 @@ const App = () => {
           // 📡 Internal Sync for open Chat Modal (High-speed internal event bus)
           window.dispatchEvent(new CustomEvent('garden-incoming-msg', { detail: payload }));
           
-          // 🌹 Show Toast only if NOT currently in the garden chat
-          const isAtGarden = activeTabRef.current === 'heartPrayer'; 
-          if (!isAtGarden) {
-            toast.custom((t) => (
-              <div 
-                onClick={() => {
-                  setActiveTab('heartPrayer');
-                  setTimeout(() => window.dispatchEvent(new CustomEvent('nav-to-garden')), 100);
-                  toast.dismiss(t.id);
-                }}
-                style={{ padding: '15px 20px', background: 'white', borderRadius: '25px', boxShadow: '0 10px 40px rgba(0,0,0,0.1)', cursor: 'pointer', border: '1.5px solid #FDFCF0' }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'rgba(138, 96, 255, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <Sparkles size={20} color="#8A60FF" />
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column' }}>
-                    <span style={{ fontSize: '13px', fontWeight: 900, color: '#2D1F08' }}>비밀의 화원 대화 도착!</span>
-                    <span style={{ fontSize: '12px', color: '#8B7355', fontWeight: 700 }}>{partnerLabel}님이 소통을 기다리고 있어요. ✨</span>
-                  </div>
-                </div>
-              </div>
-            ));
+          // 🌹 Show Popup Alert if NOT currently in the garden chat
+          if (activeTabRef.current !== 'heartPrayer') {
+             setIncomingCardCall({ 
+               type: 'garden',
+               sender: payload.sender === 'husband' ? '남편' : '아내',
+               text: payload.text,
+               msgType: payload.msgType // 'question' or 'answer' or 'chat'
+             });
           }
         }
       })
@@ -5003,29 +4997,14 @@ const App = () => {
         if (info && info.worshipTime) setWorshipTime(info.worshipTime);
         if (info && info.anniversaries) setAnniversaries(info.anniversaries);
       })
-      .on('postgres_changes', {
-        event: '*', 
-        schema: 'public', 
-        table: 'card_game_state'
-      }, payload => {
-        if (!payload.new || payload.new.couple_id !== coupleCode) return;
-        
-        const newQId = payload.new.current_question_id;
-        const isFlipped = payload.new.is_flipped;
-
-        // 🔔 카드 호출 알림 (이미 해당 탭이 아닐 때 + 새로운 질문을 뽑았거나 처음 뒤집었을 때만)
-        if (activeTabRef.current !== 'cardGame' && isFlipped && newQId !== lastNotifiedCardQIdRef.current) {
-           lastNotifiedCardQIdRef.current = newQId; // 알림 기록
+      .on('broadcast', { event: 'card-game-call' }, ({ payload }) => {
+        if (payload.sender !== userRole && activeTabRef.current !== 'cardGame') {
            setIncomingCardCall({ 
              type: 'card',
-             category: payload.new.category, 
-             questionId: newQId 
+             category: payload.category, 
+             questionId: payload.questionId,
+             sender: payload.sender === 'husband' ? '남편' : '아내'
            });
-        }
-        
-        // 카드가 덮이면 알림 기록 초기화 (다시 뽑을 때 알림을 주기 위함)
-        if (!isFlipped) {
-          lastNotifiedCardQIdRef.current = null;
         }
       })
       .on('broadcast', { event: 'secret-revealed' }, ({ payload }) => {
