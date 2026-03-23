@@ -4735,7 +4735,6 @@ const App = () => {
     return () => subscription.unsubscribe();
   }, []);
   
-  // 🛡️ Admin Authorization Sync (Force update if session exists)
   useEffect(() => {
     if (session?.user?.email === 'beak0403@gmail.com') {
       setIsAdmin(true);
@@ -4749,92 +4748,42 @@ const App = () => {
   // Admin Statistics Fetcher
   useEffect(() => {
     if (!isAdmin) return;
-
     const fetchAdminStats = async () => {
       try {
-        // 1. Total Users Count
-        const { count: usersCount, error: usersError } = await supabase
-          .from('profiles')
-          .select('*', { count: 'exact', head: true });
-        
-        if (usersError) throw usersError;
-
-        // 2. Connected Couples (Unique Couple IDs)
-        const { data: couplesData, error: couplesError } = await supabase
-          .from('profiles')
-          .select('couple_id');
-        
-        if (couplesError) throw couplesError;
-
+        const { count: usersCount } = await supabase.from('profiles').select('*', { count: 'exact', head: true });
+        const { data: couplesData } = await supabase.from('profiles').select('couple_id');
         const uniqueCouples = new Set(couplesData?.map(c => c.couple_id).filter(id => id && id !== 'none')).size;
-        
-        // 3. Active Sessions (Simulated or based on recent activity)
         const fifteenMinsAgo = new Date(Date.now() - 15 * 60000).toISOString();
-        const { count: activeCount } = await supabase
-          .from('signals')
-          .select('*', { count: 'exact', head: true })
-          .gt('updated_at', fifteenMinsAgo);
-
-        // 4. Recent Activities
-        const { data: recentData } = await supabase
-          .from('signals')
-          .select('*')
-          .order('updated_at', { ascending: false })
-          .limit(5);
-
-        setAdminStats({
-          users: usersCount || 0,
-          couples: uniqueCouples || 0,
-          activeSessions: activeCount || 0,
-          recentActivities: recentData || []
-        });
-      } catch (err) {
-        console.error("Admin stats fetch error:", err);
-      }
+        const { count: activeCount } = await supabase.from('signals').select('*', { count: 'exact', head: true }).gt('updated_at', fifteenMinsAgo);
+        const { data: recentData } = await supabase.from('signals').select('*').order('updated_at', { ascending: false }).limit(5);
+        setAdminStats({ users: usersCount || 0, couples: uniqueCouples || 0, activeSessions: activeCount || 0, recentActivities: recentData || [] });
+      } catch (err) { console.error("Admin stats fetch error:", err); }
     };
-
     fetchAdminStats();
     const interval = setInterval(fetchAdminStats, 60000);
     return () => clearInterval(interval);
   }, [isAdmin]);
 
-  
   const partnerLabel = userRole === 'husband' ? '아내' : '남편';
   const [intimacyBg, setIntimacyBg] = useState(localStorage.getItem('intimacyBg') || null);
   const [intimacySubPage, setIntimacySubPage] = useState('main');
-  const [counselingMode, setCounselingMode] = useState('chat'); // 'chat' or 'solution'
+  const [counselingMode, setCounselingMode] = useState('chat');
   const [showReport, setShowReport] = useState(false);
   const [showGuidePage, setShowGuidePage] = useState(false);
   
   const [mySignal, setMySignal] = useState('green');
   const [spouseSignal, setSpouseSignal] = useState('green');
-  const spouseMoodSignal = (userRole === 'husband' ? wifeInfo : husbandInfo)?.moodSignal || null;
   const [schedules, setSchedules] = useState(() => JSON.parse(localStorage.getItem('coupleSchedules') || '[]'));
   const [partnerPrayers, setPartnerPrayers] = useState([]);
-  const [incomingCardCall, setIncomingCardCall] = useState(null); // { category, questionId }
+  const [incomingCardCall, setIncomingCardCall] = useState(null);
 
-  // Shared Settings Lifted from SettingsView
   const [worshipDays, setWorshipDays] = useState(() => JSON.parse(localStorage.getItem('worshipDays') || '["일", "수"]'));
   const [worshipTime, setWorshipTime] = useState(() => localStorage.getItem('worshipTime') || '21:00');
-  const [anniversaries, setAnniversaries] = useState(() => {
-    try {
-      const saved = localStorage.getItem('anniversaries');
-      return saved ? JSON.parse(saved) : [];
-    } catch (e) {
-      return [];
-    }
-  });
-  const [notifications, setNotifications] = useState(() => {
-    try {
-      const saved = localStorage.getItem('notifications');
-      return saved ? JSON.parse(saved) : [];
-    } catch (e) {
-      return [];
-    }
-  });
+  const [anniversaries, setAnniversaries] = useState(() => { try { const saved = localStorage.getItem('anniversaries'); return saved ? JSON.parse(saved) : []; } catch (e) { return []; } });
+  const [notifications, setNotifications] = useState(() => { try { const saved = localStorage.getItem('notifications'); return saved ? JSON.parse(saved) : []; } catch (e) { return []; } });
   const [showNotificationList, setShowNotificationList] = useState(false);
-  const signalLockRef = useRef(null); // 🚥 Race Condition Protection Gate
-  
+  const signalLockRef = useRef(null);
+
   // Persistence
   useEffect(() => {
     localStorage.setItem('husbandInfo', JSON.stringify(husbandInfo));
@@ -4845,8 +4794,6 @@ const App = () => {
     localStorage.setItem('worshipDays', JSON.stringify(worshipDays));
     localStorage.setItem('worshipTime', worshipTime);
     localStorage.setItem('anniversaries', JSON.stringify(anniversaries));
-    
-    // 🗝️ 비밀 카드 상태 저장
     localStorage.setItem('mySecretAnswer', mySecretAnswer);
     localStorage.setItem('isMySecretAnswered', isMySecretAnswered);
     localStorage.setItem('spouseSecretAnswer', spouseSecretAnswer || "");
@@ -4856,212 +4803,78 @@ const App = () => {
 
   const handleOnboardingFinish = async (info) => {
     let finalCode = info.coupleCode || coupleCode;
-    if (info.coupleCode) {
-      setCoupleCode(info.coupleCode);
-      localStorage.setItem('coupleCode', info.coupleCode);
-    }
-    
+    if (info.coupleCode) { setCoupleCode(info.coupleCode); localStorage.setItem('coupleCode', info.coupleCode); }
     const baseInfo = userRole === 'husband' ? husbandInfo : wifeInfo;
     const updatedInfo = { ...baseInfo, ...info };
     delete updatedInfo.coupleCode;
-    
-    if (userRole === 'husband') {
-      setHusbandInfo(updatedInfo);
-    } else {
-      setWifeInfo(updatedInfo);
-    }
-
-    // Push to Supabase immediately with user.id
-    await supabase.from('profiles').upsert({
-      id: user.id,
-      couple_id: finalCode,
-      user_role: userRole,
-      info: updatedInfo,
-      updated_at: new Date().toISOString()
-    }, { onConflict: 'id' });
-
+    if (userRole === 'husband') setHusbandInfo(updatedInfo);
+    else setWifeInfo(updatedInfo);
+    await supabase.from('profiles').upsert({ id: user.id, couple_id: finalCode, user_role: userRole, info: updatedInfo, updated_at: new Date().toISOString() }, { onConflict: 'id' });
     localStorage.setItem('userRole', userRole);
     localStorage.setItem('isSetupDone', 'true');
     setIsSetupDone(true);
   };
 
-  // 🔔 Global Prayer Fetcher (Shared between Home & Garden)
   const fetchGlobalPrayers = async () => {
     if (!coupleCode) return;
-    const { data } = await supabase
-      .from('prayers')
-      .select('*')
-      .eq('couple_id', coupleCode)
-      .order('created_at', { ascending: false });
-    
+    const { data } = await supabase.from('prayers').select('*').eq('couple_id', coupleCode).order('created_at', { ascending: false });
     if (data) {
       const partnerRole = userRole === 'husband' ? 'wife' : 'husband';
-      const processed = data
-        .filter(p => p.user_role === partnerRole)
-        .map(p => ({
-          ...p,
-          type: 'partner',
-          date: new Date(p.created_at).toLocaleDateString('ko-KR')
-        }));
+      const processed = data.filter(p => p.user_role === partnerRole).map(p => ({ ...p, type: 'partner', date: new Date(p.created_at).toLocaleDateString('ko-KR') }));
       setPartnerPrayers(processed);
     }
   };
 
-  useEffect(() => {
-    if (isSetupDone && coupleCode) fetchGlobalPrayers();
-  }, [isSetupDone, coupleCode, userRole]);
+  useEffect(() => { if (isSetupDone && coupleCode) fetchGlobalPrayers(); }, [isSetupDone, coupleCode, userRole]);
 
   const addSchedule = async (s) => {
     const newSchedules = [...schedules, s];
     setSchedules(newSchedules);
-    // Sync schedules via profile info using user.id for reliable upsert/real-time
     const baseInfo = userRole === 'husband' ? husbandInfo : wifeInfo;
-    await supabase.from('profiles').upsert({
-      id: user.id,
-      couple_id: coupleCode,
-      user_role: userRole,
-      info: { ...baseInfo, coupleSchedules: newSchedules },
-      updated_at: new Date().toISOString()
-    }, { onConflict: 'id' });
+    await supabase.from('profiles').upsert({ id: user.id, couple_id: coupleCode, user_role: userRole, info: { ...baseInfo, coupleSchedules: newSchedules }, updated_at: new Date().toISOString() }, { onConflict: 'id' });
   };
 
   const deleteSchedule = async (id) => {
     const newSchedules = schedules.filter(s => s.id !== id);
     setSchedules(newSchedules);
     const baseInfo = userRole === 'husband' ? husbandInfo : wifeInfo;
-    await supabase.from('profiles').upsert({
-      id: user.id,
-      couple_id: coupleCode,
-      user_role: userRole,
-      info: { ...baseInfo, coupleSchedules: newSchedules },
-      updated_at: new Date().toISOString()
-    }, { onConflict: 'id' });
+    await supabase.from('profiles').upsert({ id: user.id, couple_id: coupleCode, user_role: userRole, info: { ...baseInfo, coupleSchedules: newSchedules }, updated_at: new Date().toISOString() }, { onConflict: 'id' });
   };
   
   const updateProfileInfo = async (text, extraInfo = {}) => {
-    if (!user?.id) {
-       console.warn("Update attempt without valid session - skipping sync.");
-       return;
-    }
+    if (!user?.id) { console.warn("Update attempt without valid session - skipping sync."); return; }
     const baseInfo = userRole === 'husband' ? husbandInfo : wifeInfo;
     const updatedInfo = { ...baseInfo, ...extraInfo };
     if (text !== undefined) updatedInfo.todayMemo = text;
-
-    // 📡 Broadcast for instant sync (even before DB propagates)
-    if (mainChannel) {
-      mainChannel.send({
-        type: 'broadcast',
-        event: 'memo-updated',
-        payload: { sender: userRole, text, extraInfo }
-      });
-    }
-
-    if (userRole === 'husband') setHusbandInfo(updatedInfo);
-    else setWifeInfo(updatedInfo);
-    
-    await supabase.from('profiles').upsert({
-      id: user.id, 
-      couple_id: coupleCode, 
-      user_role: userRole, 
-      info: updatedInfo, 
-      updated_at: new Date().toISOString()
-    }, { onConflict: 'id' });
+    if (mainChannel) mainChannel.send({ type: 'broadcast', event: 'memo-updated', payload: { sender: userRole, text, extraInfo } });
+    if (userRole === 'husband') setHusbandInfo(updatedInfo); else setWifeInfo(updatedInfo);
+    await supabase.from('profiles').upsert({ id: user.id, couple_id: coupleCode, user_role: userRole, info: updatedInfo, updated_at: new Date().toISOString() }, { onConflict: 'id' });
   };
-
-  const handleGardenMessageSend = async (message) => {
-    const baseInfo = userRole === 'husband' ? husbandInfo : wifeInfo;
-    const updatedInfo = {
-      ...baseInfo,
-      gardenMsg: message,
-      gardenNavId: Date.now() // Unique ID for navigation trigger
-    };
-
-    if (userRole === 'husband') setHusbandInfo(updatedInfo);
-    else setWifeInfo(updatedInfo);
-
-    await supabase.from('profiles').upsert({
-      id: user.id,
-      couple_id: coupleCode,
-      user_role: userRole,
-      info: updatedInfo,
-      updated_at: new Date().toISOString()
-    }, { onConflict: 'id' });
-  };
-  
-  // Supabase Real-time Sync
+   
   useEffect(() => {
-    // 💡 Reset scroll position when tab changes
     const mainArea = document.querySelector('.main-content');
     if (mainArea) mainArea.scrollTop = 0;
   }, [activeTab, counselingMode]);
 
   useEffect(() => {
-    // 1. Initial Data Fetch
     const fetchInitialData = async () => {
-      
       if (!isSetupDone || !user) return;
-
-      // Fetch My Profile by User ID
-      const { data: myProfile } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single();
-      
+      const { data: myProfile } = await supabase.from('profiles').select('*').eq('id', user.id).single();
       if (myProfile) {
         if (myProfile.user_role === 'husband') setHusbandInfo(myProfile.info || {});
         else setWifeInfo(myProfile.info || {});
         setCoupleCode(myProfile.couple_id);
         setUserRole(myProfile.user_role);
-        
-        // If profile was found, they are likely already set up.
-        if (myProfile.couple_id && myProfile.couple_id !== 'none') {
-           setIsSetupDone(true);
-           localStorage.setItem('isSetupDone', 'true');
-        }
+        if (myProfile.info?.signal) setMySignal(myProfile.info.signal);
       }
-      
       const activeCoupleCode = myProfile?.couple_id || coupleCode;
-
-      // Fetch Signals (Priority: Profile Info > signals table)
-      if (myProfile?.info?.signal) setMySignal(myProfile.info.signal);
-      
-      const { data: signalData } = await supabase
-        .from('signals')
-        .select('*')
-        .eq('couple_id', activeCoupleCode);
-      
-      if (signalData) {
-        const mySignalRow = signalData.find(s => s.user_role === userRole);
-        const spouseSignalRow = signalData.find(s => s.user_role !== userRole);
-        if (mySignalRow && !myProfile?.info?.signal) setMySignal(mySignalRow.signal);
-        if (spouseSignalRow) setSpouseSignal(spouseSignalRow.signal);
-      }
-
-      // Fetch Prayers
-      const { data: prayerData } = await supabase
-        .from('prayers')
-        .select('*')
-        .eq('couple_id', activeCoupleCode)
-        .order('created_at', { ascending: false });
-      
-      if (prayerData) {
-        setPartnerPrayers(prayerData.filter(p => p.user_role !== userRole));
-      }
-
-      // Fetch Spouse Profile
-      const { data: profileData } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('couple_id', activeCoupleCode);
-      
+      const { data: profileData } = await supabase.from('profiles').select('*').eq('couple_id', activeCoupleCode);
       if (profileData) {
-        const husbandP = profileData.find(p => p.user_role === 'husband');
-        const wifeP = profileData.find(p => p.user_role === 'wife');
-        if (husbandP) setHusbandInfo(husbandP.info || {});
-        if (wifeP) setWifeInfo(wifeP.info || {});
-
-        const commonInfo = husbandP?.info || wifeP?.info;
+        const hP = profileData.find(p => p.user_role === 'husband');
+        const wP = profileData.find(p => p.user_role === 'wife');
+        if (hP) setHusbandInfo(hP.info || {});
+        if (wP) setWifeInfo(wP.info || {});
+        const commonInfo = hP?.info || wP?.info;
         if (commonInfo) {
           if (commonInfo.worshipDays) setWorshipDays(commonInfo.worshipDays);
           if (commonInfo.worshipTime) setWorshipTime(commonInfo.worshipTime);
@@ -5070,120 +4883,26 @@ const App = () => {
         }
       }
     };
-
     fetchInitialData();
 
-    // 2. Real-time Subscription (Unique Channel per Couple)
-    const channel = supabase
-      .channel(`couple-${coupleCode}`)
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'profiles'
-      }, payload => {
-        // We now handle signals through the profiles info sync
+    const channel = supabase.channel(`couple-${coupleCode}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, payload => {
         if (!payload.new || payload.new.couple_id !== coupleCode) return;
         const { user_role: role, info } = payload.new;
-        if (role === 'husband') setHusbandInfo(info || {});
-        else if (role === 'wife') setWifeInfo(info || {});
-        
-        // Derive signals from profile info dynamically
+        if (role === 'husband') setHusbandInfo(info || {}); else if (role === 'wife') setWifeInfo(info || {});
         if (info?.signal) {
            if (role !== userRole) setSpouseSignal(info.signal);
-           else if (!signalLockRef.current) setMySignal(info.signal); // 🛡️ Race Condition Gate
+           else if (!signalLockRef.current) setMySignal(info.signal);
         }
-
-        // 🚀 자동 입장 (Auto-Navigation) 및 비밀의 화원 실시간 연동 처리
-        if (info && info.gardenNavId && info.gardenNavId !== lastGardenNavIdRef.current) {
-          lastGardenNavIdRef.current = info.gardenNavId;
-          
-          if (role !== userRole) {
-            // 🔔 Native Push
-            sendNativeNotification(
-              `${role === 'husband' ? '남편' : '아내'}님의 메시지 🌹`,
-              info.gardenMsg?.substring(0, 50) || '새 메시지가 도착했습니다.',
-              'heartPrayer',
-              'nav-to-garden'
-            );
-
-            // 🌹 Show Toast only if NOT currently in the garden chat
-            if (activeTabRef.current !== 'heartPrayer') {
-              toast.custom((t) => (
-                <div 
-                  onClick={() => {
-                    setActiveTab('heartPrayer');
-                    setTimeout(() => window.dispatchEvent(new CustomEvent('nav-to-garden')), 100);
-                    toast.dismiss(t.id);
-                  }}
-                  style={{ padding: '15px 20px', background: 'white', borderRadius: '25px', boxShadow: '0 10px 40px rgba(0,0,0,0.1)', cursor: 'pointer', border: '1.5px solid #FDFCF0' }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'rgba(138, 96, 255, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <Sparkles size={20} color="#8A60FF" />
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column' }}>
-                      <span style={{ fontSize: '13px', fontWeight: 900, color: '#2D1F08' }}>비밀의 화원 대화 도착!</span>
-                      <span style={{ fontSize: '12px', color: '#8B7355', fontWeight: 700 }}>{partnerLabel}님이 소통을 기다리고 있어요. ✨</span>
-                    </div>
-                  </div>
-                </div>
-              ));
-            }
-          }
-        }
-
-        if (info && info.requestTab && info.navId !== lastNavIdRef.current) {
-          console.log("Auto-nav triggered via profile with ID:", info.navId);
-          lastNavIdRef.current = info.navId;
-          if (activeTabRef.current !== 'cardGame' && activeTabRef.current !== 'heartPrayer') {
-            setActiveTab(info.requestTab);
-          }
-        }
-
-        if (info && info.worshipTime) setWorshipTime(info.worshipTime);
-        if (info && info.anniversaries) setAnniversaries(info.anniversaries);
-      })
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'prayers'
-      }, async (payload) => {
-        if (!payload.new && !payload.old) return;
-        const target = payload.new || payload.old;
-        if (target.couple_id !== coupleCode) return;
-        
-        // 🌹 Refresh all prayers to ensure home sync is perfect (Edit/Delete as well)
-        const { data } = await supabase.from('prayers').select('*').eq('couple_id', coupleCode).order('created_at', { ascending: false });
-        if (data) {
-          setPartnerPrayers(data.filter(p => p.user_role !== userRole));
-        }
-
-        // Add notification for NEW prayers only
-        if (payload.event === 'INSERT' && target.user_role !== userRole) {
-          toast.custom((t) => (
-            <div 
-              onClick={() => {
-                setActiveTab('heartPrayer');
-                toast.dismiss(t.id);
-              }}
-              style={{ padding: '15px 20px', background: 'white', borderRadius: '25px', boxShadow: '0 10px 40px rgba(0,0,0,0.1)', cursor: 'pointer', border: '1.5px solid #FDFCF0' }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'rgba(255, 77, 109, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <Heart size={20} color="#FF4D6D" fill="#FF4D6D" />
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                  <span style={{ fontSize: '13px', fontWeight: 900, color: '#2D1F08' }}>기도 제목이 도착했습니다!</span>
-                  <span style={{ fontSize: '12px', color: '#8B7355', fontWeight: 700 }}>{partnerLabel}님이 기도를 요청했어요. 🙏</span>
-                </div>
-              </div>
-            </div>
-          ));
+        // 🚀 배우자의 화면 전환 요청 수신
+        if (payload.new.requestTab && payload.new.navId !== lastNavIdRef.current && payload.new.user_role !== userRole) {
+          setActiveTab(payload.new.requestTab);
+          lastNavIdRef.current = payload.new.navId; // 중복 방지
+          toast.info(`${payload.new.user_role === 'husband' ? '남편' : '아내'}님이 ${payload.new.requestTab} 탭으로 이동했어요!`);
         }
       })
       .on('broadcast', { event: 'garden-chat-sent' }, ({ payload }) => {
         if (payload.sender !== userRole) {
-          // 📡 Internal Sync for open Chat Modal (High-speed internal event bus)
           window.dispatchEvent(new CustomEvent('garden-incoming-msg', { detail: payload }));
           
           // 🌹 Show Popup Alert if NOT currently in the garden chat
@@ -5427,9 +5146,9 @@ const App = () => {
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'rgba(212, 175, 55, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <User size={16} color={appTheme.primary} />
+                  <User size={16} color={appTheme?.primary || '#D4AF37'} />
                 </div>
-                <span style={{ fontSize: '13px', fontWeight: 900, color: appTheme.primary }}>
+                <span style={{ fontSize: '13px', fontWeight: 900, color: appTheme?.primary || '#D4AF37' }}>
                   {isAdmin ? '백동희 관리자님' : `${userRole === 'husband' ? (husbandInfo?.nickname || '남편') : (wifeInfo?.nickname || '아내')}님`}
                 </span>
               </div>
@@ -5457,7 +5176,7 @@ const App = () => {
           </div>
 
           <main className="main-content">
-            <AnimatePresence mode="wait">
+            {/* 🛡️ Removed AnimatePresence to prevent stuck renders durante rapid signal updates */}
               {activeTab === 'home' && (
                 <HomeView 
                   key="home"
@@ -5501,7 +5220,7 @@ const App = () => {
                   onBack={() => setActiveTab('home')} 
                   husbandInfo={husbandInfo}
                   wifeInfo={wifeInfo}
-                  onUpdateMemo={updateMemo}
+                  onUpdateMemo={updateProfileInfo}
                 />
               )}
               {activeTab === 'counseling' && (
@@ -5618,6 +5337,7 @@ const App = () => {
                   onGuideClick={() => setShowGuidePage(true)}
                   isAdmin={isAdmin}
                   onNav={setActiveTab}
+                  onUpdateMemo={updateProfileInfo}
                 />
               )}
               {activeTab === 'admin' && isAdmin && (
@@ -5646,20 +5366,29 @@ const App = () => {
                   coupleCode={coupleCode}
                   supabase={supabase}
                   mainChannel={mainChannel}
-                  setHusbandInfo={setHusbandInfo}
-                  setWifeInfo={setWifeInfo}
-                  husbandInfo={husbandInfo}
-                  wifeInfo={wifeInfo}
-                  onUpdateProfile={updateProfileInfo}
-                  myInfo={userRole === 'husband' ? husbandInfo : wifeInfo}
-                  isFullPage={true}
+                setWifeInfo={setWifeInfo}
+                husbandInfo={husbandInfo}
+                wifeInfo={wifeInfo}
+                onUpdateProfile={updateProfileInfo}
+              />
+            )}
+            {activeTab === 'profile' && (
+               <ProfileView 
+                  key="profile" user={user} userRole={userRole} coupleCode={coupleCode} setHusbandInfo={setHusbandInfo} 
+                  setWifeInfo={setWifeInfo} husbandInfo={husbandInfo} wifeInfo={wifeInfo} onUpdateProfile={updateProfileInfo} 
+                  myInfo={userRole === 'husband' ? husbandInfo : wifeInfo} isFullPage={true}
                 />
-              )}
-            </AnimatePresence>
+            )}
           </main>
 
-          {/* Luxury Bottom Nav - 5 Tabs Redesigned */}
+          {/* Luxury Bottom Nav - 5 Core Tabs */}
           <nav className="bottom-nav">
+            <NavItem 
+              active={activeTab === 'home'} 
+              onClick={() => setActiveTab('home')} 
+              icon={<Home size={22} fill={activeTab === 'home' ? appTheme.primary : "none"} color={activeTab === 'home' ? appTheme.primary : undefined} />} 
+              label="홈" 
+            />
             <NavItem 
               active={activeTab === 'cardGame'} 
               onClick={() => handleSharedNavigate('cardGame')} 
@@ -5670,13 +5399,7 @@ const App = () => {
               active={activeTab === 'counseling'} 
               onClick={() => setActiveTab('counseling')} 
               icon={<Sparkles size={22} fill={activeTab === 'counseling' ? appTheme.primary : "none"} color={activeTab === 'counseling' ? appTheme.primary : undefined} />} 
-              label="AI상담/솔루션" 
-            />
-            <NavItem 
-              active={activeTab === 'home'} 
-              onClick={() => setActiveTab('home')} 
-              icon={<Home size={22} fill={activeTab === 'home' ? appTheme.primary : "none"} color={activeTab === 'home' ? appTheme.primary : undefined} />} 
-              label="홈" 
+              label="AI하티" 
             />
             <NavItem 
               active={activeTab === 'worship'} 
@@ -5688,9 +5411,8 @@ const App = () => {
               active={activeTab === 'heartPrayer'} 
               onClick={() => setActiveTab('heartPrayer')} 
               icon={<Heart size={22} fill={activeTab === 'heartPrayer' ? appTheme.primary : "none"} color={activeTab === 'heartPrayer' ? appTheme.primary : undefined} />} 
-              label="비밀의 화원" 
+              label="작은숲" 
             />
-
           </nav>
         </>
       )}
