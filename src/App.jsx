@@ -5512,6 +5512,9 @@ const App = () => {
                 onClick={() => {
                   if (incomingCardCall.type === 'heart-prayer-sent' || incomingCardCall.type === 'garden') {
                     setActiveTab('heartPrayer');
+                    if (incomingCardCall.type === 'garden') {
+                      setTimeout(() => window.dispatchEvent(new CustomEvent('nav-to-garden')), 300);
+                    }
                   } else if (incomingCardCall.type?.startsWith('secret')) {
                     setActiveTab('home');
                   } else {
