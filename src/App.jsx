@@ -3821,15 +3821,29 @@ const SettingsView = ({
     }, { onConflict: 'id' });
   };
 
-  const addAnniversary = () => {
+  const addAnniversary = async () => {
     if (!newAnnivTitle.trim() || !newAnnivDate) {
       alert("기념일 이름과 날짜를 입력해주세요.");
       return;
     }
     const newEntry = { id: Date.now(), title: newAnnivTitle, date: newAnnivDate };
-    setAnniversaries(prev => [...prev, newEntry]);
+    const newList = [...anniversaries, newEntry];
+    setAnniversaries(newList);
     setNewAnnivTitle("");
     setNewAnnivDate("");
+    
+    // ☁️ Sync to DB
+    if (onUpdateProfile) {
+       await onUpdateProfile(undefined, { anniversaries: newList });
+    }
+  };
+
+  const removeAnniversary = async (id) => {
+    const newList = anniversaries.filter(a => a.id !== id);
+    setAnniversaries(newList);
+    if (onUpdateProfile) {
+       await onUpdateProfile(undefined, { anniversaries: newList });
+    }
   };
 
   return (
@@ -4004,9 +4018,13 @@ const SettingsView = ({
 
             <motion.button 
               whileTap={{ scale: 0.95 }} 
-              onClick={() => {
+              onClick={async () => {
                 setShowWorshipSet(false);
-                alert("설정이 저장되었습니다. 실시간으로 반영됩니다!");
+                // ☁️ Sync to DB
+                if (onUpdateProfile) {
+                   await onUpdateProfile(undefined, { worshipDays, worshipTime });
+                }
+                alert("설정이 저장되었습니다. 상대방에게도 즉시 반영됩니다!");
               }} 
               style={{ width: '100%', padding: '16px', borderRadius: '18px', background: '#2D1F08', color: 'white', fontWeight: 900, border: 'none' }}
             >
@@ -4996,33 +5014,54 @@ const App = () => {
 
   useEffect(() => {
     const fetchInitialData = async () => {
-      if (!isSetupDone || !user) return;
+      if (!user) return;
+      
+      // 🕵 Check if this user already has a setup profile in Supabase
       const { data: myProfile } = await supabase.from('profiles').select('*').eq('id', user.id).single();
-      if (myProfile) {
-        if (myProfile.user_role === 'husband') setHusbandInfo(myProfile.info || {});
-        else setWifeInfo(myProfile.info || {});
+      
+      if (myProfile && myProfile.couple_id && myProfile.couple_id !== 'none') {
+        console.log("Restoring session from Supabase profile...");
+        const role = myProfile.user_role;
+        setUserRole(role);
         setCoupleCode(myProfile.couple_id);
-        setUserRole(myProfile.user_role);
+        if (role === 'husband') setHusbandInfo(myProfile.info || {});
+        else setWifeInfo(myProfile.info || {});
+        
         if (myProfile.info?.signal) setMySignal(myProfile.info.signal);
-      }
-      const activeCoupleCode = myProfile?.couple_id || coupleCode;
-      const { data: profileData } = await supabase.from('profiles').select('*').eq('couple_id', activeCoupleCode);
-      if (profileData) {
-        const hP = profileData.find(p => p.user_role === 'husband');
-        const wP = profileData.find(p => p.user_role === 'wife');
-        if (hP) setHusbandInfo(hP.info || {});
-        if (wP) setWifeInfo(wP.info || {});
-        const commonInfo = hP?.info || wP?.info;
-        if (commonInfo) {
-          if (commonInfo.worshipDays) setWorshipDays(commonInfo.worshipDays);
-          if (commonInfo.worshipTime) setWorshipTime(commonInfo.worshipTime);
-          if (commonInfo.anniversaries) setAnniversaries(commonInfo.anniversaries);
-          if (commonInfo.coupleSchedules) setSchedules(commonInfo.coupleSchedules);
+        
+        // Mark as setup so we show the HomeView
+        setIsSetupDone(true);
+        localStorage.setItem('isSetupDone', 'true');
+        localStorage.setItem('coupleCode', myProfile.couple_id);
+        localStorage.setItem('userRole', role);
+
+        // Now fetch partner/couple info
+        const activeCode = myProfile.couple_id;
+        const { data: profileData } = await supabase.from('profiles').select('*').eq('couple_id', activeCode);
+        if (profileData) {
+          const hP = profileData.find(p => p.user_role === 'husband');
+          const wP = profileData.find(p => p.user_role === 'wife');
+          if (hP) setHusbandInfo(hP.info || {});
+          if (wP) setWifeInfo(wP.info || {});
+          const commonInfo = hP?.info || wP?.info;
+          if (commonInfo) {
+            if (commonInfo.worshipDays) setWorshipDays(commonInfo.worshipDays);
+            if (commonInfo.worshipTime) setWorshipTime(commonInfo.worshipTime);
+            if (commonInfo.anniversaries) setAnniversaries(commonInfo.anniversaries);
+            if (commonInfo.coupleSchedules) setSchedules(commonInfo.coupleSchedules);
+            
+            // 💍 Sync Marriage Date
+            if (commonInfo.marriageDate && !husbandInfo.marriageDate && !wifeInfo.marriageDate) {
+               // Proactively set if needed
+            }
+          }
         }
       }
     };
     fetchInitialData();
+  }, [user]);
 
+  useEffect(() => {
     const final_code = (coupleCode || "").toLowerCase().trim();
     if (!final_code) return;
 
@@ -5032,7 +5071,6 @@ const App = () => {
         const { user_role: role, info } = payload.new;
         if (role === 'husband') setHusbandInfo(info || {}); else if (role === 'wife') setWifeInfo(info || {});
         if (info?.signal && role !== userRole) {
-           // 🛡️ Use Ref to prevent stale closure comparison issues
            if (info.signal !== lastSpouseSignalRef.current) {
               lastSpouseSignalRef.current = info.signal;
               const signalMsgMap = {
@@ -5051,10 +5089,9 @@ const App = () => {
            setMySignal(info.signal);
         }
         
-        // 🚀 배우자의 화면 전환 요청 수신
         if (payload.new.requestTab && payload.new.navId !== lastNavIdRef.current && payload.new.user_role !== userRole) {
            setActiveTab(payload.new.requestTab);
-           lastNavIdRef.current = payload.new.navId; // 중복 방지
+           lastNavIdRef.current = payload.new.navId; 
            toast.info(`${payload.new.user_role === 'husband' ? '남편' : '아내'}님이 ${payload.new.requestTab} 탭으로 이동했어요!`);
         }
       })
@@ -5079,35 +5116,26 @@ const App = () => {
       .on('broadcast', { event: 'garden-chat-sent' }, ({ payload }) => {
         if (payload.sender !== userRole) {
           window.dispatchEvent(new CustomEvent('garden-incoming-msg', { detail: payload }));
-          
-          // 📬 System Push Notification
           const senderLabel = payload.sender === 'husband' ? '남편' : '아내';
           sendNativeNotification(
             `${senderLabel}님의 화원 메시지 도착 🌿`,
             payload.text?.substring(0, 50) || '새로운 메시지가 정원에 도착했습니다.',
             'heartPrayer'
           );
-
-          // 🌹 Show Popup Alert if NOT currently in the garden chat
           if (activeTabRef.current !== 'heartPrayer') {
             setIncomingCardCall({ 
               type: 'garden',
               sender: senderLabel,
               text: payload.text,
-              msgType: payload.msgType // 'question' or 'answer' or 'chat'
+              msgType: payload.msgType
             });
           }
         }
       })
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'prayers'
-      }, payload => {
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'prayers' }, payload => {
         if (payload.new && payload.new.couple_id === coupleCode) {
-           fetchGlobalPrayers(); // 🕒 Re-fetch state globally
-           window.dispatchEvent(new CustomEvent('prayers-updated')); // Notify embedded views
-           
+           fetchGlobalPrayers();
+           window.dispatchEvent(new CustomEvent('prayers-updated'));
            if (payload.new.user_role !== userRole) {
              const senderLabel = payload.new.user_role === 'husband' ? '남편' : '아내';
              sendNativeNotification(
@@ -5120,7 +5148,6 @@ const App = () => {
       })
       .on('broadcast', { event: 'memo-updated' }, ({ payload }) => {
         if (payload.sender !== userRole) {
-           // 즉각 메모 갱신 (DB 전파 전 우선 반영)
            const isHusband = payload.sender === 'husband';
            if (isHusband) {
               setHusbandInfo(prev => ({ ...prev, ...payload.extraInfo, todayMemo: payload.text }));
@@ -5130,52 +5157,33 @@ const App = () => {
         }
       })
       .on('broadcast', { event: 'garden-chat-reset' }, async () => {
-        // 📡 파트너의 대화 초기화 수신
         window.dispatchEvent(new CustomEvent('garden-chat-reset'));
-        
-        // 🔄 내 프로필의 과거 메시지도 함께 소생 (재수신 방지 및 DB 클린업)
         const { data } = await supabase.from('profiles').select('info').eq('id', user.id).single();
         if (data) {
            const updatedInfo = { ...data.info, gardenMsg: null, gardenMsgType: null, gardenNavId: null, gardenAnswer: null };
            await supabase.from('profiles').upsert({
              id: user.id, couple_id: coupleCode, user_role: userRole, info: updatedInfo, updated_at: new Date().toISOString()
            }, { onConflict: 'id' });
-           if (userRole === 'husband') setHusbandInfo(updatedInfo);
-           else setWifeInfo(updatedInfo);
+           if (userRole === 'husband') setHusbandInfo(updatedInfo); else setWifeInfo(updatedInfo);
         }
       })
       .on('broadcast', { event: 'card-game-call' }, ({ payload }) => {
         if (payload.sender !== userRole && activeTabRef.current !== 'cardGame' && activeTabRef.current !== 'heartPrayer') {
            const senderLabel = payload.sender === 'husband' ? '남편' : '아내';
-           
            if (payload.type === 'mood-signal') {
-              // 🌸 Garden Mood Signal Chip Notification
               sendNativeNotification(
                 `${senderLabel}님의 마음 신호 ✨`,
                 `"${payload.title}" 신호가 도착했습니다. 화원에서 확인해보세요!`,
                 'heartPrayer'
               );
-
-              setIncomingCardCall({ 
-                type: 'garden',
-                sender: senderLabel,
-                text: payload.title,
-                msgType: 'chat'
-              });
+              setIncomingCardCall({ type: 'garden', sender: senderLabel, text: payload.title, msgType: 'chat' });
            } else {
-              // 🃏 General Card Game Call
               sendNativeNotification(
                 `${senderLabel}님의 대화 요청 🃏`,
                 '함께 깊은 대화를 나누고 싶어해요! 카드 게임으로 오세요.',
                 'cardGame'
               );
-
-              setIncomingCardCall({ 
-                type: 'card',
-                category: payload.category, 
-                questionId: payload.questionId,
-                sender: senderLabel
-              });
+              setIncomingCardCall({ type: 'card', category: payload.category, questionId: payload.questionId, sender: senderLabel });
            }
         }
       })
@@ -5183,100 +5191,38 @@ const App = () => {
         if (payload?.sender !== userRole) {
            const senderLabel = payload.userRole === 'husband' ? '남편' : '아내';
            toast.success(`${senderLabel}님께서 비밀 질문의 정답을 확인했습니다! 🔓`);
-           
-           // 📬 System Push
-           sendNativeNotification(
-             `비밀 질문 공개! 🔓`,
-             `${senderLabel}님께서 당신의 비밀 답변을 확인했습니다. 대화를 나눠보세요!`,
-             'intimacy'
-           );
-
-           setIncomingCardCall({ 
-             type: 'secret-revealed',
-             sender: senderLabel
-           });
+           sendNativeNotification(`비밀 질문 공개! 🔓`, `${senderLabel}님께서 당신의 비밀 답변을 확인했습니다. 대화를 나눠보세요!`, 'intimacy');
+           setIncomingCardCall({ type: 'secret-revealed', sender: senderLabel });
         }
       })
       .on('broadcast', { event: 'secret-answer-update' }, ({ payload }) => {
-        // 🚀 글로벌 채널에서 배우자의 답변 수신 시 상태 업데이트 및 알림
         if (payload.user_role !== userRole) {
            const senderLabel = payload.user_role === 'husband' ? '남편' : '아내';
            setSpouseSecretAnswer(payload.answer);
-           
-           // 📬 System Push
-           sendNativeNotification(
-             `비밀 답변 도착! 🎁`,
-             `${senderLabel}님께서 오늘의 비밀 질문에 답변했습니다. 지금 확인해보세요!`,
-             'intimacy'
-           );
-
-           setIncomingCardCall({ 
-             type: 'secret-answer-received',
-             sender: senderLabel
-           });
+           sendNativeNotification(`비밀 답변 도착! 🎁`, `${senderLabel}님께서 오늘의 비밀 질문에 답변했습니다. 지금 확인해보세요!`, 'intimacy');
+           setIncomingCardCall({ type: 'secret-answer-received', sender: senderLabel });
         }
       })
       .on('broadcast', { event: 'heart-prayer-sent' }, ({ payload }) => {
-        // 🚀 속마음 기도 수신 알림
         if (payload.userRole !== userRole) {
            const senderLabel = payload.userRole === 'husband' ? '남편' : '아내';
-           
-           // 📬 System Push
-           sendNativeNotification(
-             `속마음 기도 요청 🙏`,
-             `${senderLabel}님께서 새로운 기도 제목을 남겼습니다.`,
-             'heartPrayer'
-           );
-
-           setIncomingCardCall({ 
-             type: 'heart-prayer-sent',
-             sender: senderLabel,
-             text: payload.text
-           });
+           sendNativeNotification(`속마음 기도 요청 🙏`, `${senderLabel}님께서 새로운 기도 제목을 남겼습니다.`, 'heartPrayer');
+           setIncomingCardCall({ type: 'heart-prayer-sent', sender: senderLabel, text: payload.text });
         }
       })
       .subscribe((status) => {
         if (status === 'SUBSCRIBED') {
-          console.log(`Connected to couple-${final_code}`);
           setSyncStatus('SUBSCRIBED');
           setMainChannel(channel);
         }
         if (status === 'CLOSED' || status === 'CHANNEL_ERROR') {
-          console.warn('Realtime connection lost/closed. Status:', status);
           setSyncStatus('ERROR');
           setMainChannel(null);
-          
-          // 🔄 Auto-Recovery: Try to reconnect after 3 seconds if setup is persistent
           if (isSetupDone && coupleCode) {
-             setTimeout(() => {
-                console.log("Attempting automatic reconnection...");
-                window.location.reload(); // Hard refresh to clear any ghost listeners
-             }, 3000);
+             setTimeout(() => { window.location.reload(); }, 3000);
           }
         }
       });
-
-    // 3. Fetch Couple Real Stats
-    const fetchCoupleStats = async () => {
-      if (!isSetupDone || !coupleCode || coupleCode === 'none') return;
-      
-      // 기기도 제목 총 개수
-      const { count: pCount } = await supabase.from('prayers').select('*', { count: 'exact', head: true }).eq('couple_id', coupleCode);
-      
-      // 시그널 업데이트는 업서트지만, 활동 자체로 간주 (마지막 활동 시간 기준 등으로 확장 가능)
-      const { data: sData } = await supabase.from('signals').select('*').eq('couple_id', coupleCode);
-      
-      // 스케줄 개수
-      const totalSchedules = schedules.length;
-      
-      setCoupleStats({ 
-        totalInteractions: (pCount || 0) + (sData?.length || 0) + totalSchedules,
-        prayerCount: pCount || 0,
-        signalCount: sData?.length || 0,
-        scheduleCount: totalSchedules
-      });
-    };
-    fetchCoupleStats();
 
     return () => {
       supabase.removeChannel(channel);
