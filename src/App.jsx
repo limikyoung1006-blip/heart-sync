@@ -1831,9 +1831,8 @@ const HeartPrayerView = ({ userRole, coupleCode, onBack, partnerPrayers, setPart
   );
 };
 
-
 /* 🌹 Intimacy Hub View (Hearts Prayer & Secret Garden) */
-const IntimacyHubView = ({ user, userRole, coupleCode, supabase, mainChannel, onBack, partnerPrayers, setPartnerPrayers, bgImage, onBgUpload, partnerLabel }) => {
+const IntimacyHubView = ({ user, userRole, coupleCode, supabase, mainChannel, onBack, partnerPrayers, setPartnerPrayers, bgImage, onBgUpload, partnerLabel, husbandInfo, wifeInfo }) => {
   const [subTab, setSubTab] = useState('prayer'); // 'prayer' or 'garden'
   const [modalSubPage, setModalSubPage] = useState('main');
 
@@ -1893,7 +1892,7 @@ const IntimacyHubView = ({ user, userRole, coupleCode, supabase, mainChannel, on
               transition: 'all 0.3s ease'
             }}
           >
-            소통의 환원
+            소통의 화원
           </button>
         </div>
       </div>
@@ -1940,6 +1939,9 @@ const IntimacyHubView = ({ user, userRole, coupleCode, supabase, mainChannel, on
                 mainChannel={mainChannel} // 📡 Pass live channel
                 isFullPage={true}
                 embedded={true}
+                setHusbandInfo={setHusbandInfo}
+                setWifeInfo={setWifeInfo}
+                myInfo={userRole === 'husband' ? husbandInfo : wifeInfo}
               />
             </motion.div>
           )}
@@ -2374,7 +2376,7 @@ const SolutionView = ({ onBack, userRole, husbandInfo, wifeInfo, schedules, admi
 };
 
 /* 🌸 Intimacy Modal (Secret Garden) */
-const IntimacyModal = ({ user, show, onClose, subPage, setSubPage, bgImage, onBgUpload, partnerLabel, userRole, coupleCode, supabase, mainChannel, isFullPage, onNav, embedded = false }) => {
+const IntimacyModal = ({ user, show, onClose, subPage, setSubPage, bgImage, onBgUpload, partnerLabel, userRole, coupleCode, supabase, mainChannel, isFullPage, onNav, embedded = false, setHusbandInfo, setWifeInfo, myInfo }) => {
   const [currentSecretIdx, setCurrentSecretIdx] = useState(0);
   const [inputText, setInputText] = useState('');
   const [messages, setMessages] = useState([]); 
@@ -2383,6 +2385,7 @@ const IntimacyModal = ({ user, show, onClose, subPage, setSubPage, bgImage, onBg
   const [isTopicFinished, setIsTopicFinished] = useState(false);
   const [randomMoods, setRandomMoods] = useState([]); 
   const chatEndRef = useRef(null);
+  const lastGardenNavIdRef = useRef(null); // To prevent duplicate messages from DB sync
 
   const moodPool = useMemo(() => [
     { title: "🍷 로맨틱한 대화가 필요해요", desc: "와인 한 잔과 함께 깊은 이야기를 나누고 싶은 밤" },
@@ -2415,7 +2418,7 @@ const IntimacyModal = ({ user, show, onClose, subPage, setSubPage, bgImage, onBg
     if (show) {
       // 🔄 Sync latest message from DB when opening
       const syncLatest = async () => {
-        const { data } = await supabase.from('profiles').select('info').eq('couple_id', coupleCode);
+        const { data } = await supabase.from('profiles').select('info, id').eq('couple_id', coupleCode);
         if (data) {
           const partner = data.find(p => p.id !== user.id);
           if (partner?.info?.gardenNavId && partner.info.gardenNavId !== lastGardenNavIdRef.current) {
@@ -2424,7 +2427,7 @@ const IntimacyModal = ({ user, show, onClose, subPage, setSubPage, bgImage, onBg
               id: partner.info.gardenNavId, 
               text: partner.info.gardenMsg, 
               sender: 'partner', 
-              type: 'chat', 
+              type: partner.info.gardenMsgType || 'chat', 
               time: partner.info.gardenTime || '방금 전' 
             };
             setMessages(prev => {
@@ -2475,9 +2478,20 @@ const IntimacyModal = ({ user, show, onClose, subPage, setSubPage, bgImage, onBg
 
   const handleSendPrompt = () => {
     const q = secretQuestions[currentSecretIdx]?.question;
-    const newMsg = { id: Date.now(), text: q, sender: 'me', type: 'question', time: getTime() };
+    const gardenNavId = Date.now();
+    const newMsg = { id: gardenNavId, text: q, sender: 'me', type: 'question', time: getTime() };
     setMessages([newMsg]);
     setSpouseStatus('typing');
+    
+    // 📡 Global Broadcast
+    if (mainChannel) {
+      mainChannel.send({
+        type: 'broadcast',
+        event: 'garden-chat-sent',
+        payload: { text: q, sender: userRole, time: getTime(), msgType: 'question', gardenNavId }
+      });
+    }
+    
     setTimeout(() => setSpouseStatus('done'), 2000);
   };
 
@@ -2517,8 +2531,32 @@ const IntimacyModal = ({ user, show, onClose, subPage, setSubPage, bgImage, onBg
 
   const handleAnswerSubmit = () => {
     if (!myAnswerInput.trim()) return;
-    const answerMsg = { id: Date.now(), text: myAnswerInput, sender: 'me', type: 'answer', time: getTime() };
+    const gardenNavId = Date.now();
+    const answerMsg = { id: gardenNavId, text: myAnswerInput, sender: 'me', type: 'answer', time: getTime() };
     setMessages(prev => [...prev, answerMsg]);
+    
+    // 📡 Global Broadcast
+    if (mainChannel) {
+      mainChannel.send({
+        type: 'broadcast',
+        event: 'garden-chat-sent',
+        payload: { text: myAnswerInput, sender: userRole, time: getTime(), msgType: 'answer', gardenNavId }
+      });
+    }
+
+    // 🔄 DB Profile Sync
+    supabase.from('profiles').select('info').eq('id', user.id).single().then(({data}) => {
+       const updatedInfo = { ...data?.info, gardenMsg: myAnswerInput, gardenMsgType: 'answer', gardenNavId };
+       supabase.from('profiles').upsert({
+         id: user.id, couple_id: coupleCode, user_role: userRole, info: updatedInfo, updated_at: new Date().toISOString()
+       }, { onConflict: 'id' }).then(({error}) => {
+          if(!error) {
+            if (userRole === 'husband') setHusbandInfo(updatedInfo);
+            else setWifeInfo(updatedInfo);
+          }
+       });
+    });
+
     setMyAnswerInput('');
     setIsTopicFinished(true);
   };
@@ -2587,7 +2625,7 @@ const IntimacyModal = ({ user, show, onClose, subPage, setSubPage, bgImage, onBg
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
                 fontSize: '32px', fontWeight: 900, marginBottom: '12px', letterSpacing: '-0.5px' 
-              }}>소통의 환원</h2>
+              }}>소통의 화원</h2>
               <p style={{ color: '#8B7355', fontSize: '15px', fontWeight: 700, opacity: 0.8 }}>두 분만의 가장 깊고 은밀한 소통 공간</p>
             </div>
             
@@ -2654,7 +2692,7 @@ const IntimacyModal = ({ user, show, onClose, subPage, setSubPage, bgImage, onBg
                   <Heart size={20} color="#F5D060" fill="#F5D060" />
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
-                  <span style={{ fontSize: '16px', fontWeight: 900, color: '#2D1F08' }}>소통의 환원 대화</span>
+                  <span style={{ fontSize: '16px', fontWeight: 900, color: '#2D1F08' }}>소통의 화원</span>
                   <span style={{ fontSize: '10px', color: '#546E7A', fontWeight: 700 }}>{partnerLabel}님과 연결됨</span>
                 </div>
               </div>
