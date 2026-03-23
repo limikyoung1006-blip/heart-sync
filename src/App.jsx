@@ -2423,7 +2423,7 @@ const SolutionView = ({ onBack, userRole, husbandInfo, wifeInfo, schedules, admi
 };
 
 /* 🌸 Intimacy Modal (Secret Garden) */
-const IntimacyModal = ({ user, show, onClose, subPage, setSubPage, bgImage, onBgUpload, partnerLabel, userRole, coupleCode, supabase, mainChannel, isFullPage, onNav, embedded = false, setHusbandInfo, setWifeInfo, myInfo }) => {
+const IntimacyModal = ({ user, show, onClose, subPage, setSubPage, bgImage, onBgUpload, partnerLabel, userRole, coupleCode, supabase, mainChannel, isFullPage, onNav, embedded = false, setHusbandInfo, setWifeInfo, husbandInfo, wifeInfo, myInfo }) => {
   const [currentSecretIdx, setCurrentSecretIdx] = useState(0);
   const [inputText, setInputText] = useState('');
   const [messages, setMessages] = useState([]); 
@@ -4938,7 +4938,7 @@ const App = () => {
     }, { onConflict: 'id' });
   };
   
-  const updateMemo = async (text, extraInfo = {}) => {
+  const updateProfileInfo = async (text, extraInfo = {}) => {
     const baseInfo = userRole === 'husband' ? husbandInfo : wifeInfo;
     const updatedInfo = { ...baseInfo, ...extraInfo };
     if (text !== undefined) updatedInfo.todayMemo = text;
@@ -5346,7 +5346,7 @@ const App = () => {
       // 2. Update Profiles table (Persistence master)
       const baseInfo = (userRole === 'husband' ? husbandInfo : wifeInfo) || {};
       const updatedInfo = { ...baseInfo, signal: newSignal };
-      await updateProfileInfo(updatedInfo); // Shared helper
+      await updateProfileInfo(undefined, { signal: newSignal });
     } catch (err) {
       console.error("Signal sync error:", err);
     }
@@ -5359,7 +5359,7 @@ const App = () => {
     lastNavIdRef.current = navId; // 내 기기에서는 중복 반응 안 하도록 저장
     
     // 내 프로필의 info에 'requestTab'과 'navId'를 실어 배우자에게 보냄
-    await updateMemo(undefined, { 
+    await updateProfileInfo(undefined, { 
       requestTab: tabName, 
       navId: navId,
       updated_at: Date.now() 
@@ -5476,7 +5476,7 @@ const App = () => {
                   schedules={schedules}
                   husbandInfo={husbandInfo}
                   wifeInfo={wifeInfo}
-                  onUpdateMemo={updateMemo}
+                  onUpdateMemo={updateProfileInfo}
                   notifPermission={notifPermission}
                   spouseSecretAnswer={spouseSecretAnswer}
                   setSpouseSecretAnswer={setSpouseSecretAnswer}
@@ -5652,6 +5652,8 @@ const App = () => {
                   mainChannel={mainChannel}
                   setHusbandInfo={setHusbandInfo}
                   setWifeInfo={setWifeInfo}
+                  husbandInfo={husbandInfo}
+                  wifeInfo={wifeInfo}
                   myInfo={userRole === 'husband' ? husbandInfo : wifeInfo}
                   isFullPage={true}
                 />
