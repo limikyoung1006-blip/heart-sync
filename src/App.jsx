@@ -4716,28 +4716,63 @@ const App = () => {
 
   // 🔔 Native Push Notification Helper (with Haptic Vibration)
   const sendNativeNotification = (title, body, tab = null, eventName = null) => {
-    if (!("Notification" in window)) return;
+    // 📬 Inbox Logging for persistence (Fixes 'missing' alerts)
+    const newNotif = { 
+      id: Date.now(), 
+      title: title || 'Heart Sync', 
+      body: body || '마음 신호가 도착했습니다.', 
+      tab, 
+      eventName,
+      time: new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
+      read: false
+    };
+    
+    setNotifications(prev => {
+      const updated = [newNotif, ...prev.slice(0, 49)];
+      localStorage.setItem('notifications', JSON.stringify(updated));
+      return updated;
+    });
+
+    if (!("Notification" in window)) {
+        // Fallback for non-supported browsers
+        console.log("Notifications not supported, but logged to inbox.");
+        return;
+    }
     
     // 📳 Haptic Vibration for smartphone interaction
     if ("vibrate" in navigator) {
       navigator.vibrate([200, 100, 200]);
     }
 
-    if (Notification.permission === "granted") {
-      const notification = new Notification(title, {
-        body: body,
-        icon: '/logo_main.png',
-        tag: tab || 'general',
-        badge: '/logo_main.png'
-      });
-
-      notification.onclick = (e) => {
-        e.preventDefault();
-        window.focus();
-        if (tab && activeTabRef.current !== tab) setActiveTab(tab);
-        if (eventName) setTimeout(() => window.dispatchEvent(new CustomEvent(eventName)), 400);
-        notification.close();
+    const notify = () => {
+      const options = {
+        body: body || '마음 신호가 도착했습니다.',
+        icon: '/logo_main.png', 
+        badge: '/logo_main.png',
+        tag: tab || 'general'
       };
+      
+      try {
+        const notification = new Notification(title || 'Heart Sync', options);
+        notification.onclick = (e) => {
+          e.preventDefault();
+          window.focus();
+          if (tab) setActiveTab(tab);
+          if (eventName) setTimeout(() => window.dispatchEvent(new CustomEvent(eventName)), 400);
+          notification.close();
+        };
+      } catch (err) {
+        console.error("Native notification creation failed:", err);
+      }
+    };
+
+    if (Notification.permission === "granted") {
+      notify();
+    } else if (Notification.permission !== "denied") {
+      Notification.requestPermission().then(permission => {
+        setNotifPermission(permission);
+        if (permission === "granted") notify();
+      });
     }
   };
 
@@ -4880,7 +4915,8 @@ const App = () => {
     localStorage.setItem('spouseSecretAnswer', spouseSecretAnswer || "");
     localStorage.setItem('isSecretRevealed', isSecretRevealed);
     localStorage.setItem('secretLastDate', new Date().toDateString());
-  }, [husbandInfo, wifeInfo, userRole, isSetupDone, schedules, worshipDays, worshipTime, anniversaries, mySecretAnswer, isMySecretAnswered, spouseSecretAnswer, isSecretRevealed]);
+    localStorage.setItem('notifications', JSON.stringify(notifications));
+  }, [husbandInfo, wifeInfo, userRole, isSetupDone, schedules, worshipDays, worshipTime, anniversaries, mySecretAnswer, isMySecretAnswered, spouseSecretAnswer, isSecretRevealed, notifications]);
 
   const handleOnboardingFinish = async (info) => {
     let finalCode = info.coupleCode || coupleCode;
@@ -5177,14 +5213,22 @@ const App = () => {
       })
       .subscribe((status) => {
         if (status === 'SUBSCRIBED') {
-          console.log(`Connected to couple-${coupleCode}`);
+          console.log(`Connected to couple-${final_code}`);
           setSyncStatus('SUBSCRIBED');
-          setMainChannel(channel); // 📡 Save live channel for global use
+          setMainChannel(channel);
         }
         if (status === 'CLOSED' || status === 'CHANNEL_ERROR') {
-          console.warn('Realtime connection issues');
+          console.warn('Realtime connection lost/closed. Status:', status);
           setSyncStatus('ERROR');
           setMainChannel(null);
+          
+          // 🔄 Auto-Recovery: Try to reconnect after 3 seconds if setup is persistent
+          if (isSetupDone && coupleCode) {
+             setTimeout(() => {
+                console.log("Attempting automatic reconnection...");
+                window.location.reload(); // Hard refresh to clear any ghost listeners
+             }, 3000);
+          }
         }
       });
 
@@ -5351,8 +5395,19 @@ const App = () => {
               />
             </div>
             <div className="top-bar-icons">
-              <button className="icon-btn-top" onClick={() => setShowNotificationList(true)}>
+              <button 
+                className="icon-btn-top" 
+                onClick={() => {
+                  setShowNotificationList(true);
+                  // Mark all as read when opening
+                  setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+                }}
+                style={{ position: 'relative' }}
+              >
                 <Bell size={22} color={appTheme.primary} style={{ opacity: 0.8 }} />
+                {notifications.some(n => !n.read) && (
+                  <span style={{ position: 'absolute', top: '2px', right: '2px', width: '8px', height: '8px', background: '#FF4D6D', borderRadius: '50%', border: '2px solid white' }} />
+                )}
               </button>
               <button className="icon-btn-top" onClick={(e) => { e.stopPropagation(); setActiveTab('settings'); }}>
                 <Settings size={22} color={appTheme.primary} style={{ opacity: 0.8 }} />
