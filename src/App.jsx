@@ -383,8 +383,8 @@ const HomeView = ({ user, userRole, coupleCode, mySignal, setMySignal, spouseSig
   const [memoInput, setMemoInput] = useState("");
   const [isEditingMemo, setIsEditingMemo] = useState(false);
 
-  const myInfo = userRole === 'husband' ? husbandInfo : wifeInfo;
-  const spouseInfo = userRole === 'husband' ? wifeInfo : husbandInfo;
+  const myInfo = (userRole === 'husband' ? husbandInfo : wifeInfo) || {};
+  const spouseInfo = (userRole === 'husband' ? wifeInfo : husbandInfo) || {};
 
   useEffect(() => {
     if (myInfo?.todayMemo) setMemoInput(myInfo.todayMemo);
@@ -3679,7 +3679,7 @@ const SettingsView = ({
   const [newAnnivDate, setNewAnnivDate] = useState("");
 
   // 📝 Local states for profile editing (Prevent lag on keystrokes)
-  const myInfo = userRole === 'husband' ? husbandInfo : wifeInfo;
+  const myInfo = (userRole === 'husband' ? husbandInfo : wifeInfo) || {};
   const setMyInfo = userRole === 'husband' ? setHusbandInfo : setWifeInfo;
   
   const [editInfo, setEditInfo] = useState({
@@ -5004,8 +5004,8 @@ const App = () => {
         .single();
       
       if (myProfile) {
-        if (myProfile.user_role === 'husband') setHusbandInfo(myProfile.info || husbandInfo);
-        else setWifeInfo(myProfile.info || wifeInfo);
+        if (myProfile.user_role === 'husband') setHusbandInfo(myProfile.info || {});
+        else setWifeInfo(myProfile.info || {});
         setCoupleCode(myProfile.couple_id);
         setUserRole(myProfile.user_role);
         
@@ -5053,8 +5053,8 @@ const App = () => {
       if (profileData) {
         const husbandP = profileData.find(p => p.user_role === 'husband');
         const wifeP = profileData.find(p => p.user_role === 'wife');
-        if (husbandP) setHusbandInfo(husbandP.info);
-        if (wifeP) setWifeInfo(wifeP.info);
+        if (husbandP) setHusbandInfo(husbandP.info || {});
+        if (wifeP) setWifeInfo(wifeP.info || {});
 
         const commonInfo = husbandP?.info || wifeP?.info;
         if (commonInfo) {
@@ -5142,8 +5142,8 @@ const App = () => {
       }, payload => {
         if (!payload.new || payload.new.couple_id !== coupleCode) return;
         const { user_role: role, info } = payload.new;
-        if (role === 'husband') setHusbandInfo(info);
-        else if (role === 'wife') setWifeInfo(info);
+        if (role === 'husband') setHusbandInfo(info || {});
+        else if (role === 'wife') setWifeInfo(info || {});
 
         // 🚀 자동 입장 (Auto-Navigation) 및 비밀의 화원 실시간 연동 처리
         if (info && info.gardenNavId && info.gardenNavId !== lastGardenNavIdRef.current) {
