@@ -4528,6 +4528,7 @@ const App = () => {
   const appTheme = { id: 'warm', primary: '#D4AF37', bg: '#FDFCF0' };
   const [mainChannel, setMainChannel] = useState(null); // 📡 Persistent Shared Channel
   const lastGardenNavIdRef = React.useRef(null);
+  const lastNotifiedCardQIdRef = React.useRef(null); // 중복 대화 카드 알림 방지용
 
   // Ref for activeTab to avoid stale closures in global real-time listeners
   const activeTabRef = React.useRef(activeTab);
@@ -5009,13 +5010,22 @@ const App = () => {
       }, payload => {
         if (!payload.new || payload.new.couple_id !== coupleCode) return;
         
-        // 🔔 카드 호출 알림 (이미 해당 탭이 아닐 때만 - 구 버전 호환성 유지)
-        if (activeTabRef.current !== 'cardGame' && payload.new.is_flipped) {
+        const newQId = payload.new.current_question_id;
+        const isFlipped = payload.new.is_flipped;
+
+        // 🔔 카드 호출 알림 (이미 해당 탭이 아닐 때 + 새로운 질문을 뽑았거나 처음 뒤집었을 때만)
+        if (activeTabRef.current !== 'cardGame' && isFlipped && newQId !== lastNotifiedCardQIdRef.current) {
+           lastNotifiedCardQIdRef.current = newQId; // 알림 기록
            setIncomingCardCall({ 
              type: 'card',
              category: payload.new.category, 
-             questionId: payload.new.current_question_id 
+             questionId: newQId 
            });
+        }
+        
+        // 카드가 덮이면 알림 기록 초기화 (다시 뽑을 때 알림을 주기 위함)
+        if (!isFlipped) {
+          lastNotifiedCardQIdRef.current = null;
         }
       })
       .on('broadcast', { event: 'secret-revealed' }, ({ payload }) => {
