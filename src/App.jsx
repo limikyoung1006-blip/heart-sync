@@ -4510,6 +4510,8 @@ const App = () => {
   const [session, setSession] = useState(null);
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showAdminLogin, setShowAdminLogin] = useState(false);
+  const [logoClickCount, setLogoClickCount] = useState(0);
   const [isAdmin, setIsAdmin] = useState(() => localStorage.getItem('isAdmin') === 'true');
   const [adminStats, setAdminStats] = useState({ users: 0, couples: 0, activeSessions: 0, recentActivities: [] });
   const [coupleStats, setCoupleStats] = useState({ totalInteractions: 0 });
