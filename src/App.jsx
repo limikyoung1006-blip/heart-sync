@@ -4172,7 +4172,10 @@ const SettingsView = ({
                 <button 
                   onClick={() => {
                     Notification.requestPermission().then(permission => {
-                      if (permission === 'granted') alert("알림 권한이 허용되었습니다!");
+                      if (permission === 'granted') {
+                        alert("알림 권한이 허용되었습니다!");
+                        subscribeToPushNotifications(); // Now also register for push!
+                      }
                       setShowNotifIntegration(false);
                     });
                   }}
@@ -4851,9 +4854,11 @@ const App = () => {
   const appTheme = { id: 'warm', primary: '#D4AF37', bg: '#FDFCF0' };
   const [mainChannel, setMainChannel] = useState(null); // 📡 Persistent Shared Channel
   const lastGardenNavIdRef = React.useRef(null);
-  const lastNotifiedCardQIdRef = React.useRef(null); // 중복 대화 카드 알림 방지용
+  const lastNotifiedCardQIdRef = React.useRef(null); 
+  const lastNotifiedGardenNavIdRef = React.useRef(null);
+  const lastNotifiedTabNavIdRef = React.useRef(null);
   const activeTabRef = React.useRef(activeTab);
-  const lastNavIdRef = React.useRef(null); // 중복 이동 방지용 ID 저장소
+  const lastNavIdRef = React.useRef(null); 
   const [notifPermission, setNotifPermission] = useState(typeof window !== 'undefined' ? Notification.permission : 'default');
 
   // 🔔 Native Push Notification Helper (with Haptic Vibration)
@@ -4914,6 +4919,43 @@ const App = () => {
       notify();
     }
   };
+
+  // Helper for Web Push Registration (For Background Notifications)
+  const subscribeToPushNotifications = async () => {
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+    
+    try {
+      const registration = await navigator.serviceWorker.ready;
+      let subscription = await registration.pushManager.getSubscription();
+      
+      if (!subscription) {
+        // This is a dummy key, user should replace with their own VAPID key if setting up server-side push
+        const publicVapidKey = 'BFfU6e9j-eH8O0n6e_z8_vS_8_8_8_8_8_8_8_8_8_8_8_8_8_8_8_8_8_8_8_8_8_8_8_8_8_8_8_8_8_8_8_8_8_8_8_8_w';
+        subscription = await registration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(publicVapidKey)
+        });
+      }
+      
+      // Save subscription to user's profile for server-side use
+      if (subscription && user) {
+        await updateProfileInfo(undefined, { pushSubscription: subscription });
+      }
+    } catch (error) {
+      console.warn('Push subscription failed:', error);
+    }
+  };
+
+  function urlBase64ToUint8Array(base64String) {
+    const padding = '='.repeat((4 - base64String.length % 4) % 4);
+    const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+    const rawData = window.atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+    for (let i = 0; i < rawData.length; ++i) {
+      outputArray[i] = rawData.charCodeAt(i);
+    }
+    return outputArray;
+  }
 
   useEffect(() => {
     if ("Notification" in window) {
@@ -5230,7 +5272,28 @@ const App = () => {
         if (payload.new.requestTab && payload.new.navId !== lastNavIdRef.current && payload.new.user_role !== userRole) {
            setActiveTab(payload.new.requestTab);
            lastNavIdRef.current = payload.new.navId; 
-           toast.info(`${payload.new.user_role === 'husband' ? '남편' : '아내'}님이 ${payload.new.requestTab} 탭으로 이동했어요!`);
+           
+           if (payload.new.navId !== lastNotifiedTabNavIdRef.current) {
+             lastNotifiedTabNavIdRef.current = payload.new.navId;
+             const senderLabel = payload.new.user_role === 'husband' ? '남편' : '아내';
+             toast.info(`${senderLabel}님이 ${payload.new.requestTab} 탭으로 초대했어요!`);
+             sendNativeNotification(
+               `화면 공유 요청 📱`,
+               `${senderLabel}님이 ${payload.new.requestTab} 화면을 함께 보자고 해요!`,
+               payload.new.requestTab
+             );
+           }
+        }
+
+        // 🌿 Garden Message Catch-up (Fail-safe for missed broadcasts)
+        if (info?.gardenNavId && role !== userRole && info.gardenNavId !== lastNotifiedGardenNavIdRef.current) {
+          lastNotifiedGardenNavIdRef.current = info.gardenNavId;
+          const senderLabel = role === 'husband' ? '남편' : '아내';
+          sendNativeNotification(
+            `${senderLabel}님의 화원 메시지 🌿`,
+            info.gardenMsg?.substring(0, 50) || '새로운 메시지가 도착했습니다.',
+            'heartPrayer'
+          );
         }
       })
       .on('broadcast', { event: 'signal-changed' }, ({ payload }) => {
