@@ -2977,22 +2977,70 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo, onU
   useEffect(() => {
     if (!mainChannel) return;
     
+    // 🔗 Propagate channel to ref for usage in sendBroadcast
+    broadcastRef.current = mainChannel;
+    
     // 🚀 Use the Master Channel from App for broad stability
     const sub = mainChannel.on('broadcast', { event: 'game-update' }, ({ payload }) => {
-      console.log("Card Game Update received:", payload);
-      if (payload.category) setCategory(payload.category);
-      if (payload.isFlipped !== undefined) setIsFlipped(payload.isFlipped);
-      if (payload.isWaiting !== undefined) setIsWaiting(payload.isWaiting);
-      if (payload.waiterRole !== undefined) setWaiterRole(payload.waiterRole);
-      if (payload.turnOwner !== undefined) setTurnOwner(payload.turnOwner);
-      if (payload.questionId) {
-        const q = CARD_DATA.find(item => String(item.id) === String(payload.questionId));
-        if (q) setCurrentQuestion(q);
-      }
+      console.log("Card Game Update received via broadcast:", payload);
+      if (payload.sender === userRole) return; // Ignore my own broadcasts
+      
+      const applyUpdates = (data) => {
+        if (data.category) setCategory(data.category);
+        if (data.isFlipped !== undefined) setIsFlipped(data.isFlipped);
+        if (data.isWaiting !== undefined) setIsWaiting(data.isWaiting);
+        if (data.waiterRole !== undefined) setWaiterRole(data.waiterRole);
+        if (data.turnOwner !== undefined) setTurnOwner(data.turnOwner);
+        if (data.questionId) {
+          const q = CARD_DATA.find(item => String(item.id) === String(data.questionId));
+          if (q) setCurrentQuestion(q);
+        }
+      };
+      applyUpdates(payload);
     });
 
-    return () => { };
-  }, [mainChannel]);
+    // 🌐 Also listen via Internal Message Bus for reliability
+    const handleInbound = (e) => {
+      if (e.detail?.sender !== userRole) {
+        // applyUpdates logic here if needed, but broadcast is faster
+      }
+    };
+    window.addEventListener('card-game-update', handleInbound);
+
+    return () => {
+      window.removeEventListener('card-game-update', handleInbound);
+    };
+  }, [mainChannel, userRole]);
+
+  // 🛡️ Fail-safe: DB Realtime Sync
+  useEffect(() => {
+    if (!coupleCode) return;
+    
+    const channel = supabase.channel(`game-db-sync-${coupleCode}`)
+      .on('postgres_changes', { 
+        event: 'UPDATE', 
+        schema: 'public', 
+        table: 'card_game_state',
+        filter: `couple_id=eq.${coupleCode}`
+      }, payload => {
+        console.log("Card Game State DB Update:", payload.new);
+        const data = payload.new;
+        if (data.category) setCategory(data.category);
+        if (data.is_flipped !== undefined) setIsFlipped(data.is_flipped);
+        if (data.is_waiting !== undefined) setIsWaiting(data.is_waiting);
+        if (data.waiter_role !== undefined) setWaiterRole(data.waiter_role);
+        if (data.turn_owner !== undefined) setTurnOwner(data.turn_owner);
+        if (data.current_question_id) {
+          const q = CARD_DATA.find(item => String(item.id) === String(data.current_question_id));
+          if (q) setCurrentQuestion(q);
+        }
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [coupleCode]);
 
   // Initial Sync from Table (Persistence)
   useEffect(() => {
@@ -5227,9 +5275,14 @@ const App = () => {
            }
         }
       })
+      .on('broadcast', { event: 'game-update' }, ({ payload }) => {
+        if (payload.sender !== userRole) {
+          window.dispatchEvent(new CustomEvent('card-game-update', { detail: payload }));
+        }
+      })
       .on('broadcast', { event: 'secret-revealed' }, ({ payload }) => {
         if (payload?.sender !== userRole) {
-           const senderLabel = payload.userRole === 'husband' ? '남편' : '아내';
+           const senderLabel = payload.sender === 'husband' ? '남편' : '아내';
            toast.success(`${senderLabel}님께서 비밀 질문의 정답을 확인했습니다! 🔓`);
            sendNativeNotification(`비밀 질문 공개! 🔓`, `${senderLabel}님께서 당신의 비밀 답변을 확인했습니다. 대화를 나눠보세요!`, 'intimacy');
            setIncomingCardCall({ type: 'secret-revealed', sender: senderLabel });
