@@ -4156,12 +4156,44 @@ const SettingsView = ({
       )}
 
       {showNotifIntegration && (
-        <div onClick={() => setShowNotifIntegration(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 6000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+        <div onClick={() => setShowNotifIntegration(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 6000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
           <motion.div onClick={(e) => e.stopPropagation()} initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} style={{ background: 'white', borderRadius: '35px', padding: '35px', width: '100%', maxWidth: '360px', textAlign: 'center' }}>
             <Smartphone size={32} color="#3B82F6" style={{ marginBottom: '15px' }} />
-            <h3 style={{ fontSize: '19px', fontWeight: 900, marginBottom: '25px' }}>기기 알림 통합</h3>
-            <p style={{ fontSize: '14px', color: '#6B7280', marginBottom: '25px' }}>실시간 푸시 알림 엔진이 활성화되었습니다.</p>
-            <motion.button whileTap={{ scale: 0.95 }} onClick={() => setShowNotifIntegration(false)} style={{ width: '100%', padding: '16px', borderRadius: '16px', background: '#2D1F08', color: 'white', fontWeight: 900 }}>확인</motion.button>
+            <h3 style={{ fontSize: '19px', fontWeight: 900, marginBottom: '20px' }}>기기 알림 통합 및 활성화</h3>
+            
+            <div style={{ background: '#F8FAFB', padding: '15px', borderRadius: '20px', marginBottom: '20px', textAlign: 'left' }}>
+              <p style={{ fontSize: '13px', color: '#4B5563', lineHeight: 1.6, fontWeight: 700, marginBottom: '10px' }}>
+                🔔 푸시 알림 상태: <span style={{ color: Notification.permission === 'granted' ? '#10B981' : '#F59E0B' }}>
+                  {Notification.permission === 'granted' ? '활성화됨' : '비활성'}
+                </span>
+              </p>
+              
+              {Notification.permission !== 'granted' ? (
+                <button 
+                  onClick={() => {
+                    Notification.requestPermission().then(permission => {
+                      if (permission === 'granted') alert("알림 권한이 허용되었습니다!");
+                      setShowNotifIntegration(false);
+                    });
+                  }}
+                  style={{ width: '100%', padding: '12px', background: '#3B82F6', color: 'white', border: 'none', borderRadius: '12px', fontWeight: 900, cursor: 'pointer' }}
+                >
+                  기기 알림 권한 허용하기
+                </button>
+              ) : (
+                <p style={{ fontSize: '12px', color: '#10B981', fontWeight: 800 }}>✅ 시스템 알림이 정상적으로 수신됩니다.</p>
+              )}
+            </div>
+
+            <div style={{ textAlign: 'left', borderTop: '1px solid #EEE', paddingTop: '20px' }}>
+              <p style={{ fontSize: '12px', color: '#8B7355', fontWeight: 900, marginBottom: '8px' }}>💡 아이폰(iOS) 사용자 주의사항</p>
+              <ul style={{ fontSize: '11px', color: '#6B7280', paddingLeft: '18px', lineHeight: 1.5, fontWeight: 600 }}>
+                <li>반드시 하단 공유버튼 눌러 <b>'홈 화면에 추가'</b>를 하셔야 푸시 알림이 작동합니다.</li>
+                <li>브라우저(Safari/Chrome) 탭에서는 알림이 제한될 수 있습니다.</li>
+              </ul>
+            </div>
+
+            <motion.button whileTap={{ scale: 0.95 }} onClick={() => setShowNotifIntegration(false)} style={{ width: '100%', padding: '16px', borderRadius: '16px', background: '#2D1F08', color: 'white', fontWeight: 900, marginTop: '25px' }}>확인</motion.button>
           </motion.div>
         </div>
       )}
@@ -4826,7 +4858,7 @@ const App = () => {
 
   // 🔔 Native Push Notification Helper (with Haptic Vibration)
   const sendNativeNotification = (title, body, tab = null, eventName = null) => {
-    // 📬 Inbox Logging for persistence (Fixes 'missing' alerts)
+    // 📬 Inbox Logging for persistence
     const newNotif = { 
       id: Date.now(), 
       title: title || 'Heart Sync', 
@@ -4843,46 +4875,43 @@ const App = () => {
       return updated;
     });
 
-    if (!("Notification" in window)) {
-        // Fallback for non-supported browsers
-        console.log("Notifications not supported, but logged to inbox.");
-        return;
-    }
-    
-    // 📳 Haptic Vibration for smartphone interaction
+    // 📳 Haptic Vibration
     if ("vibrate" in navigator) {
       navigator.vibrate([200, 100, 200]);
     }
 
+    if (!("Notification" in window)) return;
+
+    const options = {
+      body: body || '마음 신호가 도착했습니다.',
+      icon: '/logo_main.png', 
+      badge: '/logo_main.png',
+      tag: tab || 'general',
+      data: { tab, eventName },
+      vibrate: [200, 100, 200],
+      requireInteraction: true
+    };
+
     const notify = () => {
-      const options = {
-        body: body || '마음 신호가 도착했습니다.',
-        icon: '/logo_main.png', 
-        badge: '/logo_main.png',
-        tag: tab || 'general'
-      };
-      
-      try {
-        const notification = new Notification(title || 'Heart Sync', options);
-        notification.onclick = (e) => {
+      if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+        navigator.serviceWorker.ready.then(reg => {
+          reg.showNotification(title || 'Heart Sync', options);
+        }).catch(() => {
+          new Notification(title || 'Heart Sync', options);
+        });
+      } else {
+        const n = new Notification(title || 'Heart Sync', options);
+        n.onclick = (e) => {
           e.preventDefault();
           window.focus();
           if (tab) setActiveTab(tab);
-          if (eventName) setTimeout(() => window.dispatchEvent(new CustomEvent(eventName)), 400);
-          notification.close();
+          n.close();
         };
-      } catch (err) {
-        console.error("Native notification creation failed:", err);
       }
     };
 
     if (Notification.permission === "granted") {
       notify();
-    } else if (Notification.permission !== "denied") {
-      Notification.requestPermission().then(permission => {
-        setNotifPermission(permission);
-        if (permission === "granted") notify();
-      });
     }
   };
 
@@ -4899,7 +4928,28 @@ const App = () => {
     }
   }, []);
   useEffect(() => {
+    if ('serviceWorker' in navigator) {
+      const handleMessage = (event) => {
+        if (event.data?.type === 'NAVIGATE_TAB') {
+          setActiveTab(event.data.tab);
+        }
+      };
+      navigator.serviceWorker.addEventListener('message', handleMessage);
+      return () => navigator.serviceWorker.removeEventListener('message', handleMessage);
+    }
+  }, []);
+
+  useEffect(() => {
     activeTabRef.current = activeTab;
+    
+    // Check for query param tab on mount
+    const params = new URLSearchParams(window.location.search);
+    const tabParam = params.get('tab');
+    if (tabParam) {
+      setActiveTab(tabParam);
+      // Clean up URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
   }, [activeTab]);
 
   // 🕒 날짜가 바뀌었는지 체크하여 비밀 카드 초기화

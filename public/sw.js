@@ -23,19 +23,34 @@ self.addEventListener('push', (event) => {
     body: data.body,
     icon: '/logo_main.png',
     badge: '/logo_main.png',
-    data: data.url
+    vibrate: [200, 100, 200],
+    data: { 
+      url: data.url || '/',
+      tab: data.tab || 'home'
+    }
   };
-  event.waitUntil(self.notificationClick(data.title, options));
+  event.waitUntil(self.registration.showNotification(data.title, options));
 });
 
 self.addEventListener('notificationclick', (event) => {
-  event.notification.close();
+  const notification = event.notification;
+  const tab = notification.data.tab || 'home';
+  const targetUrl = `/?tab=${tab}`;
+  
+  notification.close();
+
   event.waitUntil(
-    clients.matchAll({ type: 'window' }).then((clientList) => {
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      // 1. If a window is already open, focus it and navigate
       for (const client of clientList) {
-        if (client.url === '/' && 'focus' in client) return client.focus();
+        if ('focus' in client) {
+          // Send message to client to change tab without full reload
+          client.postMessage({ type: 'NAVIGATE_TAB', tab: tab });
+          return client.focus();
+        }
       }
-      if (clients.openWindow) return clients.openWindow('/');
+      // 2. If no window open, open new one with tab param
+      if (clients.openWindow) return clients.openWindow(targetUrl);
     })
   );
 });
