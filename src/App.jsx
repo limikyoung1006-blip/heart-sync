@@ -3058,18 +3058,34 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo, onU
         if (q) {
           setCurrentQuestion(q);
         } else {
-          // No current question in DB? Pick one based on category
+          // No current question in DB? Pick one based on category and save it
           const pool = CARD_DATA.filter(item => item.category === cat);
           if (pool.length > 0) {
             const randomQ = pool[Math.floor(Math.random() * pool.length)];
             setCurrentQuestion(randomQ);
+            supabase.from('card_game_state').upsert({
+              couple_id: coupleCode,
+              category: cat,
+              current_question_id: randomQ.id,
+              is_flipped: false,
+              updated_at: new Date().toISOString()
+            }, { onConflict: 'couple_id' }).then(() => {});
           }
         }
       } else {
-        // First time entry? Pick a random everyday question
+        // First time entry? Proactively initialize it for the couple to ensure sync
         const pool = CARD_DATA.filter(item => item.category === '일상');
         if (pool.length > 0) {
-          setCurrentQuestion(pool[Math.floor(Math.random() * pool.length)]);
+          const initialQ = pool[Math.floor(Math.random() * pool.length)];
+          setCurrentQuestion(initialQ);
+          // Immediately save to DB so partner gets the same one
+          supabase.from('card_game_state').upsert({
+            couple_id: coupleCode,
+            category: '일상',
+            current_question_id: initialQ.id,
+            is_flipped: false,
+            updated_at: new Date().toISOString()
+          }, { onConflict: 'couple_id' }).then(() => {});
         }
       }
     };
