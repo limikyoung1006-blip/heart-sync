@@ -2434,7 +2434,7 @@ const SolutionView = ({ onBack, userRole, husbandInfo, wifeInfo, schedules, admi
 };
 
 /* 🌸 Intimacy Modal (Secret Garden) */
-const IntimacyModal = ({ user, show, onClose, subPage, setSubPage, bgImage, onBgUpload, partnerLabel, userRole, coupleCode, supabase, mainChannel, isFullPage, onNav, embedded = false, setHusbandInfo, setWifeInfo, husbandInfo, wifeInfo, myInfo, onUpdateProfile }) => {
+const IntimacyModal = ({ user, show, onClose, subPage, setSubPage, bgImage, onBgUpload, partnerLabel, userRole, coupleCode, supabase, mainChannel, isFullPage, onNav, embedded = false, setHusbandInfo, setWifeInfo, husbandInfo, wifeInfo, myInfo, onUpdateProfile, setShowNotificationList }) => {
   const [currentSecretIdx, setCurrentSecretIdx] = useState(0);
   const [inputText, setInputText] = useState('');
   const [messages, setMessages] = useState([]); 
@@ -2466,7 +2466,7 @@ const IntimacyModal = ({ user, show, onClose, subPage, setSubPage, bgImage, onBg
   }, [show, moodPool]);
   
   const secretQuestions = useMemo(() => 
-    (questions || []).filter(q => q.category === '시크릿'), []
+    (CARD_DATA || []).filter(q => q.category === '시크릿'), []
   );
 
   useEffect(() => {
@@ -2668,7 +2668,6 @@ const IntimacyModal = ({ user, show, onClose, subPage, setSubPage, bgImage, onBg
       }
     }
     setMessages([]);
-    setTopic("");
     setIsTopicFinished(false);
   };
 
