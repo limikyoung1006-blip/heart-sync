@@ -9,7 +9,8 @@ import {
   Lock,
   MessageCircle,
   Calendar,
-  Info
+  Info,
+  Sparkles
 } from 'lucide-react';
 import { CARD_DATA } from '../game/CardGameView';
 import HattiCharacter from '../ui/HattiCharacter';
@@ -564,12 +565,44 @@ const HomeView = ({
             <Heart size={28} color="white" fill="white" />
           </div>
           <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <span style={{ color: 'rgba(255,255,255,0.8)', fontSize: '11px', fontWeight: 900, letterSpacing: '1px', marginBottom: '3px' }}>은밀한 마음 나눔</span>
-            <span style={{ color: 'white', fontSize: '18px', fontWeight: 900 }}>속마음 기도원 입장하기</span>
+            <span style={{ color: 'rgba(255,255,255,0.8)', fontSize: '11px', fontWeight: 900, letterSpacing: '1px', marginBottom: '3px' }}>배우자에게 당신의</span>
+            <span style={{ color: 'white', fontSize: '18px', fontWeight: 900 }}>기도나눔</span>
           </div>
         </div>
-        <ChevronLeft size={24} color="white" style={{ transform: 'rotate(180deg)', opacity: 0.6 }} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {partnerPrayers && partnerPrayers.length > 0 && (
+            <div style={{ background: 'rgba(255,255,255,0.15)', padding: '6px 12px', borderRadius: '100px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <Sparkles size={12} color="white" />
+              <span style={{ color: 'white', fontSize: '11px', fontWeight: 800 }}>최근 기도 도착</span>
+            </div>
+          )}
+          <ChevronLeft size={24} color="white" style={{ transform: 'rotate(180deg)', opacity: 0.6 }} />
+        </div>
       </div>
+
+      {partnerPrayers && partnerPrayers.length > 0 && (
+        <div style={{ 
+          background: 'white', 
+          padding: '20px', 
+          borderRadius: '24px', 
+          marginBottom: '25px', 
+          border: '1px solid #FFE4E6',
+          boxShadow: '0 8px 20px rgba(255, 94, 98, 0.05)'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
+             <div style={{ background: '#FFF1F2', padding: '6px', borderRadius: '8px' }}>
+               <Heart size={16} color="#FF5E62" fill="#FF5E62" />
+             </div>
+             <span style={{ fontSize: '13px', fontWeight: 900, color: '#E11D48' }}>배우자의 최신 기도</span>
+          </div>
+          <p style={{ fontSize: '14px', color: '#2D1F08', fontWeight: 600, lineHeight: 1.6, wordBreak: 'keep-all' }}>
+            "{partnerPrayers[0].text}"
+          </p>
+          <div style={{ marginTop: '8px', display: 'flex', justifyContent: 'flex-end' }}>
+            <span style={{ fontSize: '11px', color: '#9CA3AF', fontWeight: 600 }}>{partnerPrayers[0].date}</span>
+          </div>
+        </div>
+      )}
 
       {/* Anniversary & Schedule Quick Preview */}
       <div style={{ display: 'flex', gap: '15px', marginBottom: '25px' }}>
