@@ -79,6 +79,14 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, mainChannel, husbandI
 
   const broadcastRef = useRef(null);
 
+  // Preload Images for snappy transitions
+  useEffect(() => {
+    IMAGE_CARD_DATA.forEach(item => {
+      const img = new Image();
+      img.src = item.image;
+    });
+  }, []);
+
   useEffect(() => {
     if (!mainChannel) return;
     broadcastRef.current = mainChannel;

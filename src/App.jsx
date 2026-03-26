@@ -953,43 +953,58 @@ const App = () => {
           </div>
 
           <main className="main-content" style={{ background: appTheme.bg }}>
-            <AnimatePresence mode="wait">
+            <AnimatePresence>
               {activeTab === 'home' && (
-                <HomeView 
-                  key="home"
-                  userRole={userRole}
-                  coupleCode={coupleCode}
-                  mainChannel={mainChannel}
-                  mySignal={mySignal} 
-                  setMySignal={handleSetMySignal}
-                  spouseSignal={spouseSignal}
-                  partnerPrayers={partnerPrayers}
-                  onIntimacyClick={() => setActiveTab('intimacyHub')}
-                  onNav={(tab) => setActiveTab(tab)}
-                  schedules={schedules}
-                  husbandInfo={husbandInfo}
-                  wifeInfo={wifeInfo}
-                  onUpdateMemo={updateProfileInfo}
-                  notifPermission={notifPermission}
-                  spouseSecretAnswer={spouseSecretAnswer}
-                  setSpouseSecretAnswer={setSpouseSecretAnswer}
-                  mySecretAnswer={mySecretAnswer}
-                  setMySecretAnswer={setMySecretAnswer}
-                  isMySecretAnswered={isMySecretAnswered}
-                  setIsMySecretAnswered={setIsMySecretAnswered}
-                  isRevealed={isSecretRevealed}
-                  setIsRevealed={setIsSecretRevealed}
-                  supabase={supabase}
-                />
+                <motion.div 
+                  key="homeTab"
+                  initial={{ opacity: 0 }} 
+                  animate={{ opacity: 1 }} 
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                  style={{ width: '100%', height: '100%' }}
+                >
+                  <HomeView 
+                    key="home"
+                    userRole={userRole}
+                    coupleCode={coupleCode}
+                    mainChannel={mainChannel}
+                    mySignal={mySignal} 
+                    setMySignal={handleSetMySignal}
+                    spouseSignal={spouseSignal}
+                    partnerPrayers={partnerPrayers}
+                    onIntimacyClick={() => setActiveTab('intimacyHub')}
+                    onNav={(tab) => setActiveTab(tab)}
+                    schedules={schedules}
+                    husbandInfo={husbandInfo}
+                    wifeInfo={wifeInfo}
+                    onUpdateMemo={updateProfileInfo}
+                    notifPermission={notifPermission}
+                    spouseSecretAnswer={spouseSecretAnswer}
+                    setSpouseSecretAnswer={setSpouseSecretAnswer}
+                    mySecretAnswer={mySecretAnswer}
+                    setMySecretAnswer={setMySecretAnswer}
+                    isMySecretAnswered={isMySecretAnswered}
+                    setIsMySecretAnswered={setIsMySecretAnswered}
+                    isRevealed={isSecretRevealed}
+                    setIsRevealed={setIsSecretRevealed}
+                    supabase={supabase}
+                  />
+                </motion.div>
               )}
               {activeTab === 'calendar' && (
-                <CalendarView 
-                  key="calendar" 
-                  schedules={schedules} 
-                  onAddSchedule={addSchedule} 
-                  onDeleteSchedule={deleteSchedule} 
-                  onBack={() => setActiveTab('home')} 
-                />
+                <motion.div 
+                  key="calendarTab"
+                  initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <CalendarView 
+                    key="calendar" 
+                    schedules={schedules} 
+                    onAddSchedule={addSchedule} 
+                    onDeleteSchedule={deleteSchedule} 
+                    onBack={() => setActiveTab('home')} 
+                  />
+                </motion.div>
               )}
               {activeTab === 'cardGame' && (
                 <motion.div 
@@ -997,6 +1012,7 @@ const App = () => {
                   initial={{ opacity: 0 }} 
                   animate={{ opacity: 1 }} 
                   exit={{ opacity: 0 }}
+                  transition={{ duration: 0.2 }}
                   style={{ width: '100%', height: '100%' }}
                 >
                   {dialogueGuideId ? (
@@ -1041,6 +1057,7 @@ const App = () => {
                 <motion.div 
                   key="counselingTab"
                   initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                  transition={{ duration: 0.2 }}
                   className={`flex flex-col pt-4 ${counselingMode === 'chat' ? 'flex-1 min-h-0' : ''}`}
                 >
                   <div className="flex justify-center mb-4">
@@ -1057,32 +1074,57 @@ const App = () => {
                 </motion.div>
               )}
               {(activeTab === 'intimacyHub' || activeTab === 'heartPrayer') && (
-                <motion.div key="intimacyTab" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ width: '100%', height: '100%' }}>
+                <motion.div 
+                  key="intimacyTab" 
+                  initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} 
+                  transition={{ duration: 0.2 }}
+                  style={{ width: '100%', height: '100%' }}
+                >
                   <IntimacyHubView user={user} supabase={supabase} mainChannel={mainChannel} userRole={userRole} coupleCode={coupleCode} onBack={() => setActiveTab('home')} partnerPrayers={partnerPrayers} setPartnerPrayers={setPartnerPrayers} bgImage={intimacyBg} onBgUpload={setIntimacyBg} partnerLabel={partnerLabel} husbandInfo={husbandInfo} wifeInfo={wifeInfo} setHusbandInfo={setHusbandInfo} setWifeInfo={setWifeInfo} updateProfileInfo={updateProfileInfo} initialTab={activeTab === 'heartPrayer' ? 'prayer' : 'garden'} />
                 </motion.div>
               )}
               {activeTab === 'worship' && (
-                <motion.div key="worshipTab" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                <motion.div 
+                  key="worshipTab" 
+                  initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                >
                   <WorshipView key="worship" userRole={userRole} coupleCode={coupleCode} />
                 </motion.div>
               )}
               {activeTab === 'settings' && (
-                <motion.div key="settingsTab" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                <motion.div 
+                  key="settingsTab" 
+                  initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                >
                   <SettingsView key="settings" user={user} userRole={userRole} husbandInfo={husbandInfo} setHusbandInfo={setHusbandInfo} wifeInfo={wifeInfo} setWifeInfo={setWifeInfo} worshipDays={worshipDays} setWorshipDays={setWorshipDays} worshipTime={worshipTime} setWorshipTime={setWorshipTime} anniversaries={anniversaries} setAnniversaries={setAnniversaries} onReportClick={() => setShowReport(true)} onGuideClick={() => setShowGuidePage(true)} isAdmin={isAdmin} onNav={setActiveTab} onUpdateMemo={updateProfileInfo} subscribeToPushNotifications={subscribeToPushNotifications} />
                 </motion.div>
               )}
               {activeTab === 'admin' && isAdmin && (
-                <motion.div key="adminTab" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                <motion.div 
+                  key="adminTab" 
+                  initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                >
                   <AdminView key="admin" onBack={() => setActiveTab('home')} usersCount={adminStats.users} couplesCount={adminStats.couples} activeSessions={adminStats.activeSessions} recentActivities={adminStats.recentActivities} />
                 </motion.div>
               )}
               {activeTab === 'intimacy' && (
-                <motion.div key="intimacyModalTab" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                <motion.div 
+                  key="intimacyModalTab" 
+                  initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                >
                   <IntimacyModal show={true} onClose={() => setActiveTab('home')} onNav={setActiveTab} subPage={intimacySubPage} setSubPage={setIntimacySubPage} bgImage={intimacyBg} onBgUpload={setIntimacyBg} partnerLabel={partnerLabel} user={user} userRole={userRole} coupleCode={coupleCode} supabase={supabase} mainChannel={mainChannel} setWifeInfo={setWifeInfo} husbandInfo={husbandInfo} wifeInfo={wifeInfo} onUpdateProfile={updateProfileInfo} />
                 </motion.div>
               )}
               {activeTab === 'profile' && (
-                <motion.div key="profileTab" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                <motion.div 
+                  key="profileTab" 
+                  initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                >
                   <ProfileView key="profile" user={user} userRole={userRole} coupleCode={coupleCode} setHusbandInfo={setHusbandInfo} setWifeInfo={setWifeInfo} husbandInfo={husbandInfo} wifeInfo={wifeInfo} onUpdateProfile={updateProfileInfo} myInfo={userRole === 'husband' ? husbandInfo : wifeInfo} isFullPage={true} />
                 </motion.div>
               )}
