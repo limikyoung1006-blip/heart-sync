@@ -440,7 +440,7 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo, onU
         <div className="card-float-anim">
           <div className={`talking-card ${isFlipped ? 'flipped' : ''}`} onClick={toggleFlip}>
             <div className="card-face card-front" style={{ background: "url('/card_bg.png') no-repeat center center", backgroundSize: 'cover', borderRadius: '32px', overflow: 'hidden' }}>
-              <div className="card-pattern-box" style={{ justifyContent: 'flex-end', padding: '0 15px 30px', background: 'rgba(0,0,0,0.02)' }}>
+              <div className="card-pattern-box" style={{ justifyContent: 'center', background: 'rgba(0,0,0,0.02)' }}>
                 <div className="flex flex-col items-center">
                   <div style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(12px)', padding: '12px 28px', borderRadius: '100px', border: '1.5px solid rgba(255,215,0,0.35)', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: '2px', boxShadow: '0 12px 35px rgba(0,0,0,0.5)', width: 'fit-content', minWidth: '220px' }}>
                     <p className="brand-text" style={{ fontSize: '20px', letterSpacing: '3px', color: '#FFD700', margin: 0, textShadow: '0 0 10px rgba(255,215,0,0.5)', whiteSpace: 'nowrap' }}>QUESTION CARD</p>
@@ -450,31 +450,31 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo, onU
               </div>
             </div>
             <div className="card-face card-back" style={{ background: "url('/card_bg.png') no-repeat center center", backgroundSize: 'cover', borderRadius: '32px', overflow: 'hidden', padding: 0 }}>
-              <div className="card-pattern-box" style={{ background: 'rgba(255,255,255,0.85)', margin: '12px', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.8)', backdropFilter: 'blur(12px)', padding: '24px 18px', height: 'calc(100% - 24px)', width: 'calc(100% - 24px)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', alignItems: 'center', boxSizing: 'border-box', position: 'relative' }}>
-                <div style={{ flexShrink: 0, marginBottom: '8px' }}>
-                  <span className="compat-badge" style={{ background: '#FF4D6D', color: 'white', fontWeight: 900, padding: '6px 16px', borderRadius: '100px', fontSize: '11px' }}>{category}</span>
+              <div className="card-pattern-box" style={{ background: 'rgba(255,255,255,0.88)', margin: '15px', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.8)', backdropFilter: 'blur(12px)', padding: '30px 20px', height: 'calc(100% - 30px)', width: 'calc(100% - 30px)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', alignItems: 'center', boxSizing: 'border-box', position: 'relative' }}>
+                <div style={{ flexShrink: 0, marginBottom: '10px' }}>
+                  <span className="compat-badge" style={{ background: '#FF4D6D', color: 'white', fontWeight: 900, padding: '7px 18px', borderRadius: '100px', fontSize: '12px' }}>{category}</span>
                 </div>
-                <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', padding: '10px 0' }}>
-                  <h2 className="card-question" style={{ fontSize: currentQuestion?.question?.length > 40 ? '16px' : '20px', color: '#1a1a1a', lineHeight: 1.5, textAlign: 'center', wordBreak: 'keep-all', fontWeight: 800, margin: '0 10px' }}>
+                <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', padding: '15px 0' }}>
+                  <h2 className="card-question" style={{ fontSize: (currentQuestion?.question?.length || 0) > 40 ? '17px' : '22px', color: '#2D1F08', lineHeight: 1.6, textAlign: 'center', wordBreak: 'keep-all', fontWeight: 900, margin: '0 12px' }}>
                     {currentQuestion?.question || "주제를 선택해주세요."}
                   </h2>
                 </div>
-                <div style={{ flexShrink: 0, width: '100%', display: 'flex', justifyContent: 'center', marginTop: '10px' }}>
+                <div style={{ flexShrink: 0, width: '100%', display: 'flex', justifyContent: 'center', marginTop: '15px' }}>
                   {(!turnOwner || turnOwner === userRole) ? (
                     <button className="send-to-spouse-btn" 
-                      style={{ background: '#2D1F08', borderRadius: '100px', height: '52px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', padding: '0 24px', boxShadow: '0 8px 20px rgba(0,0,0,0.3)', width: '100%', maxWidth: '220px', border: '2px solid #F5D060', cursor: 'pointer' }}
+                      style={{ background: '#2D1F08', borderRadius: '100px', height: '54px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', padding: '0 28px', boxShadow: '0 8px 25px rgba(0,0,0,0.3)', border: '2.5px solid #F5D060', cursor: 'pointer', width: 'auto' }}
                       onClick={(e) => { e.stopPropagation(); handOverTurn(); }}
                     >
-                      <span style={{ color: 'white', fontWeight: 900, fontSize: '14px' }}>답변 완료 & 턴 넘기기</span>
-                      <RefreshCw size={16} color="#F5D060" />
+                      <span style={{ color: 'white', fontWeight: 900, fontSize: '15px' }}>답변 완료 & 턴 넘기기</span>
+                      <RefreshCw size={18} color="#F5D060" />
                     </button>
                   ) : (
-                    <div style={{ background: 'rgba(138, 96, 255, 0.12)', padding: '12px 18px', borderRadius: '20px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', border: '1.5px solid #8A60FF40', width: '90%' }}>
+                    <div style={{ background: 'white', padding: '15px 20px', borderRadius: '24px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', border: '2px solid #8A60FF', width: '85%', boxShadow: '0 4px 15px rgba(138, 96, 255, 0.1)' }}>
                       <div className="flex items-center gap-2">
-                        <motion.div animate={{ scale: [1, 1.2, 1], opacity: [0.4, 0.8, 0.4] }} transition={{ duration: 1.5, repeat: Infinity }} style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#8A60FF' }} />
-                        <span style={{ fontSize: '10px', color: '#8A60FF', fontWeight: 900, letterSpacing: '1.5px' }}>LISTENING...</span>
+                        <motion.div animate={{ scale: [1, 1.2, 1], opacity: [0.5, 1, 0.5] }} transition={{ duration: 1.5, repeat: Infinity }} style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#8A60FF' }} />
+                        <span style={{ fontSize: '10px', color: '#8A60FF', fontWeight: 900, letterSpacing: '2px' }}>LISTENING...</span>
                       </div>
-                      <span style={{ fontSize: '14px', color: '#4B2691', fontWeight: 900, textAlign: 'center', wordBreak: 'keep-all' }}>{turnOwner === 'husband' ? '남편' : '아내'}님의 답변에 귀 기울여주세요</span>
+                      <span style={{ fontSize: '15px', color: '#2D1F08', fontWeight: 900, textAlign: 'center', wordBreak: 'keep-all' }}>{turnOwner === 'husband' ? '남편' : '아내'}님의 답변에 귀 기울여주세요</span>
                     </div>
                   )}
                 </div>
