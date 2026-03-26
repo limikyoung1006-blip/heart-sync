@@ -65,6 +65,8 @@ import SolutionView from './components/counseling/SolutionView';
 import AppGuideView from './components/ui/AppGuideView';
 import DeepAnalysisView from './components/auth/DeepAnalysisView';
 import SecretAnswerInteraction from './components/game/SecretAnswerInteraction';
+import ProfileView from './components/profile/ProfileView';
+
 
 const HATTI_TODOS = [
   { id: 1, action: "말하기", text: "배우자에게 '오늘 하루도 정말 고생 많았어'라고 눈을 맞추며 말해주세요." },

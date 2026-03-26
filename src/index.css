@@ -1994,3 +1994,11 @@ body {
 .icon-btn-top:hover {
   background: rgba(212, 175, 55, 0.1);
 }
+
+@keyframes refresh-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+.refresh-spin {
+  animation: refresh-spin 1s linear infinite;
+}

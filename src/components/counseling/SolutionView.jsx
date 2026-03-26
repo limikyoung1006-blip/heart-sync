@@ -52,12 +52,9 @@ const SolutionView = ({ onBack, userRole, husbandInfo, wifeInfo, schedules, admi
         마크다운 형식은 제외하고 텍스트 줄바꿈을 활용해주세요.
       `;
 
-      // NOTE: In a production environment, this should call a secure backend edge function
       const response = await fetch('/api/chat', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           model: 'gpt-4o',
           messages: [{ role: 'user', content: prompt }],
@@ -80,47 +77,66 @@ const SolutionView = ({ onBack, userRole, husbandInfo, wifeInfo, schedules, admi
   };
 
   return (
-    <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="report-page h-full bg-[#fdfaf5] overflow-y-auto p-5 pb-24">
-      <div className="flex items-center gap-3 mb-8">
-        <button onClick={onBack} className="p-2 -ml-2"><ChevronLeft size={24} color="#2D1F08" /></button>
-        <span className="text-xl font-black text-[#2D1F08]">종합 분석 리포트</span>
+    <motion.div 
+      initial={{ opacity: 0, x: 20 }} 
+      animate={{ opacity: 1, x: 0 }} 
+      style={{ 
+        height: '100%', 
+        backgroundColor: '#fdfaf5', 
+        overflowY: 'auto', 
+        padding: '20px', 
+        paddingBottom: '100px' 
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '32px' }}>
+        <button onClick={onBack} style={{ padding: '8px', marginLeft: '-8px', background: 'none', border: 'none', cursor: 'pointer' }}>
+          <ChevronLeft size={24} color="#2D1F08" />
+        </button>
+        <span style={{ fontSize: '20px', fontWeight: 900, color: '#2D1F08' }}>종합 분석 리포트</span>
       </div>
 
-      <div className="bg-white p-8 rounded-[40px] shadow-sm mb-6 border border-[#F5E6CC]">
-        <div className="flex items-center gap-3 mb-4">
+      <div style={{ background: 'white', padding: '30px', borderRadius: '40px', boxShadow: '0 4px 15px rgba(0,0,0,0.03)', marginBottom: '24px', border: '1px solid #F5E6CC' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
           <Sparkles size={20} color="#8A60FF" />
-          <span className="text-lg font-black text-[#2D1F08]">하티의 정밀 AI 분석</span>
+          <span style={{ fontSize: '18px', fontWeight: 900, color: '#2D1F08' }}>하티의 정밀 AI 분석</span>
         </div>
-        <p className="text-sm font-bold text-[#8B7355] leading-relaxed mb-8">
+        <p style={{ fontSize: '14px', fontWeight: 700, color: '#8B7355', lineHeight: 1.6, marginBottom: '32px' }}>
           최근 한 달간의 대화 패턴, 기도 제목, 감정 신호를 종합하여 AI 하티가 전하는 깊이 있는 조언을 만나보세요.
         </p>
         <button 
           onClick={handleDeepAnalysis}
           disabled={isAnalyzing}
-          className={`w-full p-5 rounded-[24px] font-black text-white flex items-center justify-center gap-3 shadow-lg transition-all ${isAnalyzing ? 'bg-gray-300' : 'bg-gradient-to-br from-[#2D1F08] to-[#4D3A1A]'}`}
+          style={{ 
+            width: '100%', padding: '20px', borderRadius: '24px', fontWeight: 900, color: 'white', 
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', 
+            border: 'none', cursor: isAnalyzing ? 'not-allowed' : 'pointer',
+            boxShadow: '0 8px 15px rgba(45, 31, 8, 0.15)', transition: '0.3s',
+            background: isAnalyzing ? '#CCC' : 'linear-gradient(135deg, #2D1F08, #4D3A1A)'
+          }}
         >
-          {isAnalyzing ? <RefreshCw size={20} className="animate-spin" /> : <Sparkles size={20} />}
+          {isAnalyzing ? <RefreshCw size={20} className="refresh-spin" /> : <Sparkles size={20} />}
           {isAnalyzing ? "리포트 작성 중..." : "새로운 분석 요청하기"}
         </button>
       </div>
 
       {/* 종합 지표 */}
-      <div className="bg-white p-8 rounded-[40px] shadow-sm mb-6 border border-[#F5E6CC]">
-        <div className="flex items-center gap-3 mb-10">
-          <div className="w-10 h-10 bg-gradient-to-br from-[#FF9A8B] to-[#FF6A88] rounded-2xl flex items-center justify-center text-white shadow-xl shadow-[#FF6A8820]">
+      <div style={{ background: 'white', padding: '30px', borderRadius: '40px', boxShadow: '0 4px 15px rgba(0,0,0,0.03)', marginBottom: '24px', border: '1px solid #F5E6CC' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '40px' }}>
+          <div style={{ width: '40px', height: '40px', background: 'linear-gradient(135deg, #FF9A8B, #FF6A88)', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', boxShadow: '0 8px 20px rgba(255, 106, 136, 0.2)' }}>
             <BarChart3 size={20} />
           </div>
-          <span className="text-lg font-black text-[#2D1F08]">이번 달 종합 활동 지표</span>
+          <span style={{ fontSize: '18px', fontWeight: 900, color: '#2D1F08' }}>이번 달 종합 활동 지표</span>
         </div>
         
-        <div className="flex flex-col items-center justify-center py-6 relative">
-          <svg className="w-[180px] h-[180px]" viewBox="0 0 160 160">
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px 0', position: 'relative' }}>
+          <svg style={{ width: '180px', height: '180px' }} viewBox="0 0 160 160">
             <circle cx="80" cy="80" r="70" stroke="rgba(0,0,0,0.03)" strokeWidth="12" fill="none" />
             <circle cx="80" cy="80" r="70" 
               stroke="url(#gauge-grad-sol)" strokeWidth="12" strokeLinecap="round" fill="none"
               style={{ 
                 strokeDasharray: `${Math.min((coupleStats.totalInteractions / 50) * 440, 440)}, 440`, 
-                transform: 'rotate(-90deg)', transformOrigin: 'center'
+                transform: 'rotate(-90deg)', transformOrigin: 'center',
+                transition: 'stroke-dasharray 1s ease'
               }} 
             />
             <defs>
@@ -130,77 +146,77 @@ const SolutionView = ({ onBack, userRole, husbandInfo, wifeInfo, schedules, admi
               </linearGradient>
             </defs>
           </svg>
-          <div className="absolute inset-0 flex flex-col items-center justify-center mt-[-10px]">
-             <span className="text-4xl font-black text-[#FF4D6D] tracking-tighter">{coupleStats?.totalInteractions || 0}</span>
-             <span className="text-xs font-black text-gray-300 uppercase tracking-widest mt-1">Interactions</span>
+          <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', marginTop: '-10px' }}>
+             <span style={{ fontSize: '36px', fontWeight: 900, color: '#FF4D6D', letterSpacing: '-2px' }}>{coupleStats?.totalInteractions || 0}</span>
+             <span style={{ fontSize: '10px', fontWeight: 900, color: '#DDD', textTransform: 'uppercase', letterSpacing: '2px', marginTop: '4px' }}>Interactions</span>
           </div>
         </div>
-        <p className="text-center text-sm font-black text-gray-400 mt-8">
+        <p style={{ textAlign: 'center', fontSize: '14px', fontWeight: 900, color: '#CCC', marginTop: '32px' }}>
            {coupleStats.totalInteractions >= 50 ? '축하드려요! 목표를 달성했습니다! 🥳' : `목표 50회 중 ${Math.round((coupleStats.totalInteractions / 50) * 100)}% 달성! 🎉`}
         </p>
       </div>
 
-      <div className="bg-white p-8 rounded-[40px] shadow-sm mb-6 border border-[#F5E6CC]">
-        <div className="flex items-center gap-3 mb-8">
-          <div className="w-10 h-10 bg-gradient-to-br from-[#8A60FF] to-[#AC8AFF] rounded-2xl flex items-center justify-center text-white shadow-xl shadow-[#8A60FF20]">
+      <div style={{ background: 'white', padding: '30px', borderRadius: '40px', boxShadow: '0 4px 15px rgba(0,0,0,0.03)', marginBottom: '24px', border: '1px solid #F5E6CC' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '32px' }}>
+          <div style={{ width: '40px', height: '40px', background: 'linear-gradient(135deg, #8A60FF, #AC8AFF)', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', boxShadow: '0 8px 20px rgba(138, 96, 255, 0.2)' }}>
             <Zap size={20} />
           </div>
-          <span className="text-lg font-black text-[#2D1F08]">데이터 종합 분석</span>
+          <span style={{ fontSize: '18px', fontWeight: 900, color: '#2D1F08' }}>데이터 종합 분석</span>
         </div>
 
-        <div className="space-y-6">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
           {[
             { label: '영적 소통 (기도제목)', value: Math.min(Math.round((coupleStats.prayerCount / Math.max(coupleStats.totalInteractions, 1)) * 100), 100), color: '#8A60FF' },
             { label: '정서적 교감 (무드시그널)', value: Math.min(Math.round((coupleStats.signalCount / Math.max(coupleStats.totalInteractions, 1)) * 100), 100), color: '#FF8A9D' },
             { label: '일상 협력 (공유일정)', value: Math.min(Math.round((coupleStats.scheduleCount / Math.max(coupleStats.totalInteractions, 1)) * 100), 100), color: '#F5D060' }
           ].map((item, idx) => (
-            <div key={idx} className="space-y-2">
-              <div className="flex justify-between items-center text-sm font-black">
-                <span className="text-[#2D1F08]">{item.label}</span>
+            <div key={idx} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '14px', fontWeight: 900 }}>
+                <span style={{ color: '#2D1F08' }}>{item.label}</span>
                 <span style={{ color: item.color }}>{item.value}%</span>
               </div>
-              <div className="w-full h-2.5 bg-gray-100 rounded-full overflow-hidden">
+              <div style={{ width: '100%', height: '10px', background: '#F3F4F6', borderRadius: '100px', overflow: 'hidden' }}>
                 <motion.div initial={{ width: 0 }} animate={{ width: `${item.value}%` }} transition={{ duration: 1, delay: idx * 0.1 }}
-                  style={{ background: item.color }} className="h-full rounded-full" />
+                  style={{ background: item.color, height: '100%', borderRadius: '100px' }} />
               </div>
             </div>
           ))}
         </div>
       </div>
 
-      <div className="bg-white/70 backdrop-blur-xl border-2 border-[#D4AF3740] rounded-[40px] p-8">
-          <div className="flex items-center gap-4 mb-8">
+      <div style={{ background: 'rgba(255, 255, 255, 0.7)', backdropFilter: 'blur(10px)', border: '2px solid rgba(212, 175, 55, 0.25)', borderRadius: '40px', padding: '32px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '32px' }}>
             <HattiCharacter state={isAnalyzing ? 'thinking' : 'floating'} size={80} />
-            <div className="flex flex-col">
-              <span className="text-xl font-black text-[#2D1F08]">하티의 심층 처방전</span>
-              <span className="text-[10px] font-black text-[#B08D3E] tracking-widest uppercase mt-1">Spiritual Counseling Report</span>
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <span style={{ fontSize: '20px', fontWeight: 900, color: '#2D1F08' }}>하티의 심층 처방전</span>
+              <span style={{ fontSize: '10px', fontWeight: 900, color: '#B08D3E', letterSpacing: '2px', textTransform: 'uppercase', marginTop: '4px' }}>Spiritual Counseling Report</span>
             </div>
           </div>
 
-          <div className="space-y-8">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
             {reportResult ? (
-              <div className="text-[15px] font-bold leading-relaxed text-[#4D3A1A] whitespace-pre-wrap text-justify italic">
+              <div style={{ fontSize: '15px', fontWeight: 600, lineHeight: 1.8, color: '#4D3A1A', whiteSpace: 'pre-wrap', textAlign: 'justify', fontStyle: 'italic' }}>
                 {reportResult}
               </div>
             ) : (
               <>
                 <section>
-                  <h4 className="flex items-center gap-2 text-[#8A60FF] font-black text-sm mb-4">
+                  <h4 style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#8A60FF', fontWeight: 900, fontSize: '14px', marginBottom: '16px' }}>
                     <Sparkles size={16} /> 영적 친밀도 분석
                   </h4>
-                  <p className="text-sm font-bold text-[#4D3A1A] leading-relaxed text-justify break-keep">
+                  <p style={{ fontSize: '14px', fontWeight: 700, color: '#4D3A1A', lineHeight: 1.7, textAlign: 'justify', wordBreak: 'keep-all' }}>
                     아직 상세 분석 결과가 생성되지 않았습니다. 상단의 <strong>'리분석 요청'</strong> 버튼을 클릭하여 두 분만을 위한 특별한 리포트를 받아보세요. 하티가 두 분의 기록을 바탕으로 깊이 있는 조언을 준비해 드립니다.
                   </p>
                 </section>
 
-                <section className="pt-6 border-t border-[#D4AF3720]">
-                  <h4 className="flex items-center gap-2 text-[#D4AF37] font-black text-sm mb-4">
+                <section style={{ paddingTop: '24px', borderTop: '1px solid rgba(212, 175, 55, 0.1)' }}>
+                  <h4 style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#D4AF37', fontWeight: 900, fontSize: '14px', marginBottom: '16px' }}>
                     <BookOpen size={16} /> 언약적 사랑의 원리
                   </h4>
-                  <p className="text-sm font-bold text-[#4D3A1A] leading-relaxed italic mb-4">
+                  <p style={{ fontSize: '14px', fontWeight: 700, color: '#4D3A1A', lineHeight: 1.7, fontStyle: 'italic', marginBottom: '16px' }}>
                     "서로 시기를 다투지 말고, 오직 사랑 가운데서 진실한 것을 말하며 범사에 그에게까지 자랄지라."
                   </p>
-                  <p className="text-sm font-bold text-[#4D3A1A] leading-relaxed text-justify break-keep">
+                  <p style={{ fontSize: '14px', fontWeight: 700, color: '#4D3A1A', lineHeight: 1.7, textAlign: 'justify', wordBreak: 'keep-all' }}>
                     개혁주의 관점에서 결혼은 거룩한 언약(Covenant)입니다. 상대의 부족함을 채우는 것이 나의 사명임을 기억할 때, 진정한 기쁨이 차오를 것입니다.
                   </p>
                 </section>
