@@ -897,6 +897,7 @@ const App = () => {
               url('/bg.png')
             `,
             backgroundBlendMode: 'overlay',
+            backgroundAttachment: 'fixed', // 백그라운드 고정으로 전환 시 깜빡임 방지
             opacity: 1,
             zIndex: -1
           }} />
@@ -951,7 +952,8 @@ const App = () => {
             </div>
           </div>
 
-          <main className="main-content">
+          <main className="main-content" style={{ background: appTheme.bg }}>
+            <AnimatePresence mode="wait">
               {activeTab === 'home' && (
                 <HomeView 
                   key="home"
@@ -977,6 +979,7 @@ const App = () => {
                   setIsMySecretAnswered={setIsMySecretAnswered}
                   isRevealed={isSecretRevealed}
                   setIsRevealed={setIsSecretRevealed}
+                  supabase={supabase}
                 />
               )}
               {activeTab === 'calendar' && (
@@ -989,7 +992,13 @@ const App = () => {
                 />
               )}
               {activeTab === 'cardGame' && (
-                <>
+                <motion.div 
+                  key="cardGameTab"
+                  initial={{ opacity: 0 }} 
+                  animate={{ opacity: 1 }} 
+                  exit={{ opacity: 0 }}
+                  style={{ width: '100%', height: '100%' }}
+                >
                   {dialogueGuideId ? (
                     <GameGuideView 
                       gameId={dialogueGuideId} 
@@ -1026,164 +1035,58 @@ const App = () => {
                       wifeInfo={wifeInfo}
                     />
                   )}
-                </>
+                </motion.div>
               )}
               {activeTab === 'counseling' && (
-                 <div className={`flex flex-col pt-4 ${counselingMode === 'chat' ? 'flex-1 min-h-0' : ''}`}>
-                    {/* 💊 AI Hatti Sub-Navigation (Chat vs Solution) */}
-                   <div className="flex justify-center mb-4">
-                     <div style={{ 
-                       display: 'flex', 
-                       background: 'rgba(0,0,0,0.05)', 
-                       borderRadius: '100px', 
-                       padding: '4px',
-                       border: '1px solid rgba(0,0,0,0.03)'
-                     }}>
-                       <button 
-                         onClick={() => setCounselingMode('chat')}
-                         style={{ 
-                           padding: '8px 20px', 
-                           borderRadius: '100px', 
-                           fontSize: '13px', 
-                           fontWeight: 900,
-                           background: counselingMode === 'chat' ? 'white' : 'transparent',
-                           color: counselingMode === 'chat' ? '#8A60FF' : '#8B7355',
-                           boxShadow: counselingMode === 'chat' ? '0 4px 10px rgba(0,0,0,0.05)' : 'none',
-                           transition: '0.3s'
-                         }}
-                       >
-                         AI 고민상담
-                       </button>
-                       <button 
-                         onClick={() => setCounselingMode('solution')}
-                         style={{ 
-                           padding: '8px 20px', 
-                           borderRadius: '100px', 
-                           fontSize: '13px', 
-                           fontWeight: 900,
-                           background: counselingMode === 'solution' ? 'white' : 'transparent',
-                           color: counselingMode === 'solution' ? '#8A60FF' : '#8B7355',
-                           boxShadow: counselingMode === 'solution' ? '0 4px 10px rgba(0,0,0,0.05)' : 'none',
-                           transition: '0.3s'
-                         }}
-                       >
-                         매월 관계 솔루션
-                       </button>
-                     </div>
-                   </div>
-                   {counselingMode === 'chat' ? (
-                     <ChatView 
-                        key="chat" 
-                        userRole={userRole} 
-                        setUserRole={setUserRole}
-                        husbandInfo={husbandInfo} 
-                        setHusbandInfo={setHusbandInfo}
-                        wifeInfo={wifeInfo} 
-                        setWifeInfo={setWifeInfo}
-                        adminStats={adminStats}
-                        schedules={schedules}
-                        onBack={() => setActiveTab('home')} 
-                      />
-                   ) : (
-                     <SolutionView 
-                        key="solution" 
-                        userRole={userRole}
-                        husbandInfo={husbandInfo}
-                        wifeInfo={wifeInfo}
-                        schedules={schedules}
-                        adminStats={adminStats}
-                        coupleStats={coupleStats}
-                        onBack={() => setCounselingMode('chat')} 
-                     />
-                   )}
-                 </div>
+                <motion.div 
+                  key="counselingTab"
+                  initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                  className={`flex flex-col pt-4 ${counselingMode === 'chat' ? 'flex-1 min-h-0' : ''}`}
+                >
+                  <div className="flex justify-center mb-4">
+                    <div style={{ display: 'flex', background: 'rgba(0,0,0,0.05)', borderRadius: '100px', padding: '4px', border: '1px solid rgba(0,0,0,0.03)' }}>
+                      <button onClick={() => setCounselingMode('chat')} style={{ padding: '8px 20px', borderRadius: '100px', fontSize: '13px', fontWeight: 900, background: counselingMode === 'chat' ? 'white' : 'transparent', color: counselingMode === 'chat' ? '#8A60FF' : '#8B7355' }}>AI 고민상담</button>
+                      <button onClick={() => setCounselingMode('solution')} style={{ padding: '8px 20px', borderRadius: '100px', fontSize: '13px', fontWeight: 900, background: counselingMode === 'solution' ? 'white' : 'transparent', color: counselingMode === 'solution' ? '#8A60FF' : '#8B7355' }}>매월 관계 솔루션</button>
+                    </div>
+                  </div>
+                  {counselingMode === 'chat' ? (
+                    <ChatView key="chat" userRole={userRole} setUserRole={setUserRole} husbandInfo={husbandInfo} setHusbandInfo={setHusbandInfo} wifeInfo={wifeInfo} setWifeInfo={setWifeInfo} adminStats={adminStats} schedules={schedules} onBack={() => setActiveTab('home')} />
+                  ) : (
+                    <SolutionView key="solution" userRole={userRole} husbandInfo={husbandInfo} wifeInfo={wifeInfo} schedules={schedules} adminStats={adminStats} coupleStats={coupleStats} onBack={() => setCounselingMode('chat')} />
+                  )}
+                </motion.div>
               )}
               {(activeTab === 'intimacyHub' || activeTab === 'heartPrayer') && (
-                  <IntimacyHubView 
-                    user={user}
-                    supabase={supabase}
-                    mainChannel={mainChannel}
-                    userRole={userRole} 
-                    coupleCode={coupleCode} 
-                    onBack={() => setActiveTab('home')}
-                    partnerPrayers={partnerPrayers}
-                    setPartnerPrayers={setPartnerPrayers}
-                    bgImage={intimacyBg}
-                    onBgUpload={setIntimacyBg}
-                    partnerLabel={partnerLabel}
-                    husbandInfo={husbandInfo}
-                    wifeInfo={wifeInfo}
-                    setHusbandInfo={setHusbandInfo}
-                    setWifeInfo={setWifeInfo}
-                    updateProfileInfo={updateProfileInfo}
-                    initialTab={activeTab === 'heartPrayer' ? 'prayer' : 'garden'}
-                  />
+                <motion.div key="intimacyTab" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ width: '100%', height: '100%' }}>
+                  <IntimacyHubView user={user} supabase={supabase} mainChannel={mainChannel} userRole={userRole} coupleCode={coupleCode} onBack={() => setActiveTab('home')} partnerPrayers={partnerPrayers} setPartnerPrayers={setPartnerPrayers} bgImage={intimacyBg} onBgUpload={setIntimacyBg} partnerLabel={partnerLabel} husbandInfo={husbandInfo} wifeInfo={wifeInfo} setHusbandInfo={setHusbandInfo} setWifeInfo={setWifeInfo} updateProfileInfo={updateProfileInfo} initialTab={activeTab === 'heartPrayer' ? 'prayer' : 'garden'} />
+                </motion.div>
               )}
               {activeTab === 'worship' && (
-                <WorshipView key="worship" userRole={userRole} coupleCode={coupleCode} />
+                <motion.div key="worshipTab" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                  <WorshipView key="worship" userRole={userRole} coupleCode={coupleCode} />
+                </motion.div>
               )}
               {activeTab === 'settings' && (
-                <SettingsView 
-                  key="settings" 
-                  user={user}
-                  userRole={userRole}
-                  husbandInfo={husbandInfo}
-                  setHusbandInfo={setHusbandInfo}
-                  wifeInfo={wifeInfo}
-                  setWifeInfo={setWifeInfo}
-                  worshipDays={worshipDays}
-                  setWorshipDays={setWorshipDays}
-                  worshipTime={worshipTime}
-                  setWorshipTime={setWorshipTime}
-                  anniversaries={anniversaries}
-                  setAnniversaries={setAnniversaries}
-                  onReportClick={() => setShowReport(true)} 
-                  onGuideClick={() => setShowGuidePage(true)}
-                  isAdmin={isAdmin}
-                  onNav={setActiveTab}
-                  onUpdateMemo={updateProfileInfo}
-                  subscribeToPushNotifications={subscribeToPushNotifications}
-                />
+                <motion.div key="settingsTab" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                  <SettingsView key="settings" user={user} userRole={userRole} husbandInfo={husbandInfo} setHusbandInfo={setHusbandInfo} wifeInfo={wifeInfo} setWifeInfo={setWifeInfo} worshipDays={worshipDays} setWorshipDays={setWorshipDays} worshipTime={worshipTime} setWorshipTime={setWorshipTime} anniversaries={anniversaries} setAnniversaries={setAnniversaries} onReportClick={() => setShowReport(true)} onGuideClick={() => setShowGuidePage(true)} isAdmin={isAdmin} onNav={setActiveTab} onUpdateMemo={updateProfileInfo} subscribeToPushNotifications={subscribeToPushNotifications} />
+                </motion.div>
               )}
               {activeTab === 'admin' && isAdmin && (
-                <AdminView 
-                  key="admin" 
-                  onBack={() => setActiveTab('home')}
-                  usersCount={adminStats.users}
-                  couplesCount={adminStats.couples}
-                  activeSessions={adminStats.activeSessions}
-                  recentActivities={adminStats.recentActivities}
-                />
+                <motion.div key="adminTab" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                  <AdminView key="admin" onBack={() => setActiveTab('home')} usersCount={adminStats.users} couplesCount={adminStats.couples} activeSessions={adminStats.activeSessions} recentActivities={adminStats.recentActivities} />
+                </motion.div>
               )}
               {activeTab === 'intimacy' && (
-                <IntimacyModal 
-                  key="intimacy"
-                  show={true} 
-                  onClose={() => setActiveTab('home')}
-                  onNav={setActiveTab}
-                  subPage={intimacySubPage}
-                  setSubPage={setIntimacySubPage}
-                  bgImage={intimacyBg}
-                  onBgUpload={setIntimacyBg}
-                  partnerLabel={partnerLabel}
-                  user={user}
-                  userRole={userRole}
-                  coupleCode={coupleCode}
-                  supabase={supabase}
-                  mainChannel={mainChannel}
-                setWifeInfo={setWifeInfo}
-                husbandInfo={husbandInfo}
-                wifeInfo={wifeInfo}
-                onUpdateProfile={updateProfileInfo}
-              />
-            )}
-            {activeTab === 'profile' && (
-               <ProfileView 
-                  key="profile" user={user} userRole={userRole} coupleCode={coupleCode} setHusbandInfo={setHusbandInfo} 
-                  setWifeInfo={setWifeInfo} husbandInfo={husbandInfo} wifeInfo={wifeInfo} onUpdateProfile={updateProfileInfo} 
-                  myInfo={userRole === 'husband' ? husbandInfo : wifeInfo} isFullPage={true}
-                />
-            )}
+                <motion.div key="intimacyModalTab" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                  <IntimacyModal show={true} onClose={() => setActiveTab('home')} onNav={setActiveTab} subPage={intimacySubPage} setSubPage={setIntimacySubPage} bgImage={intimacyBg} onBgUpload={setIntimacyBg} partnerLabel={partnerLabel} user={user} userRole={userRole} coupleCode={coupleCode} supabase={supabase} mainChannel={mainChannel} setWifeInfo={setWifeInfo} husbandInfo={husbandInfo} wifeInfo={wifeInfo} onUpdateProfile={updateProfileInfo} />
+                </motion.div>
+              )}
+              {activeTab === 'profile' && (
+                <motion.div key="profileTab" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                  <ProfileView key="profile" user={user} userRole={userRole} coupleCode={coupleCode} setHusbandInfo={setHusbandInfo} setWifeInfo={setWifeInfo} husbandInfo={husbandInfo} wifeInfo={wifeInfo} onUpdateProfile={updateProfileInfo} myInfo={userRole === 'husband' ? husbandInfo : wifeInfo} isFullPage={true} />
+                </motion.div>
+              )}
+            </AnimatePresence>
           </main>
 
           {/* Luxury Bottom Nav - 5 Core Tabs */}
