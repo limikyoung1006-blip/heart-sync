@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, Sparkles, RefreshCw } from 'lucide-react';
 
@@ -68,6 +68,7 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, mainChannel, husbandI
 
   const [mainQuestion, setMainQuestion] = useState("");
   const [imagePool, setImagePool] = useState([]);
+  const [isImageLoading, setIsImageLoading] = useState(false);
   const [selectedIndices, setSelectedIndices] = useState([]); 
   const [isSharing, setIsSharing] = useState(false); 
   const [sharedCards, setSharedCards] = useState([]); 
@@ -79,19 +80,31 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, mainChannel, husbandI
 
   const broadcastRef = useRef(null);
 
-  // Preload Images for snappy transitions
+  // Optimized Preloading Strategy
   useEffect(() => {
-    IMAGE_CARD_DATA.forEach(item => {
+    // Preload first 10 immediately
+    IMAGE_CARD_DATA.slice(0, 10).forEach(item => {
       const img = new Image();
       img.src = item.image;
     });
   }, []);
 
+  // Preload next image whenever current changes
+  useEffect(() => {
+    if (!currentQuestion) return;
+    const currentIndex = IMAGE_CARD_DATA.findIndex(q => q.id === currentQuestion.id);
+    const nextItem = IMAGE_CARD_DATA[(currentIndex + 1) % IMAGE_CARD_DATA.length];
+    if (nextItem) {
+      const img = new Image();
+      img.src = nextItem.image;
+    }
+  }, [currentQuestion]);
+
   useEffect(() => {
     if (!mainChannel) return;
     broadcastRef.current = mainChannel;
     
-    const sub = mainChannel.on('broadcast', { event: 'image-game-update' }, ({ payload }) => {
+    mainChannel.on('broadcast', { event: 'image-game-update' }, ({ payload }) => {
       if (payload.sender === userRole) return;
       
       if (payload.gameMode) setGameMode(payload.gameMode);
@@ -104,7 +117,10 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, mainChannel, husbandI
       
       if (payload.questionId) {
         const q = IMAGE_CARD_DATA.find(item => String(item.id) === String(payload.questionId));
-        if (q) setCurrentQuestion(q);
+        if (q) {
+           setIsImageLoading(true);
+           setCurrentQuestion(q);
+        }
       }
     });
 
@@ -112,9 +128,10 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, mainChannel, husbandI
   }, [mainChannel, userRole]);
 
   useEffect(() => {
-    if (currentQuestion) return;
-    setCurrentQuestion(IMAGE_CARD_DATA[0]);
-  }, []);
+    if (!currentQuestion) {
+      setCurrentQuestion(IMAGE_CARD_DATA[0]);
+    }
+  }, [currentQuestion]);
 
   const sendBroadcast = (updates) => {
     if (broadcastRef.current) {
@@ -136,6 +153,7 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, mainChannel, husbandI
 
     let nextIdx = Math.floor(Math.random() * pool.length);
     setIsFlipped(false);
+    setIsImageLoading(true);
     setTurnOwner(userRole); 
 
     setTimeout(() => {
@@ -150,12 +168,11 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, mainChannel, husbandI
           category: activeCat
         });
         
-        // Count for completion modal
         const nextCount = sessionCardCount + 1;
         setSessionCardCount(nextCount);
         if (nextCount === 10) setShowFinishModal(true);
       }
-    }, 300); 
+    }, 100); 
   };
 
   const initPick2Mode = () => {
@@ -205,7 +222,6 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, mainChannel, husbandI
     setIsSharing(true);
     sendBroadcast({ isSharing: true, sharedCards: cards, turnOwner: userRole });
 
-    // Count for completion modal
     const nextCount = sessionCardCount + 1;
     setSessionCardCount(nextCount);
     if (nextCount === 10) setShowFinishModal(true);
@@ -217,15 +233,14 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, mainChannel, husbandI
     initPick2Mode();
   };
 
-  if (!currentQuestion) return <div className="p-10 text-center">Loading...</div>;
+  if (!currentQuestion) return <div className="p-10 text-center">동기화 중...</div>;
 
   return (
     <motion.div 
-      initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} 
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} 
       className="flex flex-col items-center p-4 bg-white" 
       style={{ minHeight: '100vh', paddingBottom: '160px', overflowY: 'auto' }}
     >
-      {/* 🏁 Dialogue Finish Modal */}
       <AnimatePresence>
         {showFinishModal && (
           <motion.div 
@@ -257,7 +272,7 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, mainChannel, husbandI
                 <button 
                   onClick={() => {
                     setShowFinishModal(false);
-                    setSessionCardCount(11); // 더 이상 자동 트리거되지 않게
+                    setSessionCardCount(11);
                   }}
                   style={{ width: '100%', padding: '15px', borderRadius: '20px', background: 'none', color: '#9C27B0', fontWeight: 800, fontSize: '14px', border: 'none' }}
                 >
@@ -268,6 +283,7 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, mainChannel, husbandI
           </motion.div>
         )}
       </AnimatePresence>
+
       <header style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '15px' }}>
         <button onClick={onBack} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px' }}>
           <ChevronLeft size={24} color="#AB47BC" />
@@ -315,19 +331,30 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, mainChannel, husbandI
 
           <div style={{ perspective: '1200px', width: '310px', height: '440px' }}>
             <motion.div
-               animate={{ rotateY: isFlipped ? 180 : 0 }} transition={{ duration: 0.6, type: 'spring' }}
+               animate={{ rotateY: isFlipped ? 180 : 0 }} transition={{ duration: 0.5 }}
                onClick={() => { if (!isMyTurn) return; setIsFlipped(!isFlipped); setTurnOwner(userRole); sendBroadcast({ isFlipped: !isFlipped, turnOwner: userRole }); }}
                style={{ width: '100%', height: '100%', position: 'relative', transformStyle: 'preserve-3d', cursor: 'pointer' }}
             >
               <div style={{ position: 'absolute', inset: 0, backfaceVisibility: 'hidden', background: 'linear-gradient(135deg, #1A1A1A, #000000)', borderRadius: '30px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-                <motion.div animate={{ x: ['-150%', '150%'] }} transition={{ repeat: Infinity, duration: 4 }} style={{ position: 'absolute', inset: 0, background: 'linear-gradient(105deg, transparent, rgba(212, 175, 55, 0.15), transparent)', skewX: -30 }} />
                 <p style={{ fontSize: '11px', fontWeight: 700, color: '#B08D3E', marginBottom: '8px', letterSpacing: '1px' }}>부부의 마음을 이어주는</p>
                 <h1 style={{ fontWeight: 500, fontSize: '36px', background: 'linear-gradient(to bottom, #F7E4BE, #D4AF37, #A17928)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', fontFamily: 'serif' }}>HEART SYNC</h1>
               </div>
 
               <div style={{ position: 'absolute', inset: 0, backfaceVisibility: 'hidden', transform: 'rotateY(180deg)', background: 'white', borderRadius: '30px', border: '3px solid #AB47BC', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-                <div style={{ width: '100%', height: '65%', position: 'relative' }}>
-                  <img src={currentQuestion.image} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={e => e.target.src="https://via.placeholder.com/310x440"} />
+                <div style={{ width: '100%', height: '65%', position: 'relative', background: '#F3E5F5' }}>
+                  {isImageLoading && (
+                    <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <RefreshCw className="animate-spin" color="#AB47BC" />
+                    </div>
+                  )}
+                  <img 
+                    src={currentQuestion.image} 
+                    style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: isImageLoading ? 0 : 1 }} 
+                    onLoad={() => setIsImageLoading(false)}
+                    onError={e => { e.target.src="https://via.placeholder.com/310x440"; setIsImageLoading(false); }}
+                    loading="eager"
+                    decoding="async"
+                  />
                   <div style={{ position: 'absolute', top: '15px', right: '15px', background: 'rgba(0,0,0,0.6)', color: 'white', padding: '4px 10px', borderRadius: '8px', fontSize: '10px', fontWeight: 800 }}>{currentQuestion.category}</div>
                 </div>
                 <div style={{ padding: '20px', flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
@@ -355,19 +382,12 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, mainChannel, husbandI
                </div>
                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px', marginBottom: '30px' }}>
                  {imagePool.map((card, idx) => (
-                   <div key={idx} onClick={() => selectImage(idx)} style={{ position: 'relative', height: '140px', borderRadius: '18px', overflow: 'hidden', border: selectedIndices.includes(idx) ? '4px solid #AB47BC' : '2px solid #EEE' }}>
-                     <img src={card.image} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                     {selectedIndices.includes(idx) && (
-                       <div style={{ position: 'absolute', inset: 0, background: 'rgba(171, 71, 188, 0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                         <div style={{ background: '#AB47BC', color: 'white', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900 }}>{selectedIndices.indexOf(idx) + 1}</div>
-                       </div>
-                     )}
-                   </div>
+                    <ImageThumb key={idx} card={card} isSelected={selectedIndices.includes(idx)} order={selectedIndices.indexOf(idx) + 1} onClick={() => selectImage(idx)} />
                  ))}
                </div>
                 <div style={{ display: 'flex', gap: '10px', paddingBottom: '40px' }}>
                   <button onClick={resetPick2} style={{ flex: 1, padding: '18px', borderRadius: '20px', background: 'white', border: '2px solid #AB47BC', color: '#AB47BC', fontWeight: 900, fontSize: '15px' }}>다시 뽑기</button>
-                  <button onClick={sharePick2} style={{ flex: 2, padding: '18px', borderRadius: '20px', background: '#AB47BC', color: 'white', fontWeight: 900, fontSize: '15px', opacity: selectedIndices.length === 2 ? 1 : 0.5, boxShadow: '0 10px 20px rgba(171, 71, 188, 0.2)' }}>상대방에게 공유</button>
+                  <button onClick={sharePick2} style={{ flex: 2, padding: '18px', borderRadius: '20px', background: '#AB47BC', color: 'white', fontWeight: 900, fontSize: '15px', opacity: selectedIndices.length === 2 ? 1 : 0.5, boxShadow: '0 10px 20px rgba(171, 71, 188, 0.25)' }}>상대방에게 공유</button>
                 </div>
              </>
            ) : (
@@ -378,7 +398,7 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, mainChannel, husbandI
                  <div style={{ display: 'flex', gap: '15px', justifyContent: 'center', marginBottom: '30px' }}>
                    {sharedCards.map((card, idx) => (
                      <div key={idx} style={{ width: '130px', borderRadius: '18px', overflow: 'hidden', boxShadow: '0 10px 20px rgba(0,0,0,0.1)' }}>
-                       <img src={card.image} style={{ width: '100%', height: '160px', objectFit: 'cover' }} />
+                       <img src={card.image} style={{ width: '100%', height: '160px', objectFit: 'cover' }} loading="eager" />
                        <div style={{ padding: '8px', background: '#F3E5F5', fontSize: '11px', fontWeight: 800, color: '#AB47BC' }}>#{card.category}</div>
                      </div>
                    ))}
@@ -396,4 +416,15 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, mainChannel, husbandI
   );
 };
 
-export default ImageCardGameView;
+const ImageThumb = React.memo(({ card, isSelected, order, onClick }) => (
+  <div onClick={onClick} style={{ position: 'relative', height: '140px', borderRadius: '18px', overflow: 'hidden', border: isSelected ? '4px solid #AB47BC' : '2px solid #EEE' }}>
+    <img src={card.image} style={{ width: '100%', height: '100%', objectFit: 'cover' }} loading="lazy" />
+    {isSelected && (
+      <div style={{ position: 'absolute', inset: 0, background: 'rgba(171, 71, 188, 0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ background: '#AB47BC', color: 'white', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900 }}>{order}</div>
+      </div>
+    )}
+  </div>
+));
+
+export default React.memo(ImageCardGameView);
