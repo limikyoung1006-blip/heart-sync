@@ -10,7 +10,8 @@ import {
   MessageCircle,
   Calendar,
   Info,
-  Sparkles
+  Sparkles,
+  ArrowRight
 } from 'lucide-react';
 import { CARD_DATA } from '../game/CardGameView';
 import HattiCharacter from '../ui/HattiCharacter';
@@ -39,8 +40,9 @@ const HomeView = ({
   supabase
 }) => {
   const [showGuide, setShowGuide] = useState(false);
-  const [memoInput, setMemoInput] = useState("");
+  const [memoInput, setMemoInput] = useState(myInfo?.todayMemo || "");
   const [isEditingMemo, setIsEditingMemo] = useState(false);
+  const [isPrayerExpanded, setIsPrayerExpanded] = useState(false);
   const [showNotifModal, setShowNotifModal] = useState(false);
 
   useEffect(() => {
@@ -546,63 +548,98 @@ const HomeView = ({
       </div>
 
       {/* 🌲 New: Small Forest / Heart Prayer Quick Access */}
+      {/* 🌲 Interactive Prayer Sharing Accordion */}
       <div 
-        onClick={() => onNav('heartPrayer')}
         style={{ 
-          padding: '24px', 
           background: 'linear-gradient(135deg, #FF9966, #FF5E62)', 
           borderRadius: '26px',
           boxShadow: '0 15px 35px rgba(255, 94, 98, 0.25)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
           marginBottom: '20px',
-          cursor: 'pointer'
+          overflow: 'hidden',
+          transition: '0.3s'
         }}
       >
-        <div style={{ display: 'flex', gap: '18px', alignItems: 'center' }}>
-          <div style={{ width: '56px', height: '56px', background: 'rgba(255,255,255,0.2)', borderRadius: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Heart size={28} color="white" fill="white" />
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <span style={{ color: 'rgba(255,255,255,0.8)', fontSize: '11px', fontWeight: 900, letterSpacing: '1px', marginBottom: '3px' }}>배우자에게 당신의</span>
-            <span style={{ color: 'white', fontSize: '18px', fontWeight: 900 }}>기도나눔</span>
-          </div>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          {partnerPrayers && partnerPrayers.length > 0 && (
-            <div style={{ background: 'rgba(255,255,255,0.15)', padding: '6px 12px', borderRadius: '100px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <Sparkles size={12} color="white" />
-              <span style={{ color: 'white', fontSize: '11px', fontWeight: 800 }}>최근 기도 도착</span>
+        <div 
+          onClick={() => setIsPrayerExpanded(!isPrayerExpanded)}
+          style={{ 
+            padding: '24px', 
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            cursor: 'pointer'
+          }}
+        >
+          <div style={{ display: 'flex', gap: '18px', alignItems: 'center' }}>
+            <div style={{ width: '56px', height: '56px', background: 'rgba(255,255,255,0.2)', borderRadius: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Heart size={28} color="white" fill="white" />
             </div>
-          )}
-          <ChevronLeft size={24} color="white" style={{ transform: 'rotate(180deg)', opacity: 0.6 }} />
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <span style={{ color: 'rgba(255,255,255,0.8)', fontSize: '11px', fontWeight: 900, letterSpacing: '1px', marginBottom: '3px' }}>배우자에게 당신의</span>
+              <span style={{ color: 'white', fontSize: '18px', fontWeight: 900 }}>기도나눔</span>
+            </div>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            {partnerPrayers && partnerPrayers.length > 0 && !isPrayerExpanded && (
+              <div style={{ background: 'rgba(255,255,255,0.15)', padding: '6px 12px', borderRadius: '100px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <Sparkles size={12} color="white" />
+                <span style={{ color: 'white', fontSize: '11px', fontWeight: 800 }}>기도 확인</span>
+              </div>
+            )}
+            <motion.div animate={{ rotate: isPrayerExpanded ? 90 : 180 }}>
+              <ChevronLeft size={24} color="white" style={{ opacity: 0.6 }} />
+            </motion.div>
+          </div>
         </div>
-      </div>
 
-      {partnerPrayers && partnerPrayers.length > 0 && (
-        <div style={{ 
-          background: 'white', 
-          padding: '20px', 
-          borderRadius: '24px', 
-          marginBottom: '25px', 
-          border: '1px solid #FFE4E6',
-          boxShadow: '0 8px 20px rgba(255, 94, 98, 0.05)'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
-             <div style={{ background: '#FFF1F2', padding: '6px', borderRadius: '8px' }}>
-               <Heart size={16} color="#FF5E62" fill="#FF5E62" />
-             </div>
-             <span style={{ fontSize: '13px', fontWeight: 900, color: '#E11D48' }}>배우자의 최신 기도</span>
-          </div>
-          <p style={{ fontSize: '14px', color: '#2D1F08', fontWeight: 600, lineHeight: 1.6, wordBreak: 'keep-all' }}>
-            "{partnerPrayers[0].text}"
-          </p>
-          <div style={{ marginTop: '8px', display: 'flex', justifyContent: 'flex-end' }}>
-            <span style={{ fontSize: '11px', color: '#9CA3AF', fontWeight: 600 }}>{partnerPrayers[0].date}</span>
-          </div>
-        </div>
-      )}
+        <AnimatePresence>
+          {isPrayerExpanded && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              style={{ overflow: 'hidden' }}
+            >
+              <div style={{ padding: '0 24px 24px 24px' }}>
+                <div style={{ background: 'rgba(255,255,255,0.15)', padding: '20px', borderRadius: '20px', marginBottom: '15px' }}>
+                  {partnerPrayers && partnerPrayers.length > 0 ? (
+                    <>
+                      <p style={{ color: 'white', fontSize: '15px', fontWeight: 700, lineHeight: 1.6, marginBottom: '10px' }}>
+                        "{partnerPrayers[0].text}"
+                      </p>
+                      <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                        <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: '11px', fontWeight: 700 }}>{partnerPrayers[0].date}</span>
+                      </div>
+                    </>
+                  ) : (
+                    <p style={{ color: 'white', fontSize: '14px', fontWeight: 700, textAlign: 'center' }}>
+                      아직 배우자가 남긴 기도가 없습니다.
+                    </p>
+                  )}
+                </div>
+                <button 
+                  onClick={(e) => { e.stopPropagation(); onNav('heartPrayer'); }}
+                  style={{ 
+                    width: '100%', 
+                    padding: '14px', 
+                    background: 'white', 
+                    color: '#FF5E62', 
+                    borderRadius: '16px', 
+                    border: 'none', 
+                    fontWeight: 900, 
+                    fontSize: '14px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px'
+                  }}
+                >
+                  나도 기도 남기러 가기 <ArrowRight size={16} />
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
 
       {/* Anniversary & Schedule Quick Preview */}
       <div style={{ display: 'flex', gap: '15px', marginBottom: '25px' }}>
