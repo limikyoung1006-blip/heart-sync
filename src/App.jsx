@@ -501,6 +501,15 @@ const HomeView = ({ user, userRole, coupleCode, mySignal, setMySignal, spouseSig
   const [showGuide, setShowGuide] = useState(false);
   const [memoInput, setMemoInput] = useState("");
   const [isEditingMemo, setIsEditingMemo] = useState(false);
+  const [showNotifModal, setShowNotifModal] = useState(false);
+
+  useEffect(() => {
+    // 알림 권한이 'default'일 때(물어보지 않은 상태) 진입 시 모달 띄우기
+    if (Notification.permission === 'default') {
+      const timer = setTimeout(() => setShowNotifModal(true), 1500);
+      return () => clearTimeout(timer);
+    }
+  }, []);
 
   const myInfo = (userRole === 'husband' ? husbandInfo : wifeInfo) || {};
   const spouseInfo = (userRole === 'husband' ? wifeInfo : husbandInfo) || {};
@@ -537,8 +546,60 @@ const HomeView = ({ user, userRole, coupleCode, mySignal, setMySignal, spouseSig
     return secretQs[index].question;
   }, []);
 
+  const handleRequestNotif = () => {
+    if ("Notification" in window) {
+      Notification.requestPermission().then(permission => {
+        setShowNotifModal(false);
+        if (permission === 'granted') {
+          window.location.reload();
+        }
+      });
+    } else {
+      setShowNotifModal(false);
+    }
+  };
+
   return (
     <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="flex flex-col w-full">
+      {/* 🔔 Notification Request Modal */}
+      <AnimatePresence>
+        {showNotifModal && (
+          <motion.div 
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(5px)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}
+          >
+            <motion.div 
+              initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 20 }}
+              style={{ background: 'white', borderRadius: '32px', width: '100%', maxWidth: '340px', padding: '40px 25px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', boxShadow: '0 25px 50px rgba(0,0,0,0.2)' }}
+            >
+              <div style={{ width: '80px', height: '80px', borderRadius: '50%', background: 'rgba(138, 96, 255, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '24px' }}>
+                <Bell size={40} color="#8A60FF" />
+              </div>
+              <h3 style={{ fontSize: '22px', fontWeight: 900, color: '#2D1F08', marginBottom: '12px' }}>알림을 켜주시겠어요?</h3>
+              <p style={{ fontSize: '15px', color: '#8B7355', fontWeight: 600, lineHeight: 1.6, wordBreak: 'keep-all', marginBottom: '30px' }}>
+                배우자가 보내는 소중한 마음 신호와<br/>
+                오늘의 대화 질문을 놓치지 않도록 도와드릴게요! 💌
+              </p>
+              
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', width: '100%' }}>
+                <button 
+                  onClick={handleRequestNotif}
+                  style={{ width: '100%', padding: '18px', borderRadius: '20px', background: '#8A60FF', color: 'white', fontWeight: 900, fontSize: '16px', border: 'none' }}
+                >
+                  지금 알림 받기
+                </button>
+                <button 
+                  onClick={() => setShowNotifModal(false)}
+                  style={{ width: '100%', padding: '15px', borderRadius: '20px', background: 'none', color: '#B08D3E', fontWeight: 800, fontSize: '14px', border: 'none' }}
+                >
+                  나중에 할게요
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <header className="brand-section" style={{ paddingTop: '25px', alignItems: 'flex-start', paddingLeft: '30px', gap: '2px' }}>
         <img 
           src="/logo_main.png" 
@@ -4435,7 +4496,7 @@ const OnboardingView = ({ user, userRole, setUserRole, onFinish }) => {
       raw: deepSelections
     };
     setDeepAnalysis(analysisResult);
-    setStep(8); // Go to result view
+    setStep(9); // Go to notification prompt (new step)
   };
 
   return (
@@ -4522,6 +4583,46 @@ const OnboardingView = ({ user, userRole, setUserRole, onFinish }) => {
                 style={{ background: 'none', border: 'none', color: '#8A60FF', fontWeight: 900, fontSize: '15px', borderBottom: '1.5px solid #8A60FF', paddingBottom: '2px' }}
               >
                 기존 연결 코드 입력하기
+              </button>
+            </div>
+          </motion.div>
+        )}
+
+        {step === 9 && (
+          <motion.div key="step9" initial={{ x: 20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} exit={{ x: -20, opacity: 0 }} style={{ display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'center', alignItems: 'center', textAlign: 'center' }}>
+            <div style={{ width: '100px', height: '100px', borderRadius: '50%', background: 'rgba(212, 175, 55, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '30px' }}>
+              <Bell size={48} color="#D4AF37" />
+            </div>
+            <h2 style={{ fontSize: '26px', fontWeight: 900, color: '#2D1F08', marginBottom: '15px' }}>알림을 켜고<br/>마음을 연결하세요!</h2>
+            <p style={{ fontSize: '16px', color: '#8B7355', fontWeight: 600, lineHeight: 1.6, marginBottom: '40px', wordBreak: 'keep-all' }}>
+              배우자의 신호를 실시간으로 확인하고,<br/>
+              함께하는 대화카드를 놓치지 않으려면<br/>
+              푸쉬 알림 허용이 필요해요. 💌
+            </p>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', width: '100%' }}>
+              <button 
+                onClick={() => {
+                  if ("Notification" in window) {
+                    Notification.requestPermission().then(permission => {
+                      if (permission === 'granted') {
+                        // Registration happens in App level useEffect
+                      }
+                      setStep(8); // Go to the result/finish view
+                    });
+                  } else {
+                    setStep(8);
+                  }
+                }}
+                style={{ width: '100%', padding: '20px', borderRadius: '25px', background: '#D4AF37', color: 'white', fontWeight: 900, fontSize: '17px', border: 'none', boxShadow: '0 10px 20px rgba(212, 175, 55, 0.2)' }}
+              >
+                알림 허용하고 시작하기
+              </button>
+              <button 
+                onClick={() => setStep(8)}
+                style={{ background: 'none', border: 'none', color: '#B08D3E', fontWeight: 700, fontSize: '14px' }}
+              >
+                나중에 설정할게요
               </button>
             </div>
           </motion.div>
@@ -5082,16 +5183,20 @@ const App = () => {
 
   useEffect(() => {
     if ("Notification" in window) {
-      if (Notification.permission !== "granted" && Notification.permission !== "denied") {
+      if (Notification.permission === "granted") {
+        setNotifPermission("granted");
+        subscribeToPushNotifications(); // 권한 보장 시 구독 시도
+      } else if (Notification.permission !== "denied") {
         Notification.requestPermission().then(permission => {
           setNotifPermission(permission);
           if (permission === 'granted') {
             console.log("Push notifications enabled!");
+            subscribeToPushNotifications();
           }
         });
       }
     }
-  }, []);
+  }, [user]); // 유저 로그인 정보가 있을 때 구독 정보 저장 가능하도록 추가
   useEffect(() => {
     if ('serviceWorker' in navigator) {
       const handleMessage = (event) => {
