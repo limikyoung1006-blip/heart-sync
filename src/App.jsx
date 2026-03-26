@@ -140,7 +140,7 @@ const CARD_DATA = [
   { id: "s4", category: "시크릿", question: "만약 우리에게 자유로운 24시간과 무제한 예산이 생긴다면, 가장 먼저 함께 하고 싶은 일은?" },
   { id: "s5", category: "시크릿", question: "최근 꿈속에서 배우자와 함께했던 장면 중 가장 기억에 남는 것은?" },
   { id: "s6", category: "시크릿", question: "사실 내가 입는 옷 중에서 당신이 정말 싫어하지만 참는 옷이 있어?" },
-  { id: "s7", category: "시크릿", question: "나에게 자랑하고 싶었지만 쑥스러워서 대침 넘겼던 작은 성취는 뭐야?" },
+  { id: "s7", category: "시크릿", question: "나에게 자랑하고 싶었지만 쑥스러워서 대충 넘겼던 작은 성취는 뭐야?" },
   { id: "s8", category: "시크릿", question: "내가 자고 있을 때, 나를 보며 속으로 몰래 했던 다짐이나 고백이 있어?" },
   { id: "s9", category: "시크릿", question: "나에게 말하지 않은, 사실은 내가 꼭 고쳐줬으면 하는 아주 사소한 습관은?" },
   { id: "s10", category: "시크릿", question: "나 몰래 비상금을 모으고 있다면, 그 돈으로 나랑 가장 하고 싶은 일은?" },
@@ -3136,8 +3136,9 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo, onU
   const filteredQuestions = useMemo(() => CARD_DATA.filter(q => q.category === category), [category]);
   const [currentQuestion, setCurrentQuestion] = useState(null);
   const [isWaiting, setIsWaiting] = useState(false);
-  const [waiterRole, setWaiterRole] = useState(null);
   const [turnOwner, setTurnOwner] = useState(null);
+  const [sessionCardCount, setSessionCardCount] = useState(0);
+  const [showFinishModal, setShowFinishModal] = useState(false);
 
   // 🚀 초고속 브로드캐스트 채널 설정
   const broadcastRef = useRef(null);
@@ -3338,6 +3339,11 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo, onU
       turnOwner: userRole,
       roundId: Math.random() // 강제 새로고침용 ID
     });
+
+    // 10회 도달 시 마무리 안내
+    const nextCount = sessionCardCount + 1;
+    setSessionCardCount(nextCount);
+    if (nextCount === 10) setShowFinishModal(true);
   };
 
   const handOverTurn = () => {
@@ -3415,6 +3421,49 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo, onU
 
   return (
     <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="flex flex-col items-center p-4" style={{ paddingBottom: '150px', paddingTop: '20px' }}>
+      {/* 🏁 Dialogue Finish Modal */}
+      <AnimatePresence>
+        {showFinishModal && (
+          <motion.div 
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(10px)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}
+          >
+            <motion.div 
+              initial={{ scale: 0.9, y: 30 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 30 }}
+              style={{ background: 'white', borderRadius: '35px', width: '100%', maxWidth: '340px', padding: '45px 30px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', boxShadow: '0 25px 60px rgba(0,0,0,0.3)' }}
+            >
+              <div style={{ width: '90px', height: '90px', borderRadius: '50%', background: 'rgba(212, 175, 55, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '30px' }}>
+                <Sparkles size={45} color="#D4AF37" />
+              </div>
+              <h3 style={{ fontSize: '24px', fontWeight: 900, color: '#2D1F08', marginBottom: '15px' }}>오늘의 열 번째 대화 완료!</h3>
+              <p style={{ fontSize: '15.5px', color: '#8B7355', fontWeight: 600, lineHeight: 1.6, wordBreak: 'keep-all', marginBottom: '35px' }}>
+                오늘 나눈 대화가 서로를 더 깊게<br/>
+                이해하는 시간이 되셨나요? ✨<br/>
+                이제 대화를 마무리하고 함께<br/>
+                달콤한 휴식을 취해볼까요?
+              </p>
+              
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', width: '100%' }}>
+                <button 
+                  onClick={onBack}
+                  style={{ width: '100%', padding: '20px', borderRadius: '22px', background: '#2D1F08', color: 'white', fontWeight: 900, fontSize: '17px', border: 'none' }}
+                >
+                  오늘의 대화 마무리하기
+                </button>
+                <button 
+                  onClick={() => {
+                    setShowFinishModal(false);
+                    setSessionCardCount(11); // 더 이상 자동 트리거되지 않게
+                  }}
+                  style={{ width: '100%', padding: '15px', borderRadius: '20px', background: 'none', color: '#B08D3E', fontWeight: 800, fontSize: '14px', border: 'none' }}
+                >
+                  조금 더 대화할래요
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
       <div className="w-full flex items-center justify-start mb-2">
         <button onClick={onBack} style={{ display: 'flex', alignItems: 'center', gap: '3px', background: 'none', border: 'none', cursor: 'pointer', padding: '8px 0' }}>
           <ChevronLeft size={20} color="#8A60FF" strokeWidth={3} />
