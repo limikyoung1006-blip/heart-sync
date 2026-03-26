@@ -4,8 +4,8 @@ import { ChevronLeft } from 'lucide-react';
 import HeartPrayerView from './HeartPrayerView';
 import IntimacyModal from './IntimacyModal';
 
-const IntimacyHubView = ({ user, userRole, coupleCode, supabase, mainChannel, onBack, partnerPrayers, setPartnerPrayers, bgImage, onBgUpload, partnerLabel, husbandInfo, wifeInfo, setHusbandInfo, setWifeInfo, updateProfileInfo }) => {
-  const [subTab, setSubTab] = useState('prayer'); // 'prayer' or 'garden'
+const IntimacyHubView = ({ user, userRole, coupleCode, supabase, mainChannel, onBack, partnerPrayers, setPartnerPrayers, bgImage, onBgUpload, partnerLabel, husbandInfo, wifeInfo, setHusbandInfo, setWifeInfo, updateProfileInfo, initialTab = 'prayer' }) => {
+  const [subTab, setSubTab] = useState(initialTab); // 'prayer' or 'garden'
   const [modalSubPage, setModalSubPage] = useState('main');
 
   useEffect(() => {

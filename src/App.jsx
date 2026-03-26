@@ -953,7 +953,6 @@ const App = () => {
           </div>
 
           <main className="main-content">
-            {/* 🛡️ Removed AnimatePresence to prevent stuck renders durante rapid signal updates */}
               {activeTab === 'home' && (
                 <HomeView 
                   key="home"
@@ -964,7 +963,7 @@ const App = () => {
                   setMySignal={handleSetMySignal}
                   spouseSignal={spouseSignal}
                   partnerPrayers={partnerPrayers}
-                  onIntimacyClick={() => setActiveTab('intimacy')}
+                  onIntimacyClick={() => setActiveTab('intimacyHub')}
                   onNav={(tab) => setActiveTab(tab)}
                   schedules={schedules}
                   husbandInfo={husbandInfo}
@@ -1033,8 +1032,6 @@ const App = () => {
               {activeTab === 'counseling' && (
                  <div className={`flex flex-col pt-4 ${counselingMode === 'chat' ? 'flex-1 min-h-0' : ''}`}>
                     {/* 💊 AI Hatti Sub-Navigation (Chat vs Solution) */}
-
-                    {/* 💊 AI Hatti Sub-Navigation (Chat vs Solution) */}
                    <div className="flex justify-center mb-4">
                      <div style={{ 
                        display: 'flex', 
@@ -1102,30 +1099,31 @@ const App = () => {
                    )}
                  </div>
               )}
+              {(activeTab === 'intimacyHub' || activeTab === 'heartPrayer') && (
+                  <IntimacyHubView 
+                    user={user}
+                    supabase={supabase}
+                    mainChannel={mainChannel}
+                    userRole={userRole} 
+                    coupleCode={coupleCode} 
+                    onBack={() => setActiveTab('home')}
+                    partnerPrayers={partnerPrayers}
+                    setPartnerPrayers={setPartnerPrayers}
+                    bgImage={intimacyBg}
+                    onBgUpload={setIntimacyBg}
+                    partnerLabel={partnerLabel}
+                    husbandInfo={husbandInfo}
+                    wifeInfo={wifeInfo}
+                    setHusbandInfo={setHusbandInfo}
+                    setWifeInfo={setWifeInfo}
+                    updateProfileInfo={updateProfileInfo}
+                    initialTab={activeTab === 'heartPrayer' ? 'prayer' : 'garden'}
+                  />
+              )}
               {activeTab === 'worship' && (
                 <WorshipView key="worship" userRole={userRole} coupleCode={coupleCode} />
               )}
-               {activeTab === 'heartPrayer' && (
-                 <IntimacyHubView 
-                   user={user}
-                   supabase={supabase}
-                   mainChannel={mainChannel}
-                   userRole={userRole} 
-                   coupleCode={coupleCode} 
-                   onBack={() => setActiveTab('home')}
-                   partnerPrayers={partnerPrayers}
-                   setPartnerPrayers={setPartnerPrayers}
-                   bgImage={intimacyBg}
-                   onBgUpload={setIntimacyBg}
-                   partnerLabel={partnerLabel}
-                   husbandInfo={husbandInfo}
-                   wifeInfo={wifeInfo}
-                   setHusbandInfo={setHusbandInfo}
-                   setWifeInfo={setWifeInfo}
-                 />
-               )}
-
-               {activeTab === 'settings' && (
+              {activeTab === 'settings' && (
                 <SettingsView 
                   key="settings" 
                   user={user}
@@ -1216,10 +1214,10 @@ const App = () => {
               label="가정예배" 
             />
             <NavItem 
-              active={activeTab === 'heartPrayer'} 
-              onClick={() => setActiveTab('heartPrayer')} 
-              icon={<Heart size={22} fill={activeTab === 'heartPrayer' ? appTheme.primary : "none"} color={activeTab === 'heartPrayer' ? appTheme.primary : undefined} />} 
-              label="작은숲" 
+              active={activeTab === 'profile'} 
+              onClick={() => setActiveTab('profile')} 
+              icon={<User size={22} fill={activeTab === 'profile' ? appTheme.primary : "none"} color={activeTab === 'profile' ? appTheme.primary : undefined} />} 
+              label="내 정보" 
             />
           </nav>
         </>

@@ -528,7 +528,7 @@ const HomeView = ({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          marginBottom: '20px',
+          marginBottom: '15px',
           cursor: 'pointer'
         }}
       >
@@ -537,11 +537,38 @@ const HomeView = ({
             <MessageCircle size={28} color="#D4AF37" />
           </div>
           <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <span style={{ color: '#D4AF37', fontSize: '12px', fontWeight: 900, letterSpacing: '1px', marginBottom: '3px' }}>INTIMACY HUB</span>
+            <span style={{ color: '#D4AF37', fontSize: '11px', fontWeight: 900, letterSpacing: '1px', marginBottom: '3px' }}>둘만의 대화 공간</span>
             <span style={{ color: 'white', fontSize: '18px', fontWeight: 900 }}>소통의 화원 입장하기</span>
           </div>
         </div>
         <ChevronLeft size={24} color="#D4AF37" style={{ transform: 'rotate(180deg)', opacity: 0.6 }} />
+      </div>
+
+      {/* 🌲 New: Small Forest / Heart Prayer Quick Access */}
+      <div 
+        onClick={() => onNav('heartPrayer')}
+        style={{ 
+          padding: '24px', 
+          background: 'linear-gradient(135deg, #FF9966, #FF5E62)', 
+          borderRadius: '26px',
+          boxShadow: '0 15px 35px rgba(255, 94, 98, 0.25)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginBottom: '20px',
+          cursor: 'pointer'
+        }}
+      >
+        <div style={{ display: 'flex', gap: '18px', alignItems: 'center' }}>
+          <div style={{ width: '56px', height: '56px', background: 'rgba(255,255,255,0.2)', borderRadius: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Heart size={28} color="white" fill="white" />
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <span style={{ color: 'rgba(255,255,255,0.8)', fontSize: '11px', fontWeight: 900, letterSpacing: '1px', marginBottom: '3px' }}>은밀한 마음 나눔</span>
+            <span style={{ color: 'white', fontSize: '18px', fontWeight: 900 }}>속마음 기도원 입장하기</span>
+          </div>
+        </div>
+        <ChevronLeft size={24} color="white" style={{ transform: 'rotate(180deg)', opacity: 0.6 }} />
       </div>
 
       {/* Anniversary & Schedule Quick Preview */}
