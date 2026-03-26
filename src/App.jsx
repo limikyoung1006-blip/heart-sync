@@ -1,72 +1,41 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
-// Last Update: Shared Navigation & Turn Sync - 2026-03-22 21:20
+import React, { useState, useEffect, useCallback, useMemo, useRef, lazy, Suspense } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  Heart, 
-  MessageCircle, 
-  MessageSquare,
-  Calendar, 
-  User, 
-  Smartphone, 
-  Settings, 
-  Lock, 
-  BarChart3, 
-  Info, 
-  Share2, 
-  Users, 
-  Sparkles, 
-  ArrowRight, 
-  ChevronLeft, 
-  ChevronDown, 
-  Plus, 
-  Trash2, 
-  Edit2,
-  RefreshCw,
-  Camera,
-  Upload,
-  CheckCircle2,
-  ListTodo,
-  AlertCircle,
-  Palette,
-  ClipboardList,
-  Fingerprint,
-  Flame,
-  Clipboard,
-  Bell,
-  Home,
-  BookOpen,
-  Zap,
-  Send,
-  Music,
-  Smile,
-  ShieldCheck,
-  StickyNote,
-  X,
-  Activity,
-  Image as ImageIcon
+  Heart, Calendar, Settings, Bell, User, MessageCircle, MessageSquare,
+  Sparkles, RefreshCw, Home, Users, Info, HelpCircle, 
+  ChevronRight, ArrowLeft, BookOpen, Clock, Activity, PenTool, Layout,
+  BarChart3, ArrowRight, ChevronLeft, ChevronDown, Plus, Trash2, Edit2,
+  Camera, Upload, CheckCircle2, ListTodo, AlertCircle, Palette, ClipboardList,
+  Fingerprint, Flame, Clipboard, Book, Zap, Send, Music, Smile, ShieldCheck,
+  StickyNote, X, Image as ImageIcon
 } from 'lucide-react';
+import { supabase } from './supabase';
 
-import CardGameView, { CARD_DATA } from './components/game/CardGameView';
-import ImageCardGameView from './components/game/ImageCardGameView';
-import DialogueChoiceView from './components/dialogue/DialogueChoiceView';
-import GameGuideView from './components/dialogue/GameGuideView';
-import HomeView from './components/home/HomeView';
-import SettingsView from './components/settings/SettingsView';
+// Lazy Loaded Components
+const HomeView = lazy(() => import('./components/home/HomeView'));
+const CardGameView = lazy(() => import('./components/game/CardGameView'));
+const ImageCardGameView = lazy(() => import('./components/game/ImageCardGameView'));
+const CalendarView = lazy(() => import('./components/calendar/CalendarView'));
+const CounselingView = lazy(() => import('./components/counseling/CounselingView'));
+const ChatView = lazy(() => import('./components/counseling/ChatView'));
+const SolutionView = lazy(() => import('./components/counseling/SolutionView'));
+const IntimacyHubView = lazy(() => import('./components/intimacy/IntimacyHubView'));
+const IntimacyModal = lazy(() => import('./components/intimacy/IntimacyModal'));
+const WorshipView = lazy(() => import('./components/worship/WorshipView'));
+const SettingsView = lazy(() => import('./components/settings/SettingsView'));
+const ProfileView = lazy(() => import('./components/profile/ProfileView'));
+const AdminView = lazy(() => import('./components/admin/AdminView'));
+const GameGuideView = lazy(() => import('./components/dialogue/GameGuideView'));
+const DialogueChoiceView = lazy(() => import('./components/dialogue/DialogueChoiceView'));
+
 import AuthView from './components/auth/AuthView';
 import OnboardingView from './components/auth/OnboardingView';
-import AdminView from './components/admin/AdminView';
-import ChatView from './components/counseling/ChatView';
-import HattiCharacter from './components/ui/HattiCharacter';
-import IntimacyHubView from './components/intimacy/IntimacyHubView';
-import HeartPrayerView from './components/intimacy/HeartPrayerView';
-import IntimacyModal from './components/intimacy/IntimacyModal';
-import WorshipView from './components/worship/WorshipView';
-import SolutionView from './components/counseling/SolutionView';
 import AppGuideView from './components/ui/AppGuideView';
-import DeepAnalysisView from './components/auth/DeepAnalysisView';
-import SecretAnswerInteraction from './components/game/SecretAnswerInteraction';
-import ProfileView from './components/profile/ProfileView';
+import LoadingSpinner from './components/ui/LoadingSpinner';
+import ReportView from './components/ui/ReportView';
 
+// App constants
+const APP_DEBUG = true;
 
 const HATTI_TODOS = [
   { id: 1, action: "말하기", text: "배우자에게 '오늘 하루도 정말 고생 많았어'라고 눈을 맞추며 말해주세요." },
@@ -75,7 +44,6 @@ const HATTI_TODOS = [
   { id: 4, action: "선물", text: "퇴근길에 배우자가 좋아하는 편의점 간식을 하나 사서 건네보세요." },
   { id: 5, action: "경청", text: "오늘 배우자의 이야기를 10분 동안 조언 없이 온전히 들어주세요." }
 ];
-import { supabase } from './supabase';
 
 // Initial configuration removed - now managed via state and onboarding
 const NavItem = ({ active, onClick, icon, label }) => (
@@ -906,8 +874,7 @@ const App = () => {
           <div className="top-bar" style={{ 
             visibility: (activeTab === 'intimacy' || activeTab === 'heartPrayer') ? 'hidden' : 'visible',
             borderBottom: `1px solid ${appTheme.primary}20`,
-            background: 'rgba(255, 255, 255, 0.4)',
-            backdropFilter: 'blur(10px)'
+            background: 'rgba(255, 255, 255, 0.9)', 
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -954,15 +921,16 @@ const App = () => {
 
           <main className="main-content" style={{ background: appTheme.bg }}>
             <AnimatePresence initial={false}>
-              {activeTab === 'home' && (
-                <motion.div 
-                  key="homeTab"
-                  initial={{ opacity: 0 }} 
-                  animate={{ opacity: 1 }} 
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.15 }}
-                  style={{ width: '100%', height: '100%' }}
-                >
+              <Suspense fallback={<div className="flex items-center justify-center p-10"><RefreshCw className="animate-spin" color={appTheme.primary} /></div>}>
+                {activeTab === 'home' && (
+                  <motion.div 
+                    key="homeTab"
+                    initial={{ opacity: 0 }} 
+                    animate={{ opacity: 1 }} 
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.15 }}
+                    style={{ width: '100%', height: '100%' }}
+                  >
                   <HomeView 
                     key="home"
                     userRole={userRole}
@@ -1128,6 +1096,7 @@ const App = () => {
                   <ProfileView key="profile" user={user} userRole={userRole} coupleCode={coupleCode} setHusbandInfo={setHusbandInfo} setWifeInfo={setWifeInfo} husbandInfo={husbandInfo} wifeInfo={wifeInfo} onUpdateProfile={updateProfileInfo} myInfo={userRole === 'husband' ? husbandInfo : wifeInfo} isFullPage={true} />
                 </motion.div>
               )}
+            </Suspense>
             </AnimatePresence>
           </main>
 
