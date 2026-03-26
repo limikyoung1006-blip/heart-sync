@@ -212,12 +212,10 @@ body {
   z-index: 5;
   border-radius: 28px;
   /* Frosted Glass + User Background Image (More Visible) */
-  background-color: rgba(255, 255, 255, 0.05);
+  background-color: rgba(255, 255, 255, 0.9);
   background-image: url('/secret_card_bg.png');
   background-size: cover;
   background-position: center;
-  backdrop-filter: blur(8px) saturate(120%);
-  -webkit-backdrop-filter: blur(8px) saturate(120%);
   border-radius: 32px;
   /* overflow: hidden; -> Removed to show full badge circle */
   
@@ -384,9 +382,7 @@ body {
 
 .feat-btn {
   /* Premium Frosted Glass Background */
-  background: rgba(255, 255, 255, 0.32);
-  backdrop-filter: blur(20px) saturate(170%) brightness(1.1);
-  -webkit-backdrop-filter: blur(20px) saturate(170%) brightness(1.1);
+  background: rgba(255, 255, 255, 0.9);
   border-radius: 22px;
   padding: 22px 14px;
   cursor: pointer;
@@ -454,9 +450,7 @@ body {
   height: 94px;
   padding-bottom: 28px;
   /* 🍶 Light Beige Warm Glass */
-  background: rgba(255, 252, 242, 0.85);
-  backdrop-filter: blur(30px) saturate(160%);
-  -webkit-backdrop-filter: blur(30px) saturate(160%);
+  background: rgba(255, 252, 242, 0.98);
   border-top: 1px solid rgba(212, 175, 55, 0.2);
   display: flex;
   justify-content: space-around;
@@ -554,8 +548,7 @@ body {
 }
 
 .signal-status-card {
-  background: rgba(255, 255, 255, 0.45);
-  backdrop-filter: blur(25px);
+  background: rgba(255, 255, 255, 0.95);
   border-radius: 22px;
   padding: 18px;
   box-shadow: 0 0 0 1.5px rgba(245, 208, 96, 0.4);
@@ -635,8 +628,7 @@ body {
 }
 
 .worship-section-card {
-  background: rgba(255, 255, 255, 0.65);
-  backdrop-filter: blur(20px);
+  background: rgba(255, 255, 255, 0.95);
   border-radius: 30px;
   padding: 24px;
   border: 1px solid rgba(255, 255, 255, 0.4);

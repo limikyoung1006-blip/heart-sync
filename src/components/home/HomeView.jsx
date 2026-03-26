@@ -108,7 +108,7 @@ const HomeView = ({
         {showNotifModal && (
           <motion.div 
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(5px)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}
+            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}
           >
             <motion.div 
               initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 20 }}
@@ -389,8 +389,7 @@ const HomeView = ({
                     color: '#6F4E00', 
                     fontWeight: 900, 
                     marginTop: '15px',
-                    background: 'rgba(255,255,255,0.85)',
-                    backdropFilter: 'blur(10px)',
+                    background: 'rgba(255,255,255,0.95)',
                     padding: '8px 20px',
                     borderRadius: '100px',
                     boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
@@ -436,8 +435,7 @@ const HomeView = ({
                     }}
                     style={{
                       marginTop: '30px',
-                      background: 'rgba(255, 255, 255, 0.65)',
-                      backdropFilter: 'blur(8px)',
+                      background: 'rgba(255, 255, 255, 0.9)',
                       border: '1px solid rgba(139, 101, 0, 0.2)',
                       padding: '8px 18px',
                       borderRadius: '100px',

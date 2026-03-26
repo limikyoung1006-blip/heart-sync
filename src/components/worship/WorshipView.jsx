@@ -328,4 +328,4 @@ const WorshipView = ({ userRole, coupleCode }) => {
   );
 };
 
-export default WorshipView;
+export default React.memo(WorshipView);

@@ -46,14 +46,14 @@ const HATTI_TODOS = [
 ];
 
 // Initial configuration removed - now managed via state and onboarding
-const NavItem = ({ active, onClick, icon, label }) => (
+const NavItem = React.memo(({ active, onClick, icon, label }) => (
   <div onClick={onClick} className={`nav-item ${active ? 'active' : ''}`}>
     <div className="nav-icon-wrapper">
       {icon}
     </div>
     <span>{label}</span>
   </div>
-);
+));
 
 const MenuBtn = ({ icon, title, desc, onClick }) => (
   <button className="menu-btn" onClick={onClick}>
@@ -1299,7 +1299,4 @@ const App = () => {
   );
 };
 
-export default App;
-
-
-
+export default React.memo(App);
