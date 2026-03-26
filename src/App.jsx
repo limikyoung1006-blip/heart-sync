@@ -637,7 +637,7 @@ const App = () => {
            if (payload.new.navId !== lastNotifiedTabNavIdRef.current) {
              lastNotifiedTabNavIdRef.current = payload.new.navId;
              const senderLabel = payload.new.user_role === 'husband' ? '남편' : '아내';
-             toast.info(`${senderLabel}님이 ${payload.new.requestTab} 탭으로 초대했어요!`);
+             // Removed toast.info due to missing import
              sendNativeNotification(
                `화면 공유 요청 📱`,
                `${senderLabel}님이 ${payload.new.requestTab} 화면을 함께 보자고 해요!`,
@@ -757,7 +757,6 @@ const App = () => {
       .on('broadcast', { event: 'secret-revealed' }, ({ payload }) => {
         if (payload?.sender !== userRole) {
            const senderLabel = payload.sender === 'husband' ? '남편' : '아내';
-           toast.success(`${senderLabel}님께서 비밀 질문의 정답을 확인했습니다! 🔓`);
            sendNativeNotification(`비밀 질문 공개! 🔓`, `${senderLabel}님께서 당신의 비밀 답변을 확인했습니다. 대화를 나눠보세요!`, 'intimacy');
            setIncomingCardCall({ type: 'secret-revealed', sender: senderLabel });
         }

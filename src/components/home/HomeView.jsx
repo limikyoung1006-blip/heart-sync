@@ -39,6 +39,9 @@ const HomeView = ({
   notifPermission, mainChannel,
   supabase
 }) => {
+  const myInfo = (userRole === 'husband' ? husbandInfo : wifeInfo) || {};
+  const spouseInfo = (userRole === 'husband' ? wifeInfo : husbandInfo) || {};
+
   const [showGuide, setShowGuide] = useState(false);
   const [memoInput, setMemoInput] = useState(myInfo?.todayMemo || "");
   const [isEditingMemo, setIsEditingMemo] = useState(false);
@@ -52,9 +55,6 @@ const HomeView = ({
       return () => clearTimeout(timer);
     }
   }, [notifPermission]);
-
-  const myInfo = (userRole === 'husband' ? husbandInfo : wifeInfo) || {};
-  const spouseInfo = (userRole === 'husband' ? wifeInfo : husbandInfo) || {};
 
   useEffect(() => {
     if (myInfo?.todayMemo) setMemoInput(myInfo.todayMemo);
