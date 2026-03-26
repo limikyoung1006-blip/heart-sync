@@ -180,7 +180,7 @@ const App = () => {
   const lastNotifiedGardenNavIdRef = React.useRef(null);
   const lastNotifiedTabNavIdRef = React.useRef(null);
   const activeTabRef = React.useRef(activeTab);
-  const lastNavIdRef = React.useRef(null); 
+  const lastNavIdRef = React.useRef(localStorage.getItem('lastProcessedNavId')); 
   const [notifPermission, setNotifPermission] = useState(typeof window !== 'undefined' ? Notification.permission : 'default');
 
   // 🔔 Native Push Notification Helper (with Haptic Vibration)
@@ -597,10 +597,13 @@ const App = () => {
         } else if (info?.signal && role === userRole && !signalLockRef.current) {
            setMySignal(info.signal);
         }
-        
-        if (payload.new.requestTab && payload.new.navId !== lastNavIdRef.current && payload.new.user_role !== userRole) {
-           setActiveTab(payload.new.requestTab);
-           lastNavIdRef.current = payload.new.navId; 
+        const requestTab = info?.requestTab;
+        const navId = info?.navId;
+        if (requestTab && navId && navId !== lastNavIdRef.current && role !== userRole) {
+          lastNavIdRef.current = navId;
+          localStorage.setItem('lastProcessedNavId', navId);
+          setActiveTab(requestTab);
+        }
            
            if (payload.new.navId !== lastNotifiedTabNavIdRef.current) {
              lastNotifiedTabNavIdRef.current = payload.new.navId;
@@ -794,10 +797,10 @@ const App = () => {
   // 🚀 공유 화면 전환 (UUID 기반으로 확실하게 트리거)
   const handleSharedNavigate = async (tabName) => {
     setActiveTab(tabName);
-    const navId = Math.random().toString(36).substring(7); // 랜덤 ID 생성
-    lastNavIdRef.current = navId; // 내 기기에서는 중복 반응 안 하도록 저장
+    const navId = Math.random().toString(36).substring(7); 
+    lastNavIdRef.current = navId;
+    localStorage.setItem('lastProcessedNavId', navId);
     
-    // 🔔 대화카드 요청일 경우 배우자에게 직접 방송 알림 발신
     if (tabName === 'cardGame' && mainChannel) {
       mainChannel.send({
         type: 'broadcast',
@@ -806,12 +809,24 @@ const App = () => {
       });
     }
 
-    // 내 프로필의 info에 'requestTab'과 'navId'를 실어 배우자에게 보냄 (화면 전환 유도)
     await updateProfileInfo(undefined, { 
       requestTab: tabName, 
       navId: navId,
       updated_at: Date.now() 
     });
+
+    // 🛡️ Cleanup navigation request after 5 seconds to prevent re-triggers
+    setTimeout(async () => {
+      try {
+        const { data: current } = await supabase.from('profiles').select('info').eq('id', user.id).single();
+        if (current?.info?.navId === navId) {
+          const cleanInfo = { ...current.info };
+          delete cleanInfo.requestTab;
+          delete cleanInfo.navId;
+          await supabase.from('profiles').update({ info: cleanInfo }).eq('id', user.id);
+        }
+      } catch (e) {}
+    }, 5000);
   };
 
   return (

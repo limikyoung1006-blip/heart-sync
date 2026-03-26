@@ -73,12 +73,22 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, mainChannel, husbandI
   }, [userRole]);
 
   const drawNewCard = useCallback((targetCat = null) => {
+    if (isImageLoading) return; // 🛡️ Double-tap protection
+    
     const activeCat = targetCat || category;
     const pool = activeCat === '전체' ? IMAGE_CARD_DATA : IMAGE_CARD_DATA.filter(q => q.category === activeCat);
     
-    // Increased History threshold for better randomization
+    if (pool.length === 0) return;
+
+    // 🛡️ Find available cards not in the recent history
     const available = pool.filter(q => !history.includes(q.id));
-    const finalPool = available.length > 0 ? available : pool;
+    
+    // Determine the next target pool (if empty, reset history for this category)
+    let finalPool = available;
+    if (available.length === 0) {
+      finalPool = pool;
+      // We don't clear the whole history, but we allow repeating the first one now
+    }
 
     const nextQ = finalPool[Math.floor(Math.random() * finalPool.length)];
 
@@ -89,27 +99,28 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, mainChannel, husbandI
       
       setHistory(prev => {
         const nextH = [...prev, nextQ.id];
-        // Only reset when we've seen 85% of the pool
-        if (nextH.length > pool.length * 0.85) return nextH.slice(pool.length * 0.5);
+        // If history gets too large (relative to total pool), keep only recent 50%
+        if (nextH.length > IMAGE_CARD_DATA.length * 0.8) {
+          return nextH.slice(Math.floor(IMAGE_CARD_DATA.length * 0.4));
+        }
         return nextH;
       });
 
-      setTimeout(() => {
-        setCurrentQuestion(nextQ);
-        sendBroadcast({ 
-          questionId: nextQ.id,
-          sender: userRole, 
-          isFlipped: false, 
-          turnOwner: userRole, 
-          category: activeCat
-        });
-        
-        const nextCount = sessionCardCount + 1;
-        setSessionCardCount(nextCount);
-        if (nextCount === 10) setShowFinishModal(true);
-      }, 30);
+      // ⏱️ Delay actual transition slightly to allow AnimatePresence / Loading state to show
+      setCurrentQuestion(nextQ);
+      sendBroadcast({ 
+        questionId: nextQ.id,
+        sender: userRole, 
+        isFlipped: false, 
+        turnOwner: userRole, 
+        category: activeCat
+      });
+      
+      const nextCount = sessionCardCount + 1;
+      setSessionCardCount(nextCount);
+      if (nextCount === 10) setShowFinishModal(true);
     }
-  }, [category, history, sessionCardCount, userRole, sendBroadcast]);
+  }, [category, history, sessionCardCount, userRole, sendBroadcast, isImageLoading]);
 
   const initPick2Mode = useCallback(() => {
     const shuffled = [...IMAGE_CARD_DATA].sort(() => Math.random() - 0.5);
@@ -303,9 +314,25 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, mainChannel, husbandI
           </div>
 
           <button 
-            disabled={!isMyTurn}
+            disabled={!isMyTurn || isImageLoading}
             onClick={() => drawNewCard()}
-            style={{ width: '100%', maxWidth: '310px', padding: '20px', borderRadius: '22px', background: isMyTurn ? '#AB47BC' : '#CCC', color: 'white', fontWeight: 900, border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', transition: 'all 0.3s', boxShadow: isMyTurn ? '0 10px 25px rgba(171, 71, 188, 0.3)' : 'none' }}
+            style={{ 
+              width: '100%', 
+              maxWidth: '310px', 
+              padding: '20px', 
+              borderRadius: '22px', 
+              background: (isMyTurn && !isImageLoading) ? '#AB47BC' : '#CCC', 
+              color: 'white', 
+              fontWeight: 900, 
+              border: 'none', 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center', 
+              gap: '12px', 
+              transition: 'all 0.3s', 
+              boxShadow: (isMyTurn && !isImageLoading) ? '0 10px 25px rgba(171, 71, 188, 0.3)' : 'none',
+              opacity: isImageLoading ? 0.7 : 1
+            }}
           >
             <RefreshCw size={20} className={isImageLoading ? 'animate-spin' : ''} /> 
             {isImageLoading ? '질문 생성 중...' : '다른 이미지 뽑기'}
