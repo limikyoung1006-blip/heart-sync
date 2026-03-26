@@ -574,6 +574,20 @@ const App = () => {
     const final_code = (coupleCode || "").toLowerCase().trim();
     if (!final_code) return;
 
+    // 🧹 DB 레거시 요청 초기화 (무한루프 방지)
+    const cleanupLegacyRequest = async () => {
+      try {
+        const { data } = await supabase.from('profiles').select('info').eq('id', user.id).single();
+        if (data?.info?.requestTab || data?.info?.navId) {
+          const cleanInfo = { ...data.info };
+          delete cleanInfo.requestTab;
+          delete cleanInfo.navId;
+          await supabase.from('profiles').update({ info: cleanInfo }).eq('id', user.id);
+        }
+      } catch (e) {}
+    };
+    cleanupLegacyRequest();
+
     const channel = supabase.channel(`couple-${final_code}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, payload => {
         if (!payload.new || payload.new.couple_id?.toLowerCase() !== final_code) return;
@@ -597,37 +611,15 @@ const App = () => {
         } else if (info?.signal && role === userRole && !signalLockRef.current) {
            setMySignal(info.signal);
         }
-        const requestTab = info?.requestTab;
-        const navId = info?.navId;
-        if (requestTab && navId && navId !== lastNavIdRef.current && role !== userRole) {
-          lastNavIdRef.current = navId;
-          localStorage.setItem('lastProcessedNavId', navId);
-          setActiveTab(requestTab);
-        }
-           
-           if (payload.new.navId !== lastNotifiedTabNavIdRef.current) {
-             lastNotifiedTabNavIdRef.current = payload.new.navId;
-             const senderLabel = payload.new.user_role === 'husband' ? '남편' : '아내';
-             // Removed toast.info due to missing import
-             sendNativeNotification(
-               `화면 공유 요청 📱`,
-               `${senderLabel}님이 ${payload.new.requestTab} 화면을 함께 보자고 해요!`,
-               payload.new.requestTab
-             );
-           }
-        }
-
-        // 🌿 Garden Message Catch-up (Fail-safe for missed broadcasts)
-        if (info?.gardenNavId && role !== userRole && info.gardenNavId !== lastNotifiedGardenNavIdRef.current) {
-          lastNotifiedGardenNavIdRef.current = info.gardenNavId;
-          const senderLabel = role === 'husband' ? '남편' : '아내';
-          sendNativeNotification(
-            `${senderLabel}님의 화원 메시지 🌿`,
-            info.gardenMsg?.substring(0, 50) || '새로운 메시지가 도착했습니다.',
-            'heartPrayer'
-          );
+      })
+      .on('broadcast', { event: 'nav-trigger' }, ({ payload }) => {
+        if (payload.sender !== userRole && payload.tab && payload.navId !== lastNavIdRef.current) {
+          lastNavIdRef.current = payload.navId;
+          localStorage.setItem('lastProcessedNavId', payload.navId);
+          setActiveTab(payload.tab);
         }
       })
+
       .on('broadcast', { event: 'signal-changed' }, ({ payload }) => {
         if (payload.sender !== userRole) {
            if (payload.signal !== lastSpouseSignalRef.current) {
@@ -755,9 +747,6 @@ const App = () => {
         if (status === 'CLOSED' || status === 'CHANNEL_ERROR') {
           setSyncStatus('ERROR');
           setMainChannel(null);
-          if (isSetupDone && coupleCode) {
-             setTimeout(() => { window.location.reload(); }, 3000);
-          }
         }
       });
 
@@ -794,39 +783,34 @@ const App = () => {
     }
   };
 
-  // 🚀 공유 화면 전환 (UUID 기반으로 확실하게 트리거)
   const handleSharedNavigate = async (tabName) => {
     setActiveTab(tabName);
     const navId = Math.random().toString(36).substring(7); 
     lastNavIdRef.current = navId;
     localStorage.setItem('lastProcessedNavId', navId);
     
-    if (tabName === 'cardGame' && mainChannel) {
+    // Use Real-time Broadcast for navigation (Fast & Ephemeral)
+    if (mainChannel) {
       mainChannel.send({
         type: 'broadcast',
-        event: 'card-game-call',
-        payload: { sender: userRole, category: 'general' }
+        event: 'nav-trigger',
+        payload: { sender: userRole, tab: tabName, navId }
       });
+      
+      if (tabName === 'cardGame') {
+        mainChannel.send({
+          type: 'broadcast',
+          event: 'card-game-call',
+          payload: { sender: userRole, category: 'general' }
+        });
+      }
     }
 
+    // Still update profile as a background record, but the listener now ignores it for navigation
     await updateProfileInfo(undefined, { 
-      requestTab: tabName, 
-      navId: navId,
+      lastActiveTab: tabName,
       updated_at: Date.now() 
     });
-
-    // 🛡️ Cleanup navigation request after 5 seconds to prevent re-triggers
-    setTimeout(async () => {
-      try {
-        const { data: current } = await supabase.from('profiles').select('info').eq('id', user.id).single();
-        if (current?.info?.navId === navId) {
-          const cleanInfo = { ...current.info };
-          delete cleanInfo.requestTab;
-          delete cleanInfo.navId;
-          await supabase.from('profiles').update({ info: cleanInfo }).eq('id', user.id);
-        }
-      } catch (e) {}
-    }, 5000);
   };
 
   return (
