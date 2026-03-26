@@ -555,6 +555,137 @@ const SecretAnswerInteraction = ({
     </div>
   );
 };
+/* 📖 Game Guide View (Explanation Modal) */
+const GameGuideView = ({ gameId, onStart, onBack }) => {
+  const guideData = {
+    cardGame: {
+      title: '언어 대화 카드',
+      subtitle: 'DEEP DIALOGUE CARDS',
+      description: '평소에 나누기 힘들었던 깊은 테마의 질문들을 통해 서로의 진심을 알아가는 시간입니다.',
+      features: [
+        '5가지 특별한 테마 (일상, 관계, 추억, 상상, 신앙)',
+        '부드러운 질문으로 시작하는 자연스러운 대화',
+        '서로에 대해 한 걸음 더 깊이 알아가는 경험'
+      ],
+      icon: <MessageSquare size={48} color="#D4AF37" />,
+      color: '#FFF9C4',
+      primaryColor: '#D4AF37',
+      accentColor: '#FBC02D',
+      buttonText: '대화 시작하기'
+    },
+    imageGame: {
+      title: 'HEART-SYNC',
+      subtitle: 'IMAGE SYNCHRONIZATION',
+      description: '제시된 키워드에 어울리는 이미지를 골라보세요. 두 분의 감성 주파수가 얼마나 일치하는지 확인해볼까요?',
+      features: [
+        '방식 1: 주제별 이미지 1장을 통한 깊은 감성 대화',
+        '방식 2: 10장의 후보 카드 중 2장을 골라 마음 맞춰보기',
+        '서로의 선택을 확인하며 느끼는 짜릿한 일치감',
+        '말하지 않아도 통하는 우리만의 텔레파시 확인'
+      ],
+      icon: <ImageIcon size={48} color="#AB47BC" />,
+      color: '#F3E5F5',
+      primaryColor: '#AB47BC',
+      accentColor: '#CE93D8',
+      buttonText: '동기화 시작하기'
+    }
+  };
+
+  const data = guideData[gameId];
+  if (!data) return null;
+
+  return (
+    <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} className="flex flex-col items-center p-6 bg-white min-h-screen" style={{ paddingTop: '50px' }}>
+      <header className="w-full flex items-center mb-10">
+        <button onClick={onBack} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '10px' }}>
+           <ChevronLeft size={28} color="#2D1F08" />
+        </button>
+      </header>
+      
+      <div className="flex-1 flex flex-col items-center text-center">
+        <motion.div initial={{ scale: 0.8 }} animate={{ scale: 1 }} transition={{ type: 'spring' }} className="flex items-center justify-center mb-6" style={{ width: '100px', height: '100px', borderRadius: '30px', background: data.color, boxShadow: `0 15px 35px ${data.primaryColor}30` }}>
+          {data.icon}
+        </motion.div>
+        
+        <span style={{ fontSize: '13px', fontWeight: 900, color: data.primaryColor, letterSpacing: '2px', marginBottom: '10px' }}>{data.subtitle}</span>
+        <h2 style={{ fontSize: '32px', fontWeight: 900, color: '#2D1F08', marginBottom: '20px' }}>{data.title}</h2>
+        <p style={{ fontSize: '15px', color: '#64748B', fontWeight: 600, lineHeight: 1.6, marginBottom: '40px', wordBreak: 'keep-all', maxWidth: '280px' }}>{data.description}</p>
+        
+        <div style={{ width: '100%', background: `${data.color}50`, padding: '30px 24px', borderRadius: '32px', textAlign: 'left', marginBottom: '40px' }}>
+          <h4 style={{ fontSize: '15px', fontWeight: 900, color: data.primaryColor, marginBottom: '18px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+             <Sparkles size={18} /> 사용 안내
+          </h4>
+          <div className="flex flex-col gap-4">
+            {data.features.map((f, i) => (
+              <div key={i} className="flex gap-3 items-start" style={{ display: 'flex' }}>
+                 <CheckCircle2 size={18} color={data.primaryColor} style={{ marginTop: '2px', flexShrink: 0 }} />
+                 <span style={{ fontSize: '14px', color: '#444', fontWeight: 700, lineHeight: 1.4 }}>{f}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+      
+      <button 
+        onClick={onStart} 
+        style={{ width: '100%', padding: '20px', borderRadius: '24px', background: data.primaryColor, color: 'white', fontWeight: 900, fontSize: '18px', border: 'none', boxShadow: `0 10px 25px ${data.primaryColor}40`, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px' }}
+      >
+        <Sparkles size={20} fill="white" />
+        {data.buttonText}
+      </button>
+    </motion.div>
+  );
+};
+
+/* 🃏 Dialogue Choice View (Question vs Image) */
+const DialogueChoiceView = ({ onSelect, onBack }) => {
+  return (
+    <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="flex flex-col items-center p-6 bg-white min-h-screen" style={{ paddingTop: '50px' }}>
+       <header className="w-full mb-8">
+          <button onClick={onBack} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
+             <ChevronLeft size={28} color="#2D1F08" />
+          </button>
+       </header>
+       
+       <div className="text-center mb-10">
+          <h2 style={{ fontSize: '28px', fontWeight: 900, color: '#2D1F08', marginBottom: '10px' }}>부부 대화 도구</h2>
+          <p style={{ fontSize: '15px', color: '#8B7355', fontWeight: 700 }}>오늘 서로에게 어울리는 대화 방식을 골라보세요.</p>
+       </div>
+
+       <div className="flex flex-col gap-4 w-full max-w-sm" style={{ display: 'flex' }}>
+          <button 
+            onClick={() => onSelect('cardGame')}
+            style={{ width: '100%', padding: '25px', borderRadius: '32px', background: 'linear-gradient(135deg, #FFF8E1 0%, #FFFDE7 100%)', border: '2px solid #FBC02D', textAlign: 'left', display: 'flex', alignItems: 'center', gap: '15px' }}
+          >
+             <div style={{ background: '#FBC02D', padding: '12px', borderRadius: '18px' }}>
+                <MessageSquare size={24} color="white" />
+             </div>
+             <div className="flex flex-col">
+                <span style={{ fontSize: '18px', fontWeight: 900, color: '#5D4037' }}>언어 대화 카드</span>
+                <span style={{ fontSize: '12px', color: '#8B7355', fontWeight: 700 }}>심도 있는 질문으로 나누는 지혜</span>
+             </div>
+          </button>
+
+          <button 
+            onClick={() => onSelect('imageGame')}
+            style={{ width: '100%', padding: '25px', borderRadius: '32px', background: 'linear-gradient(135deg, #F3E5F5 0%, #E1BEE7 100%)', border: '2px solid #AB47BC', textAlign: 'left', display: 'flex', alignItems: 'center', gap: '15px' }}
+          >
+             <div style={{ background: '#AB47BC', padding: '12px', borderRadius: '18px' }}>
+                <ImageIcon size={24} color="white" />
+             </div>
+             <div className="flex flex-col">
+                <span style={{ fontSize: '18px', fontWeight: 900, color: '#4A148C' }}>이미지 대화 (HEART-SYNC)</span>
+                <span style={{ fontSize: '12px', color: '#9C27B0', fontWeight: 700 }}>감성적인 이미지로 나누는 공감</span>
+             </div>
+          </button>
+       </div>
+
+       <div style={{ marginTop: 'auto', padding: '30px 0', opacity: 0.5, textAlign: 'center' }}>
+          <p style={{ fontSize: '12px', color: '#8B7355', fontWeight: 700 }}>대화는 서로의 영혼을 만지는 가장 아름다운 몸짓입니다.</p>
+       </div>
+    </motion.div>
+  );
+};
 
 const HomeView = ({ user, userRole, coupleCode, mySignal, setMySignal, spouseSignal, partnerPrayers, onIntimacyClick, onNav, schedules, husbandInfo, wifeInfo, onUpdateMemo, activeTab, spouseSecretAnswer, setSpouseSecretAnswer, mySecretAnswer, setMySecretAnswer, isMySecretAnswered, setIsMySecretAnswered, isRevealed, setIsRevealed, notifPermission, mainChannel }) => {
   const [showGuide, setShowGuide] = useState(false);
@@ -1110,80 +1241,6 @@ const HomeView = ({ user, userRole, coupleCode, mySignal, setMySignal, spouseSig
         </div>
       </div>
 
-      {/* 🃏 HEART-SYNC Image Dialog View Entrance (Transplanted) */}
-      <div onClick={() => onNav('imageGame')} style={{ 
-        margin: '25px 0', 
-        padding: '28px', 
-        borderRadius: '32px', 
-        background: 'linear-gradient(135deg, #F3E5F5 0%, #E1BEE7 100%)', 
-        border: '1.5px solid rgba(171, 71, 188, 0.2)',
-        boxShadow: '0 20px 45px rgba(171, 71, 188, 0.1)',
-        cursor: 'pointer',
-        position: 'relative',
-        overflow: 'hidden'
-      }}>
-        {/* Subtle Shimmer Effect */}
-        <div style={{
-          position: 'absolute',
-          top: -100, left: -100,
-          width: '300px', height: '300px',
-          background: 'radial-gradient(circle, rgba(255,255,255,0.4) 0%, transparent 70%)',
-          opacity: 0.6
-        }} />
-
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
-             <div style={{ 
-               background: 'rgba(171, 71, 188, 0.15)', 
-               padding: '10px', 
-               borderRadius: '16px',
-               display: 'flex',
-               alignItems: 'center',
-               justifyContent: 'center'
-             }}>
-               <Sparkles size={22} color="#AB47BC" />
-             </div>
-             <div className="flex flex-col">
-               <span style={{ fontSize: '16px', fontWeight: 900, color: '#4A148C', letterSpacing: '-0.3px' }}>HEART-SYNC [베타]</span>
-               <span style={{ fontSize: '11px', fontWeight: 700, color: '#9C27B0', opacity: 0.8 }}>이미지로 나누는 깊은 대화</span>
-             </div>
-          </div>
-          <div style={{ 
-            background: 'white', 
-            padding: '6px 12px', 
-            borderRadius: '100px', 
-            fontSize: '11px', 
-            fontWeight: 800, 
-            color: '#AB47BC',
-            boxShadow: '0 4px 10px rgba(0,0,0,0.05)'
-          }}>
-            PREMIUM
-          </div>
-        </div>
-
-        <p style={{ 
-          fontSize: '14px', 
-          color: '#6A1B9A', 
-          fontWeight: 700, 
-          lineHeight: 1.6, 
-          wordBreak: 'keep-all',
-          marginBottom: '15px'
-        }}>
-          서로의 마음을 가장 잘 표현한 카드를 골라보세요. <br/>
-          말로 다 표현하지 못했던 깊은 감정이 이어집니다.
-        </p>
-
-        <div className="flex items-center gap-2" style={{ 
-          background: 'rgba(255,255,255,0.5)', 
-          padding: '10px 18px', 
-          borderRadius: '16px',
-          width: 'fit-content'
-        }}>
-           <span style={{ fontSize: '13px', fontWeight: 900, color: '#AB47BC' }}>이미지 대화 시작하기</span>
-           <ChevronLeft size={16} color="#AB47BC" style={{ transform: 'rotate(180deg)' }} />
-        </div>
-      </div>
-
       {/* 4. 오늘 배우자를 위해 할 일 (AI Hatti's Instructions) */}
       <motion.div 
         whileTap={{ scale: 0.98 }}
@@ -1282,40 +1339,6 @@ const HomeView = ({ user, userRole, coupleCode, mySignal, setMySignal, spouseSig
           </div>
         )}
       </div>
-
-      {/* 🚀 6. HEART-SYNC 이미지 대화 (HeartSync 2 이식) */}
-      <motion.div 
-        whileTap={{ scale: 0.97 }}
-        onClick={() => onNav('imageGame')}
-        style={{ 
-          marginBottom: '30px',
-          background: 'linear-gradient(135deg, #F3E5F5 0%, #FFFFFF 100%)',
-          borderRadius: '30px',
-          padding: '28px',
-          border: '2px solid #E1BEE7',
-          boxShadow: '0 15px 35px rgba(171, 71, 188, 0.1)',
-          cursor: 'pointer',
-          position: 'relative',
-          overflow: 'hidden'
-        }}
-      >
-        <div style={{ position: 'absolute', right: '-20px', bottom: '-20px', opacity: 0.1 }}>
-          <ImageIcon size={120} color="#AB47BC" />
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-          <div style={{ background: '#AB47BC', padding: '6px', borderRadius: '10px' }}>
-            <Sparkles size={16} color="white" />
-          </div>
-          <span style={{ fontSize: '14px', fontWeight: 900, color: '#6A1B9A', letterSpacing: '1px' }}>PREMIUM FEATURE</span>
-        </div>
-        <h3 style={{ fontSize: '20px', fontWeight: 900, color: '#2D1F08', marginBottom: '8px' }}>HEART-SYNC 이미지 대화</h3>
-        <p style={{ fontSize: '13px', color: '#7B1FA2', fontWeight: 700, lineHeight: 1.5 }}>이미지를 통해 서로의 깊은 마음을 동기화하는<br/>특별한 대화 시간을 가져보세요. ✨</p>
-        
-        <div style={{ marginTop: '15px', display: 'flex', alignItems: 'center', gap: '5px' }}>
-          <span style={{ fontSize: '12px', color: '#AB47BC', fontWeight: 800 }}>지금 시작하기</span>
-          <ArrowRight size={14} color="#AB47BC" />
-        </div>
-      </motion.div>
     </motion.div>
   );
 };
@@ -3938,6 +3961,8 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, mainChannel, husbandI
   const [selectedIndices, setSelectedIndices] = useState([]); 
   const [isSharing, setIsSharing] = useState(false); 
   const [sharedCards, setSharedCards] = useState([]); 
+  const [sessionCardCount, setSessionCardCount] = useState(0);
+  const [showFinishModal, setShowFinishModal] = useState(false);
   
   const isMyTurn = turnOwner === userRole || !turnOwner;
   const partnerNickname = userRole === 'husband' ? (wifeInfo?.nickname || '아내') : (husbandInfo?.nickname || '남편');
@@ -4006,6 +4031,11 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, mainChannel, husbandI
           turnOwner: userRole, 
           category: activeCat
         });
+        
+        // Count for completion modal
+        const nextCount = sessionCardCount + 1;
+        setSessionCardCount(nextCount);
+        if (nextCount === 10) setShowFinishModal(true);
       }
     }, 300); 
   };
@@ -4056,6 +4086,11 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, mainChannel, husbandI
     setSharedCards(cards);
     setIsSharing(true);
     sendBroadcast({ isSharing: true, sharedCards: cards, turnOwner: userRole });
+
+    // Count for completion modal
+    const nextCount = sessionCardCount + 1;
+    setSessionCardCount(nextCount);
+    if (nextCount === 10) setShowFinishModal(true);
   };
 
   const resetPick2 = () => {
@@ -4068,6 +4103,49 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, mainChannel, husbandI
 
   return (
     <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="flex flex-col items-center p-4 bg-white" style={{ minHeight: '100vh', paddingBottom: '120px' }}>
+      {/* 🏁 Dialogue Finish Modal */}
+      <AnimatePresence>
+        {showFinishModal && (
+          <motion.div 
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(10px)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}
+          >
+            <motion.div 
+              initial={{ scale: 0.9, y: 30 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 30 }}
+              style={{ background: 'white', borderRadius: '35px', width: '100%', maxWidth: '340px', padding: '45px 30px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', boxShadow: '0 25px 60px rgba(0,0,0,0.3)' }}
+            >
+              <div style={{ width: '90px', height: '90px', borderRadius: '50%', background: 'rgba(171, 71, 188, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '30px' }}>
+                <Sparkles size={45} color="#AB47BC" />
+              </div>
+              <h3 style={{ fontSize: '24px', fontWeight: 900, color: '#2D1F08', marginBottom: '15px' }}>열 번째 이미지 동기화 완료!</h3>
+              <p style={{ fontSize: '15.5px', color: '#8B7355', fontWeight: 600, lineHeight: 1.6, wordBreak: 'keep-all', marginBottom: '35px' }}>
+                오늘 이미지를 통해 나눈 감성이<br/>
+                서로를 더 깊게 이어주었나요? ✨<br/>
+                이제 대화를 마무리하고 함께<br/>
+                달콤한 휴식을 취해볼까요?
+              </p>
+              
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', width: '100%' }}>
+                <button 
+                  onClick={onBack}
+                  style={{ width: '100%', padding: '20px', borderRadius: '22px', background: '#AB47BC', color: 'white', fontWeight: 900, fontSize: '17px', border: 'none' }}
+                >
+                  오늘의 대화 마무리하기
+                </button>
+                <button 
+                  onClick={() => {
+                    setShowFinishModal(false);
+                    setSessionCardCount(11); // 더 이상 자동 트리거되지 않게
+                  }}
+                  style={{ width: '100%', padding: '15px', borderRadius: '20px', background: 'none', color: '#9C27B0', fontWeight: 800, fontSize: '14px', border: 'none' }}
+                >
+                  조금 더 대화할래요
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
       <header style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '15px' }}>
         <button onClick={onBack} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px' }}>
           <ChevronLeft size={24} color="#AB47BC" />
@@ -5886,6 +5964,8 @@ const App = () => {
   const [schedules, setSchedules] = useState(() => JSON.parse(localStorage.getItem('coupleSchedules') || '[]'));
   const [partnerPrayers, setPartnerPrayers] = useState([]);
   const [incomingCardCall, setIncomingCardCall] = useState(null);
+  const [dialogueTab, setDialogueTab] = useState('choice'); // 'choice', 'cardGame', 'imageGame'
+  const [dialogueGuideId, setDialogueGuideId] = useState(null); // 'cardGame', 'imageGame'
 
   const [worshipDays, setWorshipDays] = useState(() => JSON.parse(localStorage.getItem('worshipDays') || '["일", "수"]'));
   const [worshipTime, setWorshipTime] = useState(() => localStorage.getItem('worshipTime') || '21:00');
@@ -6423,16 +6503,44 @@ const App = () => {
                 />
               )}
               {activeTab === 'cardGame' && (
-                <CardGameView 
-                  key="cardGame" 
-                  coupleCode={coupleCode} 
-                  userRole={userRole} 
-                  mainChannel={mainChannel}
-                  onBack={() => setActiveTab('home')} 
-                  husbandInfo={husbandInfo}
-                  wifeInfo={wifeInfo}
-                  onUpdateMemo={updateProfileInfo}
-                />
+                <>
+                  {dialogueGuideId ? (
+                    <GameGuideView 
+                      gameId={dialogueGuideId} 
+                      onStart={() => {
+                        setDialogueTab(dialogueGuideId);
+                        setDialogueGuideId(null);
+                      }} 
+                      onBack={() => setDialogueGuideId(null)}
+                    />
+                  ) : dialogueTab === 'choice' ? (
+                    <DialogueChoiceView 
+                      onSelect={(mode) => setDialogueGuideId(mode)} 
+                      onBack={() => setActiveTab('home')}
+                    />
+                  ) : dialogueTab === 'cardGame' ? (
+                    <CardGameView 
+                      key="cardGame" 
+                      coupleCode={coupleCode} 
+                      userRole={userRole} 
+                      mainChannel={mainChannel}
+                      onBack={() => setDialogueTab('choice')} 
+                      husbandInfo={husbandInfo}
+                      wifeInfo={wifeInfo}
+                      onUpdateMemo={updateProfileInfo}
+                    />
+                  ) : (
+                    <ImageCardGameView 
+                      key="imageGame"
+                      onBack={() => setDialogueTab('choice')}
+                      coupleCode={coupleCode}
+                      userRole={userRole}
+                      mainChannel={mainChannel}
+                      husbandInfo={husbandInfo}
+                      wifeInfo={wifeInfo}
+                    />
+                  )}
+                </>
               )}
               {activeTab === 'counseling' && (
                  <div className={`flex flex-col pt-4 ${counselingMode === 'chat' ? 'flex-1 min-h-0' : ''}`}>
@@ -6528,17 +6636,7 @@ const App = () => {
                    setWifeInfo={setWifeInfo}
                  />
                )}
-               {activeTab === 'imageGame' && (
-                 <ImageCardGameView 
-                   key="imageGame"
-                   onBack={() => setActiveTab('home')}
-                   coupleCode={coupleCode}
-                   userRole={userRole}
-                   mainChannel={mainChannel}
-                   husbandInfo={husbandInfo}
-                   wifeInfo={wifeInfo}
-                 />
-               )}
+
                {activeTab === 'settings' && (
                 <SettingsView 
                   key="settings" 
@@ -6548,7 +6646,6 @@ const App = () => {
                   setHusbandInfo={setHusbandInfo}
                   wifeInfo={wifeInfo}
                   setWifeInfo={setWifeInfo}
-                  coupleCode={coupleCode}
                   worshipDays={worshipDays}
                   setWorshipDays={setWorshipDays}
                   worshipTime={worshipTime}
