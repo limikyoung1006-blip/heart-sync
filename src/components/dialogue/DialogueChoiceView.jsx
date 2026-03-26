@@ -4,7 +4,20 @@ import { ChevronLeft, Heart, Sparkles, Image as ImageIcon, ArrowRight } from 'lu
 
 const DialogueChoiceView = ({ onSelect, onBack }) => {
   return (
-    <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} style={{ padding: '25px', display: 'flex', flexDirection: 'column', gap: '30px', minHeight: '100vh', background: '#FDFCF0' }}>
+    <motion.div 
+      initial={{ opacity: 0, scale: 0.95 }} 
+      animate={{ opacity: 1, scale: 1 }} 
+      exit={{ opacity: 0, scale: 0.95 }} 
+      style={{ 
+        padding: '25px', 
+        display: 'flex', 
+        flexDirection: 'column', 
+        gap: '30px', 
+        minHeight: '100vh', 
+        background: '#FDFCF0',
+        paddingBottom: '120px' 
+      }}
+    >
        <header style={{ marginBottom: '10px' }}>
          <button onClick={onBack} style={{ background: 'none', border: 'none', display: 'flex', alignItems: 'center', gap: '5px', cursor: 'pointer' }}>
            <ChevronLeft size={24} color="#8A60FF" />
@@ -15,8 +28,8 @@ const DialogueChoiceView = ({ onSelect, onBack }) => {
        <div className="choice-header text-center" style={{ marginBottom: '10px' }}>
          <h1 style={{ fontSize: '28px', fontWeight: 900, color: '#2D1F08', marginBottom: '10px', letterSpacing: '-1px' }}>오늘의 동기화 대화</h1>
          <div style={{ display: 'flex', justifyContent: 'center', gap: '6px' }}>
-            <div style={{ height: '4px', width: '30px', background: '#D4AF37', borderRadius: '10px' }} />
-            <div style={{ height: '4px', width: '10px', background: '#AB47BC', borderRadius: '10px' }} />
+            <div style={{ height: '4px', width: '30px', background: '#D4AF37', borderRadius: '100px' }} />
+            <div style={{ height: '4px', width: '10px', background: '#AB47BC', borderRadius: '100px' }} />
          </div>
        </div>
 
@@ -66,10 +79,8 @@ const DialogueChoiceView = ({ onSelect, onBack }) => {
            </div>
            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: 1 }}>
              <h3 style={{ fontSize: '20px', fontWeight: 900, color: '#2D1F08' }}>마음의 창 : IMAGE SYNC</h3>
-             <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                <p style={{ fontSize: '13.5px', color: '#8B7355', fontWeight: 600, lineHeight: 1.4 }}>이미지를 통해 감성이 이어지는<br/>특별한 마음 동기화</p>
-                <div style={{ background: '#AB47BC', color: 'white', padding: '3px 8px', borderRadius: '8px', fontSize: '9px', fontWeight: 900 }}>NEW</div>
-             </div>
+             <p style={{ fontSize: '13.5px', color: '#8B7355', fontWeight: 600, lineHeight: 1.4 }}>이미지를 통해 감성이 이어지는<br/>특별한 마음 동기화</p>
+             <div style={{ position: 'absolute', top: '15px', right: '15px', background: '#AB47BC', color: 'white', padding: '3px 10px', borderRadius: '100px', fontSize: '10px', fontWeight: 900, boxShadow: '0 4px 10px rgba(171, 71, 188, 0.3)' }}>NEW</div>
            </div>
            <ArrowRight size={20} color="#AB47BC" style={{ opacity: 0.5 }} />
          </button>

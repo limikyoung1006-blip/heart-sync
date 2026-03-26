@@ -212,7 +212,11 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, mainChannel, husbandI
   if (!currentQuestion) return <div className="p-10 text-center">Loading...</div>;
 
   return (
-    <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="flex flex-col items-center p-4 bg-white" style={{ minHeight: '100vh', paddingBottom: '120px' }}>
+    <motion.div 
+      initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} 
+      className="flex flex-col items-center p-4 bg-white" 
+      style={{ minHeight: '100vh', paddingBottom: '160px', overflowY: 'auto' }}
+    >
       {/* 🏁 Dialogue Finish Modal */}
       <AnimatePresence>
         {showFinishModal && (
@@ -353,10 +357,10 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, mainChannel, husbandI
                    </div>
                  ))}
                </div>
-               <div style={{ display: 'flex', gap: '10px' }}>
-                 <button onClick={resetPick2} style={{ flex: 1, padding: '16px', borderRadius: '15px', background: 'white', border: '2px solid #AB47BC', color: '#AB47BC', fontWeight: 900 }}>다시 뽑기</button>
-                 <button onClick={sharePick2} style={{ flex: 2, padding: '16px', borderRadius: '15px', background: '#AB47BC', color: 'white', fontWeight: 900, opacity: selectedIndices.length === 2 ? 1 : 0.5 }}>상대방에게 공유</button>
-               </div>
+                <div style={{ display: 'flex', gap: '10px', paddingBottom: '40px' }}>
+                  <button onClick={resetPick2} style={{ flex: 1, padding: '18px', borderRadius: '20px', background: 'white', border: '2px solid #AB47BC', color: '#AB47BC', fontWeight: 900, fontSize: '15px' }}>다시 뽑기</button>
+                  <button onClick={sharePick2} style={{ flex: 2, padding: '18px', borderRadius: '20px', background: '#AB47BC', color: 'white', fontWeight: 900, fontSize: '15px', opacity: selectedIndices.length === 2 ? 1 : 0.5, boxShadow: '0 10px 20px rgba(171, 71, 188, 0.2)' }}>상대방에게 공유</button>
+                </div>
              </>
            ) : (
              <div className="text-center">
