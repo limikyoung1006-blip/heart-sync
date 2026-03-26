@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Music, 
@@ -7,205 +7,318 @@ import {
   MessageCircle, 
   Heart, 
   Send, 
-  Smile,
-  RefreshCw
+  Smile, 
+  RefreshCw 
 } from 'lucide-react';
 import { supabase } from '../../supabase';
 
-const extractYoutubeId = (url) => {
-  if (!url) return null;
-  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-  const match = url.match(regExp);
-  return (match && match[2].length === 11) ? match[2] : null;
-};
+const WORSHIP_SESSIONS = [
+  {
+    id: 1,
+    title: "언약 계승: 믿음의 가정을 세우시는 하나님",
+    praise: {
+      title: "오 신실하신 주",
+      lyrics: "오 신실하신 주 내 아버지여 늘 변치 않으시는 주님이여\n자비와 긍헐이 무궁하시니 어제나 오늘이나 영원토록"
+    },
+    word: {
+      ref: "신명기 6:5-7",
+      text: "너는 마음을 다하고 뜻을 다하고 힘을 다하여 네 하나님 여호와를 사랑하라 오늘 내가 네게 명하는 이 말씀을 너는 마음에 새기고 네 자녀에게 부지런히 가르치며 집에 앉았을 때에든지 길을 갈 때에든지 누워 있을 때에든지 일어날 때에든지 이 말씀을 강론할 것이며"
+    },
+    interpretation: "개혁주의 신앙에서 가정이란 단순한 혈연 공동체를 넘어 '언약의 통로'입니다. 하나님께서는 부모의 경건한 신앙이 자녀와 배우자에게 자연스럽게 흘러가기를 원하십니다. 우리의 모든 일상—앉을 때나 길을 갈 때—이 곧 예배의 자리가 되어야 합니다.",
+    questions: [
+      "오늘 우리 가정이 하나님의 통치를 인정하며 산 순간은 언제였나요?",
+      "일상의 대화 속에 하나님의 말씀을 더 자연스럽게 녹여내기 위해 오늘 우리가 실천할 수 있는 한 가지는 무엇일까요?"
+    ]
+  },
+  {
+    id: 2,
+    title: "그리스도의 통치와 부부의 언약적 연합",
+    praise: {
+      title: "그 사랑 (마커스)",
+      lyrics: "아버지 사랑 내가 노래해 아버지 은혜 내가 노래해\n그 사랑 변함없으신 거짓 없으신 성실하신 그 사랑"
+    },
+    word: {
+      ref: "에베소서 5:31-32",
+      text: "그러므로 사람이 부모를 떠나 그의 아내와 합하여 그 둘이 한 육체가 될지니 이 비밀이 크도다 나는 그리스도와 교회에 대하여 말하노라"
+    },
+    interpretation: "부부의 결혼 관계는 그리스도와 교회의 연합을 보여주는 가장 거룩한 '상징'입니다. 배우자를 대하는 나의 모습이 곧 주님을 대하는 나의 영성을 반영합니다. 서로의 부족함은 정죄의 대상이 아니라, 하나님의 주권 아래 연합될 때 온전해지는 은혜의 영역입니다.",
+    questions: [
+      "배우자의 연약함을 보았을 때, 내 힘이 아닌 '그리스도의 사랑'을 의지했던 경험이 있나요?",
+      "우리 부부가 그리스도의 통치를 받기 위해 오늘 밤 함께 내려놓아야 할 욕심이나 자존심은 무엇인가요?"
+    ]
+  }
+];
 
 const WorshipView = ({ userRole, coupleCode }) => {
+  const [currentSession, setCurrentSession] = useState(null);
+  const [isGenerating, setIsGenerating] = useState(false);
   const [praiseUrl, setPraiseUrl] = useState("");
   const [topic, setTopic] = useState("");
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [currentSession, setCurrentSession] = useState(null);
-  const [allPrayers, setAllPrayers] = useState([]);
+  const [myPrayers, setMyPrayers] = useState([]);
+  const [partnerPrayers, setPartnerPrayers] = useState([]);
 
   useEffect(() => {
+    // 1. Initial Fetch
+    const fetchPrayers = async () => {
+      const { data } = await supabase
+        .from('prayers')
+        .select('*')
+        .eq('couple_id', coupleCode)
+        .order('created_at', { ascending: false });
+      
+      if (data) {
+        setMyPrayers(data.filter(p => p.user_role === userRole));
+        setPartnerPrayers(data.filter(p => p.user_role !== userRole));
+      }
+    };
     fetchPrayers();
-    // In a real app, subscribe to realtime here if needed
-  }, [coupleCode]);
 
-  const fetchPrayers = async () => {
-    const { data } = await supabase
-      .from('prayers')
-      .select('*')
-      .eq('couple_id', coupleCode)
-      .order('created_at', { ascending: false });
-    
-    if (data) {
-      setAllPrayers(data.map(p => ({
-        ...p,
-        type: p.user_role === userRole ? 'mine' : 'partner',
-        date: new Date(p.created_at).toLocaleDateString('ko-KR')
-      })));
-    }
+    // 2. Real-time Subscription
+    const channel = supabase
+      .channel('realtime-prayers')
+      .on('postgres_changes', { 
+        event: 'INSERT', 
+        schema: 'public', 
+        table: 'prayers',
+        filter: `couple_id=eq.${coupleCode}` 
+      }, payload => {
+        if (payload.new.user_role === userRole) {
+          setMyPrayers(prev => [payload.new, ...prev]);
+        } else {
+          setPartnerPrayers(prev => [payload.new, ...prev]);
+        }
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [userRole, coupleCode]);
+
+  const extractYoutubeId = (url) => {
+    const regExp = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/;
+    const match = url?.match(regExp);
+    return (match && match[7].length === 11) ? match[7] : null;
   };
 
-  const handleGenerate = async () => {
+  const handleGenerate = () => {
     setIsGenerating(true);
-    await new Promise(r => setTimeout(r, 2000));
-    
-    // Simulated AI result
-    setCurrentSession({
-      word: { ref: "에베소서 5:22-25", text: "아내들이여 자기 남편에게 복종하기를 주께 하듯 하라... 남편들아 아내 사랑하기를 그리스도께서 교회를 사랑하시고 그 교회를 위하여 자신을 주심 같이 하라" },
-      interpretation: "결혼은 단순한 약속이 아닌 거룩한 언약입니다. 서로의 부족함을 정죄하기보다, 주님이 나를 통해 채우라고 하시는 사명으로 바라볼 때 진정한 기쁨이 차오릅니다.",
-      questions: ["최근 배우자에게 가장 고마웠던 순간은 언제인가요?", "말씀 속에서 우리 가정이 회복해야 할 영역은 어디인가요?"]
-    });
-    setIsGenerating(false);
+    setTimeout(() => {
+      const randomSession = WORSHIP_SESSIONS[Math.floor(Math.random() * WORSHIP_SESSIONS.length)];
+      setCurrentSession(randomSession);
+      setIsGenerating(false);
+    }, 1500);
   };
 
   const handleRecord = async () => {
-    if (!topic.trim()) return;
-    const { error } = await supabase.from('prayers').insert({
+    if (!topic) return;
+    const { data, error } = await supabase.from('prayers').insert({
       couple_id: coupleCode,
       user_role: userRole,
-      text: topic.trim(),
+      text: topic,
       created_at: new Date().toISOString()
-    });
+    }).select();
     
-    if (!error) {
+    if (!error && data) {
       setTopic("");
-      fetchPrayers();
     }
   };
+
+  const allPrayers = useMemo(() => {
+    const combined = [
+      ...myPrayers.map(p => ({ ...p, type: 'mine' })),
+      ...partnerPrayers.map(p => ({ ...p, type: 'spouse' }))
+    ];
+    return combined.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  }, [myPrayers, partnerPrayers]);
 
   const youtubeId = useMemo(() => extractYoutubeId(praiseUrl), [praiseUrl]);
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="worship-container flex flex-col gap-6 p-5 pb-20 overflow-y-auto h-full">
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="worship-container">
       {/* 1. Praise (Premium Glass Cinema Style) */}
-      <div className="worship-section-card bg-white/70 backdrop-blur-xl border border-white/50 rounded-[40px] shadow-sm overflow-hidden p-6">
-        <div className="worship-label-row flex items-center gap-3 mb-4">
-          <div className="worship-icon-circle bg-[#FF4D6D] w-10 h-10 rounded-full flex items-center justify-center text-white shadow-lg shadow-[#FF4D6D20]"><Music size={18} /></div>
-          <span className="worship-label-text font-black text-[10px] tracking-[4px] uppercase text-[#CD7386]">PREMIUM PRAISE STUDIO</span>
+      <div className="worship-section-card" style={{ padding: '0', overflow: 'hidden', background: 'transparent', border: 'none', boxShadow: 'none' }}>
+        <div style={{ padding: '30px 24px 20px' }}>
+          <div className="worship-label-row">
+            <div className="worship-icon-circle" style={{ background: '#FF4D6D', boxShadow: '0 4px 12px rgba(255, 77, 109, 0.3)' }}><Music size={16} /></div>
+            <span className="worship-label-text" style={{ letterSpacing: '2px' }}>PREMIUM PRAISE STUDIO</span>
+          </div>
         </div>
 
-        {/* Floating Glass Cinema Player */}
-        <div className="relative mb-6">
-          <div className="relative w-full pb-[56.25%] bg-black rounded-[32px] overflow-hidden shadow-2xl shadow-black/30 border border-white/10 isolation-auto">
+        <div style={{ position: 'relative', padding: '0 20px 30px' }}>
+          <div style={{ 
+            position: 'relative',
+            width: '100%', 
+            paddingBottom: '56.25%', 
+            background: '#000', 
+            borderRadius: '32px', 
+            overflow: 'hidden',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.6)',
+            border: '1px solid rgba(255,255,255,0.12)',
+            WebkitMaskImage: '-webkit-radial-gradient(white, black)',
+            isolation: 'isolate'
+          }}>
             {youtubeId ? (
               <iframe 
-                className="absolute inset-0 w-full h-full border-none"
-                src={`https://www.youtube.com/embed/${youtubeId}?autoplay=0&modestbranding=1&rel=0`} 
+                style={{ position: 'absolute', top: '-1px', left: '-1px', width: 'calc(100% + 2px)', height: 'calc(100% + 2px)', border: 'none' }}
+                src={`https://www.youtube.com/embed/${youtubeId}?autoplay=0&modestbranding=1&rel=0&iv_load_policy=3&showinfo=0`} 
                 title="Praise Player" 
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
                 allowFullScreen
               />
             ) : (
-              <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-[#1e293b] to-black">
+              <div style={{ 
+                position: 'absolute', inset: 0, 
+                display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                background: 'linear-gradient(135deg, #1e293b 0%, #000000 100%)'
+              }}>
                 <motion.div 
                   animate={{ scale: [1, 1.1, 1], opacity: [0.3, 0.6, 0.3] }}
                   transition={{ duration: 3, repeat: Infinity }}
-                  className="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center"
+                  style={{ width: '80px', height: '80px', borderRadius: '50%', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                 >
                   <Music size={40} color="white" />
                 </motion.div>
-                <p className="text-white/40 text-xs font-black mt-4">찬양 링크를 기다리고 있습니다</p>
+                <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '13px', fontWeight: 700, marginTop: '15px' }}>찬양 링크를 기다리고 있습니다</p>
               </div>
             )}
           </div>
-          {youtubeId && <div className="absolute -inset-10 bg-[#FF4D6D] opacity-20 blur-[80px] -z-10" />}
+          <div style={{ 
+            position: 'absolute', top: '20%', left: '50%', transform: 'translateX(-50%)',
+            width: '80%', height: '60%', background: youtubeId ? 'rgba(255, 77, 109, 0.4)' : 'transparent',
+            filter: 'blur(60px)', zIndex: -1, transition: '0.5s'
+          }} />
         </div>
 
-        <div className="bg-[#F8FAFB] p-4 rounded-2xl flex items-center gap-3 border border-[#E2E8F0]">
-          <div className="text-[#F5D060]"><Sparkles size={18} /></div>
-          <input 
-            type="text" 
-            placeholder="함께 듣고 싶은 찬양 URL" 
-            value={praiseUrl}
-            onChange={(e) => setPraiseUrl(e.target.value)}
-            className="bg-transparent flex-1 text-sm font-bold outline-none text-[#2D1F08]"
-          />
+        <div style={{ padding: '0 20px 40px' }}>
+          <div style={{ 
+            background: 'white', padding: '15px 20px', borderRadius: '24px', 
+            boxShadow: '0 10px 30px rgba(0,0,0,0.05)', display: 'flex', alignItems: 'center', gap: '12px',
+            border: '1.5px solid #F5E6CC'
+          }}>
+            <div style={{ color: '#F5D060' }}><Sparkles size={18} /></div>
+            <input 
+              className="praise-input"
+              type="text" 
+              placeholder="함께 듣고 싶은 찬양 주소를 공유해주세요." 
+              value={praiseUrl}
+              onChange={(e) => setPraiseUrl(e.target.value)}
+              style={{ border: 'none', background: 'none', flex: 1, fontSize: '13px', fontWeight: 700, outline: 'none', color: '#2D1F08', padding: '0' }}
+            />
+          </div>
         </div>
       </div>
 
-      {/* 2. Header Section */}
-      <div className="worship-section-card bg-gradient-to-br from-[#FDFCF0] to-[#F5F3E6] rounded-[40px] p-8 text-center shadow-sm">
-        <h2 className="text-2xl font-black text-[#2D1F08] mb-2">가정 예배 가이드</h2>
-        <p className="text-sm font-bold text-[#8B7355] mb-6">오늘 우리 가정에 주시는 하나님의 메시지</p>
+      <div className="worship-section-card" style={{ background: 'linear-gradient(135deg, #FDFCF0 0%, #F5F3E6 100%)', textAlign: 'center' }}>
+        <h2 style={{ fontSize: '24px', fontWeight: 900, color: '#2D1F08', marginBottom: '8px' }}>가정 예배 가이드</h2>
+        <p style={{ fontSize: '14px', color: '#8B7355', fontWeight: 700, marginBottom: '20px' }}>오늘 우리 가정에 주시는 하나님의 메시지</p>
         
-        <button onClick={handleGenerate} disabled={isGenerating} className="mx-auto w-full max-w-[240px] p-4 bg-[#2D1F08] text-white rounded-full flex items-center justify-center gap-3 font-black shadow-xl shadow-black/10 transition-all hover:scale-105 active:scale-95">
-          {isGenerating ? <RefreshCw size={18} className="animate-spin" /> : <Sparkles size={18} />}
+        <button className="generate-btn" onClick={handleGenerate} disabled={isGenerating}>
+          {isGenerating ? (
+            <RefreshCw size={18} className="animate-spin" />
+          ) : (
+            <Sparkles size={18} />
+          )}
           <span>{currentSession ? "예배 본문 새로고침" : "오늘의 예배 시작하기"}</span>
         </button>
       </div>
 
       <AnimatePresence mode="wait">
-        {currentSession && !isGenerating && (
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col gap-6">
-            <div className="bg-white p-7 rounded-[40px] shadow-sm border border-[#F1F5F9]">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-9 h-9 bg-[#F5D060]/20 rounded-full flex items-center justify-center text-[#F5D060]"><BookOpen size={18} /></div>
-                <span className="font-black text-xs text-[#8B7355]">WORD 오늘의 말씀</span>
-              </div>
-              <div className="space-y-4">
-                <span className="text-[10px] font-black uppercase text-[#B08D3E] tracking-widest">{currentSession.word.ref}</span>
-                <p className="text-lg font-black leading-relaxed text-[#2D1F08] break-keep">{currentSession.word.text}</p>
-              </div>
-            </div>
-
-            <div className="bg-white p-7 rounded-[40px] shadow-sm border border-[#F1F5F9]">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="w-9 h-9 bg-[#8A60FF]/10 rounded-full flex items-center justify-center text-[#8A60FF]"><Sparkles size={18} /></div>
-                  <span className="font-black text-xs text-[#8A60FF]">MEDITATION 말씀 해석</span>
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}
+        >
+          {currentSession && !isGenerating && (
+            <>
+              <div className="worship-section-card">
+                <div className="worship-label-row">
+                  <div className="worship-icon-circle" style={{ background: '#F5D060' }}><BookOpen size={16} /></div>
+                  <span className="worship-label-text">WORD 오늘의 말씀</span>
                 </div>
-                <p className="text-[15px] font-bold text-[#475569] leading-relaxed break-keep">{currentSession.interpretation}</p>
-            </div>
-
-            <div className="bg-white p-7 rounded-[40px] shadow-sm border border-[#F1F5F9]">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="w-9 h-9 bg-[#4BD991]/10 rounded-full flex items-center justify-center text-[#4BD991]"><MessageCircle size={18} /></div>
-                  <span className="font-black text-xs text-[#2A9D8F]">SHARING 나눔 질문</span>
+                <div className="worship-content-box">
+                  <span style={{ fontSize: '12px', fontWeight: 900, color: '#B08D3E' }}>{currentSession.word.ref}</span>
+                  <p className="scripture-text">{currentSession.word.text}</p>
                 </div>
-                <div className="space-y-3">
+              </div>
+
+              <div className="worship-section-card">
+                <div className="worship-label-row">
+                  <div className="worship-icon-circle" style={{ background: '#8A60FF' }}><Sparkles size={16} /></div>
+                  <span className="worship-label-text">MEDITATION 말씀 해석</span>
+                </div>
+                <div className="worship-content-box">
+                  <p style={{ fontSize: '15px', color: '#2D1F08', fontWeight: 600, lineHeight: 1.6 }}>{currentSession.interpretation}</p>
+                </div>
+              </div>
+
+              <div className="worship-section-card">
+                <div className="worship-label-row">
+                  <div className="worship-icon-circle" style={{ background: '#4BD991' }}><MessageCircle size={16} /></div>
+                  <span className="worship-label-text">SHARING 나눔 질문</span>
+                </div>
+                <div className="sharing-list">
                   {currentSession.questions.map((q, i) => (
-                    <div key={i} className="p-4 bg-[#F8FAFB] rounded-2xl text-sm font-bold text-[#475569] border border-[#E2E8F0]">
-                       Q{i+1}. {q}
-                    </div>
+                    <div key={i} className="sharing-item">Q{i+1}. {q}</div>
                   ))}
                 </div>
-            </div>
-          </motion.div>
-        )}
+              </div>
+            </>
+          )}
+        </motion.div>
       </AnimatePresence>
 
-      <div className="bg-white p-7 rounded-[40px] shadow-sm border border-[#F1F5F9]">
-        <div className="flex items-center gap-3 mb-8">
-          <div className="w-9 h-9 bg-[#FF9966]/10 rounded-full flex items-center justify-center text-[#FF9966]"><Heart size={18} /></div>
-          <span className="font-black text-xs text-[#AF6B48]">PRAYER 기도의 정원</span>
+      <div className="worship-section-card">
+        <div className="worship-label-row">
+          <div className="worship-icon-circle" style={{ background: '#FF9966' }}><Heart size={16} /></div>
+          <span className="worship-label-text">PRAYER 기도의 정원</span>
         </div>
         
-        <div className="space-y-4 mb-10">
+        <div className="prayer-input-container">
            <textarea 
+            className="prayer-textarea-v2" 
+            placeholder="예배를 마치며 함께 나눈 기도제목을 기록하세요..." 
             value={topic}
             onChange={(e) => setTopic(e.target.value)}
-            placeholder="함께 나눈 기도제목을 기록하세요..." 
-            className="w-full min-h-[100px] p-5 bg-[#FDFCF0] rounded-3xl text-sm font-bold border-none focus:ring-2 ring-[#F5D060]/50 outline-none resize-none"
+            style={{ minHeight: '80px', marginBottom: '10px' }}
            />
-           <button onClick={handleRecord} className="w-full p-4 bg-[#2D1F08] text-white rounded-full font-black flex items-center justify-center gap-3 text-sm">
-             <Send size={16} /> 기도제목 기록하기
+           <button className="generate-btn" onClick={handleRecord} style={{ background: '#2D1F08' }}>
+             <Send size={18} /> <span style={{ marginLeft: '10px', fontWeight: 900 }}>기도제목 기록하기</span>
            </button>
         </div>
 
-        <div className="space-y-4">
+        <div className="prayer-wall" style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+           <div className="flex items-center gap-2 mb-3" style={{ paddingLeft: '4px' }}>
+             <Heart size={16} color="#FF4D6D" fill="#FF4D6D" />
+             <span style={{ fontSize: '16px', fontWeight: 900, color: '#2D1F08' }}>서로의 기도 기록</span>
+           </div>
+
            {allPrayers.length === 0 ? (
-             <div className="text-center py-20 bg-[#FDFCF0]/50 rounded-[32px] border-2 border-dashed border-[#E2E8F0]">
-               <Smile size={48} className="mx-auto text-[#D4AF37]/30 mb-4" />
-               <p className="text-sm font-bold text-[#8B7355]/60">첫 마음을 담은 기도를 남겨보세요.</p>
+             <div className="text-center py-14" style={{ background: 'rgba(255,255,255,0.25)', borderRadius: '28px', border: '1px dashed rgba(0,0,0,0.1)' }}>
+               <Smile size={54} color="#D4AF37" style={{ opacity: 0.4, margin: '0 auto 15px' }} />
+               <p style={{ fontSize: '15px', color: '#5D4037', fontWeight: 700 }}>아직 기록된 기도가 없어요.</p>
+               <p style={{ fontSize: '13px', color: '#8B6500', opacity: 0.8, marginTop: '6px' }}>첫 마음을 담은 기도를 남겨보세요.</p>
              </div>
            ) : (
-             allPrayers.slice(0, 5).map((p) => (
-               <motion.div key={p.id} className={`p-4 rounded-3xl border-l-[6px] ${p.type === 'mine' ? 'bg-white border-[#F5D060]' : 'bg-[#8A60FF]/5 border-[#8A60FF]'} shadow-sm`}>
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-[#B08D3E]">{p.type === 'mine' ? '나의 기도' : '배우자의 기도'}</span>
-                    <span className="text-[10px] text-gray-400 font-bold">{p.date}</span>
-                  </div>
-                  <p className="text-[14px] font-bold text-[#2D1F08] leading-normal">{p.text}</p>
+             allPrayers.map((p) => (
+               <motion.div 
+                key={p.id}
+                initial={{ opacity: 0, x: p.type === 'mine' ? -10 : 10 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="prayer-card-v2"
+                style={{ 
+                  background: p.type === 'mine' ? 'rgba(255,255,255,0.9)' : 'rgba(138, 96, 255, 0.1)',
+                  borderLeft: p.type === 'mine' ? '4px solid #F5D060' : '4px solid #8A60FF',
+                  padding: '12px 15px'
+                }}
+               >
+                 <div className="flex justify-between items-center mb-2">
+                   <span style={{ fontSize: '11px', fontWeight: 900, color: p.type === 'mine' ? '#8B6500' : '#8A60FF' }}>
+                     {p.type === 'mine' ? '나의 기도' : '배우자의 기도'}
+                   </span>
+                   <span style={{ fontSize: '10px', opacity: 0.5 }}>{new Date(p.created_at).toLocaleDateString('ko-KR')}</span>
+                 </div>
+                 <p style={{ fontSize: '14px', color: '#2D1F08', lineHeight: 1.5 }}>{p.text}</p>
                </motion.div>
              ))
            )}
