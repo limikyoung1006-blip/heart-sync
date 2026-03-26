@@ -4018,6 +4018,7 @@ const SettingsView = ({
   const [showDataSecurity, setShowDataSecurity] = useState(false);
   const [showNotifIntegration, setShowNotifIntegration] = useState(false);
   const [showDeepAnalysis, setShowDeepAnalysis] = useState(false);
+  const [showNotifDiag, setShowNotifDiag] = useState(false); // New diagnostic modal state
 
   const [newAnnivTitle, setNewAnnivTitle] = useState("");
   const [newAnnivDate, setNewAnnivDate] = useState("");
@@ -4262,6 +4263,7 @@ const SettingsView = ({
         <h3 className="settings-section-title">연결 및 통합</h3>
         <SettingsItem icon={<Users size={18} />} label="배우자 연결 관리 (코드 공유)" onClick={() => setShowConnectSet(true)} />
         <SettingsItem icon={<Smartphone size={18} />} label="기기 알림 통합 설정" onClick={() => setShowNotifIntegration(true)} />
+        <SettingsItem icon={<Activity size={18} />} label="🚨 알림 정밀 진단 및 테스트" onClick={() => setShowNotifDiag(true)} />
       </div>
 
       {/* 🔔 Notifications Section */}
@@ -4441,6 +4443,82 @@ const SettingsView = ({
             <h3 style={{ fontSize: '18px', fontWeight: 900, marginBottom: '20px' }}>데이터 보안</h3>
             <p style={{ fontSize: '14px', color: '#4B5563' }}>모든 대화 내용은 기기 간 종단간 암호화로 보호됩니다.</p>
             <motion.button whileTap={{ scale: 0.95 }} onClick={() => setShowDataSecurity(false)} style={{ width: '100%', padding: '16px', marginTop: '20px', borderRadius: '16px', background: '#2D1F08', color: 'white', fontWeight: 900 }}>닫기</motion.button>
+          </motion.div>
+        </div>
+      )}
+
+      {showNotifDiag && (
+        <div onClick={() => setShowNotifDiag(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 6000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+          <motion.div onClick={(e) => e.stopPropagation()} initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} style={{ background: 'white', borderRadius: '35px', padding: '35px', width: '100%', maxWidth: '360px', textAlign: 'left' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
+              <Activity size={24} color="#EF4444" />
+              <h3 style={{ fontSize: '19px', fontWeight: 900 }}>알림 정밀 진단</h3>
+            </div>
+            
+            <div style={{ marginBottom: '25px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div style={{ background: '#F8FAFB', padding: '15px', borderRadius: '18px', border: '1px solid #EEE' }}>
+                <p style={{ fontSize: '13px', fontWeight: 800, color: '#64748B', marginBottom: '5px' }}>1. 시스템 권한 상태</p>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                   <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: Notification.permission === 'granted' ? '#10B981' : '#F59E0B' }} />
+                   <span style={{ fontSize: '15px', fontWeight: 900, color: '#1E293B' }}>{Notification.permission === 'granted' ? '허용됨 (정상)' : '허용되지 않음'}</span>
+                </div>
+              </div>
+
+              <div style={{ background: '#F8FAFB', padding: '15px', borderRadius: '18px', border: '1px solid #EEE' }}>
+                <p style={{ fontSize: '13px', fontWeight: 800, color: '#64748B', marginBottom: '5px' }}>2. 서비스 워커 상태</p>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                   <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: 'serviceWorker' in navigator ? '#10B981' : '#EF4444' }} />
+                   <span style={{ fontSize: '15px', fontWeight: 900, color: '#1E293B' }}>{'serviceWorker' in navigator ? '활성화됨' : '미지원 브라우저'}</span>
+                </div>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '25px' }}>
+              <button 
+                onClick={async () => {
+                  if (Notification.permission !== 'granted') {
+                    const res = await Notification.requestPermission();
+                    if (res !== 'granted') return alert("권한이 거부되었습니다. 브라우저 설정에서 수동으로 켜주세요.");
+                  }
+                  
+                  const reg = await navigator.serviceWorker.ready;
+                  reg.showNotification('Heart Sync 테스트 알림', {
+                    body: '지금 알림이 보인다면 시스템 설정은 정상입니다! ❤️',
+                    icon: '/logo_main.png'
+                  });
+                }}
+                style={{ width: '100%', padding: '16px', borderRadius: '14px', background: '#8A60FF', color: 'white', fontWeight: 900, border: 'none' }}
+              >
+                테스트 알림 즉시 발송
+              </button>
+              
+              <button 
+                onClick={() => {
+                  alert("5초 뒤에 알림이 옵니다. 지금 바로 앱을 최소화(홈으로 이동)하고 기다려보세요!");
+                  setTimeout(async () => {
+                    const reg = await navigator.serviceWorker.ready;
+                    reg.showNotification('백그라운드 테스트 성공!', {
+                      body: '앱이 닫혀있을 때도 알림이 정상 작동합니다. ✨',
+                      icon: '/logo_main.png'
+                    });
+                  }, 5000);
+                }}
+                style={{ width: '100%', padding: '16px', borderRadius: '14px', background: '#2D1F08', color: 'white', fontWeight: 900, border: 'none' }}
+              >
+                백그라운드 동작 테스트 (5초 후)
+              </button>
+            </div>
+
+            <div style={{ padding: '15px', background: 'rgba(239, 68, 68, 0.05)', borderRadius: '18px', border: '1px solid rgba(239, 68, 68, 0.1)' }}>
+              <p style={{ fontSize: '12px', color: '#EF4444', fontWeight: 900, marginBottom: '8px' }}>⚠️ 위 테스트가 실패한다면?</p>
+              <ul style={{ fontSize: '11px', color: '#8B7355', paddingLeft: '18px', lineHeight: 1.6, fontWeight: 700 }}>
+                <li><b>아이폰(iOS):</b> 하단 [공유] → [홈 화면에 추가] 필수!</li>
+                <li><b>배터리 절전 모드:</b> 절전 모드가 켜져 있으면 시스템이 알림을 차단합니다.</li>
+                <li><b>방해 금지 모드:</b> 집중 모드를 확인해주세요.</li>
+              </ul>
+            </div>
+
+            <button onClick={() => setShowNotifDiag(false)} style={{ width: '100%', padding: '15px', marginTop: '20px', borderRadius: '15px', border: 'none', background: '#EEE', fontWeight: 900, color: '#666' }}>닫기</button>
           </motion.div>
         </div>
       )}

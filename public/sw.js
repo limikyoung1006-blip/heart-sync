@@ -18,18 +18,33 @@ self.addEventListener('fetch', (event) => {
 
 // Handle Push Events (if using a push server)
 self.addEventListener('push', (event) => {
-  const data = event.data ? event.data.json() : { title: 'Heart Sync', body: '새로운 소식이 도착했습니다!' };
+  let data = {};
+  if (event.data) {
+    try {
+      data = event.data.json();
+    } catch (e) {
+      data = { title: 'Heart Sync', body: event.data.text() };
+    }
+  } else {
+    data = { title: 'Heart Sync', body: '새로운 소식이 도착했습니다! ❤️' };
+  }
+
   const options = {
-    body: data.body,
+    body: data.body || '메시지 내용을 확인해보세요.',
     icon: '/logo_main.png',
     badge: '/logo_main.png',
-    vibrate: [200, 100, 200],
+    vibrate: [200, 100, 200, 100, 200],
+    tag: data.tag || 'general-push',
+    renotify: true,
     data: { 
       url: data.url || '/',
       tab: data.tab || 'home'
     }
   };
-  event.waitUntil(self.registration.showNotification(data.title, options));
+
+  event.waitUntil(
+    self.registration.showNotification(data.title || 'Heart Sync', options)
+  );
 });
 
 self.addEventListener('notificationclick', (event) => {
