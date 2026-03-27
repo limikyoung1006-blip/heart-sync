@@ -152,7 +152,7 @@ const SolutionView = ({ onBack, userRole, husbandInfo, wifeInfo, schedules, admi
           </div>
         </div>
         <p style={{ textAlign: 'center', fontSize: '14px', fontWeight: 900, color: '#CCC', marginTop: '32px' }}>
-           {coupleStats.totalInteractions >= 50 ? '축하드려요! 목표를 달성했습니다! 🥳' : `목표 50회 중 ${Math.round((coupleStats.totalInteractions / 50) * 100)}% 달성! 🎉`}
+           {(coupleStats?.totalInteractions || 0) >= 50 ? '축하드려요! 목표를 달성했습니다! 🥳' : `목표 50회 중 ${Math.round(((coupleStats?.totalInteractions || 0) / 50) * 100)}% 달성! 🎉`}
         </p>
       </div>
 
@@ -166,9 +166,9 @@ const SolutionView = ({ onBack, userRole, husbandInfo, wifeInfo, schedules, admi
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
           {[
-            { label: '영적 소통 (기도제목)', value: Math.min(Math.round((coupleStats.prayerCount / Math.max(coupleStats.totalInteractions, 1)) * 100), 100), color: '#8A60FF' },
-            { label: '정서적 교감 (무드시그널)', value: Math.min(Math.round((coupleStats.signalCount / Math.max(coupleStats.totalInteractions, 1)) * 100), 100), color: '#FF8A9D' },
-            { label: '일상 협력 (공유일정)', value: Math.min(Math.round((coupleStats.scheduleCount / Math.max(coupleStats.totalInteractions, 1)) * 100), 100), color: '#F5D060' }
+            { label: '영적 소통 (기도제목)', value: Math.min(Math.round(((coupleStats?.prayerCount || 0) / Math.max(coupleStats?.totalInteractions || 1, 1)) * 100), 100), color: '#8A60FF' },
+            { label: '정서적 교감 (무드시그널)', value: Math.min(Math.round(((coupleStats?.signalCount || 0) / Math.max(coupleStats?.totalInteractions || 1, 1)) * 100), 100), color: '#FF8A9D' },
+            { label: '일상 협력 (공유일정)', value: Math.min(Math.round(((coupleStats?.scheduleCount || 0) / Math.max(coupleStats?.totalInteractions || 1, 1)) * 100), 100), color: '#F5D060' }
           ].map((item, idx) => (
             <div key={idx} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '14px', fontWeight: 900 }}>
