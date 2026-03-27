@@ -36,17 +36,6 @@ import SecretAnswerInteraction from './components/game/SecretAnswerInteraction';
 import ProfileView from './components/profile/ProfileView';
 import CalendarView from './components/calendar/CalendarView';
 
-// App constants
-const APP_DEBUG = true;
-
-const HATTI_TODOS = [
-  { id: 1, action: "말하기", text: "배우자에게 '오늘 하루도 정말 고생 많았어'라고 눈을 맞추며 말해주세요." },
-  { id: 2, action: "행동", text: "오늘 저녁 설거지나 청소 중 하나를 배우자 몰래 미리 끝내두세요." },
-  { id: 3, action: "스킨십", text: "배우자가 퇴근하고 돌아오면 5초간 따뜻하게 안아주세요." },
-  { id: 4, action: "선물", text: "퇴근길에 배우자가 좋아하는 편의점 간식을 하나 사서 건네보세요." },
-  { id: 5, action: "경청", text: "오늘 배우자의 이야기를 10분 동안 조언 없이 온전히 들어주세요." }
-];
-
 const NavItem = React.memo(({ active, onClick, icon, label }) => (
   <div onClick={onClick} className={`nav-item ${active ? 'active' : ''}`}>
     <div className="nav-icon-wrapper">
@@ -55,34 +44,6 @@ const NavItem = React.memo(({ active, onClick, icon, label }) => (
     <span>{label}</span>
   </div>
 ));
-
-const MenuBtn = ({ icon, title, desc, onClick }) => (
-  <button className="menu-btn" onClick={onClick}>
-    <span className="menu-icon">{icon}</span>
-    <div style={{ display: 'flex', flexDirection: 'column' }}>
-       <span>{title}</span>
-       <small>{desc}</small>
-    </div>
-  </button>
-);
-
-const SignalOptV2 = ({ title, desc }) => (
-  <button style={{
-    background: 'rgba(255,255,255,0.9)',
-    padding: '16px',
-    borderRadius: '18px',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '4px',
-    textAlign: 'center',
-    boxShadow: '0 4px 12px rgba(0,0,0,0.04)',
-    border: '1px solid rgba(0,0,0,0.03)',
-    cursor: 'pointer'
-  }}>
-    <strong style={{ color: '#800F2F', fontSize: '15px', fontWeight: 800 }}>{title}</strong>
-    <span style={{ color: '#A4133C', fontSize: '12px', fontWeight: 600, opacity: 0.7 }}>{desc}</span>
-  </button>
-);
 
 const App = () => {
   const [activeTab, setActiveTab] = useState('home');
@@ -113,7 +74,8 @@ const App = () => {
   const [worshipTime, setWorshipTime] = useState(() => localStorage.getItem('worshipTime') || '21:00');
   const [anniversaries, setAnniversaries] = useState(() => { try { const saved = localStorage.getItem('anniversaries'); return saved ? JSON.parse(saved) : []; } catch (e) { return []; } });
 
-  const [activeTabRef, setActiveTabRef] = [useRef('home'), useEffect(() => { activeTabRef.current = activeTab }, [activeTab])][0];
+  const activeTabRef = useRef('home');
+  useEffect(() => { activeTabRef.current = activeTab }, [activeTab]);
   const lastNavIdRef = useRef(localStorage.getItem('lastProcessedNavId'));
   const [mainChannel, setMainChannel] = useState(null);
   const appTheme = { id: 'warm', primary: '#D4AF37', bg: '#FDFCF0' };
@@ -131,7 +93,6 @@ const App = () => {
   const [intimacySubPage, setIntimacySubPage] = useState('main');
   const partnerLabel = userRole === 'husband' ? '아내' : '남편';
 
-  // [DESIGN RESTORE]: Original Premium Styles
   useEffect(() => {
     localStorage.setItem('husbandInfo', JSON.stringify(husbandInfo));
     localStorage.setItem('wifeInfo', JSON.stringify(wifeInfo));
@@ -169,8 +130,12 @@ const App = () => {
   };
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => { setSession(session); setUser(session?.user ?? null); setLoading(false); });
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => { setSession(session); setUser(session?.user ?? null); });
+    supabase.auth.getSession().then(({ data: { session: curSess } }) => { 
+      setSession(curSess); setUser(curSess?.user ?? null); setLoading(false); 
+    });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, curSess) => { 
+      setSession(curSess); setUser(curSess?.user ?? null); 
+    });
     return () => subscription.unsubscribe();
   }, []);
 
@@ -195,13 +160,35 @@ const App = () => {
     <div className="h-full flex flex-col relative w-full" style={{ '--gold': appTheme.primary, '--gold-glow': `${appTheme.primary}40`, background: appTheme.bg }}>
       {loading && <div className="fixed inset-0 flex items-center justify-center bg-white z-[99999] font-black"><RefreshCw size={40} className="animate-spin" color="#D4AF37" /></div>}
       
-      {!loading && !session && (
-        <AuthView userRole={userRole} setUserRole={setUserRole} onFinish={handleOnboardingFinish} />
+      {/* 1. 로그인 전 화면 */}
+      {!loading && !session && !isAdmin && (
+        <AuthView 
+          onLogoClick={() => setLogoClickCount(c => c + 1)} 
+          showAdminLogin={showAdminLogin} 
+          setShowAdminLogin={setShowAdminLogin} 
+          setUser={setUser} 
+          setSession={setSession} 
+          setIsAdmin={setIsAdmin} 
+          user={user} 
+          userRole={userRole} 
+          setUserRole={setUserRole} 
+          onFinish={handleOnboardingFinish} 
+        />
       )}
 
-      {!loading && session && isSetupDone && (
+      {/* 2. 로그인 후 + 초기설정 미완료 화면 */}
+      {!loading && (session || isAdmin) && !isSetupDone && (
+        <OnboardingView 
+          user={user} 
+          userRole={userRole} 
+          setUserRole={setUserRole} 
+          onFinish={handleOnboardingFinish} 
+        />
+      )}
+
+      {/* 3. 로그인 후 + 초기설정 완료 메인 앱 화면 */}
+      {!loading && (session || isAdmin) && isSetupDone && (
         <>
-          {/* [DESIGN RESTORE]: Original Premium Top Bar */}
           <div className="top-bar" style={{ 
             visibility: (activeTab === 'heartPrayer') ? 'hidden' : 'visible',
             borderBottom: `1px solid ${appTheme.primary}20`,
@@ -213,7 +200,7 @@ const App = () => {
                 <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'rgba(212, 175, 55, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <User size={16} color={appTheme.primary} />
                 </div>
-                <span style={{ fontSize: '13px', fontBold: 900, color: appTheme.primary }}>
+                <span style={{ fontSize: '13px', fontWeight: 900, color: appTheme.primary }}>
                   {userRole === 'husband' ? husbandInfo.nickname : wifeInfo.nickname}님
                 </span>
                 <div style={{ width: 8, height: 8, borderRadius: '50%', background: syncStatus === 'SUBSCRIBED' ? '#4BD991' : '#FFBE61' }} />
@@ -229,7 +216,6 @@ const App = () => {
           </div>
 
           <main className="main-content" style={{ background: appTheme.bg, position: 'relative', overflow: 'hidden' }}>
-            {/* 🏠 Zero-Unmount HomeView (Design Preserved) */}
             <div style={{ position: 'absolute', inset: 0, display: activeTab === 'home' ? 'block' : 'none', zIndex: activeTab === 'home' ? 5 : 0 }}>
               <HomeView user={user} userRole={userRole} coupleCode={coupleCode} mainChannel={mainChannel} mySignal={mySignal} setMySignal={setMySignal} spouseSignal={spouseSignal} partnerPrayers={partnerPrayers} onNav={setActiveTab} schedules={schedules} husbandInfo={husbandInfo} wifeInfo={wifeInfo} onUpdateMemo={updateProfileInfo} activeTab={activeTab} spouseSecretAnswer={spouseSecretAnswer} setSpouseSecretAnswer={setSpouseSecretAnswer} mySecretAnswer={mySecretAnswer} setMySecretAnswer={setMySecretAnswer} isMySecretAnswered={isMySecretAnswered} setIsMySecretAnswered={setIsMySecretAnswered} isRevealed={isSecretRevealed} setIsRevealed={setIsSecretRevealed} supabase={supabase} updateProfileInfo={updateProfileInfo} />
             </div>
@@ -250,7 +236,6 @@ const App = () => {
             </AnimatePresence>
           </main>
 
-          {/* [DESIGN RESTORE]: Regular Luxury Bottom Nav */}
           <nav className="bottom-nav">
             <NavItem active={activeTab === 'home'} onClick={() => setActiveTab('home')} icon={<Home size={22} fill={activeTab === 'home' ? appTheme.primary : "none"} color={appTheme.primary} />} label="홈" />
             <NavItem active={activeTab === 'calendar'} onClick={() => setActiveTab('calendar')} icon={<Calendar size={22} fill={activeTab === 'calendar' ? appTheme.primary : "none"} color={appTheme.primary} />} label="일정" />
