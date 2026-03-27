@@ -838,6 +838,10 @@ const App = () => {
           setUser={setUser}
           setSession={setSession}
           setIsAdmin={setIsAdmin}
+          user={user}
+          userRole={userRole} 
+          setUserRole={setUserRole} 
+          onFinish={handleOnboardingFinish} 
         />
       )}
 
@@ -1066,7 +1070,7 @@ const App = () => {
                   initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                   transition={{ duration: 0.15 }}
                 >
-                  <SettingsView key="settings" user={user} userRole={userRole} husbandInfo={husbandInfo} setHusbandInfo={setHusbandInfo} wifeInfo={wifeInfo} setWifeInfo={setWifeInfo} worshipDays={worshipDays} setWorshipDays={setWorshipDays} worshipTime={worshipTime} setWorshipTime={setWorshipTime} anniversaries={anniversaries} setAnniversaries={setAnniversaries} onReportClick={() => setShowReport(true)} onGuideClick={() => setShowGuidePage(true)} isAdmin={isAdmin} onNav={setActiveTab} onUpdateMemo={updateProfileInfo} subscribeToPushNotifications={subscribeToPushNotifications} />
+                  <SettingsView key="settings" user={user} userRole={userRole} coupleCode={coupleCode} husbandInfo={husbandInfo} setHusbandInfo={setHusbandInfo} wifeInfo={wifeInfo} setWifeInfo={setWifeInfo} worshipDays={worshipDays} setWorshipDays={setWorshipDays} worshipTime={worshipTime} setWorshipTime={setWorshipTime} anniversaries={anniversaries} setAnniversaries={setAnniversaries} onReportClick={() => setShowReport(true)} onGuideClick={() => setShowGuidePage(true)} isAdmin={isAdmin} onNav={setActiveTab} onUpdateMemo={updateProfileInfo} subscribeToPushNotifications={subscribeToPushNotifications} />
                 </motion.div>
               )}
               {activeTab === 'admin' && isAdmin && (

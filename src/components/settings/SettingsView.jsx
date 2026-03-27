@@ -103,6 +103,7 @@ const SettingsView = ({
   isAdmin,
   onNav,
   onUpdateMemo,
+  coupleCode,
   subscribeToPushNotifications // Pass this as prop from App!
 }) => {
   const [showDeepAnalysis, setShowDeepAnalysis] = useState(false);
@@ -162,12 +163,18 @@ const SettingsView = ({
             <SettingsItem icon={<Users size={20} color="#475569" />} label="커플 연결 해제 (데이터 삭제)" onClick={() => { if(window.confirm("배우자와의 연결을 해제하시겠습니까? 모든 공유 데이터가 초기화됩니다.")) alert("연결 해제 프로세스 시작..."); }} />
           </SettingsSection>
           
-          <div style={{ paddingTop: '20px', borderTop: '1px solid rgba(0,0,0,0.05)', marginTop: '20px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', opacity: 0.6 }}>
-              <span style={{ fontSize: '11px', fontWeight: 900, color: '#8B7355' }}>COUPLING CODE:</span>
-              <code style={{ fontSize: '12px', fontWeight: 900, color: '#D4AF37', background: 'rgba(212, 175, 55, 0.1)', padding: '2px 8px', borderRadius: '4px' }}>{user?.id?.substring(0,8).toUpperCase()}</code>
+          <div style={{ paddingTop: '20px', borderTop: '1px solid rgba(0,0,0,0.05)', marginTop: '20px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', opacity: 0.8 }}>
+              <span style={{ fontSize: '11px', fontWeight: 900, color: '#8B7355', width: '90px' }}>내 계정 ID:</span>
+              <code style={{ fontSize: '11px', fontWeight: 900, color: '#8B7355', background: 'rgba(0,0,0,0.05)', padding: '3px 8px', borderRadius: '4px' }}>{user?.id?.substring(0,8).toUpperCase()}</code>
             </div>
-            <p style={{ fontSize: '10px', color: '#8B7355', opacity: 0.7 }}>배우자와 '서로 다른 역할'이어야 하며 '동일한 코드'여야 합니다.</p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontSize: '11px', fontWeight: 900, color: '#D4AF37', width: '90px' }}>커플 연결 코드:</span>
+              <code style={{ fontSize: '13px', fontWeight: 900, color: '#2D1F08', background: 'rgba(212, 175, 55, 0.15)', padding: '4px 10px', borderRadius: '6px', border: '1px solid rgba(212, 175, 55, 0.2)' }}>{coupleCode || "연결 필요"}</code>
+            </div>
+            <p style={{ fontSize: '10px', color: '#8B7355', opacity: 0.7, marginTop: '5px', lineHeight: 1.4 }}>
+              💡 배우자와 <b>'동일한 커플 연결 코드'</b>를 사용해야 데이터가 실시간으로 동기화됩니다. 내 계정 ID는 본인 식별용이므로 배우자와 달라도 괜찮습니다.
+            </p>
           </div>
           <motion.button
             whileTap={{ scale: 0.95 }}
