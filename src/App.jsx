@@ -13,26 +13,26 @@ import { supabase } from './supabase';
 
 // Eagerly Loaded Components for instant navigation
 import HomeView from './components/home/HomeView';
-import CardGameView from './components/game/CardGameView';
+import CardGameView, { CARD_DATA } from './components/game/CardGameView';
 import ImageCardGameView from './components/game/ImageCardGameView';
-import CalendarView from './components/calendar/CalendarView';
-import CounselingView from './components/counseling/CounselingView';
-import ChatView from './components/counseling/ChatView';
-import SolutionView from './components/counseling/SolutionView';
-import IntimacyHubView from './components/intimacy/IntimacyHubView';
-import IntimacyModal from './components/intimacy/IntimacyModal';
-import WorshipView from './components/worship/WorshipView';
-import SettingsView from './components/settings/SettingsView';
-import ProfileView from './components/profile/ProfileView';
-import AdminView from './components/admin/AdminView';
-import GameGuideView from './components/dialogue/GameGuideView';
 import DialogueChoiceView from './components/dialogue/DialogueChoiceView';
-
+import GameGuideView from './components/dialogue/GameGuideView';
+import SettingsView from './components/settings/SettingsView';
 import AuthView from './components/auth/AuthView';
 import OnboardingView from './components/auth/OnboardingView';
+import AdminView from './components/admin/AdminView';
+import ChatView from './components/counseling/ChatView';
+import HattiCharacter from './components/ui/HattiCharacter';
+import IntimacyHubView from './components/intimacy/IntimacyHubView';
+import HeartPrayerView from './components/intimacy/HeartPrayerView';
+import IntimacyModal from './components/intimacy/IntimacyModal';
+import WorshipView from './components/worship/WorshipView';
+import SolutionView from './components/counseling/SolutionView';
 import AppGuideView from './components/ui/AppGuideView';
-import LoadingSpinner from './components/ui/LoadingSpinner';
-import ReportView from './components/ui/ReportView';
+import DeepAnalysisView from './components/settings/DeepAnalysisView';
+import SecretAnswerInteraction from './components/game/SecretAnswerInteraction';
+import CalendarView from './components/calendar/CalendarView';
+import ProfileView from './components/profile/ProfileView';
 
 // App constants
 const APP_DEBUG = true;
