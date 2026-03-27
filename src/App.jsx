@@ -209,8 +209,21 @@ const App = () => {
   };
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session: curSess } }) => { setSession(curSess); setUser(curSess?.user ?? null); setLoading(false); });
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, curSess) => { setSession(curSess); setUser(curSess?.user ?? null); });
+    supabase.auth.getSession()
+      .then(({ data: { session: curSess } }) => { 
+        setSession(curSess); 
+        setUser(curSess?.user ?? null); 
+        setLoading(false); 
+      })
+      .catch((err) => {
+        console.error("Session check failed, proceeding to auth:", err);
+        setLoading(false); // Ensure loading is released even on error
+      });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, curSess) => { 
+      setSession(curSess); 
+      setUser(curSess?.user ?? null); 
+    });
     return () => subscription.unsubscribe();
   }, []);
 
@@ -325,10 +338,12 @@ const App = () => {
                 {activeTab === 'cardGame' && (
                   <motion.div key="cardGame" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} style={{ width: '100%', height: '100%' }}>
                      <div style={{ padding: '0px', height: '100%', overflowY: 'auto' }}>
-                        {dialogueTab === 'choice' && <DialogueChoiceView key="choice" onSelect={(id) => { setDialogueGuideId(id === 'cardGame' ? 'cardGame' : 'imageSync'); setDialogueTab('guide'); }} onShowGuide={(id) => { setDialogueGuideId(id); setDialogueTab('guide'); }} onBack={() => setActiveTab('home')} />}
-                        {dialogueTab === 'imageGame' && <ImageCardGameView key="image" coupleCode={coupleCode} userRole={userRole} mainChannel={mainChannel} husbandInfo={husbandInfo} wifeInfo={wifeInfo} onBack={() => setDialogueTab('choice')} />}
-                        {dialogueTab === 'cardGame' && <CardGameView key="card" coupleCode={coupleCode} userRole={userRole} mainChannel={mainChannel} husbandInfo={husbandInfo} wifeInfo={wifeInfo} onUpdateMemo={updateProfileInfo} onBack={() => setDialogueTab('choice')} />}
-                        {dialogueTab === 'guide' && <GameGuideView key="guide" gameId={dialogueGuideId} onStart={() => setDialogueTab(dialogueGuideId === 'imageSync' ? 'imageGame' : 'cardGame')} onBack={() => setDialogueTab('choice')} />}
+                        <AnimatePresence mode="popLayout">
+                          {dialogueTab === 'choice' && <motion.div key="choice" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}><DialogueChoiceView onSelect={(id) => { setDialogueGuideId(id === 'cardGame' ? 'cardGame' : 'imageSync'); setDialogueTab('guide'); }} onShowGuide={(id) => { setDialogueGuideId(id); setDialogueTab('guide'); }} onBack={() => setActiveTab('home')} /></motion.div>}
+                          {dialogueTab === 'imageGame' && <motion.div key="image" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}><ImageCardGameView coupleCode={coupleCode} userRole={userRole} mainChannel={mainChannel} husbandInfo={husbandInfo} wifeInfo={wifeInfo} onBack={() => setDialogueTab('choice')} /></motion.div>}
+                          {dialogueTab === 'cardGame' && <motion.div key="card" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}><CardGameView coupleCode={coupleCode} userRole={userRole} mainChannel={mainChannel} husbandInfo={husbandInfo} wifeInfo={wifeInfo} onUpdateMemo={updateProfileInfo} onBack={() => setDialogueTab('choice')} /></motion.div>}
+                          {dialogueTab === 'guide' && <motion.div key="guide" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}><GameGuideView gameId={dialogueGuideId} onStart={() => setDialogueTab(dialogueGuideId === 'imageSync' ? 'imageGame' : 'cardGame')} onBack={() => setDialogueTab('choice')} /></motion.div>}
+                        </AnimatePresence>
                      </div>
                   </motion.div>
                 )}
