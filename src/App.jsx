@@ -864,7 +864,9 @@ const App = () => {
               url('/bg.png')
             `,
             backgroundBlendMode: 'overlay',
-            backgroundAttachment: 'fixed', // 백그라운드 고정으로 전환 시 깜빡임 방지
+            backgroundPosition: 'center',
+            backgroundSize: 'cover',
+            backgroundRepeat: 'no-repeat',
             opacity: 1,
             zIndex: -1
           }} />

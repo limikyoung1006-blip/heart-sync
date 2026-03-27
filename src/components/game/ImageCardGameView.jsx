@@ -94,19 +94,24 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, mainChannel, husbandI
 
     if (nextQ) {
       setIsFlipped(false);
-      setIsImageLoading(true);
+      // If the same question is drawn, reset loading state immediately
+      if (nextQ.id === (currentQuestion?.id)) {
+        setIsImageLoading(false);
+      } else {
+        setIsImageLoading(true);
+      }
+
       setTurnOwner(userRole); 
       
       setHistory(prev => {
         const nextH = [...prev, nextQ.id];
-        // If history gets too large (relative to total pool), keep only recent 50%
-        if (nextH.length > IMAGE_CARD_DATA.length * 0.8) {
-          return nextH.slice(Math.floor(IMAGE_CARD_DATA.length * 0.4));
+        // Threshold check: clear history if we've seen most of the category
+        if (nextH.length >= pool.length * 0.9) {
+          return [nextQ.id];
         }
         return nextH;
       });
 
-      // ⏱️ Delay actual transition slightly to allow AnimatePresence / Loading state to show
       setCurrentQuestion(nextQ);
       sendBroadcast({ 
         questionId: nextQ.id,
@@ -260,7 +265,7 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, mainChannel, husbandI
       {gameMode === 'classic' ? (
         <>
           <div style={{ width: '100%', display: 'flex', flexWrap: 'nowrap', overflowX: 'auto', gap: '8px', marginBottom: '25px', paddingBottom: '10px', scrollbarWidth: 'none' }} className="no-scrollbar">
-             {['전체', '신앙', '사랑', '일상', '소망', '가족', '휴식'].map(cat => (
+             {['전체', '신앙', '사랑', '일상', '소망', '가족', '휴식', '기록', '은혜', '찬양', '인도'].map(cat => (
                 <button 
                   key={cat} onClick={() => { setCategory(cat); drawNewCard(cat); }}
                   style={{ 
@@ -352,9 +357,9 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, mainChannel, husbandI
                     <ImageThumb key={idx} card={card} isSelected={selectedIndices.includes(idx)} order={selectedIndices.indexOf(idx) + 1} onClick={() => selectImage(idx)} />
                  ))}
                </div>
-                <div style={{ display: 'flex', gap: '12px', paddingBottom: '60px' }}>
-                  <button onClick={resetPick2} disabled={!isMyTurn} style={{ flex: 1, padding: '20px', borderRadius: '22px', background: 'white', border: '2px solid #AB47BC', color: '#AB47BC', fontWeight: 900, fontSize: '16px' }}>다시 뽑기</button>
-                  <button onClick={sharePick2} disabled={!isMyTurn || selectedIndices.length < 2} style={{ flex: 2, padding: '20px', borderRadius: '22px', background: '#AB47BC', color: 'white', fontWeight: 900, fontSize: '16px', opacity: selectedIndices.length === 2 ? 1 : 0.5, boxShadow: '0 12px 28px rgba(171, 71, 188, 0.3)' }}>상대방에게 보여주기</button>
+                <div style={{ position: 'fixed', bottom: '30px', left: '20px', right: '20px', display: 'flex', gap: '12px', zIndex: 100, background: 'rgba(255,255,255,0.8)', backdropFilter: 'blur(15px)', padding: '15px', borderRadius: '30px', boxShadow: '0 15px 40px rgba(0,0,0,0.1)', border: '1px solid rgba(171, 71, 188, 0.1)' }}>
+                  <button onClick={resetPick2} disabled={!isMyTurn} style={{ flex: 1, padding: '18px', borderRadius: '20px', background: 'white', border: '2px solid #AB47BC', color: '#AB47BC', fontWeight: 900, fontSize: '15px' }}>다시 뽑기</button>
+                  <button onClick={sharePick2} disabled={!isMyTurn || selectedIndices.length < 2} style={{ flex: 2, padding: '18px', borderRadius: '20px', background: '#AB47BC', color: 'white', fontWeight: 900, fontSize: '15px', opacity: selectedIndices.length === 2 ? 1 : 0.5, boxShadow: '0 8px 20px rgba(171, 71, 188, 0.3)' }}>상대방에게 보여주기</button>
                 </div>
              </>
            ) : (

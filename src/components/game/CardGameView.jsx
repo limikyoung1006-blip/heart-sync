@@ -41,31 +41,7 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo, onU
     return () => mainChannel.off('broadcast', { event: 'game-update' });
   }, [mainChannel, userRole]);
 
-  useEffect(() => {
-    if (!coupleCode) return;
-    
-    const channel = supabase.channel(`game-db-sync-${coupleCode}`)
-      .on('postgres_changes', { 
-        event: 'UPDATE', 
-        schema: 'public', 
-        table: 'card_game_state',
-        filter: `couple_id=eq.${coupleCode}`
-      }, payload => {
-        const data = payload.new;
-        if (data.category) setCategory(data.category);
-        if (data.is_flipped !== undefined) setIsFlipped(data.is_flipped);
-        if (data.is_waiting !== undefined) setIsWaiting(data.is_waiting);
-        if (data.waiter_role !== undefined) setWaiterRole(data.waiter_role);
-        if (data.turn_owner !== undefined) setTurnOwner(data.turn_owner);
-        if (data.current_question_id) {
-          const q = CARD_DATA.find(item => String(item.id) === String(data.current_question_id));
-          if (q) setCurrentQuestion(q);
-        }
-      })
-      .subscribe();
-
-    return () => supabase.removeChannel(channel);
-  }, [coupleCode]);
+  // Removded redundant postgres_changes listener - now relying on ultra-fast broadcast for real-time sync
 
   useEffect(() => {
     const fetchDB = async () => {
