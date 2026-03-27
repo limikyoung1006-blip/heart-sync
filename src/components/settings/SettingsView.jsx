@@ -19,7 +19,8 @@ import {
   Clock,
   Plus,
   Calendar,
-  Edit2
+  Edit2,
+  Heart
 } from 'lucide-react';
 import { supabase } from '../../supabase';
 import DeepAnalysisView from './DeepAnalysisView';
@@ -229,7 +230,7 @@ const SettingsView = ({
                 <label style={{ fontSize: '13px', fontWeight: 900, color: '#8B7355', marginBottom: '10px', display: 'block' }}>예배 요일 선택</label>
                 <div style={{ display: 'flex', justifyContent: 'space-between', gap: '5px' }}>
                   {['일', '월', '화', '수', '목', '금', '토'].map((day, idx) => {
-                    const isActive = worshipDays.includes(idx);
+                    const isActive = (worshipDays || []).includes(idx);
                     return (
                       <button
                         key={day}

@@ -71,6 +71,7 @@ const App = () => {
   const [schedules, setSchedules] = useState(() => JSON.parse(localStorage.getItem('coupleSchedules') || '[]'));
   const [notifications, setNotifications] = useState(() => { try { const saved = localStorage.getItem('notifications'); return saved ? JSON.parse(saved) : []; } catch (e) { return []; } });
   const [showNotificationList, setShowNotificationList] = useState(false);
+  const [showGuide, setShowGuide] = useState(false);
   
   const [worshipDays, setWorshipDays] = useState(() => JSON.parse(localStorage.getItem('worshipDays') || '[1,2,3,4,5,6,0]')); 
   const [worshipTime, setWorshipTime] = useState(() => localStorage.getItem('worshipTime') || '21:00');
@@ -252,7 +253,7 @@ const App = () => {
                   <User size={16} color={appTheme.primary} />
                 </div>
                 <span style={{ fontSize: '13px', fontWeight: 900, color: appTheme.primary }}>
-                  {userRole === 'husband' ? husbandInfo.nickname : wifeInfo.nickname}님
+                  {(userRole === 'husband' ? husbandInfo?.nickname : wifeInfo?.nickname) || (userRole === 'husband' ? '남편' : '아내')}님
                 </span>
                 <div style={{ width: 8, height: 8, borderRadius: '50%', background: syncStatus === 'SUBSCRIBED' ? '#4BD991' : '#FFBE61' }} />
               </div>
@@ -371,6 +372,10 @@ const App = () => {
               </AnimatePresence>
             </Suspense>
           </main>
+
+          <AnimatePresence>
+            {showGuide && <AppGuideView onClose={() => setShowGuide(false)} />}
+          </AnimatePresence>
 
           <nav className="bottom-nav">
             <NavItem active={activeTab === 'home'} onClick={() => setActiveTab('home')} icon={<Home size={22} fill={activeTab === 'home' ? appTheme.primary : "none"} color={appTheme.primary} />} label="홈" />
