@@ -273,6 +273,11 @@ const App = () => {
                   />
                 </motion.div>
               )}
+              {activeTab === 'worship' && (
+                <motion.div key="worship" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                  <WorshipView userRole={userRole} coupleCode={coupleCode} />
+                </motion.div>
+              )}
               {activeTab === 'calendar' && <motion.div key="cal" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}><CalendarView schedules={schedules} onAddSchedule={s => setSchedules([...schedules, s])} onDeleteSchedule={id => setSchedules(schedules.filter(s => s.id !== id))} onBack={() => setActiveTab('home')} /></motion.div>}
             </AnimatePresence>
           </main>
@@ -281,6 +286,7 @@ const App = () => {
             <NavItem active={activeTab === 'home'} onClick={() => setActiveTab('home')} icon={<Home size={22} fill={activeTab === 'home' ? appTheme.primary : "none"} color={appTheme.primary} />} label="홈" />
             <NavItem active={activeTab === 'cardGame'} onClick={() => { setActiveTab('cardGame'); setDialogueTab('choice'); }} icon={<MessageSquare size={22} fill={activeTab === 'cardGame' ? appTheme.primary : "none"} color={appTheme.primary} />} label="대화카드" />
             <NavItem active={activeTab === 'counseling'} onClick={() => setActiveTab('counseling')} icon={<Sparkles size={22} fill={activeTab === 'counseling' ? appTheme.primary : "none"} color={appTheme.primary} />} label="AI하티" />
+            <NavItem active={activeTab === 'worship'} onClick={() => setActiveTab('worship')} icon={<BookOpen size={22} fill={activeTab === 'worship' ? appTheme.primary : "none"} color={appTheme.primary} />} label="가정예배" />
             <NavItem active={activeTab === 'intimacyHub'} onClick={() => setActiveTab('intimacyHub')} icon={<Heart size={22} fill={activeTab === 'intimacyHub' ? appTheme.primary : "none"} color={appTheme.primary} />} label="마음정원" />
             <NavItem active={activeTab === 'profile'} onClick={() => setActiveTab('profile')} icon={<User size={22} fill={activeTab === 'profile' ? appTheme.primary : "none"} color={appTheme.primary} />} label="내 정보" />
           </nav>

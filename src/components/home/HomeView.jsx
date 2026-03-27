@@ -655,6 +655,36 @@ const HomeView = ({
         </AnimatePresence>
       </div>
 
+      {/* ✝️ Family Worship Quick Access */}
+      <div 
+        onClick={() => onNav('worship')}
+        style={{ 
+          padding: '24px', 
+          background: 'linear-gradient(135deg, #FDFCF0, #F5F3E6)', 
+          borderRadius: '26px',
+          boxShadow: '0 10px 30px rgba(212, 175, 55, 0.1)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginBottom: '20px',
+          border: '1.5px solid rgba(212, 175, 55, 0.2)',
+          cursor: 'pointer'
+        }}
+      >
+        <div style={{ display: 'flex', gap: '18px', alignItems: 'center' }}>
+          <div style={{ width: '56px', height: '56px', background: 'white', borderRadius: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 15px rgba(0,0,0,0.05)' }}>
+            <BookOpen size={28} color="#D4AF37" />
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <span style={{ color: '#8B7355', fontSize: '11px', fontWeight: 900, letterSpacing: '1px', marginBottom: '3px' }}>오늘 우리 가정에 주시는</span>
+            <span style={{ color: '#2D1F08', fontSize: '18px', fontWeight: 900 }}>가정예배 시작하기</span>
+          </div>
+        </div>
+        <div style={{ background: '#D4AF37', width: '32px', height: '32px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(212, 175, 55, 0.3)' }}>
+          <ArrowRight size={18} color="white" />
+        </div>
+      </div>
+
       {/* Anniversary & Schedule Quick Preview */}
       <div style={{ display: 'flex', gap: '15px', marginBottom: '25px' }}>
         <div 
