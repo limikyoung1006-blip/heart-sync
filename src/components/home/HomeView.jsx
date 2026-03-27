@@ -13,7 +13,7 @@ import {
   Sparkles,
   ArrowRight
 } from 'lucide-react';
-import { CARD_DATA } from '../game/CardGameView';
+import { CARD_DATA } from '../../data/dialogueCards';
 import HattiCharacter from '../ui/HattiCharacter';
 import SecretAnswerInteraction from './SecretAnswerInteraction';
 
