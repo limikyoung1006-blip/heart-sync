@@ -149,7 +149,7 @@ const SettingsView = ({
           </SettingsSection>
 
           <SettingsSection title="🔔 알림 및 동기화">
-             <SettingsItem icon={<Smartphone size={20} color="#3B82F6" />} label="기기 알림 활성화 (푸시)" onClick={() => setShowNotifIntegration(true)} />
+             <SettingsItem icon={<Smartphone size={20} color="#3B82F6" />} label="기기 알림(푸시) 활성화" onClick={() => setShowNotifIntegration(true)} />
              <SettingsItem icon={<Activity size={20} color="#EF4444" />} label="알림 전송 장애 진단하기" onClick={() => setShowNotifDiag(true)} />
           </SettingsSection>
 
@@ -161,7 +161,7 @@ const SettingsView = ({
           <SettingsSection title="🛡️ 보안 및 지원">
             <SettingsItem icon={<Lock size={20} color="#0369A1" />} label="데이터 보안 및 암호화" onClick={() => setShowDataSecurity(true)} />
             <SettingsItem icon={<Info size={20} color="#475569" />} label="기능 가이드 다시보기" onClick={onGuideClick} />
-            <SettingsItem icon={<Users size={20} color="#475569" />} label="커플 연결 해제 (데이터 삭제)" onClick={() => { if(window.confirm("배우자와의 연결을 해제하시겠습니까? 모든 공유 데이터가 초기화됩니다.")) alert("연결 해제 프로세스 시작..."); }} />
+            <SettingsItem icon={<Users size={20} color="#475569" />} label="커플 연결 해제 및 초기화" onClick={() => { if(window.confirm("배우자와의 연결을 해제하시겠습니까? 모든 공유 데이터가 초기화됩니다.")) alert("연결 해제 프로세스 시작..."); }} />
           </SettingsSection>
           
           <div style={{ paddingTop: '20px', borderTop: '1px solid rgba(0,0,0,0.05)', marginTop: '20px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -184,8 +184,8 @@ const SettingsView = ({
               <span style={{ fontSize: '11px', fontWeight: 900, color: '#D4AF37', width: '90px' }}>커플 연결 코드:</span>
               <code style={{ fontSize: '13px', fontWeight: 900, color: '#2D1F08', background: 'rgba(212, 175, 55, 0.15)', padding: '4px 10px', borderRadius: '6px', border: '1px solid rgba(212, 175, 55, 0.2)' }}>{coupleCode || "연결 필요 (클릭)"}</code>
             </div>
-            <p style={{ fontSize: '10px', color: '#8B7355', opacity: 0.7, marginTop: '5px', lineHeight: 1.4 }}>
-              💡 배우자와 <b>'동일한 커플 연결 코드'</b>를 사용해야 데이터가 실시간으로 동기화됩니다. 내 계정 ID는 본인 식별용이므로 배우자와 달라도 괜찮습니다.
+            <p style={{ fontSize: '10px', color: '#8B7355', opacity: 0.7, marginTop: '5px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              💡 배우자와 <b>'동일한 코드'</b> 사용 시 실시간 동기화됩니다 (계정 ID는 달라도 무관)
             </p>
           </div>
           <motion.button
