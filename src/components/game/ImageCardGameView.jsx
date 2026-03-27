@@ -222,7 +222,7 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, mainChannel, husbandI
       <header style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '15px' }}>
         <button onClick={onBack} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px' }}>
           <ChevronLeft size={24} color="#AB47BC" strokeWidth={3} />
-          <span style={{ fontWeight: 900, color: '#AB47BC', fontSize: '14px' }}>홈으로</span>
+          <span style={{ fontWeight: 900, color: '#AB47BC', fontSize: '14px' }}>돌아가기</span>
         </button>
         <div style={{ display: 'flex', background: '#F3E5F5', borderRadius: '15px', padding: '3px', border: '1px solid rgba(171, 71, 188, 0.1)' }}>
           {['classic', 'pick2'].map((m, i) => (
