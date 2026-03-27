@@ -673,7 +673,10 @@ const HomeView = ({
           <span style={{ fontSize: '11px', color: '#9CA3AF', fontWeight: 600 }}>우리가 사랑한 시간</span>
         </div>
 
-        <div style={{ flex: 1.2, padding: '20px', background: 'white', borderRadius: '24px', boxShadow: '0 8px 20px rgba(0,0,0,0.03)', border: '1px solid #F1F5F9' }}>
+        <div 
+          onClick={() => onNav('calendar')}
+          style={{ flex: 1.2, padding: '20px', background: 'white', borderRadius: '24px', boxShadow: '0 8px 20px rgba(0,0,0,0.03)', border: '1px solid #F1F5F9', cursor: 'pointer' }}
+        >
           <div className="flex items-center justify-between mb-4">
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                <div style={{ background: 'rgba(59, 130, 246, 0.1)', padding: '6px', borderRadius: '8px' }}>

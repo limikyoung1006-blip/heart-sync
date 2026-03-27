@@ -239,7 +239,20 @@ const App = () => {
               {activeTab === 'profile' && <motion.div key="p" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}><ProfileView user={user} userRole={userRole} husbandInfo={husbandInfo} wifeInfo={wifeInfo} onUpdateProfile={updateProfileInfo} isFullPage={true} /></motion.div>}
               {activeTab === 'settings' && <motion.div key="s" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}><SettingsView user={user} userRole={userRole} husbandInfo={husbandInfo} wifeInfo={wifeInfo} onBack={() => setActiveTab('home')} onReportClick={() => setActiveTab('report')} /></motion.div>}
               {activeTab === 'report' && <motion.div key="r" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}><SolutionView onBack={() => setActiveTab('settings')} userRole={userRole} husbandInfo={husbandInfo} wifeInfo={wifeInfo} schedules={schedules} coupleStats={coupleStats} adminStats={adminStats} /></motion.div>}
-              {(activeTab === 'intimacyHub' || activeTab === 'heartPrayer') && <motion.div key="i" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}><IntimacyHubView userRole={userRole} coupleCode={coupleCode} onBack={() => setActiveTab('home')} /></motion.div>}
+              {(activeTab === 'intimacyHub' || activeTab === 'heartPrayer') && (
+                <motion.div key="intimacy" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                  <IntimacyHubView 
+                    userRole={userRole} 
+                    coupleCode={coupleCode} 
+                    husbandInfo={husbandInfo} 
+                    wifeInfo={wifeInfo} 
+                    mainChannel={mainChannel} 
+                    supabase={supabase}
+                    initialTab={activeTab === 'heartPrayer' ? 'prayer' : 'garden'} 
+                    onBack={() => setActiveTab('home')} 
+                  />
+                </motion.div>
+              )}
               {activeTab === 'calendar' && <motion.div key="cal" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}><CalendarView schedules={schedules} onAddSchedule={s => setSchedules([...schedules, s])} onDeleteSchedule={id => setSchedules(schedules.filter(s => s.id !== id))} onBack={() => setActiveTab('home')} /></motion.div>}
             </AnimatePresence>
           </main>
