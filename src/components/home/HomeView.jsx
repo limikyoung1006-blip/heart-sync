@@ -418,19 +418,11 @@ const HomeView = ({
                 <motion.div 
                   key="revealed"
                   initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
-                  className="w-full flex flex-col items-center"
+                  style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}
                 >
-                  <h2 className="card-question" style={{ 
-                    fontSize: '19px', 
-                    marginBottom: '20px', 
-                    marginTop: '10px',
-                    textAlign: 'center',
-                    wordBreak: 'keep-all',
-                    lineHeight: 1.5,
-                    padding: '0 15px'
-                  }}>
-                    {todaySecretQuestion}
-                  </h2>
+                  <div style={{ marginBottom: '5px', opacity: 0.6 }}>
+                    <Sparkles size={16} color="#D4AF37" />
+                  </div>
                   
                   <SecretAnswerInteraction 
                     userRole={userRole}
