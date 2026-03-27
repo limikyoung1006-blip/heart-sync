@@ -89,6 +89,28 @@ const App = () => {
   const [dialogueTab, setDialogueTab] = useState('choice'); 
   const [dialogueGuideId, setDialogueGuideId] = useState(null);
 
+  // Sync state with browser history for mobile back button support
+  useEffect(() => {
+    const handlePopState = (event) => {
+      if (event.state && event.state.tab) {
+        setActiveTab(event.state.tab);
+        if (event.state.dialogueTab) setDialogueTab(event.state.dialogueTab);
+      } else {
+        setActiveTab('home');
+      }
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  // Whenever activeTab changes, push to history (if it's not from popstate)
+  useEffect(() => {
+    const currentState = window.history.state;
+    if (!currentState || currentState.tab !== activeTab) {
+      window.history.pushState({ tab: activeTab, dialogueTab }, '', '');
+    }
+  }, [activeTab, dialogueTab]);
+
   useEffect(() => {
     localStorage.setItem('husbandInfo', JSON.stringify(husbandInfo));
     localStorage.setItem('wifeInfo', JSON.stringify(wifeInfo));
@@ -219,7 +241,18 @@ const App = () => {
 
   return (
     <div className="h-full flex flex-col relative w-full" style={{ '--gold': appTheme.primary, '--gold-glow': `${appTheme.primary}40`, background: appTheme.bg }}>
-      {loading && <div className="fixed inset-0 flex items-center justify-center bg-white z-[99999] font-black"><RefreshCw size={40} className="animate-spin" color="#D4AF37" /></div>}
+      {loading && (
+        <div className="fixed inset-0 flex flex-col items-center justify-center z-[99999] font-black" style={{ background: '#FDFCF0' }}>
+          <motion.div 
+            animate={{ scale: [1, 1.1, 1], opacity: [0.5, 1, 0.5] }}
+            transition={{ duration: 2, repeat: Infinity }}
+            style={{ marginBottom: '20px' }}
+          >
+            <RefreshCw size={50} className="animate-spin" color="#D4AF37" />
+          </motion.div>
+          <p style={{ color: '#D4AF37', fontSize: '14px', letterSpacing: '2px', fontWeight: 900 }}>HEART SYNCING...</p>
+        </div>
+      )}
       
       {!loading && !session && !isAdmin && (
         <AuthView 
