@@ -74,6 +74,7 @@ const App = () => {
   
   const [worshipDays, setWorshipDays] = useState(() => JSON.parse(localStorage.getItem('worshipDays') || '[1,2,3,4,5,6,0]')); 
   const [worshipTime, setWorshipTime] = useState(() => localStorage.getItem('worshipTime') || '21:00');
+  const [anniversaries, setAnniversaries] = useState(() => { try { const saved = localStorage.getItem('anniversaries'); return saved ? JSON.parse(saved) : []; } catch (e) { return []; } });
   
   const activeTabRef = useRef('home');
   useEffect(() => { activeTabRef.current = activeTab }, [activeTab]);
@@ -96,7 +97,8 @@ const App = () => {
     localStorage.setItem('notifications', JSON.stringify(notifications));
     localStorage.setItem('worshipDays', JSON.stringify(worshipDays));
     localStorage.setItem('worshipTime', worshipTime);
-  }, [husbandInfo, wifeInfo, userRole, isSetupDone, schedules, notifications, worshipDays, worshipTime]);
+    localStorage.setItem('anniversaries', JSON.stringify(anniversaries));
+  }, [husbandInfo, wifeInfo, userRole, isSetupDone, schedules, notifications, worshipDays, worshipTime, anniversaries]);
 
   useEffect(() => {
     if ("Notification" in window) setNotifPermission(Notification.permission);
@@ -323,7 +325,11 @@ const App = () => {
                       coupleCode={coupleCode} setCoupleCode={setCoupleCode}
                       onUpdateMemo={updateProfileInfo}
                       onBack={() => setActiveTab('home')} 
+                      onNav={(tab) => setActiveTab(tab)}
                       onReportClick={() => setActiveTab('report')} 
+                      onGuideClick={() => setShowGuide(true)}
+                      anniversaries={anniversaries}
+                      setAnniversaries={setAnniversaries}
                       worshipDays={worshipDays}
                       setWorshipDays={setWorshipDays}
                       worshipTime={worshipTime}

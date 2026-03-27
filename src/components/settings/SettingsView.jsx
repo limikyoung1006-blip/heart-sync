@@ -15,7 +15,11 @@ import {
   Activity,
   Trash2,
   RefreshCw,
-  LogOut
+  LogOut,
+  Clock,
+  Plus,
+  Calendar,
+  Edit2
 } from 'lucide-react';
 import { supabase } from '../../supabase';
 import DeepAnalysisView from './DeepAnalysisView';
@@ -146,6 +150,72 @@ const SettingsView = ({
               label="AI 하티 심층 성향 진단" 
               onClick={() => setShowDeepAnalysis(true)} 
             />
+          </SettingsSection>
+
+          <SettingsSection title="📅 우리 부부의 기념일 (D-Day)">
+            <div style={{ background: 'rgba(255, 255, 255, 0.6)', padding: '20px', borderRadius: '24px', display: 'flex', flexDirection: 'column', gap: '15px' }}>
+              {/* Marriage Date (Primary) */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: '12px', borderBottom: '1px solid rgba(212, 175, 55, 0.1)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                   <div style={{ background: 'rgba(212, 175, 55, 0.15)', padding: '8px', borderRadius: '12px' }}>
+                     <Heart size={18} color="#D4AF37" fill="#D4AF37" />
+                   </div>
+                   <div style={{ display: 'flex', flexDirection: 'column' }}>
+                     <span style={{ fontSize: '14px', fontWeight: 900, color: '#2D1F08' }}>결혼기념일</span>
+                     <span style={{ fontSize: '11px', color: '#8B7355', fontWeight: 700 }}>{myInfo?.marriageDate || '2020-05-23'}</span>
+                   </div>
+                </div>
+                <div style={{ fontSize: '16px', fontWeight: 900, color: '#D4AF37' }}>
+                  D+{Math.floor((new Date() - new Date(myInfo?.marriageDate || '2020-05-23')) / 86400000)}
+                </div>
+              </div>
+
+              {/* Dynamic Anniversaries */}
+              {(anniversaries || []).map((annif) => (
+                <div key={annif.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                     <div style={{ background: 'rgba(0, 0, 0, 0.05)', padding: '8px', borderRadius: '12px' }}>
+                       <Calendar size={18} color="#64748B" />
+                     </div>
+                     <div style={{ display: 'flex', flexDirection: 'column' }}>
+                       <span style={{ fontSize: '14px', fontWeight: 800, color: '#2D1F08' }}>{annif.title}</span>
+                       <span style={{ fontSize: '11px', color: '#64748B', fontWeight: 700 }}>{annif.date}</span>
+                     </div>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <div style={{ fontSize: '14px', fontWeight: 800, color: '#2D1F08' }}>
+                      {(() => {
+                        const diff = Math.ceil((new Date(annif.date) - new Date()) / 86400000);
+                        return diff === 0 ? 'D-Day' : diff > 0 ? `D-${diff}` : `D+${Math.abs(diff)}`;
+                      })()}
+                    </div>
+                    <button 
+                      onClick={() => setAnniversaries(prev => prev.filter(a => a.id !== annif.id))}
+                      style={{ border: 'none', background: 'none', padding: '5px' }}
+                    >
+                      <Trash2 size={16} color="#EF4444" opacity={0.5} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+
+              <button 
+                onClick={() => {
+                  const title = prompt("기념일 이름을 입력하세요:");
+                  if (!title) return;
+                  const date = prompt("날짜를 입력하세요 (YYYY-MM-DD):", new Date().toISOString().split('T')[0]);
+                  if (!date) return;
+                  setAnniversaries(prev => [...(prev || []), { id: Date.now(), title, date }]);
+                }}
+                style={{
+                  width: '100%', padding: '12px', borderRadius: '15px', background: 'white',
+                  border: '1px dashed #D4AF37', color: '#B08D3E', fontSize: '13px', fontWeight: 900,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginTop: '5px'
+                }}
+              >
+                <Plus size={16} /> 새로운 기념일 추가
+              </button>
+            </div>
           </SettingsSection>
 
           <SettingsSection title="🔔 알림 및 동기화">
