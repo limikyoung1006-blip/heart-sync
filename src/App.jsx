@@ -103,24 +103,35 @@ const App = () => {
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
-  // Whenever activeTab changes, push to history (if it's not from popstate)
+  // Use a safer history push that doesn't block the UI thread during navigation transitions
   useEffect(() => {
-    const currentState = window.history.state;
-    if (!currentState || currentState.tab !== activeTab) {
-      window.history.pushState({ tab: activeTab, dialogueTab }, '', '');
-    }
+    const pushTimer = setTimeout(() => {
+      try {
+        const currentState = window.history.state;
+        if (!currentState || currentState.tab !== activeTab || currentState.dialogueTab !== dialogueTab) {
+          window.history.pushState({ tab: activeTab, dialogueTab }, '', '');
+        }
+      } catch (e) {
+        console.warn("History push failed safely:", e);
+      }
+    }, 100);
+    return () => clearTimeout(pushTimer);
   }, [activeTab, dialogueTab]);
 
   useEffect(() => {
-    localStorage.setItem('husbandInfo', JSON.stringify(husbandInfo));
-    localStorage.setItem('wifeInfo', JSON.stringify(wifeInfo));
-    localStorage.setItem('userRole', userRole);
-    localStorage.setItem('isSetupDone', isSetupDone);
-    localStorage.setItem('coupleSchedules', JSON.stringify(schedules));
-    localStorage.setItem('notifications', JSON.stringify(notifications));
-    localStorage.setItem('worshipDays', JSON.stringify(worshipDays));
-    localStorage.setItem('worshipTime', worshipTime);
-    localStorage.setItem('anniversaries', JSON.stringify(anniversaries));
+    try {
+      localStorage.setItem('husbandInfo', JSON.stringify(husbandInfo || {}));
+      localStorage.setItem('wifeInfo', JSON.stringify(wifeInfo || {}));
+      localStorage.setItem('userRole', userRole || 'husband');
+      localStorage.setItem('isSetupDone', isSetupDone ? 'true' : 'false');
+      localStorage.setItem('coupleSchedules', JSON.stringify(schedules || []));
+      localStorage.setItem('notifications', JSON.stringify(notifications || []));
+      localStorage.setItem('worshipDays', JSON.stringify(worshipDays || []));
+      localStorage.setItem('worshipTime', worshipTime || '21:00');
+      localStorage.setItem('anniversaries', JSON.stringify(anniversaries || []));
+    } catch (e) {
+      console.warn("State persistence safely skipped:", e);
+    }
   }, [husbandInfo, wifeInfo, userRole, isSetupDone, schedules, notifications, worshipDays, worshipTime, anniversaries]);
 
   useEffect(() => {
@@ -319,7 +330,7 @@ const App = () => {
                 <RefreshCw size={40} className="animate-spin" color="#D4AF37" />
               </div>
             }>
-              <AnimatePresence mode="wait" onExitComplete={() => window.scrollTo(0, 0)}>
+              <AnimatePresence mode="wait">
                 {activeTab === 'home' && (
                   <motion.div key="home" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} style={{ width: '100%', height: '100%' }}>
                     <HomeView 
