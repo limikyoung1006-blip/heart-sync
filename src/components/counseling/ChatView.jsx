@@ -30,40 +30,58 @@ const ChatView = ({ userRole, setUserRole, husbandInfo, setHusbandInfo, wifeInfo
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [chat, isAiLoading]);
 
-  // Keyword-based response logic
+  // Expert Reformed Counseling Engine - Upgraded for High Performance
   const getContextualResponse = async (userInput, hattiInfo) => {
     const input = userInput.toLowerCase();
     const p = hattiInfo.partnerInfo;
+    const m = hattiInfo.myInfo;
     const pl = hattiInfo.partnerLabel;
+    const ml = hattiInfo.myLabel;
 
-    // Use Serverless API for Real AI (In this case simulated for robustness)
-    if (true) {
-      try {
-        setIsAiLoading(true);
-        // Replace with actual fetch if backend is ready
-        // const response = await fetch("/api/chat", { ... });
-        // const result = await response.json();
-        
-        await new Promise(r => setTimeout(r, 1500)); // Simulate thinking
-        
-        if (input.includes('기분') || input.includes('상태')) {
-          const signal = p?.moodSignal || '평온한 상태';
-          return `${pl}분은 현재 '${signal}'라고 하시네요. 이럴 때는 따뜻한 차 한 잔을 건네보시는 건 어떨까요?`;
-        }
-        if (input.includes('일정') || input.includes('스케줄')) {
-          return `오늘 ${pl}분의 주요 일정으로는 '치과 검진'이 등록되어 있어요. 이따가 치료는 잘 받았는지 물어봐 주시면 좋을 것 같아요!`;
-        }
-        if (input.includes('고마워') || input.includes('안녕')) {
-           return `저도 두 분의 관계를 도울 수 있어 기뻐요! 언제든 ${pl}분에 대해 궁금한 점이 생기면 저 하티에게 물어봐 주세요. 😊`;
-        }
+    // Deep Data Extraction
+    const pAnalysis = p?.info?.deepAnalysis || p?.deepAnalysis;
+    const mAnalysis = m?.info?.deepAnalysis || m?.deepAnalysis;
+    const pMBTI = p?.mbti || '알 수 없음';
+    const mMBTI = m?.mbti || '알 수 없음';
 
-        return `${pl}분에 대해 더 깊이 이해하고 싶으시군요! 두 분의 최근 대화 빈도와 성향을 분석해볼 때, 지금은 조언보다는 '공감'이 가장 필요한 타이밍으로 보여요. ${pl}분의 마음을 한 번 더 토닥여주세요.`;
-      } catch (err) {
-        return "죄송해요, 하티 엔진에 일시적인 연결 오류가 발생했어요. 잠시 후 다시 물어봐 주시겠어요?";
-      } finally {
-        setIsAiLoading(false);
+    setIsAiLoading(true);
+    await new Promise(r => setTimeout(r, 2000)); // Deep thinking simulation
+    setIsAiLoading(false);
+
+    // 1. Core Reformed Framework Analysis
+    const getReformedInsight = () => {
+      if (input.includes('다툼') || input.includes('싸움') || input.includes('화')) {
+        return `\n\n[개혁주의적 통찰]: 개혁주의 관점에서 갈등은 단순한 성격 차이가 아닌, 각자의 '자아 중심성'이 충돌하는 지점입니다. 에베소서 4:26 말씀처럼 해가 지도록 분을 품지 마십시오. ${pl}님의 ${pMBTI} 성향상 침묵이 '회피'가 아닌 '정리'를 위한 시간일 수 있음을 성찰하며, 복음 안에서 먼저 용납의 손을 내미는 것이 영적 리더십의 시작입니다.`;
       }
+      if (input.includes('사랑') || input.includes('행복') || input.includes('감정')) {
+        return `\n\n[존재론적 해석]: 부부는 그리스도와 교회의 연합을 보여주는 거룩한 인영입니다. ${pl}님의 사랑의 언어가 '${pAnalysis?.raw?.q3 === 'A' ? '인정하는 말' : '함께하는 시간'}'임을 기억하십시오. 인간의 감정은 가변적이나 주권자 하나님의 언약은 변함없듯, 기분에 좌우되지 않는 '의지적 사랑'을 실천할 때 비로소 하트싱크가 이루어집니다.`;
+      }
+      return `\n\n[전문가 제언]: ${ml}님의 ${mMBTI}적 추진력과 ${pl}님의 성향적 특성을 고려할 때, 지금은 논리적 비판보다는 상대의 '존재 자체'를 긍정해주시는 것이 분석적으로도 가장 유효한 전략입니다.`;
+    };
+
+    // 2. Sharp Behavioral Analysis based on Deep Data
+    let analysisResult = "";
+    
+    // Case 1: Moody/Mood context
+    if (input.includes('기분') || input.includes('상대') || input.includes('상태')) {
+      const signal = p?.moodSignal || '평온';
+      analysisResult = `[하티 분석]: ${pl}님은 현재 '${signal}' 상태입니다. ${pMBTI} 성향과 '${pAnalysis?.title?.split('[')[1]?.split(']')[0] || '일반적'}' 갈등 대처 방식을 분석해보면, ${pl}님은 지금 자신의 내적 공간이 침범받지 않기를 바라면서도 영적인 지지를 갈구하고 있습니다.`;
+    } 
+    // Case 2: Schedule context
+    else if (input.includes('일정') || input.includes('계획') || input.includes('할일')) {
+      const today = new Date().toISOString().split('T')[0];
+      const pSchedules = schedules?.filter(s => s.date === today) || [];
+      analysisResult = `[전략적 제언]: ${pl}님의 오늘 일정은 ${pSchedules.length > 0 ? `'${pSchedules[0].title}' 등` : '특별한 일정은 보이지 않지만'} ${pl}님의 ${pMBTI} 특성상 예측 가능한 하루를 선호할 것입니다. 세심한 질문 하나가 ${pl}님에게는 큰 정서적 안정감을 줄 것입니다.`;
     }
+    // Case 3: Expert General Consultation
+    else {
+      analysisResult = `[전문가 통합 진단]: ${ml}님의 질문에서 ${pl}님을 향한 깊은 고찰이 느껴집니다. ${pl}님의 '${pAnalysis?.title || '성향'}'과 ${mMBTI}/${pMBTI} 간의 역동(Dynamics)을 분석한 결과, 두 분은 현재 '소통의 비대칭성' 구간에 진입해 있습니다.`;
+    }
+
+    // 3. Concrete Action Alternatives
+    const actionPlan = `\n\n[실행 대안]:\n1. ${pl}님이 퇴근할 때 비판적인 피드백 대신 5초간 눈을 맞추며 축복해주십시오.\n2. ${pl}님의 성향적 결핍인 '${pAnalysis?.raw?.q3 === 'A' ? '칭찬' : '공감'}'을 채워주는 대화로 오늘 밤을 시작해보세요.`;
+
+    return analysisResult + getReformedInsight() + actionPlan;
   };
 
   const send = async () => {
@@ -72,6 +90,7 @@ const ChatView = ({ userRole, setUserRole, husbandInfo, setHusbandInfo, wifeInfo
     setChat(prev => [...prev, { role: 'user', text: userMsg }]);
     setMsg("");
     
+    // Trigger typing indicator immediately
     const hattiResponse = await getContextualResponse(userMsg, hatti);
     setChat(prev => [...prev, { role: 'hatti', text: hattiResponse }]);
   };

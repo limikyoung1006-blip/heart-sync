@@ -108,11 +108,33 @@ const App = () => {
   const updateProfileInfo = async (text, extraInfo = {}) => {
     if (!user?.id) return;
     const baseInfo = userRole === 'husband' ? husbandInfo : wifeInfo;
-    const updatedInfo = { ...baseInfo, ...extraInfo };
-    if (text !== undefined) updatedInfo.todayMemo = text;
+    
+    // Logic to distinguish between simple memo updates and deep metadata (like analysis)
+    let updatedInfo;
+    if (text === 'deepAnalysis') {
+       updatedInfo = { ...baseInfo, deepAnalysis: extraInfo };
+    } else {
+       updatedInfo = { ...baseInfo, ...extraInfo };
+       if (text !== undefined) updatedInfo.todayMemo = text;
+    }
+
     if (userRole === 'husband') setHusbandInfo(updatedInfo); else setWifeInfo(updatedInfo);
-    if (mainChannel) mainChannel.send({ type: 'broadcast', event: 'memo-updated', payload: { sender: userRole, text, extraInfo } });
-    await supabase.from('profiles').upsert({ id: user.id, couple_id: coupleCode.toLowerCase().trim(), user_role: userRole, info: updatedInfo, updated_at: new Date().toISOString() }, { onConflict: 'id' });
+    
+    if (mainChannel) {
+      mainChannel.send({ 
+        type: 'broadcast', 
+        event: 'memo-updated', 
+        payload: { sender: userRole, text: text === 'deepAnalysis' ? '심층 분석 완료' : text, extraInfo: text === 'deepAnalysis' ? { deepAnalysis: extraInfo } : extraInfo } 
+      });
+    }
+    
+    await supabase.from('profiles').upsert({ 
+      id: user.id, 
+      couple_id: coupleCode.toLowerCase().trim(), 
+      user_role: userRole, 
+      info: updatedInfo, 
+      updated_at: new Date().toISOString() 
+    }, { onConflict: 'id' });
   };
 
   const handleOnboardingFinish = async (info) => {
