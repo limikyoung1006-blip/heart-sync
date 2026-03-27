@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { 
   X, 
@@ -10,7 +10,67 @@ import {
 } from 'lucide-react';
 import HattiCharacter from '../ui/HattiCharacter';
 
-const SecretAnswerInteraction = ({ question, myAnswer, spouseAnswer, inputText, setInputText, onSend, onClose, userRole }) => {
+const SecretAnswerInteraction = ({ 
+  userRole, 
+  coupleCode, 
+  questionText, 
+  supabase, 
+  mainChannel, 
+  spouseAnswer, 
+  setSpouseAnswer, 
+  myAnswer, 
+  setMyAnswer, 
+  answered, 
+  setAnswered,
+  onClose 
+}) => {
+  const [localInput, setLocalInput] = useState('');
+  
+  const handleSend = async () => {
+    if (!localInput.trim()) return;
+    
+    // Save to local state
+    setMyAnswer(localInput);
+    setAnswered(true);
+    
+    // Log to localStorage for persistence
+    localStorage.setItem('mySecretAnswer', localInput);
+    localStorage.setItem('isMySecretAnswered', 'true');
+    
+    // Broadcast via Supabase channel if available
+    if (mainChannel) {
+      mainChannel.send({
+        type: 'broadcast',
+        event: 'secret-answered',
+        payload: { 
+          sender: userRole, 
+          text: localInput, 
+          ts: Date.now() 
+        }
+      });
+    }
+
+    // Sync to Database
+    try {
+      if (supabase && coupleCode) {
+        const { data: profile } = await supabase.auth.getSession();
+        if (profile?.session?.user?.id) {
+           await supabase.from('profiles').upsert({
+             id: profile.session.user.id,
+             couple_id: coupleCode.toLowerCase().trim(),
+             user_role: userRole,
+             info: {
+               lastSecretAnswer: localInput,
+               lastSecretAnswerDate: new Date().toISOString().split('T')[0]
+             }
+           });
+        }
+      }
+    } catch (e) {
+      console.error("DB Sync error:", e);
+    }
+  };
+
   return (
     <motion.div 
       initial={{ opacity: 0, y: 100 }}
@@ -23,9 +83,11 @@ const SecretAnswerInteraction = ({ question, myAnswer, spouseAnswer, inputText, 
           <span className="text-[10px] font-black text-[#8A60FF] tracking-widest uppercase mb-1">Secret Card Interaction</span>
           <h2 className="text-xl font-black text-[#2D1F08]">오늘의 시크릿 답변</h2>
         </div>
-        <button onClick={onClose} className="p-3 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors">
-          <X size={24} color="#2D1F08" />
-        </button>
+        {onClose && (
+          <button onClick={onClose} className="p-3 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors">
+            <X size={24} color="#2D1F08" />
+          </button>
+        )}
       </header>
 
       <div className="flex-1 flex flex-col gap-6 overflow-y-auto pb-10">
@@ -34,7 +96,7 @@ const SecretAnswerInteraction = ({ question, myAnswer, spouseAnswer, inputText, 
               <Sparkles size={120} color="#D4AF37" />
            </div>
            <p className="text-lg font-black text-[#2D1F08] leading-relaxed relative z-10 break-keep">
-             "{question}"
+             "{questionText || "서로에게 궁금한 비밀을 물어보세요."}"
            </p>
         </div>
 
@@ -84,14 +146,14 @@ const SecretAnswerInteraction = ({ question, myAnswer, spouseAnswer, inputText, 
             autoFocus
             type="text" 
             placeholder="답변을 입력하고 카드를 뒤집으세요!" 
-            value={inputText}
-            onChange={(e) => setInputText(e.target.value)}
+            value={localInput}
+            onChange={(e) => setLocalInput(e.target.value)}
             className="bg-transparent flex-1 p-2 text-sm font-black outline-none text-[#2D1F08]"
            />
            <button 
-            disabled={!inputText.trim()}
-            onClick={() => onSend(inputText)}
-            className={`p-4 rounded-2xl transition-all shadow-lg ${inputText.trim() ? 'bg-[#2D1F08] text-white scale-105 active:scale-95' : 'bg-gray-200 text-gray-400'}`}
+            disabled={!localInput.trim()}
+            onClick={handleSend}
+            className={`p-4 rounded-2xl transition-all shadow-lg ${localInput.trim() ? 'bg-[#2D1F08] text-white scale-105 active:scale-95' : 'bg-gray-200 text-gray-400'}`}
            >
              <Send size={18} />
            </button>

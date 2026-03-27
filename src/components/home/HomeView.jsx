@@ -13,6 +13,7 @@ import {
   Info,
   Sparkles,
   ArrowRight,
+  BookOpen,
   X
 } from 'lucide-react';
 import { CARD_DATA } from '../../data/dialogueCards';
