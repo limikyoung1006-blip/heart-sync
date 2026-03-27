@@ -334,7 +334,7 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, mainChannel, husbandI
                     <ImageThumb key={idx} card={card} isSelected={selectedIndices.includes(idx)} order={selectedIndices.indexOf(idx) + 1} onClick={() => selectImage(idx)} />
                  ))}
                </div>
-                <div style={{ position: 'fixed', bottom: '30px', left: '20px', right: '20px', display: 'flex', gap: '12px', zIndex: 100, background: 'rgba(255,255,255,0.8)', backdropFilter: 'blur(15px)', padding: '15px', borderRadius: '30px', boxShadow: '0 15px 40px rgba(0,0,0,0.1)', border: '1px solid rgba(171, 71, 188, 0.1)' }}>
+                <div style={{ position: 'fixed', bottom: '110px', left: '20px', right: '20px', display: 'flex', gap: '12px', zIndex: 100, background: 'rgba(255,255,255,0.8)', backdropFilter: 'blur(15px)', padding: '15px', borderRadius: '30px', boxShadow: '0 15px 40px rgba(0,0,0,0.1)', border: '1px solid rgba(171, 71, 188, 0.1)' }}>
                   <button onClick={resetPick2} disabled={!isMyTurn} style={{ flex: 1, padding: '18px', borderRadius: '20px', background: 'white', border: '2px solid #AB47BC', color: '#AB47BC', fontWeight: 900, fontSize: '15px' }}>다시 뽑기</button>
                   <button onClick={sharePick2} disabled={!isMyTurn || selectedIndices.length < 2} style={{ flex: 2, padding: '18px', borderRadius: '20px', background: '#AB47BC', color: 'white', fontWeight: 900, fontSize: '15px', opacity: selectedIndices.length === 2 ? 1 : 0.5, boxShadow: '0 8px 20px rgba(171, 71, 188, 0.3)' }}>상대방에게 보여주기</button>
                 </div>
