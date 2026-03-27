@@ -134,7 +134,7 @@ const SolutionView = ({ onBack, userRole, husbandInfo, wifeInfo, schedules, admi
             <circle cx="80" cy="80" r="70" 
               stroke="url(#gauge-grad-sol)" strokeWidth="12" strokeLinecap="round" fill="none"
               style={{ 
-                strokeDasharray: `${Math.min((coupleStats.totalInteractions / 50) * 440, 440)}, 440`, 
+                strokeDasharray: `${Math.min(((coupleStats?.totalInteractions || 0) / 50) * 440, 440)}, 440`, 
                 transform: 'rotate(-90deg)', transformOrigin: 'center',
                 transition: 'stroke-dasharray 1s ease'
               }} 
