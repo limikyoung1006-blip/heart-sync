@@ -107,7 +107,7 @@ const SecretAnswerInteraction = ({
                  <div className="w-8 h-8 bg-[#F5D060] rounded-full flex items-center justify-center text-white"><Heart size={16} /></div>
                  <span className="text-sm font-black text-[#2D1F08]">나의 답변</span>
               </div>
-              <p className="text-[15px] font-bold text-[#8B7355] leading-relaxed italic">
+              <p className="text-[15px] font-bold text-[#8B7355] leading-relaxed">
                  {myAnswer ? `"${myAnswer}"` : "아직 답변을 입력하지 않았어요."}
               </p>
            </div>
@@ -125,7 +125,7 @@ const SecretAnswerInteraction = ({
                    <p className="text-xs font-black text-[#94A3B8] leading-relaxed">나의 답변을 먼저 완료해야<br/>배우자의 답변도 열어볼 수 있어요!</p>
                 </div>
               ) : spouseAnswer ? (
-                <p className="text-[15px] font-bold text-[#4D3A1A] leading-relaxed animate-in fade-in slide-in-from-bottom-2">
+                <p className="text-[15px] font-bold text-[#4D3A1A] leading-relaxed">
                    "{spouseAnswer}"
                 </p>
               ) : (

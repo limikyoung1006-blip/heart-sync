@@ -102,7 +102,7 @@ const DeepAnalysisView = ({ onBack, myInfo, updateProfile }) => {
               
               <div className="space-y-6">
                 <section>
-                  <p className="text-[#475569] leading-relaxed font-semibold italic">"{result.summary}"</p>
+                  <p className="text-[#475569] leading-relaxed font-semibold">"{result.summary}"</p>
                 </section>
                 
                 <section className="bg-[#FDFCF0] p-6 rounded-3xl border border-[#D4AF3730]">

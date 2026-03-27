@@ -118,7 +118,11 @@ const App = () => {
        if (text !== undefined) updatedInfo.todayMemo = text;
     }
 
-    if (userRole === 'husband') setHusbandInfo(updatedInfo); else setWifeInfo(updatedInfo);
+    if (userRole === 'husband') {
+      setHusbandInfo(prev => ({ ...prev, ...updatedInfo }));
+    } else {
+      setWifeInfo(prev => ({ ...prev, ...updatedInfo }));
+    }
     
     if (mainChannel) {
       mainChannel.send({ 
@@ -260,10 +264,10 @@ const App = () => {
                 {activeTab === 'cardGame' && (
                   <motion.div key="cardGame" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} style={{ width: '100%', height: '100%' }}>
                      <div style={{ padding: '0px', height: '100%', overflowY: 'auto' }}>
-                        {dialogueTab === 'choice' && <DialogueChoiceView onSelect={setDialogueTab} onShowGuide={(id) => { setDialogueGuideId(id); setDialogueTab('guide'); }} onBack={() => setActiveTab('home')} />}
+                        {dialogueTab === 'choice' && <DialogueChoiceView onSelect={(id) => { setDialogueGuideId(id === 'cardGame' ? 'cardGame' : 'imageSync'); setDialogueTab('guide'); }} onShowGuide={(id) => { setDialogueGuideId(id); setDialogueTab('guide'); }} onBack={() => setActiveTab('home')} />}
                         {dialogueTab === 'imageGame' && <ImageCardGameView coupleCode={coupleCode} userRole={userRole} mainChannel={mainChannel} husbandInfo={husbandInfo} wifeInfo={wifeInfo} onBack={() => setDialogueTab('choice')} />}
                         {dialogueTab === 'cardGame' && <CardGameView coupleCode={coupleCode} userRole={userRole} mainChannel={mainChannel} husbandInfo={husbandInfo} wifeInfo={wifeInfo} onUpdateMemo={updateProfileInfo} onBack={() => setDialogueTab('choice')} />}
-                        {dialogueTab === 'guide' && <GameGuideView guideId={dialogueGuideId} onBack={() => setDialogueTab('choice')} />}
+                        {dialogueTab === 'guide' && <GameGuideView gameId={dialogueGuideId} onStart={() => setDialogueTab(dialogueGuideId === 'imageSync' ? 'imageGame' : 'cardGame')} onBack={() => setDialogueTab('choice')} />}
                      </div>
                   </motion.div>
                 )}

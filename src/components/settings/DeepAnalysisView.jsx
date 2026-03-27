@@ -131,12 +131,11 @@ const DeepAnalysisView = ({ onBack, myInfo, updateProfile }) => {
     }
   };
 
-  const handleSaveAndFinish = () => {
+  const handleSaveAndFinish = async () => {
     // Note: updateProfile is passed as a prop from SettingsView, which actually uses onUpdateMemo from App.jsx
     if (updateProfile) {
-      updateProfile('deepAnalysis', analysisResult);
+      await updateProfile('deepAnalysis', analysisResult);
     }
-    alert('🎉 진단 결과가 시스템에 저장되었습니다!\n\nAI 하티의 메인 두뇌(System Prompt)가 지금부터 이 심리 및 행동 패턴을 분석하여, 부부 상담 시 완전히 개인화된 맞춤 솔루션을 제시하기 시작합니다.');
     onBack();
   };
 
