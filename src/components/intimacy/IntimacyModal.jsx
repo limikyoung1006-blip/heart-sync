@@ -18,7 +18,7 @@ import {
   Settings 
 } from 'lucide-react';
 import HattiCharacter from '../ui/HattiCharacter';
-import { CARD_DATA } from '../game/CardGameView';
+import { CARD_DATA } from '../../data/dialogueCards';
 
 const SignalOptV2 = ({ title, desc }) => (
   <div style={{ 
