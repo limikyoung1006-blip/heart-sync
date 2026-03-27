@@ -19,6 +19,14 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo, onU
 
   const filteredQuestions = useMemo(() => CARD_DATA.filter(q => q.category === category), [category]);
   const broadcastRef = useRef(null);
+  const isMounted = useRef(true);
+
+  useEffect(() => {
+    isMounted.current = true;
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
 
   useEffect(() => {
     if (!mainChannel) return;
@@ -26,7 +34,7 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo, onU
     
     const sub = mainChannel.on('broadcast', { event: 'game-update' }, ({ payload }) => {
       // guard against unmounted state
-      if (!broadcastRef.current || payload.sender === userRole) return;
+      if (!isMounted.current || !broadcastRef.current || payload.sender === userRole) return;
       
       if (payload.category) setCategory(payload.category);
       if (payload.isFlipped !== undefined) setIsFlipped(payload.isFlipped);
@@ -51,19 +59,23 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo, onU
 
   useEffect(() => {
     const fetchDB = async () => {
-      const { data } = await supabase.from('card_game_state').select('*').eq('couple_id', coupleCode).single();
-      if (data) {
-        setCategory(data.category || '일상');
-        setIsFlipped(data.is_flipped || false);
-        setIsWaiting(data.is_waiting || false);
-        setWaiterRole(data.waiter_role || null);
-        setTurnOwner(data.turn_owner || null);
-        
-        const q = CARD_DATA.find(item => String(item.id) === String(data.current_question_id));
-        if (q) setCurrentQuestion(q);
-      } else if (CARD_DATA.length > 0) {
-          const initialQ = CARD_DATA.find(i => i.category === '일상');
-          if (initialQ) setCurrentQuestion(initialQ);
+      try {
+        const { data } = await supabase.from('card_game_state').select('*').eq('couple_id', coupleCode).single();
+        if (isMounted.current && data) {
+          setCategory(data.category || '일상');
+          setIsFlipped(data.is_flipped || false);
+          setIsWaiting(data.is_waiting || false);
+          setWaiterRole(data.waiter_role || null);
+          setTurnOwner(data.turn_owner || null);
+          
+          const q = CARD_DATA.find(item => String(item.id) === String(data.current_question_id));
+          if (q) setCurrentQuestion(q);
+        } else if (isMounted.current && CARD_DATA.length > 0) {
+            const initialQ = CARD_DATA.find(i => i.category === '일상');
+            if (initialQ) setCurrentQuestion(initialQ);
+        }
+      } catch (err) {
+        console.error("Fetch DB failed:", err);
       }
     };
     fetchDB();

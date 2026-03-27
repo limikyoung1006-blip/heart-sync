@@ -31,6 +31,14 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, mainChannel, husbandI
   const partnerNickname = userRole === 'husband' ? (wifeInfo?.nickname || '아내') : (husbandInfo?.nickname || '남편');
 
   const broadcastRef = useRef(null);
+  const isMounted = useRef(true);
+
+  useEffect(() => {
+    isMounted.current = true;
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
 
   // Preload logic
   useEffect(() => {
@@ -45,7 +53,7 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, mainChannel, husbandI
     broadcastRef.current = mainChannel;
     
     const sub = mainChannel.on('broadcast', { event: 'image-game-update' }, ({ payload }) => {
-      if (!broadcastRef.current || payload.sender === userRole) return;
+      if (!isMounted.current || !broadcastRef.current || payload.sender === userRole) return;
       
       if (payload.gameMode) setGameMode(payload.gameMode);
       if (payload.isFlipped !== undefined) setIsFlipped(payload.isFlipped);

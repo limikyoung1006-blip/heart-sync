@@ -330,7 +330,7 @@ const App = () => {
                 <RefreshCw size={40} className="animate-spin" color="#D4AF37" />
               </div>
             }>
-              <AnimatePresence mode="wait">
+              <AnimatePresence mode="popLayout" initial={false}>
                 {activeTab === 'home' && (
                   <motion.div key="home" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} style={{ width: '100%', height: '100%' }}>
                     <HomeView 
@@ -347,13 +347,20 @@ const App = () => {
                   </motion.div>
                 )}
                 {activeTab === 'cardGame' && (
-                  <motion.div key="cardGame" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} style={{ width: '100%', height: '100%' }}>
-                     <div style={{ padding: '0px', height: '100%', overflowY: 'auto' }}>
-                        <AnimatePresence mode="popLayout">
-                          {dialogueTab === 'choice' && <motion.div key="choice" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}><DialogueChoiceView onSelect={(id) => { setDialogueGuideId(id === 'cardGame' ? 'cardGame' : 'imageSync'); setDialogueTab('guide'); }} onShowGuide={(id) => { setDialogueGuideId(id); setDialogueTab('guide'); }} onBack={() => setActiveTab('home')} /></motion.div>}
-                          {dialogueTab === 'imageGame' && <motion.div key="image" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}><ImageCardGameView coupleCode={coupleCode} userRole={userRole} mainChannel={mainChannel} husbandInfo={husbandInfo} wifeInfo={wifeInfo} onBack={() => setDialogueTab('choice')} /></motion.div>}
-                          {dialogueTab === 'cardGame' && <motion.div key="card" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}><CardGameView coupleCode={coupleCode} userRole={userRole} mainChannel={mainChannel} husbandInfo={husbandInfo} wifeInfo={wifeInfo} onUpdateMemo={updateProfileInfo} onBack={() => setDialogueTab('choice')} /></motion.div>}
-                          {dialogueTab === 'guide' && <motion.div key="guide" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}><GameGuideView gameId={dialogueGuideId} onStart={() => setDialogueTab(dialogueGuideId === 'imageSync' ? 'imageGame' : 'cardGame')} onBack={() => setDialogueTab('choice')} /></motion.div>}
+                  <motion.div 
+                    key="cardGame" 
+                    initial={{ opacity: 0, x: 30 }} 
+                    animate={{ opacity: 1, x: 0 }} 
+                    exit={{ opacity: 0, x: -30 }} 
+                    transition={{ duration: 0.3, ease: "easeOut" }} 
+                    style={{ width: '100%', height: '100%', position: 'relative' }}
+                  >
+                     <div style={{ padding: '0px', height: '100%', overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
+                        <AnimatePresence mode="wait">
+                          {dialogueTab === 'choice' && <motion.div key="choice" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}><DialogueChoiceView onSelect={(id) => { setDialogueGuideId(id === 'cardGame' ? 'cardGame' : 'imageSync'); setDialogueTab('guide'); }} onShowGuide={(id) => { setDialogueGuideId(id); setDialogueTab('guide'); }} onBack={() => setActiveTab('home')} /></motion.div>}
+                          {dialogueTab === 'imageGame' && <motion.div key="image" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.2 }}><ImageCardGameView coupleCode={coupleCode} userRole={userRole} mainChannel={mainChannel} husbandInfo={husbandInfo} wifeInfo={wifeInfo} onBack={() => setDialogueTab('choice')} /></motion.div>}
+                          {dialogueTab === 'cardGame' && <motion.div key="card" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.2 }}><CardGameView coupleCode={coupleCode} userRole={userRole} mainChannel={mainChannel} husbandInfo={husbandInfo} wifeInfo={wifeInfo} onUpdateMemo={updateProfileInfo} onBack={() => setDialogueTab('choice')} /></motion.div>}
+                          {dialogueTab === 'guide' && <motion.div key="guide" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} transition={{ duration: 0.2 }}><GameGuideView gameId={dialogueGuideId} onStart={() => setDialogueTab(dialogueGuideId === 'imageSync' ? 'imageGame' : 'cardGame')} onBack={() => setDialogueTab('choice')} /></motion.div>}
                         </AnimatePresence>
                      </div>
                   </motion.div>
