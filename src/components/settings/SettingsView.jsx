@@ -104,6 +104,7 @@ const SettingsView = ({
   onNav,
   onUpdateMemo,
   coupleCode,
+  setCoupleCode,
   subscribeToPushNotifications // Pass this as prop from App!
 }) => {
   const [showDeepAnalysis, setShowDeepAnalysis] = useState(false);
@@ -168,9 +169,20 @@ const SettingsView = ({
               <span style={{ fontSize: '11px', fontWeight: 900, color: '#8B7355', width: '90px' }}>내 계정 ID:</span>
               <code style={{ fontSize: '11px', fontWeight: 900, color: '#8B7355', background: 'rgba(0,0,0,0.05)', padding: '3px 8px', borderRadius: '4px' }}>{user?.id?.substring(0,8).toUpperCase()}</code>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div 
+              onClick={() => {
+                const code = prompt("커플 연결 코드를 입력하세요 (배우자와 동일한 코드를 사용해야 합니다):", coupleCode || "");
+                if (code !== null) {
+                  localStorage.setItem('coupleCode', code.toLowerCase().trim());
+                  if (setCoupleCode) setCoupleCode(code.toLowerCase().trim());
+                  alert("🎉 커플 코드가 설정되었습니다. 이제 데이터가 배우자와 실시간으로 동기화됩니다!");
+                  window.location.reload(); // Force reload to ensure all channels resync correctly
+                }
+              }}
+              style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}
+            >
               <span style={{ fontSize: '11px', fontWeight: 900, color: '#D4AF37', width: '90px' }}>커플 연결 코드:</span>
-              <code style={{ fontSize: '13px', fontWeight: 900, color: '#2D1F08', background: 'rgba(212, 175, 55, 0.15)', padding: '4px 10px', borderRadius: '6px', border: '1px solid rgba(212, 175, 55, 0.2)' }}>{coupleCode || "연결 필요"}</code>
+              <code style={{ fontSize: '13px', fontWeight: 900, color: '#2D1F08', background: 'rgba(212, 175, 55, 0.15)', padding: '4px 10px', borderRadius: '6px', border: '1px solid rgba(212, 175, 55, 0.2)' }}>{coupleCode || "연결 필요 (클릭)"}</code>
             </div>
             <p style={{ fontSize: '10px', color: '#8B7355', opacity: 0.7, marginTop: '5px', lineHeight: 1.4 }}>
               💡 배우자와 <b>'동일한 커플 연결 코드'</b>를 사용해야 데이터가 실시간으로 동기화됩니다. 내 계정 ID는 본인 식별용이므로 배우자와 달라도 괜찮습니다.

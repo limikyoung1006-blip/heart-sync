@@ -289,7 +289,19 @@ const App = () => {
                   </motion.div>
                 )}
                 {activeTab === 'profile' && <motion.div key="p" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}><ProfileView user={user} userRole={userRole} husbandInfo={husbandInfo} wifeInfo={wifeInfo} onUpdateProfile={updateProfileInfo} isFullPage={true} /></motion.div>}
-                {activeTab === 'settings' && <motion.div key="s" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}><SettingsView user={user} userRole={userRole} husbandInfo={husbandInfo} wifeInfo={wifeInfo} onBack={() => setActiveTab('home')} onReportClick={() => setActiveTab('report')} /></motion.div>}
+                {activeTab === 'settings' && (
+                  <motion.div key="s" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}>
+                    <SettingsView 
+                      user={user} userRole={userRole} 
+                      husbandInfo={husbandInfo} setHusbandInfo={setHusbandInfo}
+                      wifeInfo={wifeInfo} setWifeInfo={setWifeInfo}
+                      coupleCode={coupleCode} setCoupleCode={setCoupleCode}
+                      onUpdateMemo={updateProfileInfo}
+                      onBack={() => setActiveTab('home')} 
+                      onReportClick={() => setActiveTab('report')} 
+                    />
+                  </motion.div>
+                )}
                 {activeTab === 'report' && <motion.div key="r" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}><SolutionView onBack={() => setActiveTab('settings')} userRole={userRole} husbandInfo={husbandInfo} wifeInfo={wifeInfo} schedules={schedules} coupleStats={coupleStats} adminStats={adminStats} /></motion.div>}
                 {(activeTab === 'intimacyHub' || activeTab === 'heartPrayer') && (
                   <motion.div key="intimacy" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}>
