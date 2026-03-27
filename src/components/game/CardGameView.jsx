@@ -231,7 +231,7 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo, onU
                   onClick={onBack}
                   style={{ width: '100%', padding: '20px', borderRadius: '22px', background: '#2D1F08', color: 'white', fontWeight: 900, fontSize: '17px', border: 'none' }}
                 >
-                  오늘의 대화 마무리하기
+                  대화 선택으로 돌아가기
                 </button>
                 <button 
                   onClick={() => {
