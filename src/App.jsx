@@ -53,9 +53,8 @@ const App = () => {
   const [showAdminLogin, setShowAdminLogin] = useState(false);
   const [logoClickCount, setLogoClickCount] = useState(0);
   const [isAdmin, setIsAdmin] = useState(() => localStorage.getItem('isAdmin') === 'true');
-  const [adminStats, setAdminStats] = useState({ users: 0, couples: 0, activeSessions: 0, recentActivities: [] });
-  const [coupleStats, setCoupleStats] = useState({ totalInteractions: 0 });
   const [syncStatus, setSyncStatus] = useState('WAITING');
+  const [notifPermission, setNotifPermission] = useState('default');
   
   const [spouseSecretAnswer, setSpouseSecretAnswer] = useState(() => localStorage.getItem('spouseSecretAnswer')); 
   const [mySecretAnswer, setMySecretAnswer] = useState(() => localStorage.getItem('mySecretAnswer') || ""); 
@@ -81,7 +80,7 @@ const App = () => {
   const [spouseSignal, setSpouseSignal] = useState('green');
   const [partnerPrayers, setPartnerPrayers] = useState([]);
   const [dialogueTab, setDialogueTab] = useState('choice'); 
-  const [dialogueGuideId, setDialogueGuideId] = useState(null); 
+  const [dialogueGuideId, setDialogueGuideId] = useState(null);
 
   useEffect(() => {
     localStorage.setItem('husbandInfo', JSON.stringify(husbandInfo));
@@ -91,6 +90,10 @@ const App = () => {
     localStorage.setItem('coupleSchedules', JSON.stringify(schedules));
     localStorage.setItem('notifications', JSON.stringify(notifications));
   }, [husbandInfo, wifeInfo, userRole, isSetupDone, schedules, notifications]);
+
+  useEffect(() => {
+    if ("Notification" in window) setNotifPermission(Notification.permission);
+  }, []);
 
   const sendNativeNotification = (title, body, tab = null) => {
     const newNotif = { id: Date.now(), title, body, tab, time: new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }), read: false };
@@ -117,6 +120,14 @@ const App = () => {
     if (userRole === 'husband') setHusbandInfo(updated); else setWifeInfo(updated);
     await supabase.from('profiles').upsert({ id: user.id, couple_id: finalCode, user_role: userRole, info: updated, updated_at: new Date().toISOString() });
     setIsSetupDone(true); localStorage.setItem('isSetupDone', 'true');
+  };
+
+  const handleLogoClick = () => {
+    setLogoClickCount(prev => {
+      const next = prev + 1;
+      if (next >= 10) setShowAdminLogin(true);
+      return next;
+    });
   };
 
   useEffect(() => {
@@ -150,7 +161,17 @@ const App = () => {
       {loading && <div className="fixed inset-0 flex items-center justify-center bg-white z-[99999] font-black"><RefreshCw size={40} className="animate-spin" color="#D4AF37" /></div>}
       
       {!loading && !session && !isAdmin && (
-        <AuthView userRole={userRole} setUserRole={setUserRole} onFinish={handleOnboardingFinish} />
+        <AuthView 
+          onLogoClick={handleLogoClick}
+          showAdminLogin={showAdminLogin}
+          setShowAdminLogin={setShowAdminLogin}
+          setUser={setUser}
+          setSession={setSession}
+          setIsAdmin={setIsAdmin}
+          userRole={userRole} 
+          setUserRole={setUserRole} 
+          onFinish={handleOnboardingFinish} 
+        />
       )}
 
       {!loading && (session || isAdmin) && !isSetupDone && (
@@ -197,7 +218,8 @@ const App = () => {
                     spouseSecretAnswer={spouseSecretAnswer} setSpouseSecretAnswer={setSpouseSecretAnswer} 
                     mySecretAnswer={mySecretAnswer} setMySecretAnswer={setMySecretAnswer} 
                     isMySecretAnswered={isMySecretAnswered} setIsMySecretAnswered={setIsMySecretAnswered} 
-                    isRevealed={isSecretRevealed} setIsRevealed={setIsSecretRevealed} supabase={supabase} updateProfileInfo={updateProfileInfo} 
+                    isRevealed={isSecretRevealed} setIsRevealed={setIsSecretRevealed} 
+                    notifPermission={notifPermission} supabase={supabase} updateProfileInfo={updateProfileInfo} 
                   />
                 </motion.div>
               )}
@@ -211,7 +233,6 @@ const App = () => {
                    </div>
                 </motion.div>
               )}
-              {/* Other tabs follow exact original structure */}
               {activeTab === 'counseling' && <motion.div key="c" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}><ChatView onBack={() => setActiveTab('home')} /></motion.div>}
               {activeTab === 'profile' && <motion.div key="p" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}><ProfileView user={user} userRole={userRole} husbandInfo={husbandInfo} wifeInfo={wifeInfo} onUpdateProfile={updateProfileInfo} isFullPage={true} /></motion.div>}
               {activeTab === 'settings' && <motion.div key="s" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}><SettingsView user={user} userRole={userRole} husbandInfo={husbandInfo} wifeInfo={wifeInfo} onBack={() => setActiveTab('home')} /></motion.div>}

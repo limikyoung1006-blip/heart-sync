@@ -12,7 +12,8 @@ import {
   Calendar,
   Info,
   Sparkles,
-  ArrowRight
+  ArrowRight,
+  X
 } from 'lucide-react';
 import { CARD_DATA } from '../../data/dialogueCards';
 import HattiCharacter from '../ui/HattiCharacter';
