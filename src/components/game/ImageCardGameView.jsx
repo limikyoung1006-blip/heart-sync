@@ -245,8 +245,9 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, mainChannel, husbandI
 
       {gameMode === 'classic' ? (
         <>
-          <div style={{ width: '100%', textAlign: 'center', marginBottom: '25px', padding: '15px', background: 'rgba(171, 71, 188, 0.05)', borderRadius: '20px', border: '1px solid rgba(171, 71, 188, 0.1)' }}>
-             <p style={{ margin: 0, fontSize: '13px', color: '#AB47BC', fontWeight: 900 }}>이미지 질문 (전체 테마)</p>
+          <div style={{ width: '100%', textAlign: 'center', marginBottom: '30px', padding: '16px', background: 'rgba(171, 71, 188, 0.05)', borderRadius: '25px', border: '1px solid rgba(171, 71, 188, 0.1)', boxShadow: 'inset 0 2px 10px rgba(0,0,0,0.02)' }}>
+             <p style={{ margin: 0, fontSize: '15px', color: '#AB47BC', fontWeight: 900, letterSpacing: '-0.5px' }}>하트싱크 - 이미지 대화</p>
+             <p style={{ margin: 0, fontSize: '11px', color: '#AB47BC', opacity: 0.6, fontWeight: 700, marginTop: '4px' }}>그림을 통해 서로의 진심을 나눠보세요</p>
           </div>
 
           <div style={{ perspective: '1500px', width: '310px', height: '440px', marginBottom: '30px' }}>

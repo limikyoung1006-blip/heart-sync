@@ -11,22 +11,22 @@ import {
 } from 'lucide-react';
 import { supabase } from './supabase';
 
-// Lazy Loaded Components
+// Eagerly Loaded Components for instant navigation
 import HomeView from './components/home/HomeView';
 import CardGameView from './components/game/CardGameView';
 import ImageCardGameView from './components/game/ImageCardGameView';
-const CalendarView = lazy(() => import('./components/calendar/CalendarView'));
-const CounselingView = lazy(() => import('./components/counseling/CounselingView'));
-const ChatView = lazy(() => import('./components/counseling/ChatView'));
-const SolutionView = lazy(() => import('./components/counseling/SolutionView'));
-const IntimacyHubView = lazy(() => import('./components/intimacy/IntimacyHubView'));
-const IntimacyModal = lazy(() => import('./components/intimacy/IntimacyModal'));
-const WorshipView = lazy(() => import('./components/worship/WorshipView'));
-const SettingsView = lazy(() => import('./components/settings/SettingsView'));
-const ProfileView = lazy(() => import('./components/profile/ProfileView'));
-const AdminView = lazy(() => import('./components/admin/AdminView'));
-const GameGuideView = lazy(() => import('./components/dialogue/GameGuideView'));
-const DialogueChoiceView = lazy(() => import('./components/dialogue/DialogueChoiceView'));
+import CalendarView from './components/calendar/CalendarView';
+import CounselingView from './components/counseling/CounselingView';
+import ChatView from './components/counseling/ChatView';
+import SolutionView from './components/counseling/SolutionView';
+import IntimacyHubView from './components/intimacy/IntimacyHubView';
+import IntimacyModal from './components/intimacy/IntimacyModal';
+import WorshipView from './components/worship/WorshipView';
+import SettingsView from './components/settings/SettingsView';
+import ProfileView from './components/profile/ProfileView';
+import AdminView from './components/admin/AdminView';
+import GameGuideView from './components/dialogue/GameGuideView';
+import DialogueChoiceView from './components/dialogue/DialogueChoiceView';
 
 import AuthView from './components/auth/AuthView';
 import OnboardingView from './components/auth/OnboardingView';
@@ -921,14 +921,14 @@ const App = () => {
           </div>
 
           <main className="main-content" style={{ background: appTheme.bg }}>
-            <AnimatePresence mode="wait">
+            <AnimatePresence>
                 {activeTab === 'home' && (
                   <motion.div 
                     key="homeTab"
                     initial={{ opacity: 0 }} 
                     animate={{ opacity: 1 }} 
                     exit={{ opacity: 0 }}
-                    transition={{ duration: 0.15 }}
+                    transition={{ duration: 0.1 }}
                     style={{ width: '100%', height: '100%' }}
                   >
                   <HomeView 
