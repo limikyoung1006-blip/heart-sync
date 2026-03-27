@@ -14,7 +14,8 @@ import {
   Sparkles,
   ArrowRight,
   BookOpen,
-  X
+  X,
+  Zap
 } from 'lucide-react';
 import { CARD_DATA } from '../../data/dialogueCards';
 import HattiCharacter from '../ui/HattiCharacter';
@@ -343,6 +344,54 @@ const HomeView = ({
           </div>
         </div>
       </div>
+
+      {/* 💝 Hatti's One-Day Suggestion (Premium Glass Gold Style) */}
+      {dailyTodo && (
+        <motion.div 
+          initial={{ opacity: 0, y: 15 }} 
+          animate={{ opacity: 1, y: 0 }}
+          style={{ 
+            margin: '0 0 25px 0',
+            padding: '24px',
+            background: 'rgba(255, 255, 255, 0.7)',
+            borderRadius: '26px',
+            border: '2px solid rgba(212, 175, 55, 0.25)',
+            boxShadow: '0 15px 35px rgba(212, 175, 55, 0.1)',
+            position: 'relative',
+            overflow: 'hidden'
+          }}
+        >
+          <div style={{ position: 'absolute', top: '-10px', right: '-10px', opacity: 0.1 }}>
+             <Sparkles size={100} color="#D4AF37" />
+          </div>
+          
+          <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '18px' }}>
+            <div style={{ width: '48px', height: '48px', borderRadius: '16px', background: 'linear-gradient(135deg, #D4AF37, #B08D3E)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 8px 20px rgba(212, 175, 55, 0.3)' }}>
+              {dailyTodo.action === '말하기' && <MessageCircle size={22} color="white" />}
+              {dailyTodo.action === '행동' && <Zap size={22} color="white" />}
+              {dailyTodo.action === '스킨십' && <Heart size={22} color="white" fill="white" />}
+              {dailyTodo.action === '선물' && <Sparkles size={22} color="white" />}
+              {dailyTodo.action === '경청' && <BookOpen size={22} color="white" />}
+            </div>
+            <div>
+              <span style={{ fontSize: '11px', fontWeight: 900, color: '#B08D3E', letterSpacing: '2px', textTransform: 'uppercase' }}>Hatti's One-Day</span>
+              <h3 style={{ fontSize: '18px', fontWeight: 900, color: '#2D1F08' }}>오늘의 {dailyTodo.action} 제안</h3>
+            </div>
+          </div>
+
+          <div style={{ background: 'white', padding: '18px', borderRadius: '18px', border: '1px solid rgba(212, 175, 55, 0.15)', position: 'relative', zIndex: 1 }}>
+            <p style={{ fontSize: '15px', color: '#4D3A1A', fontWeight: 700, lineHeight: 1.6, wordBreak: 'keep-all' }}>
+              “{dailyTodo.text}”
+            </p>
+          </div>
+
+          {activeTab !== 'counseling' && (
+            <div style={{ position: 'absolute', bottom: '-5px', right: '15px', opacity: 0.8 }}>
+               <HattiCharacter size={55} state="floating" />
+            </div>
+          )}
+        </motion.div>
+      )}
 
       {/* 🚦 Central Secret Question Box (3D Deep Gold Style) */}
       <div className="card-stack" style={{ margin: '20px 0 35px' }}>
