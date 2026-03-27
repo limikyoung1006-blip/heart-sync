@@ -41,8 +41,8 @@ const HomeView = ({
   notifPermission, mainChannel,
   supabase
 }) => {
-  const myInfo = (userRole === 'husband' ? husbandInfo : wifeInfo) || {};
-  const spouseInfo = (userRole === 'husband' ? wifeInfo : husbandInfo) || {};
+  const myInfo = (userRole?.toLowerCase() === 'husband' ? husbandInfo : wifeInfo) || {};
+  const spouseInfo = (userRole?.toLowerCase() === 'husband' ? wifeInfo : husbandInfo) || {};
 
   const [showGuide, setShowGuide] = useState(false);
   const [memoInput, setMemoInput] = useState(myInfo?.todayMemo || "");

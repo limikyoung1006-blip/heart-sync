@@ -235,7 +235,21 @@ const App = () => {
                    </div>
                 </motion.div>
               )}
-              {activeTab === 'counseling' && <motion.div key="c" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}><ChatView onBack={() => setActiveTab('home')} /></motion.div>}
+              {activeTab === 'counseling' && (
+                <motion.div key="c" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                  <ChatView 
+                    userRole={userRole} 
+                    setUserRole={setUserRole}
+                    husbandInfo={husbandInfo} 
+                    setHusbandInfo={setHusbandInfo}
+                    wifeInfo={wifeInfo} 
+                    setWifeInfo={setWifeInfo}
+                    schedules={schedules} 
+                    adminStats={adminStats} 
+                    onBack={() => setActiveTab('home')} 
+                  />
+                </motion.div>
+              )}
               {activeTab === 'profile' && <motion.div key="p" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}><ProfileView user={user} userRole={userRole} husbandInfo={husbandInfo} wifeInfo={wifeInfo} onUpdateProfile={updateProfileInfo} isFullPage={true} /></motion.div>}
               {activeTab === 'settings' && <motion.div key="s" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}><SettingsView user={user} userRole={userRole} husbandInfo={husbandInfo} wifeInfo={wifeInfo} onBack={() => setActiveTab('home')} onReportClick={() => setActiveTab('report')} /></motion.div>}
               {activeTab === 'report' && <motion.div key="r" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}><SolutionView onBack={() => setActiveTab('settings')} userRole={userRole} husbandInfo={husbandInfo} wifeInfo={wifeInfo} schedules={schedules} coupleStats={coupleStats} adminStats={adminStats} /></motion.div>}

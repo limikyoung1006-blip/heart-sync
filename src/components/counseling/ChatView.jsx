@@ -16,10 +16,10 @@ const ChatView = ({ userRole, setUserRole, husbandInfo, setHusbandInfo, wifeInfo
   const chatEndRef = useRef(null);
 
   const hatti = {
-    myLabel: userRole === 'husband' ? '남편' : '아내',
-    partnerLabel: userRole === 'husband' ? '아내' : '남편',
-    partnerInfo: (userRole === 'husband' ? wifeInfo : husbandInfo) || {},
-    myInfo: (userRole === 'husband' ? husbandInfo : wifeInfo) || {}
+    myLabel: userRole?.toLowerCase() === 'husband' ? '남편' : '아내',
+    partnerLabel: userRole?.toLowerCase() === 'husband' ? '아내' : '남편',
+    partnerInfo: (userRole?.toLowerCase() === 'husband' ? wifeInfo : husbandInfo) || {},
+    myInfo: (userRole?.toLowerCase() === 'husband' ? husbandInfo : wifeInfo) || {}
   };
 
   const [chat, setChat] = useState([
@@ -101,7 +101,7 @@ const ChatView = ({ userRole, setUserRole, husbandInfo, setHusbandInfo, wifeInfo
           </div>
         </div>
         <button 
-           onClick={() => alert("하티의 성향 맞춤형 설정 기능이 곧 추가됩니다.")}
+           onClick={() => setChat(prev => [...prev, { role: 'hatti', text: `아직 하티의 성격(성향)을 맞춤화하는 기능은 준비 중이에요! 곧 ${hatti.partnerLabel}분을 더 깊게 이해할 수 있는 특별한 성향 설정 기능으로 찾아뵐게요. 😊` }])}
            style={{ padding: '10px', background: 'rgba(138, 96, 255, 0.1)', borderRadius: '15px', border: 'none', color: '#8A60FF' }}
         >
           <Settings size={20} />
