@@ -177,6 +177,7 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, mainChannel, husbandI
     <motion.div 
       initial={{ opacity: 0 }} 
       animate={{ opacity: 1 }} 
+      exit={{ opacity: 0, scale: 0.95 }}
       className="flex flex-col items-center p-4 bg-white" 
       style={{ minHeight: '100%', paddingBottom: '200px' }} // Increased padding for button access
     >
