@@ -48,6 +48,7 @@ const HomeView = ({
   const [isEditingMemo, setIsEditingMemo] = useState(false);
   const [isPrayerExpanded, setIsPrayerExpanded] = useState(false);
   const [showNotifModal, setShowNotifModal] = useState(false);
+  const [showNotifBanner, setShowNotifBanner] = useState(true);
 
   useEffect(() => {
     // 알림 권한이 'default'일 때(물어보지 않은 상태) 진입 시 모달 띄우기
@@ -164,7 +165,7 @@ const HomeView = ({
 
 
       {/* 🔔 Notification Prompt Banner */}
-      {notifPermission !== 'granted' && (
+      {notifPermission !== 'granted' && showNotifBanner && (
         <motion.div 
           initial={{ opacity: 0, y: -10 }} 
           animate={{ opacity: 1, y: 0 }}
@@ -172,9 +173,16 @@ const HomeView = ({
             margin: '0 20px 20px', padding: '15px 20px', 
             background: 'linear-gradient(135deg, #2D1F08, #4D3A1A)', 
             borderRadius: '18px', display: 'flex', alignItems: 'center', 
-            justifyContent: 'space-between', boxShadow: '0 10px 25px rgba(0,0,0,0.1)' 
+            justifyContent: 'space-between', boxShadow: '0 10px 25px rgba(0,0,0,0.1)',
+            position: 'relative'
           }}
         >
+          <button 
+            onClick={(e) => { e.stopPropagation(); setShowNotifBanner(false); }}
+            style={{ position: 'absolute', top: '-8px', right: '-8px', background: '#D4AF37', border: '2px solid #2D1F08', borderRadius: '50%', width: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 10 }}
+          >
+            <X size={14} color="white" />
+          </button>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'rgba(212, 175, 55, 0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <Bell size={18} color="#D4AF37" />

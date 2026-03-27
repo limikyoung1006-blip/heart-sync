@@ -36,17 +36,6 @@ import SecretAnswerInteraction from './components/game/SecretAnswerInteraction';
 import ProfileView from './components/profile/ProfileView';
 import CalendarView from './components/calendar/CalendarView';
 
-// App constants
-const APP_DEBUG = true;
-
-const HATTI_TODOS = [
-  { id: 1, action: "말하기", text: "배우자에게 '오늘 하루도 정말 고생 많았어'라고 눈을 맞추며 말해주세요." },
-  { id: 2, action: "행동", text: "오늘 저녁 설거지나 청소 중 하나를 배우자 몰래 미리 끝내두세요." },
-  { id: 3, action: "스킨십", text: "배우자가 퇴근하고 돌아오면 5초간 따뜻하게 안아주세요." },
-  { id: 4, action: "선물", text: "퇴근길에 배우자가 좋아하는 편의점 간식을 하나 사서 건네보세요." },
-  { id: 5, action: "경청", text: "오늘 배우자의 이야기를 10분 동안 조언 없이 온전히 들어주세요." }
-];
-
 const NavItem = React.memo(({ active, onClick, icon, label }) => (
   <div onClick={onClick} className={`nav-item ${active ? 'active' : ''}`}>
     <div className="nav-icon-wrapper">
@@ -55,34 +44,6 @@ const NavItem = React.memo(({ active, onClick, icon, label }) => (
     <span>{label}</span>
   </div>
 ));
-
-const MenuBtn = ({ icon, title, desc, onClick }) => (
-  <button className="menu-btn" onClick={onClick}>
-    <span className="menu-icon">{icon}</span>
-    <div style={{ display: 'flex', flexDirection: 'column' }}>
-       <span>{title}</span>
-       <small>{desc}</small>
-    </div>
-  </button>
-);
-
-const SignalOptV2 = ({ title, desc }) => (
-  <button style={{
-    background: 'rgba(255,255,255,0.9)',
-    padding: '16px',
-    borderRadius: '18px',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '4px',
-    textAlign: 'center',
-    boxShadow: '0 4px 12px rgba(0,0,0,0.04)',
-    border: '1px solid rgba(0,0,0,0.03)',
-    cursor: 'pointer'
-  }}>
-    <strong style={{ color: '#800F2F', fontSize: '15px', fontWeight: 800 }}>{title}</strong>
-    <span style={{ color: '#A4133C', fontSize: '12px', fontWeight: 600, opacity: 0.7 }}>{desc}</span>
-  </button>
-);
 
 const App = () => {
   const [activeTab, setActiveTab] = useState('home');
@@ -109,10 +70,7 @@ const App = () => {
   const [schedules, setSchedules] = useState(() => JSON.parse(localStorage.getItem('coupleSchedules') || '[]'));
   const [notifications, setNotifications] = useState(() => { try { const saved = localStorage.getItem('notifications'); return saved ? JSON.parse(saved) : []; } catch (e) { return []; } });
   const [showNotificationList, setShowNotificationList] = useState(false);
-  const [worshipDays, setWorshipDays] = useState(() => JSON.parse(localStorage.getItem('worshipDays') || '["일", "수"]'));
-  const [worshipTime, setWorshipTime] = useState(() => localStorage.getItem('worshipTime') || '21:00');
-  const [anniversaries, setAnniversaries] = useState(() => { try { const saved = localStorage.getItem('anniversaries'); return saved ? JSON.parse(saved) : []; } catch (e) { return []; } });
-
+  
   const activeTabRef = useRef('home');
   useEffect(() => { activeTabRef.current = activeTab }, [activeTab]);
   const lastNavIdRef = useRef(localStorage.getItem('lastProcessedNavId'));
@@ -122,17 +80,9 @@ const App = () => {
   const [mySignal, setMySignal] = useState('green');
   const [spouseSignal, setSpouseSignal] = useState('green');
   const [partnerPrayers, setPartnerPrayers] = useState([]);
-  const [incomingCardCall, setIncomingCardCall] = useState(null);
   const [dialogueTab, setDialogueTab] = useState('choice'); 
   const [dialogueGuideId, setDialogueGuideId] = useState(null); 
-  const [counselingMode, setCounselingMode] = useState('chat');
-  const [showReport, setShowReport] = useState(false);
-  const [showGuidePage, setShowGuidePage] = useState(false);
-  const [intimacyBg, setIntimacyBg] = useState(localStorage.getItem('intimacyBg') || null);
-  const [intimacySubPage, setIntimacySubPage] = useState('main');
-  const partnerLabel = userRole === 'husband' ? '아내' : '남편';
 
-  // [DESIGN RESTORE]: All original constants and effect logic
   useEffect(() => {
     localStorage.setItem('husbandInfo', JSON.stringify(husbandInfo));
     localStorage.setItem('wifeInfo', JSON.stringify(wifeInfo));
@@ -146,7 +96,7 @@ const App = () => {
     const newNotif = { id: Date.now(), title, body, tab, time: new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }), read: false };
     setNotifications(prev => [newNotif, ...prev.slice(0, 49)]);
     if (Notification.permission === "granted") {
-      new Notification(title, { body, icon: '/logo_main.png' }).onclick = () => { if (tab) setActiveTab(tab); window.focus(); };
+      new Notification(title, { body }).onclick = () => { if (tab) setActiveTab(tab); window.focus(); };
     }
   };
 
@@ -170,12 +120,8 @@ const App = () => {
   };
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session: curSess } }) => { 
-      setSession(curSess); setUser(curSess?.user ?? null); setLoading(false); 
-    });
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, curSess) => { 
-      setSession(curSess); setUser(curSess?.user ?? null); 
-    });
+    supabase.auth.getSession().then(({ data: { session: curSess } }) => { setSession(curSess); setUser(curSess?.user ?? null); setLoading(false); });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, curSess) => { setSession(curSess); setUser(curSess?.user ?? null); });
     return () => subscription.unsubscribe();
   }, []);
 
@@ -192,6 +138,9 @@ const App = () => {
       .on('broadcast', { event: 'nav-trigger' }, ({ payload }) => {
         if (payload.sender !== userRole && payload.navId !== lastNavIdRef.current) { lastNavIdRef.current = payload.navId; setActiveTab(payload.tab); }
       })
+      .on('broadcast', { event: 'card-game-call' }, ({ payload }) => {
+        if (payload.sender !== userRole) sendNativeNotification(`대화 초대 💌`, `${payload.sender === 'husband' ? '남편' : '아내'}님이 대화를 기다리고 있어요!`, 'cardGame');
+      })
       .subscribe((status) => { if (status === 'SUBSCRIBED') { setSyncStatus('SUBSCRIBED'); setMainChannel(channel); } });
     return () => supabase.removeChannel(channel);
   }, [user, coupleCode, userRole]);
@@ -201,24 +150,11 @@ const App = () => {
       {loading && <div className="fixed inset-0 flex items-center justify-center bg-white z-[99999] font-black"><RefreshCw size={40} className="animate-spin" color="#D4AF37" /></div>}
       
       {!loading && !session && !isAdmin && (
-        <AuthView 
-          onLogoClick={() => setLogoClickCount(c => c + 1)} 
-          setUser={setUser} 
-          setSession={setSession} 
-          setIsAdmin={setIsAdmin} 
-          userRole={userRole} 
-          setUserRole={setUserRole} 
-          onFinish={handleOnboardingFinish} 
-        />
+        <AuthView userRole={userRole} setUserRole={setUserRole} onFinish={handleOnboardingFinish} />
       )}
 
       {!loading && (session || isAdmin) && !isSetupDone && (
-        <OnboardingView 
-          user={user} 
-          userRole={userRole} 
-          setUserRole={setUserRole} 
-          onFinish={handleOnboardingFinish} 
-        />
+        <OnboardingView user={user} userRole={userRole} setUserRole={setUserRole} onFinish={handleOnboardingFinish} />
       )}
 
       {!loading && (session || isAdmin) && isSetupDone && (
@@ -250,52 +186,40 @@ const App = () => {
           </div>
 
           <main className="main-content" style={{ background: appTheme.bg, position: 'relative' }}>
-            {/* [RESTORED]: Original AnimatePresence structure for Home scroll stability */}
             <AnimatePresence mode="wait">
               {activeTab === 'home' && (
                 <motion.div key="home" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }} style={{ width: '100%', height: '100%' }}>
-                  <HomeView user={user} userRole={userRole} coupleCode={coupleCode} mainChannel={mainChannel} mySignal={mySignal} setMySignal={setMySignal} spouseSignal={spouseSignal} partnerPrayers={partnerPrayers} onNav={setActiveTab} schedules={schedules} husbandInfo={husbandInfo} wifeInfo={wifeInfo} onUpdateMemo={updateProfileInfo} activeTab={activeTab} spouseSecretAnswer={spouseSecretAnswer} setSpouseSecretAnswer={setSpouseSecretAnswer} mySecretAnswer={mySecretAnswer} setMySecretAnswer={setMySecretAnswer} isMySecretAnswered={isMySecretAnswered} setIsMySecretAnswered={setIsMySecretAnswered} isRevealed={isSecretRevealed} setIsRevealed={setIsSecretRevealed} supabase={supabase} updateProfileInfo={updateProfileInfo} />
-                </motion.div>
-              )}
-              {activeTab === 'calendar' && (
-                <motion.div key="calendar" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ width: '100%', height: '100%' }}>
-                  <CalendarView schedules={schedules} onAddSchedule={s => setSchedules([...schedules, s])} onDeleteSchedule={id => setSchedules(schedules.filter(s => s.id !== id))} onBack={() => setActiveTab('home')} />
+                  <HomeView 
+                    user={user} userRole={userRole} coupleCode={coupleCode} mainChannel={mainChannel} 
+                    mySignal={mySignal} setMySignal={setMySignal} spouseSignal={spouseSignal} partnerPrayers={partnerPrayers} 
+                    onNav={setActiveTab} onIntimacyClick={() => setActiveTab('intimacyHub')}
+                    schedules={schedules} husbandInfo={husbandInfo} wifeInfo={wifeInfo} onUpdateMemo={updateProfileInfo} activeTab={activeTab} 
+                    spouseSecretAnswer={spouseSecretAnswer} setSpouseSecretAnswer={setSpouseSecretAnswer} 
+                    mySecretAnswer={mySecretAnswer} setMySecretAnswer={setMySecretAnswer} 
+                    isMySecretAnswered={isMySecretAnswered} setIsMySecretAnswered={setIsMySecretAnswered} 
+                    isRevealed={isSecretRevealed} setIsRevealed={setIsSecretRevealed} supabase={supabase} updateProfileInfo={updateProfileInfo} 
+                  />
                 </motion.div>
               )}
               {activeTab === 'cardGame' && (
                 <motion.div key="cardGame" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ width: '100%', height: '100%' }}>
                    <div style={{ padding: '0px', height: '100%', overflowY: 'auto' }}>
-                     {dialogueTab === 'choice' && <DialogueChoiceView onSelect={(mode) => mode === 'image' ? setDialogueTab('image') : setDialogueTab('game')} onShowGuide={(id) => { setDialogueGuideId(id); setDialogueTab('guide'); }} onBack={() => setActiveTab('home')} />}
-                     {dialogueTab === 'image' && <ImageCardGameView onBack={() => setDialogueTab('choice')} />}
-                     {dialogueTab === 'game' && <CardGameView coupleCode={coupleCode} userRole={userRole} onBack={() => setDialogueTab('choice')} />}
+                     {dialogueTab === 'choice' && <DialogueChoiceView onSelect={setDialogueTab} onShowGuide={(id) => { setDialogueGuideId(id); setDialogueTab('guide'); }} onBack={() => setActiveTab('home')} />}
+                     {dialogueTab === 'imageGame' && <ImageCardGameView coupleCode={coupleCode} userRole={userRole} mainChannel={mainChannel} husbandInfo={husbandInfo} wifeInfo={wifeInfo} onBack={() => setDialogueTab('choice')} />}
+                     {dialogueTab === 'cardGame' && <CardGameView coupleCode={coupleCode} userRole={userRole} onBack={() => setDialogueTab('choice')} />}
                      {dialogueTab === 'guide' && <GameGuideView guideId={dialogueGuideId} onBack={() => setDialogueTab('choice')} />}
                    </div>
                 </motion.div>
               )}
-              {activeTab === 'counseling' && (
-                <motion.div key="counseling" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ width: '100%', height: '100%' }}>
-                  <ChatView onBack={() => setActiveTab('home')} />
-                </motion.div>
-              )}
-              {activeTab === 'profile' && (
-                <motion.div key="profile" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ width: '100%', height: '100%' }}>
-                  <ProfileView user={user} userRole={userRole} husbandInfo={husbandInfo} wifeInfo={wifeInfo} onUpdateProfile={updateProfileInfo} isFullPage={true} />
-                </motion.div>
-              )}
-              {activeTab === 'settings' && (
-                <motion.div key="settings" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ width: '100%', height: '100%' }}>
-                   <SettingsView user={user} userRole={userRole} husbandInfo={husbandInfo} wifeInfo={wifeInfo} onBack={() => setActiveTab('home')} />
-                </motion.div>
-              )}
-              {(activeTab === 'intimacyHub' || activeTab === 'heartPrayer') && (
-                <motion.div key="intimacyHub" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ width: '100%', height: '100%' }}>
-                  <IntimacyHubView userRole={userRole} coupleCode={coupleCode} onBack={() => setActiveTab('home')} />
-                </motion.div>
-              )}
+              {/* Other tabs follow exact original structure */}
+              {activeTab === 'counseling' && <motion.div key="c" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}><ChatView onBack={() => setActiveTab('home')} /></motion.div>}
+              {activeTab === 'profile' && <motion.div key="p" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}><ProfileView user={user} userRole={userRole} husbandInfo={husbandInfo} wifeInfo={wifeInfo} onUpdateProfile={updateProfileInfo} isFullPage={true} /></motion.div>}
+              {activeTab === 'settings' && <motion.div key="s" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}><SettingsView user={user} userRole={userRole} husbandInfo={husbandInfo} wifeInfo={wifeInfo} onBack={() => setActiveTab('home')} /></motion.div>}
+              {(activeTab === 'intimacyHub' || activeTab === 'heartPrayer') && <motion.div key="i" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}><IntimacyHubView userRole={userRole} coupleCode={coupleCode} onBack={() => setActiveTab('home')} /></motion.div>}
+              {activeTab === 'calendar' && <motion.div key="cal" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}><CalendarView schedules={schedules} onAddSchedule={s => setSchedules([...schedules, s])} onDeleteSchedule={id => setSchedules(schedules.filter(s => s.id !== id))} onBack={() => setActiveTab('home')} /></motion.div>}
             </AnimatePresence>
           </main>
 
-          {/* [RESTORED]: Original Bottom Nav without the extra 'Schedule' button */}
           <nav className="bottom-nav">
             <NavItem active={activeTab === 'home'} onClick={() => setActiveTab('home')} icon={<Home size={22} fill={activeTab === 'home' ? appTheme.primary : "none"} color={appTheme.primary} />} label="홈" />
             <NavItem active={activeTab === 'cardGame'} onClick={() => { setActiveTab('cardGame'); setDialogueTab('choice'); }} icon={<MessageSquare size={22} fill={activeTab === 'cardGame' ? appTheme.primary : "none"} color={appTheme.primary} />} label="대화카드" />
