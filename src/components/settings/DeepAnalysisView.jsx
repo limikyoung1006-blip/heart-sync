@@ -142,13 +142,13 @@ const DeepAnalysisView = ({ onBack, myInfo, updateProfile }) => {
   if (showResult && analysisResult) {
     return (
       <div style={{ position: 'fixed', inset: 0, background: '#F8FAFC', zIndex: 999999, display: 'flex', flexDirection: 'column' }}>
-        <div style={{ display: 'flex', alignItems: 'center', padding: '50px 20px 20px', background: 'white', borderBottom: '1px solid #E2E8F0', position: 'relative' }}>
-          <button onClick={() => setShowResult(false)} style={{ position: 'absolute', left: '20px', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px', color: '#64748B', fontWeight: 700 }}>
+        <div style={{ display: 'flex', alignItems: 'center', padding: '65px 20px 20px', background: 'white', borderBottom: '1px solid #E2E8F0', position: 'relative', zIndex: 10 }}>
+          <button onClick={() => setShowResult(false)} style={{ position: 'absolute', left: '20px', bottom: '22px', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px', color: '#64748B', fontWeight: 700 }}>
             <ChevronLeft size={20} /> 뒤로
           </button>
           <h2 style={{ fontSize: '18px', fontWeight: 900, color: '#1E293B', margin: '0 auto' }}>진단 결과 보고서</h2>
         </div>
-        <div style={{ flex: 1, padding: '30px 24px', display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
+        <div style={{ flex: 1, padding: '30px 24px 120px', display: 'flex', flexDirection: 'column', overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
           <div style={{ background: 'white', padding: '30px 20px', borderRadius: '24px', boxShadow: '0 10px 30px rgba(0,0,0,0.05)', border: '2px solid rgba(138, 96, 255, 0.2)', marginBottom: '30px' }}>
             <h1 style={{ fontSize: '20px', fontWeight: 900, color: '#8A60FF', marginBottom: '20px', lineHeight: 1.4, wordBreak: 'keep-all' }}>
               {analysisResult.title}
@@ -180,12 +180,12 @@ const DeepAnalysisView = ({ onBack, myInfo, updateProfile }) => {
 
   return (
     <div style={{ position: 'fixed', inset: 0, background: '#F8FAFC', zIndex: 999999, display: 'flex', flexDirection: 'column' }}>
-      <div style={{ display: 'flex', alignItems: 'center', padding: '50px 20px 20px', background: 'white', borderBottom: '1px solid #E2E8F0' }}>
+      <div style={{ display: 'flex', alignItems: 'center', padding: '65px 20px 20px', background: 'white', borderBottom: '1px solid #E2E8F0', zIndex: 10 }}>
         <button onClick={onBack} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}>
           <ChevronLeft size={24} color="#1E293B" /> <span style={{ fontSize: '16px', fontWeight: 800 }}>진단 취소</span>
         </button>
       </div>
-      <div style={{ flex: 1, padding: '30px 24px', display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
+      <div style={{ flex: 1, padding: '30px 24px 120px', display: 'flex', flexDirection: 'column', overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '15px' }}>
            <Sparkles size={24} color="#8A60FF" />
            <h2 style={{ fontSize: '20px', fontWeight: 900, color: '#1E293B' }}>하티 부부 성향 심층 진단</h2>
