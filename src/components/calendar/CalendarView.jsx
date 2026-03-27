@@ -81,9 +81,9 @@ const CalendarView = ({ schedules, onAddSchedule, onDeleteSchedule, onBack }) =>
             </div>
           </div>
 
-          <div className="grid grid-cols-7 gap-y-4 text-center mb-4">
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '16px 0', textAlign: 'center', marginBottom: '16px' }}>
             {weekDays.map((d, i) => (
-              <span key={d} className={`text-[12px] font-black ${i === 0 ? 'text-[#FF5E62]' : i === 6 ? 'text-[#8A60FF]' : 'text-gray-400'}`}>{d}</span>
+              <span key={d} style={{ fontSize: '12px', fontWeight: 900, color: i === 0 ? '#FF5E62' : i === 6 ? '#8A60FF' : '#94A3B8' }}>{d}</span>
             ))}
             
             {Array.from({ length: firstDayOfMonth }).map((_, i) => <div key={`empty-${i}`} />)}
