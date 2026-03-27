@@ -925,29 +925,29 @@ const App = () => {
             </div>
           </div>
 
-          <main className="main-content" style={{ background: appTheme.bg }}>
-            <AnimatePresence mode="wait">
-                {activeTab === 'home' && (
-                  <motion.div 
-                    key="homeTab"
-                    initial={{ opacity: 0 }} 
-                    animate={{ opacity: 1 }} 
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.1 }}
-                    style={{ width: '100%', height: '100%' }}
-                  >
-                  <HomeView 
-                    key="home"
-                    userRole={userRole}
-                    coupleCode={coupleCode}
-                    mainChannel={mainChannel}
-                    mySignal={mySignal} 
-                    setMySignal={handleSetMySignal}
-                    spouseSignal={spouseSignal}
-                    partnerPrayers={partnerPrayers}
-                    onIntimacyClick={() => setActiveTab('intimacyHub')}
-                    onNav={(tab) => setActiveTab(tab)}
-                    schedules={schedules}
+          <main className="main-content" style={{ background: appTheme.bg, position: 'relative' }}>
+            {/* 🏠 Zero-Unmount HomeView (Permanent but hidden when not active for instant navigation) */}
+            <div 
+              style={{ 
+                width: '100%', height: '100%', 
+                display: activeTab === 'home' ? 'block' : 'none',
+                opacity: activeTab === 'home' ? 1 : 0,
+                transition: 'opacity 0.15s ease'
+              }}
+            >
+              <HomeView 
+                key="home-permanent"
+                user={user}
+                userRole={userRole}
+                coupleCode={coupleCode}
+                mainChannel={mainChannel}
+                mySignal={mySignal} 
+                setMySignal={handleSetMySignal}
+                spouseSignal={spouseSignal}
+                partnerPrayers={partnerPrayers}
+                onIntimacyClick={() => setActiveTab('intimacyHub')}
+                onNav={(tab) => setActiveTab(tab)}
+                schedules={schedules}
                     husbandInfo={husbandInfo}
                     wifeInfo={wifeInfo}
                     onUpdateMemo={updateProfileInfo}
@@ -961,10 +961,21 @@ const App = () => {
                     isRevealed={isSecretRevealed}
                     setIsRevealed={setIsSecretRevealed}
                     supabase={supabase}
-                  />
-                </motion.div>
-              )}
-              {activeTab === 'calendar' && (
+                    updateProfileInfo={updateProfileInfo}
+              />
+            </div>
+
+            <AnimatePresence mode="wait">
+                {activeTab !== 'home' && (
+                  <motion.div 
+                    key={activeTab}
+                    initial={{ opacity: 0 }} 
+                    animate={{ opacity: 1 }} 
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.1 }}
+                    style={{ width: '100%', height: '100%' }}
+                  >
+                    {activeTab === 'calendar' && (
                 <motion.div 
                   key="calendarTab"
                   initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
