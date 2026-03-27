@@ -209,7 +209,7 @@ const App = () => {
           </div>
 
           <main className="main-content" style={{ background: appTheme.bg, position: 'relative' }}>
-            <AnimatePresence>
+            <AnimatePresence mode="wait">
               {activeTab === 'home' && (
                 <motion.div key="home" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }} style={{ width: '100%', height: '100%' }}>
                   <HomeView 
@@ -242,12 +242,18 @@ const App = () => {
               {(activeTab === 'intimacyHub' || activeTab === 'heartPrayer') && (
                 <motion.div key="intimacy" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
                   <IntimacyHubView 
+                    user={user}
                     userRole={userRole} 
                     coupleCode={coupleCode} 
                     husbandInfo={husbandInfo} 
                     wifeInfo={wifeInfo} 
+                    setHusbandInfo={setHusbandInfo}
+                    setWifeInfo={setWifeInfo}
                     mainChannel={mainChannel} 
                     supabase={supabase}
+                    partnerPrayers={partnerPrayers}
+                    setPartnerPrayers={setPartnerPrayers}
+                    updateProfileInfo={updateProfileInfo}
                     initialTab={activeTab === 'heartPrayer' ? 'prayer' : 'garden'} 
                     onBack={() => setActiveTab('home')} 
                   />
