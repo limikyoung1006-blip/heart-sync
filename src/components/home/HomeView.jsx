@@ -102,7 +102,12 @@ const HomeView = ({
   };
 
   return (
-    <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="flex flex-col w-full">
+    <motion.div 
+      initial={{ opacity: 0 }} 
+      animate={{ opacity: 1 }} 
+      className="flex flex-col w-full"
+      style={{ willChange: 'opacity' }}
+    >
       {/* 🔔 Notification Request Modal */}
       <AnimatePresence>
         {showNotifModal && (

@@ -73,46 +73,49 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, mainChannel, husbandI
   }, [userRole]);
 
   const drawNewCard = useCallback((targetCat = null) => {
-    if (isImageLoading) return; // 🛡️ Double-tap protection
+    if (isImageLoading) return;
     
     const activeCat = targetCat || category;
-    const pool = activeCat === '전체' ? IMAGE_CARD_DATA : IMAGE_CARD_DATA.filter(q => q.category === activeCat);
     
-    if (pool.length === 0) return;
+    // 🔍 Mapping user buttons to multiple internal tags for a richer pool
+    const categoryMap = {
+      '신앙': ['신앙', '말씀', '기도', '예배', '새출발', '비전', '거룩', '찬양'],
+      '사랑': ['사랑', '나눔', '연합', '희생', '약속'],
+      '일상': ['일상', '시간', '교제', '기록', '시작', '대화', '차', '식사'],
+      '소망': ['소망', '비전', '계획', '실천', '지혜', '해방'],
+      '가족': ['가족', '동행', '순수', '지혜', '돌봄', '축복'],
+      '휴식': ['휴식', '치유', '평안', '평화', '자연', '보호', '생수']
+    };
 
-    // 🛡️ Find available cards not in the recent history
-    const available = pool.filter(q => !history.includes(q.id));
-    
-    // Determine the next target pool (if empty, reset history for this category)
-    let finalPool = available;
-    if (available.length === 0) {
-      finalPool = pool;
-      // We don't clear the whole history, but we allow repeating the first one now
+    let pool = [];
+    if (activeCat === '전체') {
+      pool = IMAGE_CARD_DATA;
+    } else {
+      const internalTags = categoryMap[activeCat] || [activeCat];
+      pool = IMAGE_CARD_DATA.filter(q => internalTags.includes(q.category));
     }
+    
+    if (pool.length === 0) pool = IMAGE_CARD_DATA; // Fallback
+
+    const available = pool.filter(q => !history.includes(q.id));
+    let finalPool = available.length > 0 ? available : pool;
 
     const nextQ = finalPool[Math.floor(Math.random() * finalPool.length)];
 
     if (nextQ) {
       setIsFlipped(false);
-      // If the same question is drawn, reset loading state immediately
-      if (nextQ.id === (currentQuestion?.id)) {
+      
+      // 🛡️ Reliability Fix: If the same question, just stop loading immediately
+      if (currentQuestion && nextQ.id === currentQuestion.id) {
         setIsImageLoading(false);
       } else {
         setIsImageLoading(true);
       }
 
       setTurnOwner(userRole); 
-      
-      setHistory(prev => {
-        const nextH = [...prev, nextQ.id];
-        // Threshold check: clear history if we've seen most of the category
-        if (nextH.length >= pool.length * 0.9) {
-          return [nextQ.id];
-        }
-        return nextH;
-      });
-
+      setHistory(prev => [...prev, nextQ.id].slice(-20)); // Keep history simple
       setCurrentQuestion(nextQ);
+      
       sendBroadcast({ 
         questionId: nextQ.id,
         sender: userRole, 
@@ -125,7 +128,7 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, mainChannel, husbandI
       setSessionCardCount(nextCount);
       if (nextCount === 10) setShowFinishModal(true);
     }
-  }, [category, history, sessionCardCount, userRole, sendBroadcast, isImageLoading]);
+  }, [category, history, sessionCardCount, userRole, sendBroadcast, isImageLoading, currentQuestion]);
 
   const initPick2Mode = useCallback(() => {
     const shuffled = [...IMAGE_CARD_DATA].sort(() => Math.random() - 0.5);
@@ -302,6 +305,7 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, mainChannel, husbandI
                     </div>
                   )}
                   <img 
+                    key={`${currentQuestion?.id}-${sessionCardCount}`}
                     src={currentQuestion?.image} 
                     style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
                     onLoad={() => setIsImageLoading(false)}
@@ -309,7 +313,7 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, mainChannel, husbandI
                     loading="eager"
                     decoding="async"
                   />
-                  <div style={{ position: 'absolute', top: '15px', right: '15px', background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', color: 'white', padding: '6px 12px', borderRadius: '10px', fontSize: '11px', fontWeight: 900 }}>{currentQuestion?.category}</div>
+                  <div style={{ position: 'absolute', top: '15px', right: '15px', background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', color: 'white', padding: '6px 12px', borderRadius: '100px', fontSize: '11px', fontWeight: 900 }}>{currentQuestion?.category}</div>
                 </div>
                 <div style={{ padding: '25px 20px', flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
                   <p style={{ fontSize: '16.5px', fontWeight: 900, color: '#2D1F08', lineHeight: 1.6, wordBreak: 'keep-all' }}>{currentQuestion?.question}</p>

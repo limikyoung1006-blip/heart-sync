@@ -12,9 +12,9 @@ import {
 import { supabase } from './supabase';
 
 // Lazy Loaded Components
-const HomeView = lazy(() => import('./components/home/HomeView'));
-const CardGameView = lazy(() => import('./components/game/CardGameView'));
-const ImageCardGameView = lazy(() => import('./components/game/ImageCardGameView'));
+import HomeView from './components/home/HomeView';
+import CardGameView from './components/game/CardGameView';
+import ImageCardGameView from './components/game/ImageCardGameView';
 const CalendarView = lazy(() => import('./components/calendar/CalendarView'));
 const CounselingView = lazy(() => import('./components/counseling/CounselingView'));
 const ChatView = lazy(() => import('./components/counseling/ChatView'));
@@ -921,8 +921,7 @@ const App = () => {
           </div>
 
           <main className="main-content" style={{ background: appTheme.bg }}>
-            <AnimatePresence initial={false}>
-              <Suspense fallback={<div className="flex items-center justify-center p-10"><RefreshCw className="animate-spin" color={appTheme.primary} /></div>}>
+            <AnimatePresence mode="wait">
                 {activeTab === 'home' && (
                   <motion.div 
                     key="homeTab"
@@ -1097,7 +1096,6 @@ const App = () => {
                   <ProfileView key="profile" user={user} userRole={userRole} coupleCode={coupleCode} setHusbandInfo={setHusbandInfo} setWifeInfo={setWifeInfo} husbandInfo={husbandInfo} wifeInfo={wifeInfo} onUpdateProfile={updateProfileInfo} myInfo={userRole === 'husband' ? husbandInfo : wifeInfo} isFullPage={true} />
                 </motion.div>
               )}
-            </Suspense>
             </AnimatePresence>
           </main>
 
