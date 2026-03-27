@@ -195,7 +195,7 @@ const SolutionView = ({ onBack, userRole, husbandInfo, wifeInfo, schedules, admi
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
             {reportResult ? (
-              <div style={{ fontSize: '15px', fontWeight: 600, lineHeight: 1.8, color: '#4D3A1A', whiteSpace: 'pre-wrap', textAlign: 'justify', fontStyle: 'italic' }}>
+              <div style={{ fontSize: '15px', fontWeight: 600, lineHeight: 1.8, color: '#4D3A1A', whiteSpace: 'pre-wrap', textAlign: 'justify' }}>
                 {reportResult}
               </div>
             ) : (
@@ -213,7 +213,7 @@ const SolutionView = ({ onBack, userRole, husbandInfo, wifeInfo, schedules, admi
                   <h4 style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#D4AF37', fontWeight: 900, fontSize: '14px', marginBottom: '16px' }}>
                     <BookOpen size={16} /> 언약적 사랑의 원리
                   </h4>
-                  <p style={{ fontSize: '14px', fontWeight: 700, color: '#4D3A1A', lineHeight: 1.7, fontStyle: 'italic', marginBottom: '16px' }}>
+                  <p style={{ fontSize: '14px', fontWeight: 700, color: '#4D3A1A', lineHeight: 1.7, marginBottom: '16px' }}>
                     "서로 시기를 다투지 말고, 오직 사랑 가운데서 진실한 것을 말하며 범사에 그에게까지 자랄지라."
                   </p>
                   <p style={{ fontSize: '14px', fontWeight: 700, color: '#4D3A1A', lineHeight: 1.7, textAlign: 'justify', wordBreak: 'keep-all' }}>
