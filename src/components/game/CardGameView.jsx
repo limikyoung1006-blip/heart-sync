@@ -204,7 +204,7 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo, onU
   };
 
   return (
-    <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="flex flex-col items-center p-4" style={{ paddingBottom: '150px', paddingTop: '20px' }}>
+    <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="flex flex-col items-center p-4" style={{ paddingBottom: '150px', paddingTop: '20px' }}>
       <AnimatePresence>
         {showFinishModal && (
           <motion.div 

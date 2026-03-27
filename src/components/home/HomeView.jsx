@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 import { CARD_DATA } from '../../data/dialogueCards';
 import HattiCharacter from '../ui/HattiCharacter';
-import SecretAnswerInteraction from './SecretAnswerInteraction';
+import SecretAnswerInteraction from '../game/SecretAnswerInteraction';
 
 const HATTI_TODOS = [
   { id: 1, action: "말하기", text: "배우자에게 '오늘 하루도 정말 고생 많았어'라고 눈을 맞추며 말해주세요." },
