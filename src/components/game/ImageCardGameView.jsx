@@ -72,31 +72,10 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, mainChannel, husbandI
     }
   }, [userRole]);
 
-  const drawNewCard = useCallback((targetCat = null) => {
+  const drawNewCard = useCallback(() => {
     if (isImageLoading) return;
     
-    const activeCat = targetCat || category;
-    
-    // 🔍 Mapping user buttons to multiple internal tags for a richer pool
-    const categoryMap = {
-      '신앙': ['신앙', '말씀', '기도', '예배', '새출발', '비전', '거룩', '찬양'],
-      '사랑': ['사랑', '나눔', '연합', '희생', '약속'],
-      '일상': ['일상', '시간', '교제', '기록', '시작', '대화', '차', '식사'],
-      '소망': ['소망', '비전', '계획', '실천', '지혜', '해방'],
-      '가족': ['가족', '동행', '순수', '지혜', '돌봄', '축복'],
-      '휴식': ['휴식', '치유', '평안', '평화', '자연', '보호', '생수']
-    };
-
-    let pool = [];
-    if (activeCat === '전체') {
-      pool = IMAGE_CARD_DATA;
-    } else {
-      const internalTags = categoryMap[activeCat] || [activeCat];
-      pool = IMAGE_CARD_DATA.filter(q => internalTags.includes(q.category));
-    }
-    
-    if (pool.length === 0) pool = IMAGE_CARD_DATA; // Fallback
-
+    const pool = IMAGE_CARD_DATA;
     const available = pool.filter(q => !history.includes(q.id));
     let finalPool = available.length > 0 ? available : pool;
 
@@ -105,7 +84,6 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, mainChannel, husbandI
     if (nextQ) {
       setIsFlipped(false);
       
-      // 🛡️ Reliability Fix: If the same question, just stop loading immediately
       if (currentQuestion && nextQ.id === currentQuestion.id) {
         setIsImageLoading(false);
       } else {
@@ -113,7 +91,7 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, mainChannel, husbandI
       }
 
       setTurnOwner(userRole); 
-      setHistory(prev => [...prev, nextQ.id].slice(-20)); // Keep history simple
+      setHistory(prev => [...prev, nextQ.id].slice(-30)); // Keep history of recent 30 cards
       setCurrentQuestion(nextQ);
       
       sendBroadcast({ 
@@ -121,14 +99,14 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, mainChannel, husbandI
         sender: userRole, 
         isFlipped: false, 
         turnOwner: userRole, 
-        category: activeCat
+        category: '전체'
       });
       
       const nextCount = sessionCardCount + 1;
       setSessionCardCount(nextCount);
       if (nextCount === 10) setShowFinishModal(true);
     }
-  }, [category, history, sessionCardCount, userRole, sendBroadcast, isImageLoading, currentQuestion]);
+  }, [history, sessionCardCount, userRole, sendBroadcast, isImageLoading, currentQuestion]);
 
   const initPick2Mode = useCallback(() => {
     const shuffled = [...IMAGE_CARD_DATA].sort(() => Math.random() - 0.5);
@@ -267,19 +245,8 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, mainChannel, husbandI
 
       {gameMode === 'classic' ? (
         <>
-          <div style={{ width: '100%', display: 'flex', flexWrap: 'nowrap', overflowX: 'auto', gap: '8px', marginBottom: '25px', paddingBottom: '10px', scrollbarWidth: 'none' }} className="no-scrollbar">
-             {['전체', '신앙', '사랑', '일상', '소망', '가족', '휴식', '기록', '은혜', '찬양', '인도'].map(cat => (
-                <button 
-                  key={cat} onClick={() => { setCategory(cat); drawNewCard(cat); }}
-                  style={{ 
-                    padding: '10px 20px', borderRadius: '100px', border: 'none', flexShrink: 0,
-                    background: category === cat ? '#AB47BC' : '#F3E5F5', color: category === cat ? 'white' : '#AB47BC',
-                    fontWeight: 900, fontSize: '13px', boxShadow: category === cat ? '0 4px 12px rgba(171, 71, 188, 0.3)' : 'none'
-                  }}
-                >
-                  {cat}
-                </button>
-             ))}
+          <div style={{ width: '100%', textAlign: 'center', marginBottom: '25px', padding: '15px', background: 'rgba(171, 71, 188, 0.05)', borderRadius: '20px', border: '1px solid rgba(171, 71, 188, 0.1)' }}>
+             <p style={{ margin: 0, fontSize: '13px', color: '#AB47BC', fontWeight: 900 }}>이미지 질문 (전체 테마)</p>
           </div>
 
           <div style={{ perspective: '1500px', width: '310px', height: '440px', marginBottom: '30px' }}>
