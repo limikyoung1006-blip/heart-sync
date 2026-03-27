@@ -36,21 +36,70 @@ import SecretAnswerInteraction from './components/game/SecretAnswerInteraction';
 import ProfileView from './components/profile/ProfileView';
 import CalendarView from './components/calendar/CalendarView';
 
+// App constants
+const APP_DEBUG = true;
+
+const HATTI_TODOS = [
+  { id: 1, action: "말하기", text: "배우자에게 '오늘 하루도 정말 고생 많았어'라고 눈을 맞추며 말해주세요." },
+  { id: 2, action: "행동", text: "오늘 저녁 설거지나 청소 중 하나를 배우자 몰래 미리 끝내두세요." },
+  { id: 3, action: "스킨십", text: "배우자가 퇴근하고 돌아오면 5초간 따뜻하게 안아주세요." },
+  { id: 4, action: "선물", text: "퇴근길에 배우자가 좋아하는 편의점 간식을 하나 사서 건네보세요." },
+  { id: 5, action: "경청", text: "오늘 배우자의 이야기를 10분 동안 조언 없이 온전히 들어주세요." }
+];
+
 const NavItem = React.memo(({ active, onClick, icon, label }) => (
-  <div onClick={onClick} className={`nav-item ${active ? 'active' : ''} flex flex-col items-center justify-center gap-1 cursor-pointer transition-all active:scale-95`}>
-    <div className={`nav-icon-wrapper p-2 rounded-2xl ${active ? 'bg-[#D4AF37]/10' : ''}`}>
-      {React.cloneElement(icon, { size: 22, color: active ? "#D4AF37" : "#8B7355", fill: active ? "#D4AF37" : "none" })}
+  <div onClick={onClick} className={`nav-item ${active ? 'active' : ''}`}>
+    <div className="nav-icon-wrapper">
+      {icon}
     </div>
-    <span className={`text-[10px] font-black ${active ? 'text-[#D4AF37]' : 'text-[#8B7355] opacity-60'}`}>{label}</span>
+    <span>{label}</span>
   </div>
 ));
+
+const MenuBtn = ({ icon, title, desc, onClick }) => (
+  <button className="menu-btn" onClick={onClick}>
+    <span className="menu-icon">{icon}</span>
+    <div style={{ display: 'flex', flexDirection: 'column' }}>
+       <span>{title}</span>
+       <small>{desc}</small>
+    </div>
+  </button>
+);
+
+const SignalOptV2 = ({ title, desc }) => (
+  <button style={{
+    background: 'rgba(255,255,255,0.9)',
+    padding: '16px',
+    borderRadius: '18px',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '4px',
+    textAlign: 'center',
+    boxShadow: '0 4px 12px rgba(0,0,0,0.04)',
+    border: '1px solid rgba(0,0,0,0.03)',
+    cursor: 'pointer'
+  }}>
+    <strong style={{ color: '#800F2F', fontSize: '15px', fontWeight: 800 }}>{title}</strong>
+    <span style={{ color: '#A4133C', fontSize: '12px', fontWeight: 600, opacity: 0.7 }}>{desc}</span>
+  </button>
+);
 
 const App = () => {
   const [activeTab, setActiveTab] = useState('home');
   const [session, setSession] = useState(null);
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showAdminLogin, setShowAdminLogin] = useState(false);
+  const [logoClickCount, setLogoClickCount] = useState(0);
   const [isAdmin, setIsAdmin] = useState(() => localStorage.getItem('isAdmin') === 'true');
+  const [adminStats, setAdminStats] = useState({ users: 0, couples: 0, activeSessions: 0, recentActivities: [] });
+  const [coupleStats, setCoupleStats] = useState({ totalInteractions: 0 });
+  const [syncStatus, setSyncStatus] = useState('WAITING');
+  
+  const [spouseSecretAnswer, setSpouseSecretAnswer] = useState(() => localStorage.getItem('spouseSecretAnswer')); 
+  const [mySecretAnswer, setMySecretAnswer] = useState(() => localStorage.getItem('mySecretAnswer') || ""); 
+  const [isMySecretAnswered, setIsMySecretAnswered] = useState(() => localStorage.getItem('isMySecretAnswered') === 'true'); 
+  const [isSecretRevealed, setIsSecretRevealed] = useState(() => localStorage.getItem('isSecretRevealed') === 'true'); 
   const [isSetupDone, setIsSetupDone] = useState(() => localStorage.getItem('isSetupDone') === 'true');
   const [userRole, setUserRole] = useState(() => localStorage.getItem('userRole') || 'husband');
   const [coupleCode, setCoupleCode] = useState(() => localStorage.getItem('coupleCode') || 'HS-7289');
@@ -59,29 +108,30 @@ const App = () => {
   const [wifeInfo, setWifeInfo] = useState(() => JSON.parse(localStorage.getItem('wifeInfo') || '{"nickname":"박아내", "mbti":"ENFP", "blood":"B", "marriageDate":"2020-05-23"}'));
   const [schedules, setSchedules] = useState(() => JSON.parse(localStorage.getItem('coupleSchedules') || '[]'));
   const [notifications, setNotifications] = useState(() => { try { const saved = localStorage.getItem('notifications'); return saved ? JSON.parse(saved) : []; } catch (e) { return []; } });
-  const [syncStatus, setSyncStatus] = useState('WAITING');
-  const [mainChannel, setMainChannel] = useState(null);
+  const [showNotificationList, setShowNotificationList] = useState(false);
+  const [worshipDays, setWorshipDays] = useState(() => JSON.parse(localStorage.getItem('worshipDays') || '["일", "수"]'));
+  const [worshipTime, setWorshipTime] = useState(() => localStorage.getItem('worshipTime') || '21:00');
+  const [anniversaries, setAnniversaries] = useState(() => { try { const saved = localStorage.getItem('anniversaries'); return saved ? JSON.parse(saved) : []; } catch (e) { return []; } });
 
+  const [activeTabRef, setActiveTabRef] = [useRef('home'), useEffect(() => { activeTabRef.current = activeTab }, [activeTab])][0];
+  const lastNavIdRef = useRef(localStorage.getItem('lastProcessedNavId'));
+  const [mainChannel, setMainChannel] = useState(null);
+  const appTheme = { id: 'warm', primary: '#D4AF37', bg: '#FDFCF0' };
+  
   const [mySignal, setMySignal] = useState('green');
   const [spouseSignal, setSpouseSignal] = useState('green');
   const [partnerPrayers, setPartnerPrayers] = useState([]);
-  const [spouseSecretAnswer, setSpouseSecretAnswer] = useState(() => localStorage.getItem('spouseSecretAnswer'));
-  const [mySecretAnswer, setMySecretAnswer] = useState(() => localStorage.getItem('mySecretAnswer') || "");
-  const [isMySecretAnswered, setIsMySecretAnswered] = useState(() => localStorage.getItem('isMySecretAnswered') === 'true');
-  const [isSecretRevealed, setIsSecretRevealed] = useState(() => localStorage.getItem('isSecretRevealed') === 'true');
-
-  const [dialogueTab, setDialogueTab] = useState('choice');
-  const [dialogueGuideId, setDialogueGuideId] = useState(null);
+  const [incomingCardCall, setIncomingCardCall] = useState(null);
+  const [dialogueTab, setDialogueTab] = useState('choice'); 
+  const [dialogueGuideId, setDialogueGuideId] = useState(null); 
   const [counselingMode, setCounselingMode] = useState('chat');
-  const [showNotificationList, setShowNotificationList] = useState(false);
   const [showReport, setShowReport] = useState(false);
   const [showGuidePage, setShowGuidePage] = useState(false);
-  
-  const activeTabRef = useRef(activeTab);
-  const lastNavIdRef = useRef(localStorage.getItem('lastProcessedNavId'));
+  const [intimacyBg, setIntimacyBg] = useState(localStorage.getItem('intimacyBg') || null);
+  const [intimacySubPage, setIntimacySubPage] = useState('main');
+  const partnerLabel = userRole === 'husband' ? '아내' : '남편';
 
-  useEffect(() => { activeTabRef.current = activeTab; }, [activeTab]);
-
+  // [DESIGN RESTORE]: Original Premium Styles
   useEffect(() => {
     localStorage.setItem('husbandInfo', JSON.stringify(husbandInfo));
     localStorage.setItem('wifeInfo', JSON.stringify(wifeInfo));
@@ -89,27 +139,24 @@ const App = () => {
     localStorage.setItem('isSetupDone', isSetupDone);
     localStorage.setItem('coupleSchedules', JSON.stringify(schedules));
     localStorage.setItem('notifications', JSON.stringify(notifications));
-    localStorage.setItem('mySecretAnswer', mySecretAnswer);
-    localStorage.setItem('isMySecretAnswered', isMySecretAnswered);
-    localStorage.setItem('spouseSecretAnswer', spouseSecretAnswer || "");
-    localStorage.setItem('isSecretRevealed', isSecretRevealed);
-  }, [husbandInfo, wifeInfo, userRole, isSetupDone, schedules, notifications, mySecretAnswer, isMySecretAnswered, spouseSecretAnswer, isSecretRevealed]);
+  }, [husbandInfo, wifeInfo, userRole, isSetupDone, schedules, notifications]);
 
   const sendNativeNotification = (title, body, tab = null) => {
     const newNotif = { id: Date.now(), title, body, tab, time: new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }), read: false };
     setNotifications(prev => [newNotif, ...prev.slice(0, 49)]);
     if (Notification.permission === "granted") {
-      new Notification(title, { body }).onclick = () => { if (tab) setActiveTab(tab); window.focus(); };
+      new Notification(title, { body, icon: '/logo_main.png' }).onclick = () => { if (tab) setActiveTab(tab); window.focus(); };
     }
   };
 
   const updateProfileInfo = async (text, extraInfo = {}) => {
     if (!user?.id) return;
-    const info = { ...(userRole === 'husband' ? husbandInfo : wifeInfo), ...extraInfo };
-    if (text !== undefined) info.todayMemo = text;
-    if (userRole === 'husband') setHusbandInfo(info); else setWifeInfo(info);
+    const baseInfo = userRole === 'husband' ? husbandInfo : wifeInfo;
+    const updatedInfo = { ...baseInfo, ...extraInfo };
+    if (text !== undefined) updatedInfo.todayMemo = text;
+    if (userRole === 'husband') setHusbandInfo(updatedInfo); else setWifeInfo(updatedInfo);
     if (mainChannel) mainChannel.send({ type: 'broadcast', event: 'memo-updated', payload: { sender: userRole, text, extraInfo } });
-    await supabase.from('profiles').upsert({ id: user.id, couple_id: coupleCode.toLowerCase(), user_role: userRole, info, updated_at: new Date().toISOString() });
+    await supabase.from('profiles').upsert({ id: user.id, couple_id: coupleCode.toLowerCase().trim(), user_role: userRole, info: updatedInfo, updated_at: new Date().toISOString() }, { onConflict: 'id' });
   };
 
   const handleOnboardingFinish = async (info) => {
@@ -118,7 +165,7 @@ const App = () => {
     const updated = { ...(userRole === 'husband' ? husbandInfo : wifeInfo), ...info, coupleCode: finalCode };
     if (userRole === 'husband') setHusbandInfo(updated); else setWifeInfo(updated);
     await supabase.from('profiles').upsert({ id: user.id, couple_id: finalCode, user_role: userRole, info: updated, updated_at: new Date().toISOString() });
-    setIsSetupDone(true);
+    setIsSetupDone(true); localStorage.setItem('isSetupDone', 'true');
   };
 
   useEffect(() => {
@@ -129,74 +176,87 @@ const App = () => {
 
   useEffect(() => {
     if (!user) return;
-    const final_code = coupleCode.toLowerCase();
+    const final_code = coupleCode.toLowerCase().trim();
     const channel = supabase.channel(`couple-${final_code}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, payload => {
         if (!payload.new || payload.new.couple_id?.toLowerCase() !== final_code) return;
         const { user_role: role, info } = payload.new;
-        if (role === 'husband') setHusbandInfo(info || {}); else setWifeInfo(info || {});
+        if (role === 'husband') setHusbandInfo(info || {}); else if (role === 'wife') setWifeInfo(info || {});
         if (info?.signal && role !== userRole) setSpouseSignal(info.signal);
       })
       .on('broadcast', { event: 'nav-trigger' }, ({ payload }) => {
         if (payload.sender !== userRole && payload.navId !== lastNavIdRef.current) { lastNavIdRef.current = payload.navId; setActiveTab(payload.tab); }
       })
-      .subscribe(status => { if (status === 'SUBSCRIBED') { setSyncStatus('SUBSCRIBED'); setMainChannel(channel); } });
+      .subscribe((status) => { if (status === 'SUBSCRIBED') { setSyncStatus('SUBSCRIBED'); setMainChannel(channel); } });
     return () => supabase.removeChannel(channel);
   }, [user, coupleCode, userRole]);
 
   return (
-    <div className="h-full flex flex-col relative w-full bg-[#FDFCF0] font-sans">
-      <AnimatePresence>
-        {loading && <motion.div exit={{ opacity: 0 }} className="fixed inset-0 flex items-center justify-center bg-white z-[99999]"><RefreshCw size={40} className="animate-spin" color="#D4AF37" /></motion.div>}
-      </AnimatePresence>
-
+    <div className="h-full flex flex-col relative w-full" style={{ '--gold': appTheme.primary, '--gold-glow': `${appTheme.primary}40`, background: appTheme.bg }}>
+      {loading && <div className="fixed inset-0 flex items-center justify-center bg-white z-[99999] font-black"><RefreshCw size={40} className="animate-spin" color="#D4AF37" /></div>}
+      
       {!loading && !session && (
         <AuthView userRole={userRole} setUserRole={setUserRole} onFinish={handleOnboardingFinish} />
       )}
 
       {!loading && session && isSetupDone && (
         <>
-          <div className="top-bar flex items-center justify-between px-6 py-4 bg-white/80 backdrop-blur-md sticky top-0 z-[100] border-b border-[#D4AF37]/10" style={{ display: (activeTab === 'heartPrayer') ? 'none' : 'flex' }}>
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-[#D4AF37]/10 flex items-center justify-center"><User size={20} color="#D4AF37" /></div>
-              <div className="flex flex-col">
-                <span className="text-[14px] font-black text-[#2D1F08]">{userRole === 'husband' ? husbandInfo.nickname : wifeInfo.nickname}님</span>
-                <span className="text-[10px] font-bold text-[#4BD991]">● 실시간 연결 중</span>
+          {/* [DESIGN RESTORE]: Original Premium Top Bar */}
+          <div className="top-bar" style={{ 
+            visibility: (activeTab === 'heartPrayer') ? 'hidden' : 'visible',
+            borderBottom: `1px solid ${appTheme.primary}20`,
+            background: 'rgba(255, 255, 255, 0.9)', 
+            backdropFilter: 'blur(20px)', zIndex: 100
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'rgba(212, 175, 55, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <User size={16} color={appTheme.primary} />
+                </div>
+                <span style={{ fontSize: '13px', fontBold: 900, color: appTheme.primary }}>
+                  {userRole === 'husband' ? husbandInfo.nickname : wifeInfo.nickname}님
+                </span>
+                <div style={{ width: 8, height: 8, borderRadius: '50%', background: syncStatus === 'SUBSCRIBED' ? '#4BD991' : '#FFBE61' }} />
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <button onClick={() => setShowNotificationList(true)} className="w-10 h-10 rounded-full flex items-center justify-center relative active:scale-90 transition-transform"><Bell size={22} color="#D4AF37" />{notifications.some(n => !n.read) && <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full" />}</button>
-              <button onClick={() => setActiveTab('settings')} className="w-10 h-10 rounded-full flex items-center justify-center active:scale-90 transition-transform"><Settings size={22} color="#D4AF37" /></button>
+            <div className="top-bar-icons">
+              <button className="icon-btn-top" onClick={() => setShowNotificationList(true)} style={{ position: 'relative' }}>
+                <Bell size={22} color={appTheme.primary} />
+                {notifications.some(n => !n.read) && <span style={{ position: 'absolute', top: 2, right: 2, width: 8, height: 8, background: '#FF4D6D', borderRadius: '50%', border: '2px solid white' }} />}
+              </button>
+              <button className="icon-btn-top" onClick={() => setActiveTab('settings')}><Settings size={22} color={appTheme.primary} /></button>
             </div>
           </div>
 
-          <main className="flex-1 relative overflow-hidden">
-            {/* 🏠 Zero-Unmount HomeView (Always active but hidden) */}
-            <div style={{ position: 'absolute', inset: 0, display: activeTab === 'home' ? 'block' : 'none' }}>
+          <main className="main-content" style={{ background: appTheme.bg, position: 'relative', overflow: 'hidden' }}>
+            {/* 🏠 Zero-Unmount HomeView (Design Preserved) */}
+            <div style={{ position: 'absolute', inset: 0, display: activeTab === 'home' ? 'block' : 'none', zIndex: activeTab === 'home' ? 5 : 0 }}>
               <HomeView user={user} userRole={userRole} coupleCode={coupleCode} mainChannel={mainChannel} mySignal={mySignal} setMySignal={setMySignal} spouseSignal={spouseSignal} partnerPrayers={partnerPrayers} onNav={setActiveTab} schedules={schedules} husbandInfo={husbandInfo} wifeInfo={wifeInfo} onUpdateMemo={updateProfileInfo} activeTab={activeTab} spouseSecretAnswer={spouseSecretAnswer} setSpouseSecretAnswer={setSpouseSecretAnswer} mySecretAnswer={mySecretAnswer} setMySecretAnswer={setMySecretAnswer} isMySecretAnswered={isMySecretAnswered} setIsMySecretAnswered={setIsMySecretAnswered} isRevealed={isSecretRevealed} setIsRevealed={setIsSecretRevealed} supabase={supabase} updateProfileInfo={updateProfileInfo} />
             </div>
 
             <AnimatePresence mode="wait">
               {activeTab !== 'home' && (
-                <motion.div key={activeTab} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.15 }} className="absolute inset-0 z-10 bg-[#FDFCF0]">
+                <motion.div key={activeTab} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }} style={{ width: '100%', height: '100%', position: 'relative', zIndex: 10 }}>
                   {activeTab === 'calendar' && <CalendarView schedules={schedules} onAddSchedule={s => setSchedules([...schedules, s])} onDeleteSchedule={id => setSchedules(schedules.filter(s => s.id !== id))} onBack={() => setActiveTab('home')} />}
                   {activeTab === 'cardGame' && <CardGameView coupleCode={coupleCode} userRole={userRole} onBack={() => setActiveTab('home')} />}
-                  {activeTab === 'profile' && <ProfileView user={user} userRole={userRole} husbandInfo={husbandInfo} wifeInfo={wifeInfo} onUpdateProfile={updateProfileInfo} />}
-                  {activeTab === 'settings' && <SettingsView user={user} userRole={userRole} husbandInfo={husbandInfo} wifeInfo={wifeInfo} onBack={() => setActiveTab('home')} />}
                   {activeTab === 'counseling' && <ChatView onBack={() => setActiveTab('home')} />}
                   {activeTab === 'worship' && <WorshipView onBack={() => setActiveTab('home')} />}
+                  {activeTab === 'profile' && <ProfileView user={user} userRole={userRole} husbandInfo={husbandInfo} wifeInfo={wifeInfo} onUpdateProfile={updateProfileInfo} isFullPage={true} />}
+                  {activeTab === 'settings' && <SettingsView user={user} userRole={userRole} husbandInfo={husbandInfo} wifeInfo={wifeInfo} onBack={() => setActiveTab('home')} />}
                   {(activeTab === 'intimacyHub' || activeTab === 'heartPrayer') && <IntimacyHubView userRole={userRole} coupleCode={coupleCode} onBack={() => setActiveTab('home')} />}
+                  {activeTab === 'intimacy' && <IntimacyModal show={true} onClose={() => setActiveTab('home')} onNav={setActiveTab} subPage={intimacySubPage} setSubPage={setIntimacySubPage} bgImage={intimacyBg} onBgUpload={setIntimacyBg} partnerLabel={partnerLabel} user={user} userRole={userRole} coupleCode={coupleCode} supabase={supabase} mainChannel={mainChannel} setWifeInfo={setWifeInfo} husbandInfo={husbandInfo} wifeInfo={wifeInfo} onUpdateProfile={updateProfileInfo} />}
                 </motion.div>
               )}
             </AnimatePresence>
           </main>
 
-          <nav className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-xl border-t border-[#D4AF37]/10 px-6 py-4 flex justify-between items-center z-[1000] rounded-t-[32px] shadow-[0_-10px_40px_rgba(212,175,55,0.08)]">
-            <NavItem active={activeTab === 'home'} onClick={() => setActiveTab('home')} icon={<Home />} label="홈" />
-            <NavItem active={activeTab === 'calendar'} onClick={() => setActiveTab('calendar')} icon={<Calendar />} label="일정" />
-            <NavItem active={activeTab === 'cardGame'} onClick={() => setActiveTab('cardGame')} icon={<MessageSquare />} label="대화카드" />
-            <NavItem active={activeTab === 'status'} onClick={() => setActiveTab('intimacyHub')} icon={<Sparkles />} label="마음정원" />
-            <NavItem active={activeTab === 'profile'} onClick={() => setActiveTab('profile')} icon={<User />} label="내 정보" />
+          {/* [DESIGN RESTORE]: Regular Luxury Bottom Nav */}
+          <nav className="bottom-nav">
+            <NavItem active={activeTab === 'home'} onClick={() => setActiveTab('home')} icon={<Home size={22} fill={activeTab === 'home' ? appTheme.primary : "none"} color={appTheme.primary} />} label="홈" />
+            <NavItem active={activeTab === 'calendar'} onClick={() => setActiveTab('calendar')} icon={<Calendar size={22} fill={activeTab === 'calendar' ? appTheme.primary : "none"} color={appTheme.primary} />} label="일정" />
+            <NavItem active={activeTab === 'cardGame'} onClick={() => { setActiveTab('cardGame'); if (mainChannel) mainChannel.send({ type: 'broadcast', event: 'card-game-call', payload: { sender: userRole } }); }} icon={<MessageSquare size={22} fill={activeTab === 'cardGame' ? appTheme.primary : "none"} color={appTheme.primary} />} label="대화카드" />
+            <NavItem active={activeTab === 'counseling'} onClick={() => setActiveTab('counseling')} icon={<Sparkles size={22} fill={activeTab === 'counseling' ? appTheme.primary : "none"} color={appTheme.primary} />} label="AI하티" />
+            <NavItem active={activeTab === 'profile'} onClick={() => setActiveTab('profile')} icon={<User size={22} fill={activeTab === 'profile' ? appTheme.primary : "none"} color={appTheme.primary} />} label="내 정보" />
           </nav>
         </>
       )}
