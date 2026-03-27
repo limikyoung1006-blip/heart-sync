@@ -43,8 +43,7 @@ const HattiCharacter = ({ state = 'floating', size = 120, style = {} }) => {
           alignItems: 'center', 
           justifyContent: 'center',
           position: 'relative',
-          zIndex: 100,
-          transformStyle: 'preserve-3d'
+          zIndex: 100
         }}
       >
         <img 

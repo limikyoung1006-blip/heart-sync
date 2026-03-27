@@ -7,7 +7,11 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, mainChannel, husbandI
   const [gameMode, setGameMode] = useState('classic'); 
   const [category, setCategory] = useState('전체');
   const [isFlipped, setIsFlipped] = useState(false);
-  const [currentQuestion, setCurrentQuestion] = useState(IMAGE_CARD_DATA[0]);
+  const [currentQuestion, setCurrentQuestion] = useState(() => {
+    // Pick a random initial card to avoid duplicates on every fresh mount
+    const randomIndex = Math.floor(Math.random() * IMAGE_CARD_DATA.length);
+    return IMAGE_CARD_DATA[randomIndex];
+  });
   const [turnOwner, setTurnOwner] = useState(null);
 
   const [mainQuestion, setMainQuestion] = useState("");
