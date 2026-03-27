@@ -101,7 +101,7 @@ const ChatView = ({ userRole, setUserRole, husbandInfo, setHusbandInfo, wifeInfo
           </div>
         </div>
         <button 
-           onClick={() => setChat(prev => [...prev, { role: 'hatti', text: `아직 하티의 성격(성향)을 맞춤화하는 기능은 준비 중이에요! 곧 ${hatti.partnerLabel}분을 더 깊게 이해할 수 있는 특별한 성향 설정 기능으로 찾아뵐게요. 😊` }])}
+           onClick={() => setChat(prev => [...prev, { role: 'hatti', text: `아직 하티의 성격(말투)을 맞춤화하는 기능은 열심히 만들고 있는 중이에요! ${hatti.partnerLabel}분의 성향(${hatti.partnerInfo?.mbti || '성향'})은 제가 이미 잘 알고 있답니다. 걱정 마세요! 😊` }])}
            style={{ padding: '10px', background: 'rgba(138, 96, 255, 0.1)', borderRadius: '15px', border: 'none', color: '#8A60FF' }}
         >
           <Settings size={20} />

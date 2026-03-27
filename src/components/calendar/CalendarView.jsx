@@ -66,8 +66,18 @@ const CalendarView = ({ schedules, onAddSchedule, onDeleteSchedule, onBack }) =>
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-[18px] font-black text-[#2D1F08]">{currentDate.getFullYear()}년 {monthNames[currentDate.getMonth()]}</h2>
             <div className="flex gap-2">
+              <button 
+                onClick={() => {
+                  const now = new Date();
+                  setCurrentDate(new Date(now.getFullYear(), now.getMonth(), 1));
+                  setSelectedDate(now.getDate());
+                }}
+                className="px-3 py-1 text-[12px] font-black text-[#D4AF37] bg-[#D4AF37]/10 rounded-full hover:bg-[#D4AF37]/20 transition-colors mr-2"
+              >
+                오늘
+              </button>
               <button onClick={prevMonth} className="p-2 hover:bg-gray-50 rounded-full transition-colors"><ChevronLeft size={20} color="#8B7355" /></button>
-              <button onClick={nextMonth} className="p-2 hover:bg-gray-0 rounded-full transition-colors"><ChevronRight size={20} color="#8B7355" /></button>
+              <button onClick={nextMonth} className="p-2 hover:bg-gray-50 rounded-full transition-colors"><ChevronRight size={20} color="#8B7355" /></button>
             </div>
           </div>
 
