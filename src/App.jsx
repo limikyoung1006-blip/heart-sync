@@ -31,7 +31,6 @@ import SolutionView from './components/counseling/SolutionView';
 import AppGuideView from './components/ui/AppGuideView';
 import DeepAnalysisView from './components/settings/DeepAnalysisView';
 import SecretAnswerInteraction from './components/game/SecretAnswerInteraction';
-import CalendarView from './components/calendar/CalendarView';
 import ProfileView from './components/profile/ProfileView';
 
 // App constants
