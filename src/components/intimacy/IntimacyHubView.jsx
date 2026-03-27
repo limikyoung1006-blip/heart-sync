@@ -72,7 +72,7 @@ const IntimacyHubView = ({ user, userRole, coupleCode, supabase, mainChannel, on
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto" style={{ background: '#FDFCF0' }}>
+      <div className="flex-1 overflow-y-auto" style={{ background: '#FDFCF0', paddingBottom: '160px', WebkitOverflowScrolling: 'touch' }}>
         <AnimatePresence mode="wait">
           {subTab === 'prayer' ? (
             <motion.div 

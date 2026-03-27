@@ -143,9 +143,9 @@ const DeepAnalysisView = ({ onBack, myInfo, updateProfile }) => {
   if (showResult && analysisResult) {
     return (
       <div style={{ position: 'fixed', inset: 0, background: '#F8FAFC', zIndex: 999999, display: 'flex', flexDirection: 'column' }}>
-        <div style={{ display: 'flex', alignItems: 'center', padding: '65px 20px 20px', background: 'white', borderBottom: '1px solid #E2E8F0', position: 'relative', zIndex: 10 }}>
-          <button onClick={() => setShowResult(false)} style={{ position: 'absolute', left: '20px', bottom: '22px', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px', color: '#64748B', fontWeight: 700 }}>
-            <ChevronLeft size={20} /> 뒤로
+        <div style={{ display: 'flex', alignItems: 'center', padding: '85px 20px 25px', background: 'white', borderBottom: '1px solid #E2E8F0', position: 'relative', zIndex: 1000000 }}>
+          <button onClick={() => setShowResult(false)} style={{ position: 'absolute', left: '20px', bottom: '26px', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px', color: '#64748B', fontWeight: 900, padding: '15px', margin: '-15px' }}>
+            <ChevronLeft size={24} /> 뒤로
           </button>
           <h2 style={{ fontSize: '18px', fontWeight: 900, color: '#1E293B', margin: '0 auto' }}>진단 결과 보고서</h2>
         </div>
@@ -181,9 +181,9 @@ const DeepAnalysisView = ({ onBack, myInfo, updateProfile }) => {
 
   return (
     <div style={{ position: 'fixed', inset: 0, background: '#F8FAFC', zIndex: 999999, display: 'flex', flexDirection: 'column' }}>
-      <div style={{ display: 'flex', alignItems: 'center', padding: '65px 20px 20px', background: 'white', borderBottom: '1px solid #E2E8F0', zIndex: 10 }}>
-        <button onClick={onBack} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <ChevronLeft size={24} color="#1E293B" /> <span style={{ fontSize: '16px', fontWeight: 800 }}>진단 취소</span>
+      <div style={{ display: 'flex', alignItems: 'center', padding: '85px 20px 25px', background: 'white', borderBottom: '1px solid #E2E8F0', zIndex: 1000000 }}>
+        <button onClick={onBack} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', padding: '15px', margin: '-15px' }}>
+          <ChevronLeft size={28} color="#1E293B" /> <span style={{ fontSize: '18px', fontWeight: 900 }}>진단 취소</span>
         </button>
       </div>
       <div style={{ flex: 1, padding: '30px 24px 120px', display: 'flex', flexDirection: 'column', overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
