@@ -153,6 +153,52 @@ const SettingsView = ({
              <SettingsItem icon={<Activity size={20} color="#EF4444" />} label="알림 전송 장애 진단하기" onClick={() => setShowNotifDiag(true)} />
           </SettingsSection>
 
+          <SettingsSection title="⛪ 가정예배 스케줄">
+            <div style={{ background: 'rgba(255, 255, 255, 0.6)', padding: '20px', borderRadius: '24px', display: 'flex', flexDirection: 'column', gap: '15px' }}>
+              <div>
+                <label style={{ fontSize: '13px', fontWeight: 900, color: '#8B7355', marginBottom: '10px', display: 'block' }}>예배 요일 선택</label>
+                <div style={{ display: 'flex', justifyContent: 'space-between', gap: '5px' }}>
+                  {['일', '월', '화', '수', '목', '금', '토'].map((day, idx) => {
+                    const isActive = worshipDays.includes(idx);
+                    return (
+                      <button
+                        key={day}
+                        onClick={() => {
+                          const newDays = isActive ? worshipDays.filter(d => d !== idx) : [...worshipDays, idx];
+                          setWorshipDays(newDays);
+                        }}
+                        style={{
+                          flex: 1, padding: '10px 0', borderRadius: '12px', fontSize: '12px', fontWeight: 900,
+                          background: isActive ? '#D4AF37' : 'white',
+                          color: isActive ? 'white' : '#8B7355',
+                          border: isActive ? 'none' : '1px solid #F5E6CC',
+                          transition: '0.3s'
+                        }}
+                      >
+                        {day}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid #F5E6CC', paddingTop: '15px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <Clock size={18} color="#D4AF37" />
+                  <span style={{ fontSize: '15px', fontWeight: 800, color: '#2D1F08' }}>예배 알림 시간</span>
+                </div>
+                <input 
+                  type="time" 
+                  value={worshipTime}
+                  onChange={(e) => setWorshipTime(e.target.value)}
+                  style={{
+                    border: '1px solid #F5E6CC', background: 'white', padding: '8px 12px', borderRadius: '12px',
+                    fontSize: '14px', fontWeight: 900, color: '#2D1F08', outline: 'none'
+                  }}
+                />
+              </div>
+            </div>
+          </SettingsSection>
+
           <SettingsSection title="⚙️ 배경 및 개인화">
             <SettingsItem icon={<Palette size={20} color="#D946EF" />} label="테마 및 배경 컬러 (준비중)" onClick={() => alert("나만의 테마 기능은 Pro 버전에서 제공될 예정입니다.")} />
             <SettingsToggle icon={<Bell size={20} color="#F59E0B" />} label="실시간 무드 푸시 알림" active={true} onToggle={() => {}} />

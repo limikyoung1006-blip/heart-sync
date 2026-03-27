@@ -72,6 +72,9 @@ const App = () => {
   const [notifications, setNotifications] = useState(() => { try { const saved = localStorage.getItem('notifications'); return saved ? JSON.parse(saved) : []; } catch (e) { return []; } });
   const [showNotificationList, setShowNotificationList] = useState(false);
   
+  const [worshipDays, setWorshipDays] = useState(() => JSON.parse(localStorage.getItem('worshipDays') || '[1,2,3,4,5,6,0]')); 
+  const [worshipTime, setWorshipTime] = useState(() => localStorage.getItem('worshipTime') || '21:00');
+  
   const activeTabRef = useRef('home');
   useEffect(() => { activeTabRef.current = activeTab }, [activeTab]);
   const lastNavIdRef = useRef(localStorage.getItem('lastProcessedNavId'));
@@ -91,7 +94,9 @@ const App = () => {
     localStorage.setItem('isSetupDone', isSetupDone);
     localStorage.setItem('coupleSchedules', JSON.stringify(schedules));
     localStorage.setItem('notifications', JSON.stringify(notifications));
-  }, [husbandInfo, wifeInfo, userRole, isSetupDone, schedules, notifications]);
+    localStorage.setItem('worshipDays', JSON.stringify(worshipDays));
+    localStorage.setItem('worshipTime', worshipTime);
+  }, [husbandInfo, wifeInfo, userRole, isSetupDone, schedules, notifications, worshipDays, worshipTime]);
 
   useEffect(() => {
     if ("Notification" in window) setNotifPermission(Notification.permission);
@@ -140,6 +145,26 @@ const App = () => {
       updated_at: new Date().toISOString() 
     }, { onConflict: 'id' });
   };
+
+  // Family Worship Notification Scheduler
+  useEffect(() => {
+    if (!isSetupDone) return;
+    const checkWorshipNotif = () => {
+      const now = new Date();
+      const currentDay = now.getDay();
+      const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+      if (worshipDays.includes(currentDay) && currentTime === worshipTime) {
+        const lastNotif = localStorage.getItem('lastWorshipNotif');
+        const todayKey = `${now.toDateString()}-${currentTime}`;
+        if (lastNotif !== todayKey) {
+          sendNativeNotification("🙏 가정예배 시간입니다", "하나님의 은혜를 함께 나누는 복된 시간 되세요.", "worship");
+          localStorage.setItem('lastWorshipNotif', todayKey);
+        }
+      }
+    };
+    const intervalId = setInterval(checkWorshipNotif, 45000); 
+    return () => clearInterval(intervalId);
+  }, [isSetupDone, worshipDays, worshipTime]);
 
   const handleOnboardingFinish = async (info) => {
     const finalCode = (info.coupleCode || coupleCode).toLowerCase().trim();
@@ -299,6 +324,10 @@ const App = () => {
                       onUpdateMemo={updateProfileInfo}
                       onBack={() => setActiveTab('home')} 
                       onReportClick={() => setActiveTab('report')} 
+                      worshipDays={worshipDays}
+                      setWorshipDays={setWorshipDays}
+                      worshipTime={worshipTime}
+                      setWorshipTime={setWorshipTime}
                     />
                   </motion.div>
                 )}
@@ -325,7 +354,11 @@ const App = () => {
                 )}
                 {activeTab === 'worship' && (
                   <motion.div key="worship" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}>
-                    <WorshipView userRole={userRole} coupleCode={coupleCode} />
+                    <WorshipView 
+                      userRole={userRole} 
+                      coupleCode={coupleCode} 
+                      onAddSchedule={(s) => setSchedules(prev => [...prev.filter(oldS => oldS.id !== s.id), s])}
+                    />
                   </motion.div>
                 )}
                 {activeTab === 'calendar' && <motion.div key="cal" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}><CalendarView schedules={schedules} onAddSchedule={s => setSchedules([...schedules, s])} onDeleteSchedule={id => setSchedules(schedules.filter(s => s.id !== id))} onBack={() => setActiveTab('home')} /></motion.div>}

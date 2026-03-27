@@ -49,7 +49,7 @@ const WORSHIP_SESSIONS = [
   }
 ];
 
-const WorshipView = ({ userRole, coupleCode }) => {
+const WorshipView = ({ userRole, coupleCode, onAddSchedule }) => {
   const [currentSession, setCurrentSession] = useState(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [praiseUrl, setPraiseUrl] = useState("");
@@ -58,7 +58,6 @@ const WorshipView = ({ userRole, coupleCode }) => {
   const [partnerPrayers, setPartnerPrayers] = useState([]);
 
   useEffect(() => {
-    // 1. Initial Fetch
     const fetchPrayers = async () => {
       const { data } = await supabase
         .from('prayers')
@@ -73,9 +72,8 @@ const WorshipView = ({ userRole, coupleCode }) => {
     };
     fetchPrayers();
 
-    // 2. Real-time Subscription
     const channel = supabase
-      .channel('realtime-prayers')
+      .channel(`realtime-prayers-${coupleCode}`)
       .on('postgres_changes', { 
         event: 'INSERT', 
         schema: 'public', 
@@ -112,6 +110,7 @@ const WorshipView = ({ userRole, coupleCode }) => {
 
   const handleRecord = async () => {
     if (!topic) return;
+    
     const { data, error } = await supabase.from('prayers').insert({
       couple_id: coupleCode,
       user_role: userRole,
@@ -119,6 +118,18 @@ const WorshipView = ({ userRole, coupleCode }) => {
       created_at: new Date().toISOString()
     }).select();
     
+    if (onAddSchedule) {
+      const now = new Date();
+      onAddSchedule({
+        id: `worship-${Date.now()}`,
+        title: "🙏 가정예배 완료",
+        time: `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`,
+        location: topic.substring(0, 20) + (topic.length > 20 ? "..." : ""),
+        date: now.toISOString().split('T')[0],
+        type: 'worship'
+      });
+    }
+
     if (!error && data) {
       setTopic("");
     }
