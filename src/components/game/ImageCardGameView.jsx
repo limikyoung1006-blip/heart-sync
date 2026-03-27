@@ -45,7 +45,7 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, mainChannel, husbandI
     broadcastRef.current = mainChannel;
     
     const sub = mainChannel.on('broadcast', { event: 'image-game-update' }, ({ payload }) => {
-      if (payload.sender === userRole) return;
+      if (!broadcastRef.current || payload.sender === userRole) return;
       
       if (payload.gameMode) setGameMode(payload.gameMode);
       if (payload.isFlipped !== undefined) setIsFlipped(payload.isFlipped);
@@ -64,7 +64,12 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, mainChannel, husbandI
       }
     });
 
-    return () => mainChannel.off('broadcast', { event: 'image-game-update' });
+    return () => {
+      broadcastRef.current = null;
+      if (mainChannel) {
+        mainChannel.off('broadcast', { event: 'image-game-update' });
+      }
+    };
   }, [mainChannel, userRole]);
 
   const sendBroadcast = useCallback((updates) => {

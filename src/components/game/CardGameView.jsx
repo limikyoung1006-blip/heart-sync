@@ -25,7 +25,8 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo, onU
     broadcastRef.current = mainChannel;
     
     const sub = mainChannel.on('broadcast', { event: 'game-update' }, ({ payload }) => {
-      if (payload.sender === userRole) return;
+      // guard against unmounted state
+      if (!broadcastRef.current || payload.sender === userRole) return;
       
       if (payload.category) setCategory(payload.category);
       if (payload.isFlipped !== undefined) setIsFlipped(payload.isFlipped);
@@ -38,7 +39,12 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo, onU
       }
     });
 
-    return () => mainChannel.off('broadcast', { event: 'game-update' });
+    return () => {
+      broadcastRef.current = null;
+      if (mainChannel) {
+        mainChannel.off('broadcast', { event: 'game-update' });
+      }
+    };
   }, [mainChannel, userRole]);
 
   // Removded redundant postgres_changes listener - now relying on ultra-fast broadcast for real-time sync
