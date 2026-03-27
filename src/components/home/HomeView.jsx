@@ -62,30 +62,31 @@ const HomeView = ({
   
   // Pick a daily todo based on the date
   const dailyTodo = useMemo(() => {
-    const today = new Date();
-    const seed = today.getFullYear() + (today.getMonth() + 1) * 100 + today.getDate();
-    return HATTI_TODOS[seed % HATTI_TODOS.length];
+    try {
+      if (!HATTI_TODOS || HATTI_TODOS.length === 0) return null;
+      const today = new Date();
+      const seed = today.getFullYear() + (today.getMonth() + 1) * 100 + today.getDate();
+      return HATTI_TODOS[seed % HATTI_TODOS.length];
+    } catch (e) { return null; }
   }, []);
 
   const todaySchedules = useMemo(() => {
-    const todayStr = new Date().toISOString().split('T')[0];
-    return schedules.filter(s => s.date === todayStr);
+    try {
+      const todayStr = new Date().toISOString().split('T')[0];
+      return (schedules || []).filter(s => s && s.date === todayStr);
+    } catch (e) { return []; }
   }, [schedules]);
   
   const [isAdviceOpen, setIsAdviceOpen] = useState(false);
 
   const todaySecretQuestion = useMemo(() => {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = now.getMonth() + 1;
-    const date = now.getDate();
-    const seed = (year * 10000) + (month * 100) + date;
-      
-    const secretQs = CARD_DATA.filter(q => q.category === '시크릿');
-    if (secretQs.length === 0) return "서로에게 궁금한 비밀을 물어보세요.";
-    
-    const index = seed % secretQs.length;
-    return secretQs[index].question;
+    try {
+      const now = new Date();
+      const seed = (now.getFullYear() * 10000) + ((now.getMonth() + 1) * 100) + now.getDate();
+      const secretQs = (CARD_DATA || []).filter(q => q && q.category === '시크릿');
+      if (!secretQs || secretQs.length === 0) return "서로에게 궁금한 비밀을 물어보세요.";
+      return secretQs[seed % secretQs.length].question;
+    } catch (e) { return "소중한 대화를 시작해보세요."; }
   }, []);
 
   const handleRequestNotif = () => {
