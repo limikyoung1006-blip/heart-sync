@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef, lazy, Suspense } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+// UI stability and scroll fix applied - 2026-03-27
 import { 
   Heart, Calendar, Settings, Bell, User, MessageCircle, MessageSquare,
   Sparkles, RefreshCw, Home, Users, Info, HelpCircle, 

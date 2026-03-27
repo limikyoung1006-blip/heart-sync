@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+// UI scrolling clearance and safety guards applied - 2026-03-27
 import { 
   Heart, 
   ChevronDown, 

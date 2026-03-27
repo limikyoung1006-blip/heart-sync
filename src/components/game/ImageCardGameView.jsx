@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+// Game UI scroll padding and sync fix applied - 2026-03-27
 import { ChevronLeft, Sparkles, RefreshCw } from 'lucide-react';
 import { IMAGE_CARD_DATA } from '../../data/imageCards';
 

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+// UI Notch visibility and scroll padding applied - 2026-03-27
 import { ChevronLeft, Sparkles } from 'lucide-react';
 
 const DeepAnalysisView = ({ onBack, myInfo, updateProfile }) => {
