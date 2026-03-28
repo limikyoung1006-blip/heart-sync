@@ -142,7 +142,7 @@ const App = () => {
     const newNotif = { id: Date.now(), title, body, tab, time: new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }), read: false };
     setNotifications(prev => [newNotif, ...prev.slice(0, 49)]);
     if (Notification.permission === "granted") {
-      new Notification(title, { body }).onclick = () => { if (tab) setActiveTab(tab); window.focus(); };
+      new Notification(title, { body }).onclick = () => { if (tab) setActiveTab(tab === 'cardGame' ? 'cardGameQuestion' : tab); window.focus(); };
     }
   };
 
@@ -252,7 +252,7 @@ const App = () => {
         if (payload.sender !== userRole && payload.navId !== lastNavIdRef.current) { lastNavIdRef.current = payload.navId; setActiveTab(payload.tab); }
       })
       .on('broadcast', { event: 'card-game-call' }, ({ payload }) => {
-        if (payload.sender !== userRole) sendNativeNotification(`대화 초대 💌`, `${payload.sender === 'husband' ? '남편' : '아내'}님이 대화를 기다리고 있어요!`, 'cardGame');
+        if (payload.sender !== userRole) sendNativeNotification(`대화 초대 💌`, `${payload.sender === 'husband' ? '남편' : '아내'}님이 대화를 기다리고 있어요!`, 'cardGameQuestion');
       })
       .on('broadcast', { event: 'secret-answered' }, ({ payload }) => {
         if (payload.sender !== userRole) {
@@ -336,7 +336,14 @@ const App = () => {
                     <HomeView 
                       user={user} userRole={userRole} coupleCode={coupleCode} mainChannel={mainChannel} 
                       mySignal={mySignal} setMySignal={setMySignal} spouseSignal={spouseSignal} partnerPrayers={partnerPrayers} 
-                      onNav={setActiveTab} onIntimacyClick={() => setActiveTab('intimacyHub')}
+                      onNav={(tab) => {
+                        if (tab === 'cardGame') {
+                          setActiveTab('cardGameChoice');
+                        } else {
+                          setActiveTab(tab);
+                        }
+                      }} 
+                      onIntimacyClick={() => setActiveTab('intimacyHub')}
                       schedules={schedules} husbandInfo={husbandInfo} wifeInfo={wifeInfo} onUpdateMemo={updateProfileInfo} activeTab={activeTab} 
                       spouseSecretAnswer={spouseSecretAnswer} setSpouseSecretAnswer={setSpouseSecretAnswer} 
                       mySecretAnswer={mySecretAnswer} setMySecretAnswer={setMySecretAnswer} 
@@ -346,23 +353,29 @@ const App = () => {
                     />
                   </motion.div>
                 )}
-                {activeTab === 'cardGame' && (
-                  <motion.div 
-                    key="cardGame" 
-                    initial={{ opacity: 0, x: 30 }} 
-                    animate={{ opacity: 1, x: 0 }} 
-                    exit={{ opacity: 0, x: -30 }} 
-                    transition={{ duration: 0.3, ease: "easeOut" }} 
-                    style={{ width: '100%', height: '100%', position: 'relative' }}
-                  >
-                     <div style={{ padding: '0px', height: '100%', overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
-                        <AnimatePresence mode="popLayout">
-                          {dialogueTab === 'choice' && <motion.div key="choice" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}><DialogueChoiceView onSelect={(id) => { setDialogueGuideId(id === 'cardGame' ? 'cardGame' : 'imageSync'); setDialogueTab('guide'); }} onShowGuide={(id) => { setDialogueGuideId(id); setDialogueTab('guide'); }} onBack={() => setActiveTab('home')} /></motion.div>}
-                          {dialogueTab === 'imageGame' && <motion.div key="image" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.2 }}><ImageCardGameView coupleCode={coupleCode} userRole={userRole} mainChannel={mainChannel} husbandInfo={husbandInfo} wifeInfo={wifeInfo} onBack={() => { setActiveTab('home'); }} /></motion.div>}
-                          {dialogueTab === 'cardGame' && <motion.div key="card" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.2 }}><CardGameView coupleCode={coupleCode} userRole={userRole} mainChannel={mainChannel} husbandInfo={husbandInfo} wifeInfo={wifeInfo} onUpdateMemo={updateProfileInfo} onBack={() => { setActiveTab('home'); }} /></motion.div>}
-                          {dialogueTab === 'guide' && <motion.div key="guide" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} transition={{ duration: 0.2 }}><GameGuideView gameId={dialogueGuideId} onStart={() => setDialogueTab(dialogueGuideId === 'imageSync' ? 'imageGame' : 'cardGame')} onBack={() => setDialogueTab('choice')} /></motion.div>}
-                        </AnimatePresence>
-                     </div>
+                {/* 🌈 Flattened Dialogue Screens */}
+                {activeTab === 'cardGameChoice' && (
+                  <motion.div key="choice" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.2 }}>
+                    <DialogueChoiceView 
+                      onSelect={(id) => setActiveTab(id === 'cardGame' ? 'cardGameQuestion' : 'imageGame')} 
+                      onShowGuide={(id) => { setDialogueGuideId(id); setActiveTab('cardGameGuide'); }} 
+                      onBack={() => setActiveTab('home')} 
+                    />
+                  </motion.div>
+                )}
+                {activeTab === 'cardGameQuestion' && (
+                  <motion.div key="card" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.2 }}>
+                    <CardGameView coupleCode={coupleCode} userRole={userRole} mainChannel={mainChannel} husbandInfo={husbandInfo} wifeInfo={wifeInfo} onUpdateMemo={updateProfileInfo} onBack={() => setActiveTab('home')} />
+                  </motion.div>
+                )}
+                {activeTab === 'imageGame' && (
+                  <motion.div key="image" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.2 }}>
+                    <ImageCardGameView coupleCode={coupleCode} userRole={userRole} mainChannel={mainChannel} husbandInfo={husbandInfo} wifeInfo={wifeInfo} onBack={() => setActiveTab('home')} />
+                  </motion.div>
+                )}
+                {activeTab === 'cardGameGuide' && (
+                  <motion.div key="guide" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} transition={{ duration: 0.2 }}>
+                    <GameGuideView gameId={dialogueGuideId} onStart={() => setActiveTab(dialogueGuideId === 'imageSync' ? 'imageGame' : 'cardGameQuestion')} onBack={() => setActiveTab('cardGameChoice')} />
                   </motion.div>
                 )}
                 {activeTab === 'counseling' && (
@@ -443,7 +456,7 @@ const App = () => {
 
           <nav className="bottom-nav">
             <NavItem active={activeTab === 'home'} onClick={() => setActiveTab('home')} icon={<Home size={22} fill={activeTab === 'home' ? appTheme.primary : "none"} color={appTheme.primary} />} label="홈" />
-            <NavItem active={activeTab === 'cardGame'} onClick={() => { setActiveTab('cardGame'); setDialogueTab('choice'); }} icon={<MessageSquare size={22} fill={activeTab === 'cardGame' ? appTheme.primary : "none"} color={appTheme.primary} />} label="대화카드" />
+            <NavItem active={activeTab.startsWith('cardGame') || activeTab === 'imageGame'} onClick={() => setActiveTab('cardGameChoice')} icon={<MessageSquare size={22} fill={(activeTab.startsWith('cardGame') || activeTab === 'imageGame') ? appTheme.primary : "none"} color={appTheme.primary} />} label="대화카드" />
             <NavItem active={activeTab === 'counseling'} onClick={() => setActiveTab('counseling')} icon={<Sparkles size={22} fill={activeTab === 'counseling' ? appTheme.primary : "none"} color={appTheme.primary} />} label="AI하티" />
             <NavItem active={activeTab === 'worship'} onClick={() => setActiveTab('worship')} icon={<BookOpen size={22} fill={activeTab === 'worship' ? appTheme.primary : "none"} color={appTheme.primary} />} label="가정예배" />
             <NavItem active={activeTab === 'intimacyHub'} onClick={() => setActiveTab('intimacyHub')} icon={<Heart size={22} fill={activeTab === 'intimacyHub' ? appTheme.primary : "none"} color={appTheme.primary} />} label="마음정원" />
