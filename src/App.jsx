@@ -89,6 +89,13 @@ const App = () => {
   const [dialogueTab, setDialogueTab] = useState('choice'); 
   const [dialogueGuideId, setDialogueGuideId] = useState(null);
 
+  // 📱 Mobile Fix: Force scroll to top on tab change to prevent 'white screen' scroll artifacts
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    const mainArea = document.querySelector('.main-content');
+    if (mainArea) mainArea.scrollTop = 0;
+  }, [activeTab]);
+
   // Sync state with browser history for mobile back button support
   useEffect(() => {
     const handlePopState = (event) => {
@@ -108,15 +115,15 @@ const App = () => {
     const pushTimer = setTimeout(() => {
       try {
         const currentState = window.history.state;
-        if (!currentState || currentState.tab !== activeTab || currentState.dialogueTab !== dialogueTab) {
-          window.history.pushState({ tab: activeTab, dialogueTab }, '', '');
+        if (!currentState || currentState.tab !== activeTab) {
+          window.history.pushState({ tab: activeTab }, '', '');
         }
       } catch (e) {
         console.warn("History push failed safely:", e);
       }
     }, 100);
     return () => clearTimeout(pushTimer);
-  }, [activeTab, dialogueTab]);
+  }, [activeTab]);
 
   useEffect(() => {
     try {
@@ -330,7 +337,7 @@ const App = () => {
                 <RefreshCw size={40} className="animate-spin" color="#D4AF37" />
               </div>
             }>
-              <AnimatePresence mode="popLayout" initial={false}>
+              <AnimatePresence mode="wait">
                 {activeTab === 'home' && (
                   <motion.div key="home" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} style={{ width: '100%', height: '100%' }}>
                     <HomeView 
