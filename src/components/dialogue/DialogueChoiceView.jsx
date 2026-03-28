@@ -1,6 +1,5 @@
 import React from 'react';
-import { motion } from 'framer-motion';
-import { ChevronLeft, Heart, Sparkles, Image as ImageIcon, ArrowRight, HelpCircle } from 'lucide-react';
+import { ChevronLeft, Heart, Image as ImageIcon, HelpCircle } from 'lucide-react';
 
 const DialogueChoiceView = ({ onSelect, onShowGuide, onBack }) => {
   const appTheme = {
@@ -43,7 +42,7 @@ const DialogueChoiceView = ({ onSelect, onShowGuide, onBack }) => {
        <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
           {/* Choice 1: Question Cards */}
           <div style={{ position: 'relative' }}>
-            <button 
+            <div 
               onClick={() => onSelect('cardGame')}
               style={{ 
                 background: 'white', padding: '28px 22px', borderRadius: '35px', 
@@ -51,7 +50,8 @@ const DialogueChoiceView = ({ onSelect, onShowGuide, onBack }) => {
                 border: '1.5px solid rgba(212, 175, 55, 0.25)', 
                 textAlign: 'left', width: '100%',
                 position: 'relative', overflow: 'hidden',
-                boxShadow: '0 8px 25px rgba(212, 175, 55, 0.04)'
+                boxShadow: '0 8px 25px rgba(212, 175, 55, 0.04)',
+                cursor: 'pointer'
               }}
             >
               <div style={{ 
@@ -65,18 +65,27 @@ const DialogueChoiceView = ({ onSelect, onShowGuide, onBack }) => {
                 <h3 style={{ fontSize: '18px', fontWeight: 900, color: appTheme.text, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>언어의 창 : 질문 카드</h3>
                 <p style={{ fontSize: '13.5px', color: appTheme.subText, fontWeight: 600, lineHeight: 1.5, wordBreak: 'keep-all' }}>150개 이상의 질문으로<br/>서로의 생각을 깊게 발견해요</p>
               </div>
-            </button>
+            </div>
+            {/* Dedicated help button outside the main card click area */}
             <button 
               onClick={(e) => { e.stopPropagation(); onShowGuide('cardGame'); }}
-              style={{ position: 'absolute', top: '15px', right: '15px', background: 'rgba(212, 175, 55, 0.08)', border: 'none', padding: '8px', borderRadius: '15px', color: '#D4AF37', zIndex: 10 }}
+              style={{ 
+                position: 'absolute', top: '0', right: '0', 
+                width: '70px', height: '70px', 
+                background: 'transparent', border: 'none',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                zIndex: 30, cursor: 'pointer'
+              }}
             >
-              <HelpCircle size={18} />
+              <div style={{ background: 'rgba(212, 175, 55, 0.1)', padding: '10px', borderRadius: '15px' }}>
+                <HelpCircle size={22} color="#D4AF37" />
+              </div>
             </button>
           </div>
 
           {/* Choice 2: Image Game */}
           <div style={{ position: 'relative' }}>
-            <button 
+            <div 
               onClick={() => onSelect('imageGame')}
               style={{ 
                 background: 'white', padding: '28px 22px', borderRadius: '35px', 
@@ -84,7 +93,8 @@ const DialogueChoiceView = ({ onSelect, onShowGuide, onBack }) => {
                 border: '1.5px solid rgba(171, 71, 188, 0.25)', 
                 textAlign: 'left', width: '100%',
                 position: 'relative', overflow: 'hidden',
-                boxShadow: '0 8px 25px rgba(171, 71, 188, 0.04)'
+                boxShadow: '0 8px 25px rgba(171, 71, 188, 0.04)',
+                cursor: 'pointer'
               }}
             >
               <div style={{ 
@@ -99,12 +109,21 @@ const DialogueChoiceView = ({ onSelect, onShowGuide, onBack }) => {
                 <p style={{ fontSize: '13.5px', color: appTheme.subText, fontWeight: 600, lineHeight: 1.5, wordBreak: 'keep-all' }}>이미지를 통해 감성이 이어지는<br/>특별한 마음 동기화</p>
                 <div style={{ display: 'inline-block', width: 'fit-content', background: '#AB47BC', color: 'white', padding: '2px 10px', borderRadius: '100px', fontSize: '9px', fontWeight: 900, marginTop: '5px' }}>NEW IMAGE SYNC</div>
               </div>
-            </button>
+            </div>
+            {/* Dedicated help button outside the main card click area */}
             <button 
               onClick={(e) => { e.stopPropagation(); onShowGuide('imageSync'); }}
-              style={{ position: 'absolute', top: '15px', right: '15px', background: 'rgba(171, 71, 188, 0.08)', border: 'none', padding: '8px', borderRadius: '15px', color: '#AB47BC', zIndex: 10 }}
+              style={{ 
+                position: 'absolute', top: '0', right: '0', 
+                width: '70px', height: '70px', 
+                background: 'transparent', border: 'none',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                zIndex: 30, cursor: 'pointer'
+              }}
             >
-              <HelpCircle size={18} />
+              <div style={{ background: 'rgba(171, 71, 188, 0.1)', padding: '10px', borderRadius: '15px' }}>
+                <HelpCircle size={22} color="#AB47BC" />
+              </div>
             </button>
           </div>
         </div>
