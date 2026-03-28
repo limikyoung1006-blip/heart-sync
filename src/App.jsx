@@ -26,12 +26,12 @@ function App() {
 
     const handlePopState = (event) => {
       if (event.state && event.state.activeTab) {
-        // 🔒 SAFETY DELAY: Wait 150ms before swapping massive components.
-        // This prevents the browser from freezing during hardware back action.
+        // Reduced delay to 50ms for snappiness while maintaining safety
         setTimeout(() => {
           setActiveTab(event.state.activeTab);
-          window.scrollTo(0, 0);
-        }, 150); 
+          const scroller = document.getElementById('main-scroller');
+          if (scroller) scroller.scrollTop = 0;
+        }, 50); 
       }
     };
 
@@ -42,10 +42,10 @@ function App() {
   const changeTab = useCallback((newTab) => {
     if (activeTab === newTab) return;
     
-    // We use pushState to sync browser back button with App internal tab
     window.history.pushState({ activeTab: newTab }, '');
     setActiveTab(newTab);
-    window.scrollTo(0, 0);
+    const scroller = document.getElementById('main-scroller');
+    if (scroller) scroller.scrollTop = 0;
   }, [activeTab]);
 
   // Auth & Session
