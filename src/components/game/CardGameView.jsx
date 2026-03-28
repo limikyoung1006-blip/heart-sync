@@ -150,7 +150,16 @@ const CardGameView = ({ onBack, coupleCode, userRole }) => {
         </div>
       </div>
 
-      <div style={{ marginBottom: '25px', textAlign: 'center', position: 'relative' }}>
+      <div style={{ 
+        width: '100%', 
+        padding: '14px', 
+        borderRadius: '20px', 
+        background: (turnOwner === userRole || !turnOwner) ? 'rgba(212, 175, 55, 0.12)' : 'rgba(138, 96, 255, 0.08)', 
+        marginBottom: '20px', 
+        textAlign: 'center', 
+        position: 'relative',
+        border: '1px solid rgba(212, 175, 55, 0.2)'
+      }}>
         {showTurnWarning && (
           <div style={{ 
             position: 'absolute', 
@@ -171,11 +180,14 @@ const CardGameView = ({ onBack, coupleCode, userRole }) => {
              ⚠️ {turnOwner === 'husband' ? '남편' : '아내'}님이 답변 중입니다...
           </div>
         )}
-        <p style={{ letterSpacing: '4px', color: '#8B6500', fontWeight: 900, fontSize: '11px', opacity: 0.7, marginBottom: '5px' }}>CHOOSE A CARD TOGETHER</p>
-        <div style={{ display: 'inline-block', background: 'rgba(212, 175, 55, 0.15)', padding: '6px 16px', borderRadius: '12px', border: '1px solid rgba(212, 175, 55, 0.3)' }}>
-          <span style={{ fontSize: '12px', color: '#8B6500', fontWeight: 900 }}>현재 답변 턴: {turnOwner ? (turnOwner === 'husband' ? '남편 👨' : '아내 👩') : '자유 선택 🔄'}</span>
-        </div>
+        <span style={{ fontSize: '14px', fontWeight: 900, color: (turnOwner === userRole || !turnOwner) ? '#8B6500' : '#8A60FF' }}>
+          {(turnOwner === userRole || !turnOwner) 
+            ? "✨ 당신의 턴입니다! 마음을 나눠주세요" 
+            : `⏳ ${turnOwner === 'husband' ? '남편' : '아내'}님이 답변 중입니다...`}
+        </span>
       </div>
+
+      <p style={{ letterSpacing: '4px', color: '#8B6500', fontWeight: 900, fontSize: '11px', opacity: 0.7, marginBottom: '25px', textAlign: 'center' }}>CHOOSE A CARD TOGETHER</p>
 
       <div className="card-container" style={{ 
         perspective: '1200px', 
@@ -290,7 +302,6 @@ const CardGameView = ({ onBack, coupleCode, userRole }) => {
         {turnOwner && turnOwner !== userRole ? '배우자의 답변 차례입니다' : '새로운 질문 뽑기'}
       </button>
 
-      <p style={{ marginTop: '20px', fontSize: '11px', color: '#8B7355', fontWeight: 700, paddingBottom: turnOwner === null ? '150px' : '20px' }}>* 아래로 스크롤하여 더 많은 메뉴를 확인하세요</p>
     </div>
   );
 };
