@@ -46,7 +46,8 @@ import {
   Image as ImageIcon
 } from 'lucide-react';
 
-import CardGameView, { CARD_DATA } from './components/game/CardGameView';
+import CardGameView from './components/game/CardGameView';
+import { CARD_DATA } from './data/dialogueCards';
 import ImageCardGameView from './components/game/ImageCardGameView';
 import DialogueChoiceView from './components/dialogue/DialogueChoiceView';
 import GameGuideView from './components/dialogue/GameGuideView';
