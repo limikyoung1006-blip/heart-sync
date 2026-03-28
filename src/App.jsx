@@ -396,10 +396,11 @@ const App = () => {
                 <RefreshCw size={40} className="animate-spin" color="#D4AF37" />
               </div>
             }>
-              <AnimatePresence mode="wait">
-                {/* 🌈 Ultra-lightened Transitions for Mobile Stability */}
+              <AnimatePresence>
+                {/* 🌈 Ultra-fast Rendering: No 'mode="wait"' to prevent stall death */}
+                {/* 🌈 Instant Navigation: No exit animations to save mobile GPU */}
                 {activeTab === 'home' && (
-                  <motion.div key="home" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }} style={{ width: '100%', height: '100%' }}>
+                  <motion.div key="home" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={false} transition={{ duration: 0.05 }} style={{ width: '100%', height: '100%' }}>
                     <HomeView 
                       user={user} userRole={userRole} coupleCode={coupleCode} mainChannel={mainChannel} 
                       mySignal={mySignal} setMySignal={setMySignal} spouseSignal={spouseSignal} partnerPrayers={partnerPrayers} 
@@ -418,7 +419,7 @@ const App = () => {
                   </motion.div>
                 )}
                 {activeTab === 'cardGameChoice' && (
-                  <motion.div key="choice" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}>
+                  <motion.div key="choice" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={false} transition={{ duration: 0.05 }}>
                     <DialogueChoiceView 
                       onSelect={(id) => setActiveTab(id === 'cardGame' ? 'cardGameQuestion' : 'imageGame')} 
                       onShowGuide={(id) => { setDialogueGuideId(id); setActiveTab('cardGameGuide'); }} 
@@ -427,7 +428,7 @@ const App = () => {
                   </motion.div>
                 )}
                 {activeTab === 'cardGameQuestion' && (
-                  <motion.div key="card" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}>
+                  <motion.div key="card" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={false} transition={{ duration: 0.05 }}>
                     <CardGameView 
                       coupleCode={coupleCode} 
                       userRole={userRole} 
@@ -443,7 +444,7 @@ const App = () => {
                   </motion.div>
                 )}
                 {activeTab === 'imageGame' && (
-                  <motion.div key="image" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}>
+                  <motion.div key="image" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={false} transition={{ duration: 0.05 }}>
                     <ImageCardGameView 
                       coupleCode={coupleCode} 
                       userRole={userRole} 

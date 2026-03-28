@@ -44,15 +44,15 @@ const DialogueChoiceView = ({ onSelect, onShowGuide, onBack }) => {
              style={{ 
                background: 'white', padding: '35px 25px', borderRadius: '35px', 
                display: 'flex', alignItems: 'center', gap: '20px', border: '3px solid #FFFDE7', 
-               boxShadow: '0 20px 40px rgba(0,0,0,0.06)', textAlign: 'left', width: '100%',
+               border: '1.5px solid rgba(212, 175, 55, 0.4)', textAlign: 'left', width: '100%',
                position: 'relative', overflow: 'hidden'
              }}
            >
              <div style={{ 
                width: '75px', height: '75px', borderRadius: '25px', 
-               background: 'linear-gradient(135deg, #FFFDE7, #FFF9C4)', 
+               background: '#FFF9C4', 
                display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-               boxShadow: '0 8px 15px rgba(212, 175, 55, 0.1)'
+               display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0
              }}>
                <Heart size={35} color="#D4AF37" fill="#D4AF37" />
              </div>
@@ -76,15 +76,15 @@ const DialogueChoiceView = ({ onSelect, onShowGuide, onBack }) => {
              style={{ 
                background: 'white', padding: '35px 25px', borderRadius: '35px', 
                display: 'flex', alignItems: 'center', gap: '20px', border: '3px solid #F3E5F5', 
-               boxShadow: '0 20px 40px rgba(0,0,0,0.06)', textAlign: 'left', width: '100%',
+               border: '1.5px solid rgba(212, 175, 55, 0.4)', textAlign: 'left', width: '100%',
                position: 'relative', overflow: 'hidden'
              }}
            >
              <div style={{ 
                width: '75px', height: '75px', borderRadius: '25px', 
-               background: 'linear-gradient(135deg, #F3E5F5, #E1BEE7)', 
+               background: '#E1BEE7', 
                display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-               boxShadow: '0 8px 15px rgba(171, 71, 188, 0.1)'
+               display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0
              }}>
                <ImageIcon size={35} color="#AB47BC" />
              </div>
