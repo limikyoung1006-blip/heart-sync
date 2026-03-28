@@ -1,14 +1,19 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { ChevronLeft, Sparkles, RefreshCw } from 'lucide-react';
+import { ChevronLeft, Sparkles } from 'lucide-react';
 import { IMAGE_CARD_DATA } from '../../data/imageCards';
 
 const ImageCardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo }) => {
   const [gameMode, setGameMode] = useState('classic'); 
   const [isFlipped, setIsFlipped] = useState(false);
+  
+  // Safe initialization
   const [currentQuestion, setCurrentQuestion] = useState(() => {
-    const randomIndex = Math.floor(Math.random() * IMAGE_CARD_DATA.length);
-    return IMAGE_CARD_DATA[randomIndex];
+    const pool = IMAGE_CARD_DATA || [];
+    if (pool.length === 0) return { id: 0, image: '', question: '데이터를 불러오는 중...' };
+    const randomIndex = Math.floor(Math.random() * pool.length);
+    return pool[randomIndex];
   });
+
   const [turnOwner, setTurnOwner] = useState(null);
   const [mainQuestion, setMainQuestion] = useState("");
   const [imagePool, setImagePool] = useState([]);
@@ -20,15 +25,12 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo
   const [showFinishModal, setShowFinishModal] = useState(false);
   const [history, setHistory] = useState([]);
   
-  const isMyTurn = turnOwner === userRole || !turnOwner;
+  const isMyTurn = !turnOwner || turnOwner === userRole;
   const partnerNickname = userRole === 'husband' ? (wifeInfo?.nickname || '아내') : (husbandInfo?.nickname || '남편');
-  const isMounted = useRef(true);
 
   useEffect(() => {
-    isMounted.current = true;
     window.scrollTo(0, 0);
     return () => {
-      isMounted.current = false;
       setImagePool([]);
       setSharedCards([]);
     };
@@ -36,9 +38,12 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo
 
   const drawNewCard = useCallback(() => {
     if (isImageLoading) return;
-    const pool = IMAGE_CARD_DATA;
+    const pool = IMAGE_CARD_DATA || [];
+    if (pool.length === 0) return;
+
     const available = pool.filter(q => !history.includes(q.id));
-    const nextQ = (available.length > 0 ? available : pool)[Math.floor(Math.random() * (available.length > 0 ? available : pool).length)];
+    const selection = available.length > 0 ? available : pool;
+    const nextQ = selection[Math.floor(Math.random() * selection.length)];
     
     if (nextQ) {
       setIsFlipped(false);
@@ -52,29 +57,18 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo
   }, [history, sessionCardCount, userRole, isImageLoading]);
 
   const initPick2Mode = useCallback(() => {
-    const shuffled = [...IMAGE_CARD_DATA].sort(() => Math.random() - 0.5);
+    const dataPool = IMAGE_CARD_DATA || [];
+    if (dataPool.length < 10) return;
+
+    const shuffled = [...dataPool].sort(() => Math.random() - 0.5);
     const pool = shuffled.slice(0, 10);
     const qPool = ["부부 생활을 잘 나타내는 이미지는?", "우리의 미래 소망 모습은?", "오늘 내 마음 상태는?"];
     setMainQuestion(qPool[Math.floor(Math.random() * qPool.length)]);
-    setImagePool(pool); setSelectedIndices([]); setIsSharing(false); setTurnOwner(userRole);
+    setImagePool(pool); 
+    setSelectedIndices([]); 
+    setIsSharing(false); 
+    setTurnOwner(userRole);
   }, [userRole]);
-
-  const selectImage = (idx) => {
-    if (isSharing || !isMyTurn) return;
-    setSelectedIndices(prev => {
-      if (prev.includes(idx)) return prev.filter(i => i !== idx);
-      if (prev.length < 2) return [...prev, idx];
-      return [prev[1], idx];
-    });
-  };
-
-  const sharePick2 = () => {
-    if (selectedIndices.length !== 2) return;
-    setSharedCards(selectedIndices.map(i => imagePool[i]));
-    setIsSharing(true);
-    setSessionCardCount(prev => prev + 1);
-    if (sessionCardCount + 1 >= 10) setShowFinishModal(true);
-  };
 
   return (
     <div 
@@ -86,14 +80,13 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo
         alignItems: 'center', 
         padding: '20px', 
         paddingBottom: '160px',
-        minHeight: '100vh',
-        overflowY: 'auto', // 🔓 Force scrolling to be enabled
-        WebkitOverflowScrolling: 'touch',
-        background: 'white'
+        minHeight: '100%',
+        overflowY: 'visible', // Parent handles scroll
+        background: 'transparent'
       }}
     >
       {showFinishModal && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
           <div style={{ background: 'white', borderRadius: '35px', width: '100%', maxWidth: '340px', padding: '40px 25px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
             <Sparkles size={45} color="#AB47BC" style={{ marginBottom: '20px' }} />
             <h3 style={{ fontSize: '22px', fontWeight: 900, color: '#2D1F08', marginBottom: '10px' }}>열 번째 하트싱크 완료!</h3>
@@ -123,7 +116,7 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo
       </div>
 
       {gameMode === 'classic' ? (
-        <>
+        <div style={{ width: '100%' }}>
           <div style={{ width: '100%', height: '420px', position: 'relative', marginBottom: '30px' }}>
             <div onClick={() => { if (!isMyTurn) return; setIsFlipped(!isFlipped); setTurnOwner(userRole); }} style={{ width: '100%', height: '100%', position: 'relative' }}>
                {!isFlipped ? (
@@ -133,9 +126,9 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo
                  </div>
                ) : (
                  <div style={{ position: 'absolute', inset: 0, background: 'white', borderRadius: '32px', border: '2.5px solid #AB47BC', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-                    <div style={{ width: '100%', height: '70%', position: 'relative' }}>
-                      {isImageLoading && <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#F9F5FF' }}><RefreshCw className="animate-spin" color="#AB47BC" size={32} /></div>}
-                      <img src={currentQuestion?.image} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onLoad={() => setIsImageLoading(false)} />
+                    <div style={{ width: '100%', height: '70%', position: 'relative', background: '#F9F5FF' }}>
+                      {isImageLoading && <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Sparkles color="#AB47BC" size={32} /></div>}
+                      <img src={currentQuestion?.image} style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: isImageLoading ? 0 : 1 }} onLoad={() => setIsImageLoading(false)} />
                     </div>
                     <div style={{ padding: '20px', flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
                       <p style={{ fontSize: '16px', fontWeight: 900, color: '#2D1F08', lineHeight: 1.5 }}>{currentQuestion?.question}</p>
@@ -145,7 +138,7 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo
             </div>
           </div>
           <button disabled={!isMyTurn || isImageLoading} onClick={() => drawNewCard()} style={{ width: '100%', padding: '18px', borderRadius: '22px', background: (isMyTurn && !isImageLoading) ? '#AB47BC' : '#CCC', color: 'white', fontWeight: 900, border: 'none' }}>다른 이미지 뽑기</button>
-        </>
+        </div>
       ) : (
         <div style={{ width: '100%' }}>
            {!isSharing ? (
@@ -156,7 +149,7 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo
                </div>
                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '10px', marginBottom: '20px' }}>
                  {imagePool.map((card, idx) => (
-                    <div key={idx} onClick={() => selectImage(idx)} style={{ position: 'relative', height: '140px', borderRadius: '18px', overflow: 'hidden', border: selectedIndices.includes(idx) ? '4px solid #AB47BC' : '1px solid #EEE' }}>
+                    <div key={idx} onClick={() => { if(!isMyTurn) return; setSelectedIndices(prev => prev.includes(idx) ? prev.filter(i => i !== idx) : (prev.length < 2 ? [...prev, idx] : [prev[1], idx])); }} style={{ position: 'relative', height: '140px', borderRadius: '18px', overflow: 'hidden', border: selectedIndices.includes(idx) ? '4px solid #AB47BC' : '1px solid #EEE' }}>
                       <img src={card.image} style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: selectedIndices.includes(idx) ? 0.7 : 1 }} loading="lazy" />
                       {selectedIndices.includes(idx) && <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><div style={{ background: '#AB47BC', color: 'white', borderRadius: '50%', width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900 }}>{selectedIndices.indexOf(idx) + 1}</div></div>}
                     </div>
@@ -164,7 +157,7 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo
                </div>
                 <div style={{ display: 'flex', gap: '10px', width: '100%' }}>
                   <button onClick={() => initPick2Mode()} disabled={!isMyTurn} style={{ flex: 1, padding: '15px', borderRadius: '18px', background: 'white', border: '1px solid #AB47BC', color: '#AB47BC', fontWeight: 900 }}>다시 뽑기</button>
-                  <button onClick={sharePick2} disabled={!isMyTurn || selectedIndices.length < 2} style={{ flex: 2, padding: '15px', borderRadius: '18px', background: '#AB47BC', color: 'white', fontWeight: 900, opacity: selectedIndices.length === 2 ? 1 : 0.5 }}>이미지 보여주기</button>
+                  <button onClick={() => { setSharedCards(selectedIndices.map(i => imagePool[i])); setIsSharing(true); setSessionCardCount(prev => prev + 1); if (sessionCardCount+1 >= 10) setShowFinishModal(true); }} disabled={!isMyTurn || selectedIndices.length < 2} style={{ flex: 2, padding: '15px', borderRadius: '18px', background: '#AB47BC', color: 'white', fontWeight: 900, opacity: selectedIndices.length === 2 ? 1 : 0.5 }}>이미지 보여주기</button>
                 </div>
              </>
            ) : (
