@@ -3,7 +3,7 @@ import { ChevronLeft, Sparkles } from 'lucide-react';
 import { supabase } from '../../supabase';
 import { CARD_DATA } from '../../data/dialogueCards';
 
-const CardGameView = ({ onBack, coupleCode, userRole }) => {
+const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo }) => {
   const [category, setCategory] = useState('일상');
   const [isFlipped, setIsFlipped] = useState(false);
   const [currentQuestion, setCurrentQuestion] = useState(null);
@@ -15,7 +15,11 @@ const CardGameView = ({ onBack, coupleCode, userRole }) => {
   const [history, setHistory] = useState([]);
   const isMounted = useRef(false);
 
-  // Initialize and check for existing state
+  const isMyTurn = !turnOwner || turnOwner === userRole;
+  const partnerNickname = userRole === 'husband' ? (wifeInfo?.nickname || '아내') : (husbandInfo?.nickname || '남편');
+  const partnerNameOnly = userRole === 'husband' ? '아내가' : '남편이';
+
+  // Initialize and check for existing state + Real-time Sync
   useEffect(() => {
     isMounted.current = true;
     const loadState = async () => {
@@ -49,12 +53,39 @@ const CardGameView = ({ onBack, coupleCode, userRole }) => {
     };
     
     loadState();
-    return () => { isMounted.current = false; };
+
+    // Real-time subscription
+    let subscription;
+    if (coupleCode) {
+      subscription = supabase
+        .channel(`card_game_${coupleCode}`)
+        .on('postgres_changes', { 
+          event: '*', 
+          schema: 'public', 
+          table: 'card_game_state', 
+          filter: `couple_id=eq.${coupleCode}` 
+        }, payload => {
+          const updated = payload.new;
+          if (updated && isMounted.current) {
+            setCategory(updated.category);
+            setIsFlipped(updated.is_flipped);
+            setTurnOwner(updated.turn_owner);
+            const q = CARD_DATA.find(item => String(item.id) === String(updated.current_question_id));
+            if (q) setCurrentQuestion(q);
+          }
+        })
+        .subscribe();
+    }
+
+    return () => { 
+      isMounted.current = false; 
+      if (subscription) subscription.unsubscribe();
+    };
   }, [coupleCode]);
 
   // Handle Turn and Drawing
   const drawNewCard = (targetCat = null) => {
-    if (turnOwner && turnOwner !== userRole) {
+    if (!isMyTurn) {
       setShowTurnWarning(true);
       setTimeout(() => setShowTurnWarning(false), 2000);
       return;
@@ -89,7 +120,7 @@ const CardGameView = ({ onBack, coupleCode, userRole }) => {
   };
 
   const toggleFlip = () => {
-    if (turnOwner && turnOwner !== userRole) {
+    if (!isMyTurn) {
       setShowTurnWarning(true);
       setTimeout(() => setShowTurnWarning(false), 2000);
       return;
@@ -97,7 +128,27 @@ const CardGameView = ({ onBack, coupleCode, userRole }) => {
     const nextFlip = !isFlipped;
     setIsFlipped(nextFlip);
     if (coupleCode) {
-      supabase.from('card_game_state').update({ is_flipped: nextFlip, turn_owner: userRole }).eq('couple_id', coupleCode).then(() => {});
+      supabase.from('card_game_state').update({ 
+        is_flipped: nextFlip, 
+        turn_owner: userRole,
+        updated_at: new Date().toISOString()
+      }).eq('couple_id', coupleCode).then(() => {});
+    }
+  };
+
+  const passTurn = async () => {
+    if (turnOwner !== userRole) return;
+    
+    const nextTurnOwner = userRole === 'husband' ? 'wife' : 'husband';
+    setIsFlipped(false);
+    setTurnOwner(nextTurnOwner);
+    
+    if (coupleCode) {
+      await supabase.from('card_game_state').update({ 
+        turn_owner: nextTurnOwner,
+        is_flipped: false,
+        updated_at: new Date().toISOString()
+      }).eq('couple_id', coupleCode);
     }
   };
 
@@ -154,7 +205,7 @@ const CardGameView = ({ onBack, coupleCode, userRole }) => {
         width: '100%', 
         padding: '14px', 
         borderRadius: '20px', 
-        background: (turnOwner === userRole || !turnOwner) ? 'rgba(212, 175, 55, 0.12)' : 'rgba(138, 96, 255, 0.08)', 
+        background: isMyTurn ? 'rgba(212, 175, 55, 0.12)' : 'rgba(138, 96, 255, 0.08)', 
         marginBottom: '20px', 
         textAlign: 'center', 
         position: 'relative',
@@ -180,10 +231,10 @@ const CardGameView = ({ onBack, coupleCode, userRole }) => {
              ⚠️ {turnOwner === 'husband' ? '남편' : '아내'}님이 답변 중입니다...
           </div>
         )}
-        <span style={{ fontSize: '14px', fontWeight: 900, color: (turnOwner === userRole || !turnOwner) ? '#8B6500' : '#8A60FF' }}>
-          {(turnOwner === userRole || !turnOwner) 
+        <span style={{ fontSize: '14px', fontWeight: 900, color: isMyTurn ? '#8B6500' : '#8A60FF' }}>
+          {isMyTurn 
             ? "✨ 당신의 턴입니다! 마음을 나눠주세요" 
-            : `⏳ ${turnOwner === 'husband' ? '남편' : '아내'}님이 답변 중입니다...`}
+            : `⏳ ${partnerNameOnly} 답변 중입니다...`}
         </span>
       </div>
 
@@ -225,6 +276,10 @@ const CardGameView = ({ onBack, coupleCode, userRole }) => {
                 }}>QUESTION CARD</span>
                 
                 <div style={{ position: 'relative', zIndex: 2, marginTop: '25px', width: '60px', height: '2px', background: 'linear-gradient(90deg, transparent, #D4AF37, transparent)' }} />
+                
+                <div style={{ position: 'relative', zIndex: 2, marginTop: '100px' }}>
+                   <span style={{ background: '#D4AF37', color: 'white', padding: '8px 20px', borderRadius: '12px', fontSize: '14px', fontWeight: 900, boxShadow: '0 4px 10px rgba(0,0,0,0.1)' }}>답변완료/턴</span>
+                </div>
               </>
             )}
           </div>
@@ -268,23 +323,42 @@ const CardGameView = ({ onBack, coupleCode, userRole }) => {
               padding: '15px', 
               borderRadius: '20px',
               border: '1px solid rgba(138, 96, 255, 0.1)',
-              marginTop: '20px'
+              marginTop: '10px'
             }}>
               <span style={{ fontSize: '13px', color: '#8A60FF', fontWeight: 900, display: 'block' }}>
                 서로의 눈을 즐겁게 바라보며 💬<br/>
-                <small style={{ opacity: 0.7, fontSize: '10px', fontWeight: 700 }}>대화를 마친 후 다음 카드를 뽑으세요</small>
+                <small style={{ opacity: 0.7, fontSize: '10px', fontWeight: 700 }}>대화를 마친 후 답변완료 버튼을 누르세요</small>
               </span>
             </div>
+
+            <button 
+              onClick={(e) => { e.stopPropagation(); passTurn(); }} 
+              disabled={!isMyTurn}
+              style={{ 
+                marginTop: '15px',
+                width: '100%',
+                padding: '14px',
+                borderRadius: '16px',
+                background: isMyTurn ? '#8A60FF' : '#E5E7EB',
+                color: 'white',
+                fontWeight: 900,
+                fontSize: '14px',
+                border: 'none',
+                boxShadow: isMyTurn ? '0 5px 15px rgba(138, 96, 255, 0.2)' : 'none'
+              }}
+            >
+              답변완료 / 턴 넘기기
+            </button>
           </div>
         </div>
       </div>
 
       <div style={{ textAlign: 'center', marginBottom: '15px' }}>
-        <p style={{ fontSize: '13px', color: '#2D1F08', fontWeight: 800 }}>대화가 끝났나요? 새로운 질문을 확인하세요</p>
+        <p style={{ fontSize: '13px', color: '#2D1F08', fontWeight: 800 }}>{isMyTurn ? "카드를 넘기거나 새로 뽑을 수 있습니다" : "배우자가 대화 중입니다"}</p>
       </div>
 
       <button 
-        disabled={turnOwner && turnOwner !== userRole} 
+        disabled={!isMyTurn} 
         onClick={() => drawNewCard()} 
         style={{ 
           width: '100%', 
@@ -292,14 +366,14 @@ const CardGameView = ({ onBack, coupleCode, userRole }) => {
           padding: '18px', 
           borderRadius: '22px', 
           border: 'none', 
-          background: turnOwner && turnOwner !== userRole ? '#E5E7EB' : '#2D1F08', 
-          color: turnOwner && turnOwner !== userRole ? '#9CA3AF' : 'white', 
+          background: isMyTurn ? '#2D1F08' : '#E5E7EB', 
+          color: isMyTurn ? 'white' : '#9CA3AF', 
           fontWeight: 900, 
           fontSize: '16px',
-          boxShadow: '0 10px 20px rgba(0,0,0,0.1)'
+          boxShadow: isMyTurn ? '0 10px 20px rgba(0,0,0,0.1)' : 'none'
         }}
       >
-        {turnOwner && turnOwner !== userRole ? '배우자의 답변 차례입니다' : '새로운 질문 뽑기'}
+        {isMyTurn ? '새로운 질문 뽑기' : '배우자의 답변 차례입니다'}
       </button>
 
     </div>
