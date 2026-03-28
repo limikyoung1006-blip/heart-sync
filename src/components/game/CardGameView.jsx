@@ -196,20 +196,25 @@ const CardGameView = ({ onBack, coupleCode, userRole }) => {
             border: '3px solid rgba(212, 175, 55, 0.4)',
             backfaceVisibility: 'hidden',
             WebkitBackfaceVisibility: 'hidden',
+            visibility: isFlipped ? 'hidden' : 'visible',
             overflow: 'hidden'
           }}>
-            <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.1)', zIndex: 1 }} />
-            
-            <span className="brand-text" style={{ 
-              position: 'relative',
-              zIndex: 2,
-              fontSize: '28px', 
-              letterSpacing: '8px',
-              fontWeight: 900,
-              marginTop: '150px'
-            }}>QUESTION CARD</span>
-            
-            <div style={{ position: 'relative', zIndex: 2, marginTop: '25px', width: '60px', height: '2px', background: 'linear-gradient(90deg, transparent, #D4AF37, transparent)' }} />
+            {!isFlipped && (
+              <>
+                <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.1)', zIndex: 1 }} />
+                
+                <span className="brand-text" style={{ 
+                  position: 'relative',
+                  zIndex: 2,
+                  fontSize: '28px', 
+                  letterSpacing: '8px',
+                  fontWeight: 900,
+                  marginTop: '150px'
+                }}>QUESTION CARD</span>
+                
+                <div style={{ position: 'relative', zIndex: 2, marginTop: '25px', width: '60px', height: '2px', background: 'linear-gradient(90deg, transparent, #D4AF37, transparent)' }} />
+              </>
+            )}
           </div>
 
           {/* Card Back */}
