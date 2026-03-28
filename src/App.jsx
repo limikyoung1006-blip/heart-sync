@@ -75,14 +75,18 @@ const App = () => {
   };
 
   const handleNav = (tab) => {
-    setActiveTab(tab);
-    if (scrollRef.current) {
-      scrollRef.current.scrollTo(0, 0);
-    }
+    // [STABILITY ENGINE]: 0.15s safety delay to prevent mobile rendering deadlock
+    setTimeout(() => {
+      setActiveTab(tab);
+      if (scrollRef.current) {
+        scrollRef.current.scrollTo(0, 0);
+      }
+      window.scrollTo({ top: 0, behavior: 'instant' });
+    }, 150);
   };
 
   return (
-    <div id="root" ref={scrollRef} style={{ width: '100vw', height: '100dvh', overflowY: 'auto', backgroundColor: '#FDFCF0', position: 'relative' }}>
+    <div id="root" ref={scrollRef} style={{ width: '100vw', minHeight: '100vh', backgroundColor: '#FDFCF0', position: 'relative' }}>
       <AnimatePresence mode="wait">
         <main key={activeTab} style={{ paddingBottom: '100px' }}>
           {activeTab === 'home' && (
