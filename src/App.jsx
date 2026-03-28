@@ -426,12 +426,33 @@ const App = () => {
                 )}
                 {activeTab === 'cardGameQuestion' && (
                   <motion.div key="card" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.2 }}>
-                    <CardGameView coupleCode={coupleCode} userRole={userRole} mainChannel={mainChannel} husbandInfo={husbandInfo} wifeInfo={wifeInfo} onUpdateMemo={updateProfileInfo} onBack={() => setActiveTab('home')} />
+                    <CardGameView 
+                      coupleCode={coupleCode} 
+                      userRole={userRole} 
+                      mainChannel={mainChannel} 
+                      husbandInfo={husbandInfo} 
+                      wifeInfo={wifeInfo} 
+                      onUpdateMemo={updateProfileInfo} 
+                      onBack={() => {
+                        setDialogueGuideId('cardSync'); // Ensure it's the right guide
+                        setActiveTab('cardGameGuide');
+                      }} 
+                    />
                   </motion.div>
                 )}
                 {activeTab === 'imageGame' && (
                   <motion.div key="image" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.2 }}>
-                    <ImageCardGameView coupleCode={coupleCode} userRole={userRole} mainChannel={mainChannel} husbandInfo={husbandInfo} wifeInfo={wifeInfo} onBack={() => setActiveTab('home')} />
+                    <ImageCardGameView 
+                      coupleCode={coupleCode} 
+                      userRole={userRole} 
+                      mainChannel={mainChannel} 
+                      husbandInfo={husbandInfo} 
+                      wifeInfo={wifeInfo} 
+                      onBack={() => {
+                        setDialogueGuideId('imageSync'); // Ensure it's the right guide
+                        setActiveTab('cardGameGuide');
+                      }} 
+                    />
                   </motion.div>
                 )}
                 {activeTab === 'cardGameGuide' && (
