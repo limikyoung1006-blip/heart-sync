@@ -85,7 +85,6 @@ const CardGameView = ({ onBack, coupleCode, userRole }) => {
         padding: '20px', 
         paddingBottom: '160px',
         minHeight: '100%', 
-        overflowY: 'visible',
         WebkitOverflowScrolling: 'touch'
       }}
     >
@@ -132,25 +131,119 @@ const CardGameView = ({ onBack, coupleCode, userRole }) => {
       </div>
 
       <div className="card-container" style={{ perspective: '1000px', marginBottom: '30px' }}>
+      <div 
+        className="card-container" 
+        style={{ 
+          perspective: '1000px', 
+          marginBottom: '35px', 
+          width: '100%', 
+          display: 'flex', 
+          justifyContent: 'center' 
+        }}
+      >
          <div 
            className={`talking-card ${isFlipped ? 'flipped' : ''}`} 
            onClick={toggleFlip}
-           style={{ width: '280px', height: '400px', cursor: 'pointer', transition: 'transform 0.5s', transformStyle: 'preserve-3d', position: 'relative' }}
+           style={{ 
+             width: '300px', 
+             height: '420px', 
+             cursor: 'pointer', 
+             transition: 'transform 0.6s cubic-bezier(0.4, 0, 0.2, 1)', 
+             transformStyle: 'preserve-3d', 
+             position: 'relative' 
+           }}
          >
-           {!isFlipped ? (
-             <div style={{ position: 'absolute', inset: 0, backfaceVisibility: 'hidden', background: '#2D1F08', borderRadius: '28px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', border: '2px solid #D4AF37' }}>
-                <Sparkles size={40} color="#D4AF37" style={{ marginBottom: '10px' }} />
-                <span style={{ color: '#D4AF37', fontWeight: 900, fontSize: '14px', letterSpacing: '2px' }}>QUESTION CARD</span>
-             </div>
-           ) : (
-             <div style={{ position: 'absolute', inset: 0, backfaceVisibility: 'hidden', background: 'white', borderRadius: '28px', border: '2.5px solid #8A60FF', padding: '25px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', alignItems: 'center', textAlign: 'center' }}>
-                <div style={{ background: '#FF4D6D', color: 'white', padding: '4px 14px', borderRadius: '100px', fontSize: '11px', fontWeight: 900 }}>#{category}</div>
-                <h2 style={{ fontSize: '19px', fontWeight: 900, color: '#2D1F08', lineHeight: 1.6, wordBreak: 'keep-all' }}>{currentQuestion?.question || "카드를 뽑아주세요!"}</h2>
-                <div style={{ width: '100%', background: '#F9F5FF', padding: '12px', borderRadius: '15px' }}>
-                  <span style={{ fontSize: '13px', color: '#8A60FF', fontWeight: 900 }}>대화를 마친 후 다음 카드를 뽑으세요 💬</span>
-                </div>
-             </div>
-           )}
+           {/* Card Front: The Question Mark/Logo side */}
+           <div style={{ 
+             position: 'absolute', 
+             inset: 0, 
+             backfaceVisibility: 'hidden', 
+             background: 'linear-gradient(145deg, #2D1F08, #1A1205)', 
+             borderRadius: '35px', 
+             display: 'flex', 
+             flexDirection: 'column', 
+             alignItems: 'center', 
+             justifyContent: 'center', 
+             border: '3px solid #D4AF37',
+             boxShadow: '0 20px 40px rgba(0,0,0,0.4), inset 0 0 50px rgba(212,175,55,0.1)'
+           }}>
+              <div style={{ 
+                width: '100px', 
+                height: '100px', 
+                borderRadius: '50%', 
+                background: 'rgba(212, 175, 55, 0.1)', 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center',
+                marginBottom: '25px',
+                border: '1px solid rgba(212, 175, 55, 0.3)'
+              }}>
+                <Sparkles size={50} color="#D4AF37" />
+              </div>
+              <span style={{ 
+                color: '#D4AF37', 
+                fontWeight: 900, 
+                fontSize: '18px', 
+                letterSpacing: '5px',
+                fontFamily: "'Cinzel', serif",
+                textShadow: '0 2px 4px rgba(0,0,0,0.3)'
+              }}>QUESTION CARD</span>
+              <div style={{ marginTop: '20px', width: '40px', height: '2px', background: '#D4AF37', opacity: 0.5 }} />
+           </div>
+
+           {/* Card Back: The Question Text side */}
+           <div style={{ 
+             position: 'absolute', 
+             inset: 0, 
+             backfaceVisibility: 'hidden', 
+             background: 'white', 
+             borderRadius: '35px', 
+             border: '3px solid #8A60FF', 
+             padding: '40px 30px', 
+             display: 'flex', 
+             flexDirection: 'column', 
+             justifyContent: 'space-between', 
+             alignItems: 'center', 
+             textAlign: 'center',
+             transform: 'rotateY(180deg)',
+             boxShadow: '0 20px 40px rgba(138, 96, 255, 0.15)'
+           }}>
+              <div style={{ 
+                background: 'linear-gradient(135deg, #FF4D6D, #FF8fa3)', 
+                color: 'white', 
+                padding: '6px 20px', 
+                borderRadius: '100px', 
+                fontSize: '13px', 
+                fontWeight: 900,
+                boxShadow: '0 4px 10px rgba(255, 77, 109, 0.3)'
+              }}>#{category}</div>
+              
+              <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <h2 style={{ 
+                  fontSize: '22px', 
+                  fontWeight: 900, 
+                  color: '#2D1F08', 
+                  lineHeight: 1.7, 
+                  wordBreak: 'keep-all',
+                  fontFamily: "'Noto Serif KR', serif"
+                }}>
+                  {currentQuestion?.question || "카드를 뽑아주세요!"}
+                </h2>
+              </div>
+
+              <div style={{ 
+                width: '100%', 
+                background: '#F9F5FF', 
+                padding: '15px', 
+                borderRadius: '20px',
+                border: '1px solid rgba(138, 96, 255, 0.1)'
+              }}>
+                <span style={{ fontSize: '14px', color: '#8A60FF', fontWeight: 900, display: 'block' }}>
+                  서로의 눈을 즐겁게 바라보며 💬<br/>
+                  <small style={{ opacity: 0.7, fontSize: '11px', fontWeight: 700 }}>대화를 마친 후 다음 카드를 뽑으세요</small>
+                </span>
+              </div>
+           </div>
          </div>
       </div>
 
