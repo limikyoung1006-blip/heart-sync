@@ -17,7 +17,7 @@ const DialogueChoiceView = ({ onSelect, onBack }) => {
         display: 'flex', 
         flexDirection: 'column', 
         gap: '25px', 
-        minHeight: '100vh', 
+        minHeight: '100%', 
         background: appTheme.background,
         paddingBottom: '120px' 
       }}

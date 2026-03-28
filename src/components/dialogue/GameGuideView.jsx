@@ -11,15 +11,14 @@ const GameGuideView = ({ gameId, onStart, onBack }) => {
 
   return (
     <div 
+      className="game-guide-view"
       style={{ 
         padding: '20px', 
-        minHeight: '100vh', 
+        minHeight: '100%', 
         background: '#FDFCF0', 
         display: 'flex', 
         flexDirection: 'column',
-        paddingBottom: '100px',
-        overflowY: 'auto', // 🚀 Force scrolling to be enabled
-        WebkitOverflowScrolling: 'touch' // 📱 Smooth mobile scrolling
+        paddingBottom: '100px'
       }}
     >
       <header style={{ marginBottom: '20px', paddingTop: '10px' }}>
