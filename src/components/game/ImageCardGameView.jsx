@@ -37,6 +37,10 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, mainChannel, husbandI
     isMounted.current = true;
     return () => {
       isMounted.current = false;
+      // 🧹 Memory Cleanup: Clear large data on unmount to free up mobile RAM
+      setImagePool([]);
+      setSharedCards([]);
+      setCurrentQuestion(null);
     };
   }, []);
 
@@ -184,7 +188,17 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, mainChannel, husbandI
   return (
     <motion.div 
       className="flex flex-col items-center p-4 bg-white" 
-      style={{ width: '100%', minHeight: '100%', paddingBottom: '200px' }} 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }} // Minimal exit animation to save resources
+      transition={{ duration: 0.2 }}
+      style={{ 
+        width: '100%', 
+        minHeight: '100%', 
+        paddingBottom: '200px',
+        willChange: 'transform, opacity', // 🚀 GPU Acceleration
+        backfaceVisibility: 'hidden' 
+      }} 
     >
       {showFinishModal && (
         <div 
@@ -290,8 +304,8 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, mainChannel, husbandI
                     style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
                     onLoad={() => setIsImageLoading(false)}
                     onError={e => { e.target.src="https://via.placeholder.com/310x440?text=Image+Load+Error"; setIsImageLoading(false); }}
-                    loading="eager"
-                    decoding="async"
+                    loading="lazy"
+                    decoding="async" // ⚡ Non-blocking decoding
                   />
                   <div style={{ position: 'absolute', top: '15px', right: '15px', background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', color: 'white', padding: '6px 12px', borderRadius: '100px', fontSize: '11px', fontWeight: 900 }}>{currentQuestion?.category}</div>
                 </div>
@@ -378,7 +392,12 @@ const ImageThumb = React.memo(({ card, isSelected, order, onClick }) => (
     onClick={onClick} 
     style={{ position: 'relative', height: '160px', borderRadius: '22px', overflow: 'hidden', border: isSelected ? '4px solid #AB47BC' : '2px solid #F0F0F0', cursor: 'pointer', transition: 'all 0.2s', boxShadow: isSelected ? '0 8px 20px rgba(171, 71, 188, 0.3)' : '0 4px 12px rgba(0,0,0,0.05)' }}
   >
-    <img src={card.image} style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: isSelected ? 0.9 : 1 }} loading="lazy" />
+    <img 
+      src={card.image} 
+      style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: isSelected ? 0.9 : 1 }} 
+      loading="lazy" 
+      decoding="async"
+    />
     {isSelected && (
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ position: 'absolute', inset: 0, background: 'rgba(171, 71, 188, 0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ background: '#AB47BC', color: 'white', borderRadius: '50%', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: '16px', boxShadow: '0 4px 10px rgba(0,0,0,0.2)' }}>{order}</div>
