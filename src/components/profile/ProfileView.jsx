@@ -27,6 +27,7 @@ const ProfileView = ({
   isFullPage = true
 }) => {
   const [showProfileEdit, setShowProfileEdit] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   
   // 📝 Local states for profile editing (Prevent lag on keystrokes)
   const myInfo = (userRole === 'husband' ? husbandInfo : wifeInfo) || {};
@@ -85,12 +86,15 @@ const ProfileView = ({
   };
 
   const handleProfileSave = async () => {
+    if (isSaving) return;
+    setIsSaving(true);
     const updatedInfo = { ...myInfo, ...editInfo };
-    setMyInfo(updatedInfo);
     
     try {
+      if (setMyInfo) setMyInfo(updatedInfo);
+      
       // 1. Update My Profile
-      await supabase.from('profiles').upsert({
+      const { error: upsertError } = await supabase.from('profiles').upsert({
         id: user.id, 
         couple_id: coupleCode, 
         user_role: userRole, 
@@ -98,13 +102,16 @@ const ProfileView = ({
         updated_at: new Date().toISOString()
       }, { onConflict: 'id' });
 
+      if (upsertError) throw upsertError;
+
       // 2. If Marriage Date changed, sync with spouse
-      if (editInfo.marriageDate !== myInfo.marriageDate) {
+      const oldMarriageDate = myInfo.marriageDate || '2020-05-23';
+      if (editInfo.marriageDate !== oldMarriageDate) {
         const spouseRole = userRole === 'husband' ? 'wife' : 'husband';
         const spouseSetter = userRole === 'husband' ? setWifeInfo : setHusbandInfo;
         const updatedSpouseInfo = { ...spouseInfo, marriageDate: editInfo.marriageDate };
         
-        spouseSetter(updatedSpouseInfo);
+        if (spouseSetter) spouseSetter(updatedSpouseInfo);
         await supabase.from('profiles').upsert({
           couple_id: coupleCode, 
           user_role: spouseRole, 
@@ -117,7 +124,9 @@ const ProfileView = ({
       alert("정보가 성공적으로 저장되었습니다!");
     } catch (err) {
       console.error("Profile save error:", err);
-      alert("저장 중 오류가 발생했습니다.");
+      alert("저장 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -270,9 +279,26 @@ const ProfileView = ({
                 <motion.button 
                   whileTap={{ scale: 0.95 }} 
                   onClick={handleProfileSave} 
-                  style={{ width: '100%', padding: '18px', borderRadius: '18px', background: 'linear-gradient(135deg, #2D1F08, #4D3A1A)', color: 'white', fontWeight: 900, border: 'none', cursor: 'pointer', marginTop: '10px', fontSize: '16px', boxShadow: '0 10px 20px rgba(45, 31, 8, 0.2)' }}
+                  disabled={isSaving}
+                  style={{ 
+                    width: '100%', padding: '18px', borderRadius: '18px', 
+                    background: isSaving ? '#CCC' : 'linear-gradient(135deg, #2D1F08, #4D3A1A)', 
+                    color: 'white', fontWeight: 900, border: 'none', cursor: isSaving ? 'default' : 'pointer', 
+                    marginTop: '10px', fontSize: '16px', boxShadow: '0 10px 20px rgba(45, 31, 8, 0.2)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px'
+                  }}
                 >
-                  수정 완료
+                  {isSaving ? (
+                    <>
+                      <motion.div 
+                        animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                        style={{ width: '20px', height: '20px', border: '3px solid white', borderTopColor: 'transparent', borderRadius: '50%' }}
+                      />
+                      저장 중...
+                    </>
+                  ) : (
+                    "수정 완료"
+                  )}
                 </motion.button>
               </div>
             </motion.div>

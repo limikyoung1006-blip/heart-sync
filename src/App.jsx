@@ -210,12 +210,38 @@ const App = () => {
   }, [isSetupDone, worshipDays, worshipTime]);
 
   const handleOnboardingFinish = async (info) => {
-    const finalCode = (info.coupleCode || coupleCode).toLowerCase().trim();
-    setCoupleCode(finalCode);
-    const updated = { ...(userRole === 'husband' ? husbandInfo : wifeInfo), ...info, coupleCode: finalCode };
-    if (userRole === 'husband') setHusbandInfo(updated); else setWifeInfo(updated);
-    await supabase.from('profiles').upsert({ id: user.id, couple_id: finalCode, user_role: userRole, info: updated, updated_at: new Date().toISOString() });
-    setIsSetupDone(true); localStorage.setItem('isSetupDone', 'true');
+    try {
+      const finalCode = (info.coupleCode || coupleCode || "").toLowerCase().trim();
+      if (!finalCode) {
+        alert("커플 연결 코드가 필요합니다.");
+        return;
+      }
+      setCoupleCode(finalCode);
+      const currentInfo = userRole === 'husband' ? husbandInfo : wifeInfo;
+      const updated = { ...currentInfo, ...info, coupleCode: finalCode };
+      
+      if (userRole === 'husband') setHusbandInfo(updated); 
+      else setWifeInfo(updated);
+
+      // 💾 Immediate Storage for safety
+      localStorage.setItem('isSetupDone', 'true');
+      localStorage.setItem('coupleCode', finalCode);
+
+      // ☁️ Sync with Supabase (Background)
+      await supabase.from('profiles').upsert({ 
+        id: user.id, 
+        couple_id: finalCode, 
+        user_role: userRole, 
+        info: updated, 
+        updated_at: new Date().toISOString() 
+      }, { onConflict: 'id' });
+
+      setIsSetupDone(true);
+    } catch (err) {
+      console.error("Setup finish failed:", err);
+      // Even if sync fails, let them in if we have local info, or alert
+      setIsSetupDone(true); 
+    }
   };
 
   const handleLogoClick = () => {
@@ -428,7 +454,20 @@ const App = () => {
                     />
                   </motion.div>
                 )}
-                {activeTab === 'profile' && <motion.div key="p" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}><ProfileView user={user} userRole={userRole} husbandInfo={husbandInfo} wifeInfo={wifeInfo} onUpdateProfile={updateProfileInfo} isFullPage={true} /></motion.div>}
+                {activeTab === 'profile' && (
+                  <motion.div key="p" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}>
+                    <ProfileView 
+                      user={user} 
+                      userRole={userRole} 
+                      husbandInfo={husbandInfo} 
+                      setHusbandInfo={setHusbandInfo} 
+                      wifeInfo={wifeInfo} 
+                      setWifeInfo={setWifeInfo} 
+                      coupleCode={coupleCode}
+                      isFullPage={true} 
+                    />
+                  </motion.div>
+                )}
                 {activeTab === 'settings' && (
                   <motion.div key="s" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}>
                     <SettingsView 

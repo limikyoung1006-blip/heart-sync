@@ -308,42 +308,44 @@ const OnboardingView = ({ user, userRole, setUserRole, onFinish }) => {
               </div>
             )}
             
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', width: '100%' }}>
-              <button 
-                onClick={async () => {
-                  const newCode = 'HS-' + Math.floor(1000 + Math.random() * 9000);
-                  setCoupleCode(newCode);
-                  
-                  // Early upsert for creator so the joiner can find this code
-                  try {
-                    const { error } = await supabase.from('profiles').upsert({
-                      id: user.id,
-                      couple_id: newCode,
-                      user_role: userRole,
-                      info: { nickname, marriageDate: mDate || new Date().toISOString().split('T')[0], mbti: insightResult, blood, deepAnalysis },
-                      updated_at: new Date().toISOString()
-                    }, { onConflict: 'id' });
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', width: '100%' }}>
+                <button 
+                  onClick={async () => {
+                    const randomNum = Math.floor(1000 + Math.random() * 9000);
+                    const newCode = `hs-${randomNum}`; // Internal: lowercase
+                    setCoupleCode(newCode); // UI will show uppercase via display logic if needed
                     
-                    if (error) throw error;
-                    alert("서버에 코드 등록 완료: " + newCode + "\n이제 배우자에게 코드를 알려주세요!");
-                  } catch (err) {
-                    console.error("Early upsert failed:", err);
-                    alert("서버 등록 실패: " + err.message);
-                  }
-                  
-                  setStep(5); // Show created code
-                }}
-                style={{ width: '100%', padding: '18px', borderRadius: '20px', background: '#2D1F08', color: 'white', fontWeight: 900, fontSize: '16px', boxShadow: '0 8px 20px rgba(0,0,0,0.1)' }}
-              >
-                새로운 초대 코드 만들기
-              </button>
-              <button 
-                onClick={() => setStep(6)}
-                style={{ width: '100%', padding: '18px', borderRadius: '20px', background: '#FDFCF0', border: '2.5px solid #F5D060', color: '#2D1F08', fontWeight: 900, fontSize: '16px' }}
-              >
-                초대 코드 입력하기
-              </button>
-            </div>
+                    try {
+                      setIsConnecting(true);
+                      const { error } = await supabase.from('profiles').upsert({
+                        id: user.id,
+                        couple_id: newCode,
+                        user_role: userRole,
+                        info: { nickname, marriageDate: mDate || new Date().toISOString().split('T')[0], mbti: insightResult, blood, deepAnalysis },
+                        updated_at: new Date().toISOString()
+                      }, { onConflict: 'id' });
+                      
+                      if (error) throw error;
+                      setStep(5);
+                    } catch (err) {
+                      console.error("Early upsert failed:", err);
+                      alert("코드 생성 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
+                    } finally {
+                      setIsConnecting(false);
+                    }
+                  }}
+                  disabled={isConnecting}
+                  style={{ width: '100%', padding: '18px', borderRadius: '20px', background: '#2D1F08', color: 'white', fontWeight: 900, fontSize: '16px', boxShadow: '0 8px 20px rgba(0,0,0,0.1)', opacity: isConnecting ? 0.7 : 1 }}
+                >
+                  {isConnecting ? "생성 중..." : "새로운 초대 코드 만들기"}
+                </button>
+                <button 
+                  onClick={() => setStep(6)}
+                  style={{ width: '100%', padding: '18px', borderRadius: '20px', background: '#FDFCF0', border: '2.5px solid #F5D060', color: '#2D1F08', fontWeight: 900, fontSize: '16px' }}
+                >
+                  초대 코드 입력하기
+                </button>
+              </div>
           </motion.div>
         )}
 
@@ -352,7 +354,7 @@ const OnboardingView = ({ user, userRole, setUserRole, onFinish }) => {
              <h2 style={{ fontSize: '22px', fontWeight: 900, color: '#2D1F08', marginBottom: '15px' }}>초대 코드가 생성되었습니다</h2>
              <div style={{ width: '100%', padding: '30px', background: '#F9FAFB', borderRadius: '24px', border: '2px dashed #D4AF37', marginBottom: '15px' }}>
                 <span style={{ fontSize: '12px', fontWeight: 900, color: '#B08D3E', display: 'block', marginBottom: '10px' }}>우리만의 소중한 연결 코드</span>
-                <div style={{ fontSize: '32px', fontWeight: 900, color: '#2D1F08', letterSpacing: '8px' }}>{coupleCode}</div>
+                <div style={{ fontSize: '32px', fontWeight: 900, color: '#2D1F08', letterSpacing: '8px' }}>{coupleCode?.toUpperCase()}</div>
              </div>
              <p style={{ color: '#8B7355', fontSize: '14px', marginBottom: '30px', fontWeight: 600, lineHeight: 1.6 }}>이 코드를 복사해서 배우자에게 보내주세요.<br/>배우자와 연결이 확인되면 자동으로 시작됩니다.</p>
              
@@ -367,21 +369,30 @@ const OnboardingView = ({ user, userRole, setUserRole, onFinish }) => {
                   <Share2 size={18} /> 초대 코드 복사하기
                 </button>
 
-                <button 
+                 <button 
                   onClick={async () => {
+                    const normalized = coupleCode.trim().toLowerCase();
                     setIsConnecting(true);
-                    // Check if spouse has connected (created a profile)
-                    const { data } = await supabase.from('profiles').select('*').eq('couple_id', coupleCode);
-                    if (data && data.length > 1) {
-                      setIsConnected(true);
-                      setTimeout(() => {
-                        onFinish({ nickname, marriageDate: mDate, mbti: insightResult, blood, coupleCode, deepAnalysis });
-                      }, 1000);
-                    } else {
-                      setTimeout(() => {
-                        setIsConnecting(false);
+                    
+                    try {
+                      // Check if spouse has connected (created a profile)
+                      const { data, error } = await supabase.from('profiles').select('*').eq('couple_id', normalized);
+                      
+                      if (error) throw error;
+
+                      if (data && data.length > 1) {
+                        setIsConnected(true);
+                        setTimeout(() => {
+                          onFinish({ nickname, marriageDate: mDate, mbti: insightResult, blood, coupleCode: normalized, deepAnalysis });
+                        }, 500);
+                      } else {
                         alert("아직 배우자가 연결되지 않았습니다. 코드를 공유했는지 확인해주세요!");
-                      }, 1500);
+                      }
+                    } catch (err) {
+                      console.error("Connection check failed:", err);
+                      alert("연결 확인 중 오류가 발생했습니다. 네트워크 상태를 확인해주세요.");
+                    } finally {
+                      setIsConnecting(false);
                     }
                   }}
                   disabled={isConnecting || isConnected}
@@ -410,11 +421,11 @@ const OnboardingView = ({ user, userRole, setUserRole, onFinish }) => {
             <p style={{ color: '#8B7355', fontSize: '14px', marginBottom: '25px', fontWeight: 600 }}>배우자에게 받은 HS-로 시작하는 코드를 입력하세요.</p>
             <input 
               placeholder="예: HS-1234" 
-              value={coupleCode}
-              onChange={(e) => setCoupleCode(e.target.value.toUpperCase())}
+              value={coupleCode?.toUpperCase()}
+              onChange={(e) => setCoupleCode(e.target.value.toLowerCase())}
               style={{ width: '100%', padding: '20px', borderRadius: '20px', border: '2px solid #F5D060', fontSize: '20px', fontWeight: 900, textAlign: 'center', letterSpacing: '4px', marginBottom: '25px' }} 
             />
-            {coupleCode && coupleCode.startsWith('HS-') && (
+            {coupleCode && coupleCode.startsWith('hs-') && (
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ textAlign: 'center', marginBottom: '25px' }}>
                 <div className="flex items-center justify-center gap-2" style={{ color: '#8A60FF', fontWeight: 900 }}>
                   <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}>
@@ -424,32 +435,36 @@ const OnboardingView = ({ user, userRole, setUserRole, onFinish }) => {
                 </div>
               </motion.div>
             )}
-            <button 
+             <button 
               onClick={async () => {
-                if (!coupleCode || !coupleCode.startsWith('HS-')) return;
+                const normalized = coupleCode.trim().toLowerCase();
+                if (!normalized || !normalized.startsWith('hs-')) return;
+                
                 setIsConnecting(true);
-                
-                // Try to find existing couple in Supabase
-                const { data } = await supabase.from('profiles').select('*').eq('couple_id', coupleCode);
-                
-                if (data && data.length > 0) {
-                  // Find spouse info to show a warmer message
-                  const spouse = data.find(p => p.id !== user.id);
-                  const spouseName = spouse?.info?.nickname || (spouse?.user_role === 'husband' ? '남편' : '아내') || '배우자';
+                try {
+                  // Try to find existing couple in Supabase
+                  const { data, error } = await supabase.from('profiles').select('*').eq('couple_id', normalized);
                   
-                  alert(`🎉 ${spouseName}님을 찾았습니다! 성공적으로 연결되었습니다.`);
+                  if (error) throw error;
                   
-                  // Found existing couple code
-                  setIsConnected(true);
-                  setTimeout(() => {
-                    onFinish({ nickname, marriageDate: mDate, mbti: insightResult, blood, coupleCode, deepAnalysis });
-                  }, 1200);
-                } else {
-                  // No such code yet
-                  setTimeout(() => {
-                    setIsConnecting(false);
-                    alert("코드를 찾을 수 없습니다.\n입력한 코드: " + coupleCode + "\n(데이터베이스에 등록된 정보가 없습니다.)");
-                  }, 1500);
+                  if (data && data.length > 0) {
+                    const spouse = data.find(p => p.id !== user.id);
+                    const spouseName = spouse?.info?.nickname || (spouse?.user_role === 'husband' ? '남편' : '아내') || '배우자';
+                    
+                    alert(`🎉 ${spouseName}님을 찾았습니다! 성공적으로 연결되었습니다.`);
+                    
+                    setIsConnected(true);
+                    setTimeout(() => {
+                      onFinish({ nickname, marriageDate: mDate, mbti: insightResult, blood, coupleCode: normalized, deepAnalysis });
+                    }, 800);
+                  } else {
+                    alert("코드를 찾을 수 없습니다.\n입력한 코드: " + normalized.toUpperCase() + "\n배우자에게 코드를 다시 확인해달라고 하세요!");
+                  }
+                } catch (err) {
+                  console.error("Join check fail:", err);
+                  alert("연결 중 오류가 발생했습니다. 잠시 후 상단 '새로고침'을 해보세요.");
+                } finally {
+                  setIsConnecting(false);
                 }
               }}
               disabled={!coupleCode || !coupleCode.startsWith('HS-') || isConnecting || isConnected}
