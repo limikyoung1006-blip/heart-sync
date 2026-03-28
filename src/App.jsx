@@ -436,7 +436,8 @@ const App = () => {
                       onUpdateMemo={updateProfileInfo} 
                       onBack={() => {
                         window.scrollTo(0, 0);
-                        setActiveTab('cardGameChoice');
+                        setDialogueGuideId('cardSync');
+                        setActiveTab('cardGameGuide');
                       }} 
                     />
                   </div>
@@ -451,7 +452,8 @@ const App = () => {
                       wifeInfo={wifeInfo} 
                       onBack={() => {
                         window.scrollTo(0, 0);
-                        setActiveTab('cardGameChoice');
+                        setDialogueGuideId('imageSync');
+                        setActiveTab('cardGameGuide');
                       }} 
                     />
                   </div>

@@ -3,11 +3,11 @@ import { motion } from 'framer-motion';
 import { ChevronLeft, Sparkles, BookOpen, Infinity, Camera, Zap, Heart, ArrowRight } from 'lucide-react';
 
 const GameGuideView = ({ gameId, onStart, onBack }) => {
-  const isImageGame = gameId === 'imageGame';
+  // Support both ID strings to ensure correct content matches
+  const isImageGame = gameId === 'imageSync' || gameId === 'imageGame';
   
   return (
-    <motion.div 
-      initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}
+    <div 
       style={{ 
         padding: '20px', 
         minHeight: '100%', 
@@ -27,23 +27,22 @@ const GameGuideView = ({ gameId, onStart, onBack }) => {
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
         <div style={{ 
           width: '90px', height: '90px', borderRadius: '35px', 
-          background: isImageGame ? 'linear-gradient(135deg, #F3E5F5, #E1BEE7)' : 'linear-gradient(135deg, #FFFDE7, #FFF9C4)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '25px',
-          boxShadow: '0 15px 30px rgba(0,0,0,0.05)'
+          background: isImageGame ? '#E1BEE7' : '#FFF9C4',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '25px'
         }}>
           {isImageGame ? <Sparkles size={45} color="#AB47BC" /> : <BookOpen size={45} color="#D4AF37" />}
         </div>
 
         <h2 style={{ fontSize: '26px', fontWeight: 900, color: '#2D1F08', marginBottom: '12px' }}>
-          {isImageGame ? "마음의 창: HEART SYNC" : "언어의 창: 질문 카드"}
+          {isImageGame ? "마음의 창: IMAGE SYNC" : "언어의 창: 질문 카드"}
         </h2>
-        <p style={{ fontSize: '15px', color: '#8B7355', fontWeight: 600, lineHeight: 1.6, marginBottom: '35px', wordBreak: 'keep-all', padding: '0 10px' }}>
+        <p style={{ fontSize: '15.5px', color: '#8B7355', fontWeight: 600, lineHeight: 1.6, marginBottom: '35px', wordBreak: 'keep-all', padding: '0 10px' }}>
           {isImageGame 
             ? "글보다 더 깊은 울림을 주는 이미지를 통해\n배우자의 숨겨진 마음과 감각을 연결해보세요."
             : "150개 이상의 질문 카드를 통해\n평소 나누지 못했던 깊은 속마음을 발견해보세요."}
         </p>
 
-        <div style={{ width: '100%', background: 'white', borderRadius: '30px', padding: '25px', boxShadow: '0 10px 30px rgba(0,0,0,0.03)', textAlign: 'left', display: 'flex', flexDirection: 'column', gap: '18px' }}>
+        <div style={{ width: '100%', background: 'white', borderRadius: '30px', padding: '25px', boxShadow: '0 8px 25px rgba(0,0,0,0.03)', textAlign: 'left', display: 'flex', flexDirection: 'column', gap: '18px' }}>
           <h3 style={{ fontSize: '13px', fontWeight: 900, color: '#2D1F08', opacity: 0.5, letterSpacing: '1px' }}>GUIDE & RULES</h3>
           
           <div style={{ display: 'flex', gap: '15px', alignItems: 'flex-start' }}>
@@ -83,14 +82,13 @@ const GameGuideView = ({ gameId, onStart, onBack }) => {
             width: '100%', padding: '20px', borderRadius: '25px', 
             background: isImageGame ? '#AB47BC' : '#D4AF37', 
             color: 'white', fontWeight: 900, fontSize: '17px', border: 'none',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
-            boxShadow: isImageGame ? '0 15px 30px rgba(171, 71, 188, 0.25)' : '0 15px 30px rgba(212, 175, 55, 0.25)'
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px'
           }}
         >
           대화 시작하기 <ArrowRight size={22} />
         </button>
       </div>
-    </motion.div>
+    </div>
   );
 };
 
