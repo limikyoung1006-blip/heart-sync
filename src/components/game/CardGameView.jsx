@@ -124,18 +124,18 @@ const CardGameView = ({ onBack, coupleCode, userRole }) => {
       </div>
 
       <div style={{ marginBottom: '25px', textAlign: 'center' }}>
-        <p style={{ letterSpacing: '4px', color: '#8B6500', fontWeight: 900, fontSize: '11px', opacity: 0.7, marginBottom: '5px' }}>SELECT YOUR TOPIC</p>
-        <div style={{ display: 'inline-block', background: 'rgba(212, 175, 55, 0.1)', padding: '4px 12px', borderRadius: '8px', border: '1px solid rgba(212, 175, 55, 0.2)' }}>
-          <span style={{ fontSize: '10px', color: '#B08D3E', fontWeight: 900 }}>턴: {turnOwner ? (turnOwner === 'husband' ? '남편' : '아내') : '자유'}</span>
+        <p style={{ letterSpacing: '4px', color: '#8B6500', fontWeight: 900, fontSize: '11px', opacity: 0.7, marginBottom: '5px' }}>CHOOSE A CARD TOGETHER</p>
+        <div style={{ display: 'inline-block', background: 'rgba(212, 175, 55, 0.15)', padding: '6px 16px', borderRadius: '12px', border: '1px solid rgba(212, 175, 55, 0.3)' }}>
+          <span style={{ fontSize: '12px', color: '#8B6500', fontWeight: 900 }}>현재 답변 턴: {turnOwner ? (turnOwner === 'husband' ? '남편 👨' : '아내 👩') : '자유 선택 🔄'}</span>
         </div>
       </div>
 
       <div className="card-container" style={{ 
         perspective: '1200px', 
-        marginBottom: '40px', 
+        marginBottom: '30px', 
         width: '100%', 
         maxWidth: '320px',
-        height: '440px',
+        height: '420px',
         display: 'flex', 
         justifyContent: 'center',
         alignItems: 'center'
@@ -146,35 +146,18 @@ const CardGameView = ({ onBack, coupleCode, userRole }) => {
         >
           {/* Card Front */}
           <div className="card-face card-front" style={{ border: '3px solid rgba(212, 175, 55, 0.4)' }}>
-            <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.2)', zIndex: 1 }} />
+            <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.1)', zIndex: 1 }} />
             
-            <div style={{ 
-              position: 'relative',
-              zIndex: 2,
-              width: '100px', 
-              height: '100px', 
-              borderRadius: '50%', 
-              background: 'rgba(255, 255, 255, 0.15)', 
-              backdropFilter: 'blur(10px)',
-              display: 'flex', 
-              alignItems: 'center', 
-              justifyContent: 'center',
-              marginBottom: '40px',
-              border: '1.5px solid rgba(255, 255, 255, 0.4)',
-              boxShadow: '0 8px 32px rgba(0,0,0,0.1)'
-            }}>
-              <Sparkles size={50} color="#D4AF37" />
-            </div>
-
             <span className="brand-text" style={{ 
               position: 'relative',
               zIndex: 2,
-              fontSize: '24px', 
-              letterSpacing: '6px',
-              fontWeight: 900
+              fontSize: '26px', 
+              letterSpacing: '8px',
+              fontWeight: 900,
+              marginTop: '150px'
             }}>QUESTION CARD</span>
             
-            <div style={{ position: 'relative', zIndex: 2, marginTop: '20px', width: '50px', height: '1.5px', background: 'linear-gradient(90deg, transparent, #D4AF37, transparent)' }} />
+            <div style={{ position: 'relative', zIndex: 2, marginTop: '25px', width: '60px', height: '2px', background: 'linear-gradient(90deg, transparent, #D4AF37, transparent)' }} />
           </div>
 
           {/* Card Back */}
@@ -220,15 +203,30 @@ const CardGameView = ({ onBack, coupleCode, userRole }) => {
         </div>
       </div>
 
+      <div style={{ textAlign: 'center', marginBottom: '15px' }}>
+        <p style={{ fontSize: '13px', color: '#2D1F08', fontWeight: 800 }}>대화가 끝났나요? 새로운 질문을 확인하세요</p>
+      </div>
+
       <button 
         disabled={turnOwner && turnOwner !== userRole} 
         onClick={() => drawNewCard()} 
-        style={{ width: '100%', maxWidth: '280px', padding: '18px', borderRadius: '22px', border: 'none', background: '#2D1F08', color: 'white', fontWeight: 900, fontSize: '16px', opacity: (turnOwner && turnOwner !== userRole) ? 0.3 : 1 }}
+        style={{ 
+          width: '100%', 
+          maxWidth: '280px', 
+          padding: '18px', 
+          borderRadius: '22px', 
+          border: 'none', 
+          background: turnOwner && turnOwner !== userRole ? '#E5E7EB' : '#2D1F08', 
+          color: turnOwner && turnOwner !== userRole ? '#9CA3AF' : 'white', 
+          fontWeight: 900, 
+          fontSize: '16px',
+          boxShadow: '0 10px 20px rgba(0,0,0,0.1)'
+        }}
       >
-        새로운 질문 뽑기
+        {turnOwner && turnOwner !== userRole ? '배우자의 답변 차례입니다' : '새로운 질문 뽑기'}
       </button>
 
-      <p style={{ marginTop: '20px', fontSize: '11px', color: '#8B7355', fontWeight: 700 }}>* 아래로 스크롤하여 더 많은 메뉴를 확인하세요</p>
+      <p style={{ marginTop: '20px', fontSize: '11px', color: '#8B7355', fontWeight: 700, paddingBottom: turnOwner === null ? '150px' : '20px' }}>* 아래로 스크롤하여 더 많은 메뉴를 확인하세요</p>
     </div>
   );
 };
