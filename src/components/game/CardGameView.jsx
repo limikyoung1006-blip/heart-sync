@@ -180,9 +180,8 @@ const CardGameView = ({ onBack, coupleCode, userRole }) => {
       <div className="card-container" style={{ 
         perspective: '1200px', 
         marginBottom: '30px', 
-        width: '100%', 
-        maxWidth: '320px',
-        height: '420px',
+        width: '320px', 
+        height: '440px',
         display: 'flex', 
         justifyContent: 'center',
         alignItems: 'center'
@@ -190,15 +189,21 @@ const CardGameView = ({ onBack, coupleCode, userRole }) => {
         <div 
           className={`talking-card ${isFlipped ? 'flipped' : ''}`} 
           onClick={toggleFlip}
+          style={{ width: '100%', height: '100%' }}
         >
           {/* Card Front */}
-          <div className="card-face card-front" style={{ border: '3px solid rgba(212, 175, 55, 0.4)' }}>
+          <div className="card-face card-front" style={{ 
+            border: '3px solid rgba(212, 175, 55, 0.4)',
+            backfaceVisibility: 'hidden',
+            WebkitBackfaceVisibility: 'hidden',
+            overflow: 'hidden'
+          }}>
             <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.1)', zIndex: 1 }} />
             
             <span className="brand-text" style={{ 
               position: 'relative',
               zIndex: 2,
-              fontSize: '26px', 
+              fontSize: '28px', 
               letterSpacing: '8px',
               fontWeight: 900,
               marginTop: '150px'
@@ -208,7 +213,14 @@ const CardGameView = ({ onBack, coupleCode, userRole }) => {
           </div>
 
           {/* Card Back */}
-          <div className="card-face card-back" style={{ border: '3px solid #8A60FF', background: 'white' }}>
+          <div className="card-face card-back" style={{ 
+            border: '3px solid #8A60FF', 
+            background: 'white',
+            backfaceVisibility: 'hidden',
+            WebkitBackfaceVisibility: 'hidden',
+            transform: 'rotateY(180deg)',
+            overflow: 'hidden'
+          }}>
             <div style={{ 
               background: 'linear-gradient(135deg, #FF4D6D, #FF8fa3)', 
               color: 'white', 
