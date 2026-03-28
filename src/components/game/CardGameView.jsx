@@ -25,6 +25,9 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo, onU
     isMounted.current = true;
     return () => {
       isMounted.current = false;
+      // 🧹 Memory Cleanup
+      setCurrentQuestion(null);
+      setHistory([]);
     };
   }, []);
 
@@ -222,7 +225,20 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo, onU
   };
 
   return (
-    <motion.div className="flex flex-col items-center p-4" style={{ width: '100%', paddingBottom: '150px', paddingTop: '20px' }}>
+    <motion.div 
+      className="flex flex-col items-center p-4" 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.15 }}
+      style={{ 
+        width: '100%', 
+        paddingBottom: '150px', 
+        paddingTop: '20px',
+        willChange: 'transform, opacity', // 🚀 GPU Acceleration
+        backfaceVisibility: 'hidden'
+      }}
+    >
       {showFinishModal && (
         <div 
           style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(10px)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}

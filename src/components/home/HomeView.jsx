@@ -52,11 +52,18 @@ const HomeView = ({
   const [isPrayerExpanded, setIsPrayerExpanded] = useState(false);
   const [showNotifModal, setShowNotifModal] = useState(false);
   const [showNotifBanner, setShowNotifBanner] = useState(true);
+  const [isReady, setIsReady] = useState(false); // 🚀 For staggered rendering
+
+  useEffect(() => {
+    // Give browser some breathing room to finish exit animation of previous screen
+    const readyTimer = setTimeout(() => setIsReady(true), 100);
+    return () => clearTimeout(readyTimer);
+  }, []);
 
   useEffect(() => {
     // 알림 권한이 'default'일 때(물어보지 않은 상태) 진입 시 모달 띄우기
     if (notifPermission === 'default') {
-      const timer = setTimeout(() => setShowNotifModal(true), 1500);
+      const timer = setTimeout(() => setShowNotifModal(true), 2000); // Delayed slightly more
       return () => clearTimeout(timer);
     }
   }, [notifPermission]);
@@ -344,6 +351,13 @@ const HomeView = ({
           </div>
         </div>
       </div>
+
+      {!isReady ? (
+        <div style={{ padding: '40px', textAlign: 'center' }}>
+          <Sparkles className="animate-pulse" color="#D4AF37" size={24} />
+        </div>
+      ) : (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
 
       {/* 🚦 Central Secret Question Box (3D Deep Gold Style) */}
       <div className="card-stack" style={{ margin: '20px 0 35px' }}>
@@ -779,6 +793,8 @@ const HomeView = ({
           )}
         </div>
       </div>
+        </motion.div>
+      )}
     </motion.div>
   );
 };
