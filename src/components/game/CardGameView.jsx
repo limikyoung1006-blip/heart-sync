@@ -223,48 +223,45 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo, onU
 
   return (
     <motion.div className="flex flex-col items-center p-4" style={{ width: '100%', paddingBottom: '150px', paddingTop: '20px' }}>
-      <AnimatePresence>
-        {showFinishModal && (
+      {showFinishModal && (
+        <div 
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(10px)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}
+        >
           <motion.div 
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(10px)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}
+            initial={{ scale: 0.9, y: 30 }} animate={{ scale: 1, y: 0 }} 
+            style={{ background: 'white', borderRadius: '35px', width: '100%', maxWidth: '340px', padding: '45px 30px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', boxShadow: '0 25px 60px rgba(0,0,0,0.3)' }}
           >
-            <motion.div 
-              initial={{ scale: 0.9, y: 30 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 30 }}
-              style={{ background: 'white', borderRadius: '35px', width: '100%', maxWidth: '340px', padding: '45px 30px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', boxShadow: '0 25px 60px rgba(0,0,0,0.3)' }}
-            >
-              <div style={{ width: '90px', height: '90px', borderRadius: '50%', background: 'rgba(212, 175, 55, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '30px' }}>
-                <Sparkles size={45} color="#D4AF37" />
-              </div>
-              <h3 style={{ fontSize: '24px', fontWeight: 900, color: '#2D1F08', marginBottom: '15px' }}>오늘의 열 번째 대화 완료!</h3>
-              <p style={{ fontSize: '15.5px', color: '#8B7355', fontWeight: 600, lineHeight: 1.6, wordBreak: 'keep-all', marginBottom: '35px' }}>
-                오늘 나눈 대화가 서로를 더 깊게<br/>
-                이해하는 시간이 되셨나요? ✨<br/>
-                이제 대화를 마무리하고 함께<br/>
-                달콤한 휴식을 취해볼까요?
-              </p>
-              
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', width: '100%' }}>
-                <button 
-                  onClick={onBack}
-                  style={{ width: '100%', padding: '20px', borderRadius: '22px', background: '#2D1F08', color: 'white', fontWeight: 900, fontSize: '17px', border: 'none' }}
-                >
-                  대화 선택으로 돌아가기
-                </button>
-                <button 
-                  onClick={() => {
-                    setShowFinishModal(false);
-                    setSessionCardCount(11); 
-                  }}
-                  style={{ width: '100%', padding: '15px', borderRadius: '20px', background: 'none', color: '#B08D3E', fontWeight: 800, fontSize: '14px', border: 'none' }}
-                >
-                  조금 더 대화할래요
-                </button>
-              </div>
-            </motion.div>
+            <div style={{ width: '90px', height: '90px', borderRadius: '50%', background: 'rgba(212, 175, 55, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '30px' }}>
+              <Sparkles size={45} color="#D4AF37" />
+            </div>
+            <h3 style={{ fontSize: '24px', fontWeight: 900, color: '#2D1F08', marginBottom: '15px' }}>오늘의 열 번째 대화 완료!</h3>
+            <p style={{ fontSize: '15.5px', color: '#8B7355', fontWeight: 600, lineHeight: 1.6, wordBreak: 'keep-all', marginBottom: '35px' }}>
+              오늘 나눈 대화가 서로를 더 깊게<br/>
+              이해하는 시간이 되셨나요? ✨<br/>
+              이제 대화를 마무리하고 함께<br/>
+              달콤한 휴식을 취해볼까요?
+            </p>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', width: '100%' }}>
+              <button 
+                onClick={onBack}
+                style={{ width: '100%', padding: '20px', borderRadius: '22px', background: '#2D1F08', color: 'white', fontWeight: 900, fontSize: '17px', border: 'none' }}
+              >
+                대화 선택으로 돌아가기
+              </button>
+              <button 
+                onClick={() => {
+                  setShowFinishModal(false);
+                  setSessionCardCount(11); 
+                }}
+                style={{ width: '100%', padding: '15px', borderRadius: '20px', background: 'none', color: '#B08D3E', fontWeight: 800, fontSize: '14px', border: 'none' }}
+              >
+                조금 더 대화할래요
+              </button>
+            </div>
           </motion.div>
-        )}
-      </AnimatePresence>
+        </div>
+      )}
       <div className="w-full flex items-center justify-start mb-2">
         <button onClick={onBack} style={{ display: 'flex', alignItems: 'center', gap: '3px', background: 'none', border: 'none', cursor: 'pointer', padding: '8px 0' }}>
           <ChevronLeft size={20} color="#8A60FF" strokeWidth={3} />

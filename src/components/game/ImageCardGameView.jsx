@@ -186,48 +186,45 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, mainChannel, husbandI
       className="flex flex-col items-center p-4 bg-white" 
       style={{ width: '100%', minHeight: '100%', paddingBottom: '200px' }} 
     >
-      <AnimatePresence>
-        {showFinishModal && (
+      {showFinishModal && (
+        <div 
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(10px)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}
+        >
           <motion.div 
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(10px)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}
+            initial={{ scale: 0.9, y: 30 }} animate={{ scale: 1, y: 0 }} 
+            style={{ background: 'white', borderRadius: '35px', width: '100%', maxWidth: '340px', padding: '45px 30px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', boxShadow: '0 25px 60px rgba(0,0,0,0.3)' }}
           >
-            <motion.div 
-              initial={{ scale: 0.9, y: 30 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 30 }}
-              style={{ background: 'white', borderRadius: '35px', width: '100%', maxWidth: '340px', padding: '45px 30px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', boxShadow: '0 25px 60px rgba(0,0,0,0.3)' }}
-            >
-              <div style={{ width: '90px', height: '90px', borderRadius: '50%', background: 'rgba(171, 71, 188, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '30px' }}>
-                <Sparkles size={45} color="#AB47BC" />
-              </div>
-              <h3 style={{ fontSize: '24px', fontWeight: 900, color: '#2D1F08', marginBottom: '15px' }}>열 번째 하트싱크 완료!</h3>
-              <p style={{ fontSize: '15.5px', color: '#8B7355', fontWeight: 600, lineHeight: 1.6, wordBreak: 'keep-all', marginBottom: '35px' }}>
-                오늘 이미지를 통해 나눈 감성이<br/>
-                서로를 더 깊게 이어주었나요? ✨<br/>
-                이제 대화를 마무리하고 함께<br/>
-                달콤한 휴식을 취해볼까요?
-              </p>
-              
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', width: '100%' }}>
-                <button 
-                  onClick={onBack}
-                  style={{ width: '100%', padding: '20px', borderRadius: '22px', background: '#AB47BC', color: 'white', fontWeight: 900, fontSize: '17px', border: 'none' }}
-                >
-                  대화 선택으로 돌아가기
-                </button>
-                <button 
-                  onClick={() => {
-                    setShowFinishModal(false);
-                    setSessionCardCount(11);
-                  }}
-                  style={{ width: '100%', padding: '15px', borderRadius: '20px', background: 'none', color: '#9C27B0', fontWeight: 800, fontSize: '14px', border: 'none' }}
-                >
-                  조금 더 대화할래요
-                </button>
-              </div>
-            </motion.div>
+            <div style={{ width: '90px', height: '90px', borderRadius: '50%', background: 'rgba(171, 71, 188, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '30px' }}>
+              <Sparkles size={45} color="#AB47BC" />
+            </div>
+            <h3 style={{ fontSize: '24px', fontWeight: 900, color: '#2D1F08', marginBottom: '15px' }}>열 번째 하트싱크 완료!</h3>
+            <p style={{ fontSize: '15.5px', color: '#8B7355', fontWeight: 600, lineHeight: 1.6, wordBreak: 'keep-all', marginBottom: '35px' }}>
+              오늘 이미지를 통해 나눈 감성이<br/>
+              서로를 더 깊게 이어주었나요? ✨<br/>
+              이제 대화를 마무리하고 함께<br/>
+              달콤한 휴식을 취해볼까요?
+            </p>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', width: '100%' }}>
+              <button 
+                onClick={onBack}
+                style={{ width: '100%', padding: '20px', borderRadius: '22px', background: '#AB47BC', color: 'white', fontWeight: 900, fontSize: '17px', border: 'none' }}
+              >
+                대화 선택으로 돌아가기
+              </button>
+              <button 
+                onClick={() => {
+                  setShowFinishModal(false);
+                  setSessionCardCount(11);
+                }}
+                style={{ width: '100%', padding: '15px', borderRadius: '20px', background: 'none', color: '#9C27B0', fontWeight: 800, fontSize: '14px', border: 'none' }}
+              >
+                조금 더 대화할래요
+              </button>
+            </div>
           </motion.div>
-        )}
-      </AnimatePresence>
+        </div>
+      )}
 
       <header style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '15px' }}>
         <button onClick={onBack} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px' }}>
