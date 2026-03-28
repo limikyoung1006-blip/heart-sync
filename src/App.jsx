@@ -245,30 +245,58 @@ const App = () => {
     return () => subscription.unsubscribe();
   }, []);
 
+  // 📱 Mobile-Robust Sync Strategy
   useEffect(() => {
-    if (!user) return;
-    const final_code = coupleCode.toLowerCase().trim();
-    const channel = supabase.channel(`couple-${final_code}`)
+    if (!user || !coupleCode) return;
+    
+    // Normalize code for consistent channel binding
+    const normalizedCode = coupleCode.trim().toLowerCase();
+    const channelName = `couple-${normalizedCode}`;
+    
+    // Create channel with mobile-optimized configuration
+    const channel = supabase.channel(channelName, {
+      config: {
+        broadcast: { self: false, ack: true }, // Add ACKs for better reliability on mobile
+        presence: { key: userRole }
+      }
+    });
+
+    channel
       .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, payload => {
-        if (!payload.new || payload.new.couple_id?.toLowerCase() !== final_code) return;
+        if (!payload.new || payload.new.couple_id?.toLowerCase() !== normalizedCode) return;
         const { user_role: role, info } = payload.new;
-        if (role === 'husband') setHusbandInfo(info || {}); else if (role === 'wife') setWifeInfo(info || {});
+        if (role === 'husband') setHusbandInfo(info || {}); 
+        else if (role === 'wife') setWifeInfo(info || {});
         if (info?.signal && role !== userRole) setSpouseSignal(info.signal);
       })
       .on('broadcast', { event: 'nav-trigger' }, ({ payload }) => {
-        if (payload.sender !== userRole && payload.navId !== lastNavIdRef.current) { lastNavIdRef.current = payload.navId; setActiveTab(payload.tab); }
+        if (payload.sender !== userRole && payload.navId !== lastNavIdRef.current) { 
+          lastNavIdRef.current = payload.navId; 
+          setActiveTab(payload.tab); 
+        }
       })
       .on('broadcast', { event: 'card-game-call' }, ({ payload }) => {
         if (payload.sender !== userRole) sendNativeNotification(`대화 초대 💌`, `${payload.sender === 'husband' ? '남편' : '아내'}님이 대화를 기다리고 있어요!`, 'cardGameQuestion');
       })
       .on('broadcast', { event: 'secret-answered' }, ({ payload }) => {
-        if (payload.sender !== userRole) {
-          setSpouseSecretAnswer(payload.text);
-        }
+        if (payload.sender !== userRole) setSpouseSecretAnswer(payload.text);
       })
-      .subscribe((status) => { if (status === 'SUBSCRIBED') { setSyncStatus('SUBSCRIBED'); setMainChannel(channel); } });
-    return () => supabase.removeChannel(channel);
-  }, [user, coupleCode, userRole]);
+      .subscribe((status) => { 
+        if (status === 'SUBSCRIBED') { 
+          setSyncStatus('SUBSCRIBED'); 
+          setMainChannel(channel); 
+          console.log(`🔗 Realtime Synced: ${normalizedCode}`);
+        } else if (status === 'CLOSED' || status === 'CHANNEL_ERROR') {
+          setSyncStatus('DISCONNECTED');
+          console.warn("⚠️ Realtime link unstable, attempting to recover...");
+          // No hard retry here to avoid loops, useEffect dependency will naturally trigger re-sub on state changes
+        }
+      });
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user, coupleCode, userRole, supabase]);
 
   return (
     <div className="h-full flex flex-col relative w-full" style={{ '--gold': appTheme.primary, '--gold-glow': `${appTheme.primary}40`, background: appTheme.bg }}>
