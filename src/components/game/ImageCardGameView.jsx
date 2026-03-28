@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { ChevronLeft, Sparkles } from 'lucide-react';
+import { supabase } from '../../supabase';
 import { IMAGE_CARD_DATA } from '../../data/imageCards';
 
 const ImageCardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo }) => {
   const [gameMode, setGameMode] = useState('classic'); 
   const [isFlipped, setIsFlipped] = useState(false);
+  const [showTurnWarning, setShowTurnWarning] = useState(false);
   
   // Safe initialization
   const [currentQuestion, setCurrentQuestion] = useState(() => {
@@ -25,19 +27,66 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo
   const [showFinishModal, setShowFinishModal] = useState(false);
   const [history, setHistory] = useState([]);
   
+  const isMounted = useRef(false);
   const isMyTurn = !turnOwner || turnOwner === userRole;
   const partnerNickname = userRole === 'husband' ? (wifeInfo?.nickname || '아내') : (husbandInfo?.nickname || '남편');
 
+  // Multi-device Sync logic
   useEffect(() => {
-    window.scrollTo(0, 0);
-    return () => {
-      setImagePool([]);
-      setSharedCards([]);
+    isMounted.current = true;
+    if (!coupleCode) return;
+
+    const loadState = async () => {
+      const { data } = await supabase.from('image_game_state').select('*').eq('couple_id', coupleCode).single();
+      if (isMounted.current && data) {
+        setGameMode(data.game_mode || 'classic');
+        setIsFlipped(data.is_flipped || false);
+        setTurnOwner(data.turn_owner || null);
+        const q = IMAGE_CARD_DATA.find(item => String(item.id) === String(data.current_question_id));
+        if (q) setCurrentQuestion(q);
+        if (data.shared_cards) {
+           setSharedCards(data.shared_cards);
+           setIsSharing(true);
+        }
+      }
     };
-  }, []);
+
+    loadState();
+
+    const subscription = supabase
+      .channel(`image_game_${coupleCode}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'image_game_state', filter: `couple_id=eq.${coupleCode}` }, 
+        payload => {
+          const updated = payload.new;
+          if (updated && isMounted.current) {
+            setGameMode(updated.game_mode);
+            setIsFlipped(updated.is_flipped);
+            setTurnOwner(updated.turn_owner);
+            if (updated.shared_cards) {
+              setSharedCards(updated.shared_cards);
+              setIsSharing(true);
+            } else {
+              setIsSharing(false);
+            }
+            const q = IMAGE_CARD_DATA.find(item => String(item.id) === String(updated.current_question_id));
+            if (q) setCurrentQuestion(q);
+          }
+        })
+      .subscribe();
+
+    return () => { 
+      isMounted.current = false;
+      subscription.unsubscribe();
+    };
+  }, [coupleCode]);
 
   const drawNewCard = useCallback(() => {
     if (isImageLoading) return;
+    if (turnOwner && turnOwner !== userRole) {
+      setShowTurnWarning(true);
+      setTimeout(() => setShowTurnWarning(false), 2000);
+      return;
+    }
     const pool = IMAGE_CARD_DATA || [];
     if (pool.length === 0) return;
 
@@ -53,8 +102,20 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo
       setCurrentQuestion(nextQ);
       setSessionCardCount(prev => prev + 1);
       if (sessionCardCount + 1 >= 10) setShowFinishModal(true);
+
+      if (coupleCode) {
+        supabase.from('image_game_state').upsert({
+          couple_id: coupleCode,
+          game_mode: 'classic',
+          is_flipped: false,
+          turn_owner: userRole,
+          current_question_id: nextQ.id,
+          shared_cards: null,
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'couple_id' }).then(() => {});
+      }
     }
-  }, [history, sessionCardCount, userRole, isImageLoading]);
+  }, [history, sessionCardCount, userRole, isImageLoading, coupleCode, turnOwner]);
 
   const initPick2Mode = useCallback(() => {
     const dataPool = IMAGE_CARD_DATA || [];
@@ -111,7 +172,27 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo
         </div>
       </header>
       
-      <div style={{ width: '100%', padding: '14px', borderRadius: '20px', background: isMyTurn ? 'rgba(171, 71, 188, 0.08)' : '#F3E5F5', marginBottom: '20px', textAlign: 'center' }}>
+      <div style={{ width: '100%', padding: '14px', borderRadius: '20px', background: isMyTurn ? 'rgba(171, 71, 188, 0.08)' : '#F3E5F5', marginBottom: '20px', textAlign: 'center', position: 'relative' }}>
+        {showTurnWarning && (
+          <div style={{ 
+            position: 'absolute', 
+            top: '-50px', 
+            left: '50%', 
+            transform: 'translateX(-50%)', 
+            background: 'rgba(45, 31, 8, 0.95)', 
+            color: 'white', 
+            padding: '10px 20px', 
+            borderRadius: '15px', 
+            fontSize: '13px', 
+            fontWeight: 800, 
+            whiteSpace: 'nowrap',
+            zIndex: 100,
+            boxShadow: '0 10px 25px rgba(0,0,0,0.2)',
+            animation: 'fadeInOut 2s ease-in-out'
+          }}>
+             ⚠️ {turnOwner === 'husband' ? '남편' : '아내'}님이 답변 중입니다...
+          </div>
+        )}
         <span style={{ fontSize: '13px', fontWeight: 900, color: isMyTurn ? '#AB47BC' : '#9C27B0' }}>{isMyTurn ? "당신의 턴입니다! 마음을 나눠주세요 ✨" : `${partnerNickname}님이 준비 중입니다...`}</span>
       </div>
 
