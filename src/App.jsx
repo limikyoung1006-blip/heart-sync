@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef, lazy, Suspense } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 // UI stability and scroll fix applied - 2026-03-27
 import { 
   Heart, Calendar, Settings, Bell, User, MessageCircle, MessageSquare,
@@ -58,7 +57,7 @@ const App = () => {
   const [adminStats, setAdminStats] = useState({ users: 0, couples: 0, activeSessions: 0, recentActivities: [] });
   
   const [spouseSecretAnswer, setSpouseSecretAnswer] = useState(() => localStorage.getItem('spouseSecretAnswer')); 
-
+  
   // 📱 Mobile Stability: Centralized scroll and history manager
   useEffect(() => {
     if (!activeTab) return;
@@ -75,7 +74,7 @@ const App = () => {
           else window.history.pushState({ tab: activeTab }, '', '');
         }
       } catch (e) { console.warn("History sync safely skipped:", e); }
-    }, 80);
+    }, 100);
     return () => { clearTimeout(scrollTimer); clearTimeout(historyTimer); };
   }, [activeTab]);
 
@@ -110,33 +109,15 @@ const App = () => {
   const [dialogueTab, setDialogueTab] = useState('choice'); 
   const [dialogueGuideId, setDialogueGuideId] = useState(null);
 
-  // Sync state with browser history for mobile back button support
   useEffect(() => {
     const handlePopState = (event) => {
       if (event.state && event.state.tab) {
         setActiveTab(event.state.tab);
-        if (event.state.dialogueTab) setDialogueTab(event.state.dialogueTab);
       } else { setActiveTab('home'); }
     };
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
-
-  useEffect(() => {
-    try {
-      localStorage.setItem('husbandInfo', JSON.stringify(husbandInfo || {}));
-      localStorage.setItem('wifeInfo', JSON.stringify(wifeInfo || {}));
-      localStorage.setItem('userRole', userRole || 'husband');
-      localStorage.setItem('isSetupDone', isSetupDone ? 'true' : 'false');
-      localStorage.setItem('coupleSchedules', JSON.stringify(schedules || []));
-      localStorage.setItem('notifications', JSON.stringify(notifications || []));
-      localStorage.setItem('worshipDays', JSON.stringify(worshipDays || []));
-      localStorage.setItem('worshipTime', worshipTime || '21:00');
-      localStorage.setItem('anniversaries', JSON.stringify(anniversaries || []));
-    } catch (e) {
-      console.warn("State persistence safely skipped:", e);
-    }
-  }, [husbandInfo, wifeInfo, userRole, isSetupDone, schedules, notifications, worshipDays, worshipTime, anniversaries]);
 
   useEffect(() => {
     if ("Notification" in window) setNotifPermission(Notification.permission);
@@ -146,15 +127,13 @@ const App = () => {
     const newNotif = { id: Date.now(), title, body, tab, time: new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }), read: false };
     setNotifications(prev => [newNotif, ...prev.slice(0, 49)]);
     if (Notification.permission === "granted") {
-      new Notification(title, { body }).onclick = () => { if (tab) setActiveTab(tab === 'cardGame' ? 'cardGameQuestion' : tab); window.focus(); };
+      new Notification(title, { body }).onclick = () => { if (tab) setActiveTab(tab === 'cardGame' ? 'cardGameChoice' : tab); window.focus(); };
     }
   };
 
   const updateProfileInfo = async (text, extraInfo = {}) => {
     if (!user?.id) return;
     const baseInfo = userRole === 'husband' ? husbandInfo : wifeInfo;
-    
-    // Logic to distinguish between simple memo updates and deep metadata (like analysis)
     let updatedInfo;
     if (text === 'deepAnalysis') {
        updatedInfo = { ...baseInfo, deepAnalysis: extraInfo };
@@ -162,41 +141,21 @@ const App = () => {
        updatedInfo = { ...baseInfo, ...extraInfo };
        if (text !== undefined) updatedInfo.todayMemo = text;
     }
-
-    if (userRole === 'husband') {
-      setHusbandInfo(prev => ({ ...prev, ...updatedInfo }));
-    } else {
-      setWifeInfo(prev => ({ ...prev, ...updatedInfo }));
-    }
-    
+    if (userRole === 'husband') setHusbandInfo(prev => ({ ...prev, ...updatedInfo }));
+    else setWifeInfo(prev => ({ ...prev, ...updatedInfo }));
     if (mainChannel) {
-      mainChannel.send({ 
-        type: 'broadcast', 
-        event: 'memo-updated', 
-        payload: { sender: userRole, text: text === 'deepAnalysis' ? '심층 분석 완료' : text, extraInfo: text === 'deepAnalysis' ? { deepAnalysis: extraInfo } : extraInfo } 
-      });
+      mainChannel.send({ type: 'broadcast', event: 'memo-updated', payload: { sender: userRole, text: text === 'deepAnalysis' ? '심층 분석 완료' : text, extraInfo: text === 'deepAnalysis' ? { deepAnalysis: extraInfo } : extraInfo } });
     }
-    
-    await supabase.from('profiles').upsert({ 
-      id: user.id, 
-      couple_id: coupleCode.toLowerCase().trim(), 
-      user_role: userRole, 
-      info: updatedInfo, 
-      updated_at: new Date().toISOString() 
-    }, { onConflict: 'id' });
+    await supabase.from('profiles').upsert({ id: user.id, couple_id: coupleCode.toLowerCase().trim(), user_role: userRole, info: updatedInfo, updated_at: new Date().toISOString() }, { onConflict: 'id' });
   };
 
-  // Family Worship Notification Scheduler
   useEffect(() => {
     if (!isSetupDone) return;
     const checkWorshipNotif = () => {
       const now = new Date();
-      const currentDay = now.getDay();
-      const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-      if (worshipDays.includes(currentDay) && currentTime === worshipTime) {
-        const lastNotif = localStorage.getItem('lastWorshipNotif');
-        const todayKey = `${now.toDateString()}-${currentTime}`;
-        if (lastNotif !== todayKey) {
+      if (worshipDays.includes(now.getDay()) && `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}` === worshipTime) {
+        const todayKey = `${now.toDateString()}-${worshipTime}`;
+        if (localStorage.getItem('lastWorshipNotif') !== todayKey) {
           sendNativeNotification("🙏 가정예배 시간입니다", "하나님의 은혜를 함께 나누는 복된 시간 되세요.", "worship");
           localStorage.setItem('lastWorshipNotif', todayKey);
         }
@@ -209,340 +168,87 @@ const App = () => {
   const handleOnboardingFinish = async (info) => {
     try {
       const finalCode = (info.coupleCode || coupleCode || "").toLowerCase().trim();
-      if (!finalCode) {
-        alert("커플 연결 코드가 필요합니다.");
-        return;
-      }
       setCoupleCode(finalCode);
       const currentInfo = userRole === 'husband' ? husbandInfo : wifeInfo;
       const updated = { ...currentInfo, ...info, coupleCode: finalCode };
-      
-      if (userRole === 'husband') setHusbandInfo(updated); 
-      else setWifeInfo(updated);
-
-      // 💾 Immediate Storage for safety
+      if (userRole === 'husband') setHusbandInfo(updated); else setWifeInfo(updated);
       localStorage.setItem('isSetupDone', 'true');
       localStorage.setItem('coupleCode', finalCode);
-
-      // ☁️ Sync with Supabase (Background)
-      await supabase.from('profiles').upsert({ 
-        id: user.id, 
-        couple_id: finalCode, 
-        user_role: userRole, 
-        info: updated, 
-        updated_at: new Date().toISOString() 
-      }, { onConflict: 'id' });
-
+      await supabase.from('profiles').upsert({ id: user.id, couple_id: finalCode, user_role: userRole, info: updated, updated_at: new Date().toISOString() }, { onConflict: 'id' });
       setIsSetupDone(true);
-    } catch (err) {
-      console.error("Setup finish failed:", err);
-      // Even if sync fails, let them in if we have local info, or alert
-      setIsSetupDone(true); 
-    }
-  };
-
-  const handleLogoClick = () => {
-    setLogoClickCount(prev => {
-      const next = prev + 1;
-      if (next >= 10) setShowAdminLogin(true);
-      return next;
-    });
+    } catch (err) { setIsSetupDone(true); }
   };
 
   useEffect(() => {
-    supabase.auth.getSession()
-      .then(({ data: { session: curSess } }) => { 
-        setSession(curSess); 
-        setUser(curSess?.user ?? null); 
-        setLoading(false); 
-      })
-      .catch((err) => {
-        console.error("Session check failed, proceeding to auth:", err);
-        setLoading(false); // Ensure loading is released even on error
-      });
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, curSess) => { 
-      setSession(curSess); 
-      setUser(curSess?.user ?? null); 
-    });
+    supabase.auth.getSession().then(({ data: { session: curSess } }) => { setSession(curSess); setUser(curSess?.user ?? null); setLoading(false); }).catch(() => setLoading(false));
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, curSess) => { setSession(curSess); setUser(curSess?.user ?? null); });
     return () => subscription.unsubscribe();
   }, []);
 
-  // 📱 Mobile-Robust Sync Strategy
   useEffect(() => {
     if (!user || !coupleCode) return;
-    
-    // Normalize code for consistent channel binding
     const normalizedCode = coupleCode.trim().toLowerCase();
-    const channelName = `couple-${normalizedCode}`;
-    
-    // Create channel with mobile-optimized configuration
-    const channel = supabase.channel(channelName, {
-      config: {
-        broadcast: { self: false, ack: true }, // Add ACKs for better reliability on mobile
-        presence: { key: userRole }
-      }
+    const channel = supabase.channel(`couple-${normalizedCode}`, { config: { broadcast: { self: false, ack: true }, presence: { key: userRole } } });
+    channel.on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, payload => {
+      if (!payload.new || payload.new.couple_id?.toLowerCase() !== normalizedCode) return;
+      const { user_role: role, info } = payload.new;
+      if (role === 'husband') setHusbandInfo(info || {}); else if (role === 'wife') setWifeInfo(info || {});
+      if (info?.signal && role !== userRole) setSpouseSignal(info.signal);
+    }).on('broadcast', { event: 'nav-trigger' }, ({ payload }) => {
+      if (payload.sender !== userRole && payload.navId !== lastNavIdRef.current) { lastNavIdRef.current = payload.navId; setActiveTab(payload.tab); }
+    }).on('broadcast', { event: 'card-game-call' }, ({ payload }) => {
+      if (payload.sender !== userRole) sendNativeNotification(`대화 초대 💌`, `${payload.sender === 'husband' ? '남편' : '아내'}님이 대화를 기다리고 있어요!`, 'cardGameQuestion');
+    }).on('broadcast', { event: 'secret-answered' }, ({ payload }) => {
+      if (payload.sender !== userRole) setSpouseSecretAnswer(payload.text);
+    }).subscribe((status) => { 
+      if (status === 'SUBSCRIBED') { setSyncStatus('SUBSCRIBED'); setMainChannel(channel); } 
+      else if (status === 'CLOSED' || status === 'CHANNEL_ERROR') setSyncStatus('DISCONNECTED');
     });
-
-    channel
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, payload => {
-        if (!payload.new || payload.new.couple_id?.toLowerCase() !== normalizedCode) return;
-        const { user_role: role, info } = payload.new;
-        if (role === 'husband') setHusbandInfo(info || {}); 
-        else if (role === 'wife') setWifeInfo(info || {});
-        if (info?.signal && role !== userRole) setSpouseSignal(info.signal);
-      })
-      .on('broadcast', { event: 'nav-trigger' }, ({ payload }) => {
-        if (payload.sender !== userRole && payload.navId !== lastNavIdRef.current) { 
-          lastNavIdRef.current = payload.navId; 
-          setActiveTab(payload.tab); 
-        }
-      })
-      .on('broadcast', { event: 'card-game-call' }, ({ payload }) => {
-        if (payload.sender !== userRole) sendNativeNotification(`대화 초대 💌`, `${payload.sender === 'husband' ? '남편' : '아내'}님이 대화를 기다리고 있어요!`, 'cardGameQuestion');
-      })
-      .on('broadcast', { event: 'secret-answered' }, ({ payload }) => {
-        if (payload.sender !== userRole) setSpouseSecretAnswer(payload.text);
-      })
-      .subscribe((status) => { 
-        if (status === 'SUBSCRIBED') { 
-          setSyncStatus('SUBSCRIBED'); 
-          setMainChannel(channel); 
-          console.log(`🔗 Realtime Synced: ${normalizedCode}`);
-        } else if (status === 'CLOSED' || status === 'CHANNEL_ERROR') {
-          setSyncStatus('DISCONNECTED');
-          console.warn("⚠️ Realtime link unstable, attempting to recover...");
-          // No hard retry here to avoid loops, useEffect dependency will naturally trigger re-sub on state changes
-        }
-      });
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    return () => { supabase.removeChannel(channel); };
   }, [user, coupleCode, userRole, supabase]);
 
   return (
     <div className="h-full flex flex-col relative w-full" style={{ '--gold': appTheme.primary, '--gold-glow': `${appTheme.primary}40`, background: appTheme.bg }}>
       {loading && (
         <div className="fixed inset-0 flex flex-col items-center justify-center z-[99999] font-black" style={{ background: '#FDFCF0' }}>
-          <motion.div 
-            animate={{ scale: [1, 1.1, 1], opacity: [0.5, 1, 0.5] }}
-            transition={{ duration: 2, repeat: Infinity }}
-            style={{ marginBottom: '20px' }}
-          >
-            <RefreshCw size={50} className="animate-spin" color="#D4AF37" />
-          </motion.div>
+          <RefreshCw size={50} className="animate-spin" color="#D4AF37" style={{ marginBottom: '20px' }} />
           <p style={{ color: '#D4AF37', fontSize: '14px', letterSpacing: '2px', fontWeight: 900 }}>HEART SYNCING...</p>
         </div>
       )}
-      
       {!loading && !session && !isAdmin && (
-        <AuthView 
-          onLogoClick={handleLogoClick}
-          showAdminLogin={showAdminLogin}
-          setShowAdminLogin={setShowAdminLogin}
-          setUser={setUser}
-          setSession={setSession}
-          setIsAdmin={setIsAdmin}
-          userRole={userRole} 
-          setUserRole={setUserRole} 
-          onFinish={handleOnboardingFinish} 
-        />
+        <AuthView onLogoClick={() => setLogoClickCount(c => c + 1)} showAdminLogin={showAdminLogin} setShowAdminLogin={setShowAdminLogin} setUser={setUser} setSession={setSession} setIsAdmin={setIsAdmin} userRole={userRole} setUserRole={setUserRole} onFinish={handleOnboardingFinish} />
       )}
-
       {!loading && (session || isAdmin) && !isSetupDone && (
         <OnboardingView user={user} userRole={userRole} setUserRole={setUserRole} onFinish={handleOnboardingFinish} />
       )}
-
       {!loading && (session || isAdmin) && isSetupDone && (
         <>
-          <div className="top-bar" style={{ 
-            visibility: (activeTab === 'heartPrayer') ? 'hidden' : 'visible',
-            borderBottom: `1px solid ${appTheme.primary}20`,
-            background: 'rgba(255, 255, 255, 0.9)', 
-            backdropFilter: 'blur(20px)', zIndex: 100
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'rgba(212, 175, 55, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <User size={16} color={appTheme.primary} />
-                </div>
-                <span style={{ fontSize: '13px', fontWeight: 900, color: appTheme.primary }}>
-                  {(userRole === 'husband' ? husbandInfo?.nickname : wifeInfo?.nickname) || (userRole === 'husband' ? '남편' : '아내')}님
-                </span>
-                <div style={{ width: 8, height: 8, borderRadius: '50%', background: syncStatus === 'SUBSCRIBED' ? '#4BD991' : '#FFBE61' }} />
-              </div>
+          <div className="top-bar" style={{ visibility: (activeTab === 'heartPrayer') ? 'hidden' : 'visible', borderBottom: `1px solid ${appTheme.primary}20`, background: 'rgba(255, 255, 255, 0.9)', backdropFilter: 'blur(20px)', zIndex: 100 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'rgba(212, 175, 55, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><User size={16} color={appTheme.primary} /></div>
+              <span style={{ fontSize: '13px', fontWeight: 900, color: appTheme.primary }}>{(userRole === 'husband' ? husbandInfo?.nickname : wifeInfo?.nickname) || (userRole === 'husband' ? '남편' : '아내')}님</span>
+              <div style={{ width: 8, height: 8, borderRadius: '50%', background: syncStatus === 'SUBSCRIBED' ? '#4BD991' : '#FFBE61' }} />
             </div>
             <div className="top-bar-icons">
-              <button className="icon-btn-top" onClick={() => setShowNotificationList(true)} style={{ position: 'relative' }}>
-                <Bell size={22} color={appTheme.primary} />
-                {notifications.some(n => !n.read) && <span style={{ position: 'absolute', top: 2, right: 2, width: 8, height: 8, background: '#FF4D6D', borderRadius: '50%', border: '2px solid white' }} />}
-              </button>
+              <button className="icon-btn-top" onClick={() => setShowNotificationList(true)} style={{ position: 'relative' }}><Bell size={22} color={appTheme.primary} />{notifications.some(n => !n.read) && <span style={{ position: 'absolute', top: 2, right: 2, width: 8, height: 8, background: '#FF4D6D', borderRadius: '50%', border: '2px solid white' }} />}</button>
               <button className="icon-btn-top" onClick={() => setActiveTab('settings')}><Settings size={22} color={appTheme.primary} /></button>
             </div>
           </div>
-
-          <main className="main-content" style={{ background: appTheme.bg, position: 'relative' }}>
-            <Suspense fallback={
-              <div className="flex items-center justify-center h-full w-full">
-                <RefreshCw size={40} className="animate-spin" color="#D4AF37" />
-              </div>
-            }>
-              <div>
-                {activeTab === 'home' && (
-                  <div key="home" style={{ width: '100%', height: '100%' }}>
-                    <HomeView 
-                      user={user} userRole={userRole} coupleCode={coupleCode} mainChannel={mainChannel} 
-                      mySignal={mySignal} setMySignal={setMySignal} spouseSignal={spouseSignal} partnerPrayers={partnerPrayers} 
-                      onNav={(tab) => {
-                        setActiveTab(tab === 'cardGame' ? 'cardGameChoice' : tab);
-                      }} 
-                      onIntimacyClick={() => setActiveTab('intimacyHub')}
-                      schedules={schedules} husbandInfo={husbandInfo} wifeInfo={wifeInfo} onUpdateMemo={updateProfileInfo} activeTab={activeTab} 
-                      spouseSecretAnswer={spouseSecretAnswer} setSpouseSecretAnswer={setSpouseSecretAnswer} 
-                      mySecretAnswer={mySecretAnswer} setMySecretAnswer={setMySecretAnswer} 
-                      isMySecretAnswered={isMySecretAnswered} setIsMySecretAnswered={setIsMySecretAnswered} 
-                      isRevealed={isSecretRevealed} setIsRevealed={setIsSecretRevealed} 
-                      notifPermission={notifPermission} supabase={supabase} updateProfileInfo={updateProfileInfo} 
-                    />
-                  </div>
-                )}
-                {activeTab === 'cardGameChoice' && (
-                  <div key="choice">
-                    <DialogueChoiceView 
-                      onSelect={(id) => {
-                        setDialogueGuideId(id);
-                        setActiveTab('cardGameGuide');
-                      }} 
-                      onBack={() => setActiveTab('home')} 
-                    />
-                  </div>
-                )}
-                {activeTab === 'cardGameQuestion' && (
-                  <div key="card">
-                    <CardGameView 
-                      coupleCode={coupleCode} 
-                      userRole={userRole} 
-                      mainChannel={mainChannel} 
-                      husbandInfo={husbandInfo} 
-                      wifeInfo={wifeInfo} 
-                      onUpdateMemo={updateProfileInfo} 
-                      onBack={() => {
-                        setDialogueGuideId('cardSync');
-                        setActiveTab('cardGameGuide');
-                      }} 
-                    />
-                  </div>
-                )}
-                {activeTab === 'imageGame' && (
-                  <div key="image">
-                    <ImageCardGameView 
-                      coupleCode={coupleCode} 
-                      userRole={userRole} 
-                      mainChannel={mainChannel} 
-                      husbandInfo={husbandInfo} 
-                      wifeInfo={wifeInfo} 
-                      onBack={() => {
-                        setDialogueGuideId('imageSync');
-                        setActiveTab('cardGameGuide');
-                      }} 
-                    />
-                  </div>
-                )}
-                {activeTab === 'cardGameGuide' && (
-                  <div key="guide">
-                    <GameGuideView gameId={dialogueGuideId} onStart={() => setActiveTab(dialogueGuideId === 'imageSync' ? 'imageGame' : 'cardGameQuestion')} onBack={() => setActiveTab('cardGameChoice')} />
-                  </div>
-                )}
-                {activeTab === 'counseling' && (
-                  <div key="c">
-                    <ChatView 
-                      userRole={userRole} 
-                      setUserRole={setUserRole}
-                      husbandInfo={husbandInfo} 
-                      setHusbandInfo={setHusbandInfo}
-                      wifeInfo={wifeInfo} 
-                      setWifeInfo={setWifeInfo}
-                      schedules={schedules} 
-                      adminStats={adminStats} 
-                      onBack={() => setActiveTab('home')} 
-                    />
-                  </div>
-                )}
-                {activeTab === 'profile' && (
-                  <div key="p">
-                    <ProfileView 
-                      user={user} 
-                      userRole={userRole} 
-                      husbandInfo={husbandInfo} 
-                      setHusbandInfo={setHusbandInfo} 
-                      wifeInfo={wifeInfo} 
-                      setWifeInfo={setWifeInfo} 
-                      coupleCode={coupleCode}
-                      isFullPage={true} 
-                    />
-                  </div>
-                )}
-                {activeTab === 'settings' && (
-                  <div key="s">
-                    <SettingsView 
-                      user={user} userRole={userRole} 
-                      husbandInfo={husbandInfo} setHusbandInfo={setHusbandInfo}
-                      wifeInfo={wifeInfo} setWifeInfo={setWifeInfo}
-                      coupleCode={coupleCode} setCoupleCode={setCoupleCode}
-                      onUpdateMemo={updateProfileInfo}
-                      onBack={() => setActiveTab('home')} 
-                      onNav={(tab) => setActiveTab(tab)}
-                      onReportClick={() => setActiveTab('report')} 
-                      onGuideClick={() => setShowGuide(true)}
-                      anniversaries={anniversaries}
-                      setAnniversaries={setAnniversaries}
-                      worshipDays={worshipDays}
-                      setWorshipDays={setWorshipDays}
-                      worshipTime={worshipTime}
-                      setWorshipTime={setWorshipTime}
-                    />
-                  </div>
-                )}
-                {activeTab === 'report' && <div key="r"><SolutionView onBack={() => setActiveTab('settings')} userRole={userRole} husbandInfo={husbandInfo} wifeInfo={wifeInfo} schedules={schedules} coupleStats={coupleStats} adminStats={adminStats} /></div>}
-                {(activeTab === 'intimacyHub' || activeTab === 'heartPrayer') && (
-                  <div key="intimacy">
-                    <IntimacyHubView 
-                      user={user}
-                      userRole={userRole} 
-                      coupleCode={coupleCode} 
-                      husbandInfo={husbandInfo} 
-                      wifeInfo={wifeInfo} 
-                      setHusbandInfo={setHusbandInfo}
-                      setWifeInfo={setWifeInfo}
-                      mainChannel={mainChannel} 
-                      supabase={supabase}
-                      partnerPrayers={partnerPrayers}
-                      setPartnerPrayers={setPartnerPrayers}
-                      updateProfileInfo={updateProfileInfo}
-                      initialTab={activeTab === 'heartPrayer' ? 'prayer' : 'garden'} 
-                      onBack={() => setActiveTab('home')} 
-                    />
-                  </div>
-                )}
-                {activeTab === 'worship' && (
-                  <div key="worship">
-                    <WorshipView 
-                      userRole={userRole} 
-                      coupleCode={coupleCode} 
-                      onAddSchedule={(s) => setSchedules(prev => [...prev.filter(oldS => oldS.id !== s.id), s])}
-                    />
-                  </div>
-                )}
-                {activeTab === 'calendar' && <div key="cal"><CalendarView schedules={schedules} onAddSchedule={s => setSchedules([...schedules, s])} onDeleteSchedule={id => setSchedules(schedules.filter(s => s.id !== id))} onBack={() => setActiveTab('home')} /></div>}
-              </div>
-            </Suspense>
+          <main className="main-content" style={{ background: appTheme.bg, position: 'relative', overflowY: 'auto' }}>
+            {activeTab === 'home' && <HomeView user={user} userRole={userRole} coupleCode={coupleCode} mainChannel={mainChannel} mySignal={mySignal} setMySignal={setMySignal} spouseSignal={spouseSignal} partnerPrayers={partnerPrayers} onNav={(tab) => setActiveTab(tab === 'cardGame' ? 'cardGameChoice' : tab)} onIntimacyClick={() => setActiveTab('intimacyHub')} schedules={schedules} husbandInfo={husbandInfo} wifeInfo={wifeInfo} onUpdateMemo={updateProfileInfo} activeTab={activeTab} spouseSecretAnswer={spouseSecretAnswer} setSpouseSecretAnswer={setSpouseSecretAnswer} mySecretAnswer={mySecretAnswer} setMySecretAnswer={setMySecretAnswer} isMySecretAnswered={isMySecretAnswered} setIsMySecretAnswered={setIsMySecretAnswered} isRevealed={isSecretRevealed} setIsRevealed={setIsSecretRevealed} notifPermission={notifPermission} supabase={supabase} updateProfileInfo={updateProfileInfo} />}
+            {activeTab === 'cardGameChoice' && <DialogueChoiceView onSelect={(id) => { setDialogueGuideId(id); setActiveTab('cardGameGuide'); }} onBack={() => setActiveTab('home')} />}
+            {activeTab === 'cardGameQuestion' && <CardGameView coupleCode={coupleCode} userRole={userRole} mainChannel={mainChannel} husbandInfo={husbandInfo} wifeInfo={wifeInfo} onUpdateMemo={updateProfileInfo} onBack={() => { setDialogueGuideId('cardSync'); setActiveTab('cardGameGuide'); }} />}
+            {activeTab === 'imageGame' && <ImageCardGameView coupleCode={coupleCode} userRole={userRole} mainChannel={mainChannel} husbandInfo={husbandInfo} wifeInfo={wifeInfo} onBack={() => { setDialogueGuideId('imageSync'); setActiveTab('cardGameGuide'); }} />}
+            {activeTab === 'cardGameGuide' && <GameGuideView gameId={dialogueGuideId} onStart={() => setActiveTab(dialogueGuideId === 'imageSync' ? 'imageGame' : 'cardGameQuestion')} onBack={() => setActiveTab('cardGameChoice')} />}
+            {activeTab === 'counseling' && <ChatView userRole={userRole} setUserRole={setUserRole} husbandInfo={husbandInfo} setHusbandInfo={setHusbandInfo} wifeInfo={wifeInfo} setWifeInfo={setWifeInfo} schedules={schedules} adminStats={adminStats} onBack={() => setActiveTab('home')} />}
+            {activeTab === 'profile' && <ProfileView user={user} userRole={userRole} husbandInfo={husbandInfo} setHusbandInfo={setHusbandInfo} wifeInfo={wifeInfo} setWifeInfo={setWifeInfo} coupleCode={coupleCode} isFullPage={true} />}
+            {activeTab === 'settings' && <SettingsView user={user} userRole={userRole} husbandInfo={husbandInfo} setHusbandInfo={setHusbandInfo} wifeInfo={wifeInfo} setWifeInfo={setWifeInfo} coupleCode={coupleCode} setCoupleCode={setCoupleCode} onUpdateMemo={updateProfileInfo} onBack={() => setActiveTab('home')} onNav={(tab) => setActiveTab(tab)} onReportClick={() => setActiveTab('report')} onGuideClick={() => setShowGuide(true)} anniversaries={anniversaries} setAnniversaries={setAnniversaries} worshipDays={worshipDays} setWorshipDays={setWorshipDays} worshipTime={worshipTime} setWorshipTime={setWorshipTime} />}
+            {activeTab === 'report' && <SolutionView onBack={() => setActiveTab('settings')} userRole={userRole} husbandInfo={husbandInfo} wifeInfo={wifeInfo} schedules={schedules} coupleStats={coupleStats} adminStats={adminStats} />}
+            {(activeTab === 'intimacyHub' || activeTab === 'heartPrayer') && <IntimacyHubView user={user} userRole={userRole} coupleCode={coupleCode} husbandInfo={husbandInfo} wifeInfo={wifeInfo} setHusbandInfo={setHusbandInfo} setWifeInfo={setWifeInfo} mainChannel={mainChannel} supabase={supabase} partnerPrayers={partnerPrayers} setPartnerPrayers={setPartnerPrayers} updateProfileInfo={updateProfileInfo} initialTab={activeTab === 'heartPrayer' ? 'prayer' : 'garden'} onBack={() => setActiveTab('home')} />}
+            {activeTab === 'worship' && <WorshipView userRole={userRole} coupleCode={coupleCode} onAddSchedule={(s) => setSchedules(prev => [...prev.filter(oldS => oldS.id !== s.id), s])} />}
+            {activeTab === 'calendar' && <CalendarView schedules={schedules} onAddSchedule={s => setSchedules([...schedules, s])} onDeleteSchedule={id => setSchedules(schedules.filter(s => s.id !== id))} onBack={() => setActiveTab('home')} />}
           </main>
-
-          <AnimatePresence>
-            {showGuide && <AppGuideView onClose={() => setShowGuide(false)} />}
-          </AnimatePresence>
-
+          {showGuide && <AppGuideView onClose={() => setShowGuide(false)} />}
           <nav className="bottom-nav">
             <NavItem active={activeTab === 'home'} onClick={() => setActiveTab('home')} icon={<Home size={22} fill={activeTab === 'home' ? appTheme.primary : "none"} color={appTheme.primary} />} label="홈" />
             <NavItem active={activeTab.startsWith('cardGame') || activeTab === 'imageGame'} onClick={() => setActiveTab('cardGameChoice')} icon={<MessageSquare size={22} fill={(activeTab.startsWith('cardGame') || activeTab === 'imageGame') ? appTheme.primary : "none"} color={appTheme.primary} />} label="대화카드" />

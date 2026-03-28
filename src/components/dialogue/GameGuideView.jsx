@@ -1,9 +1,7 @@
 import React from 'react';
-import { motion } from 'framer-motion';
 import { ChevronLeft, Sparkles, BookOpen, Infinity, Camera, Zap, Heart, ArrowRight } from 'lucide-react';
 
 const GameGuideView = ({ gameId, onStart, onBack }) => {
-  // Support both ID strings to ensure correct content matches
   const isImageGame = gameId === 'imageSync' || gameId === 'imageGame';
   
   return (
