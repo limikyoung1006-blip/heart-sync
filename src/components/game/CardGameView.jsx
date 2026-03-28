@@ -130,7 +130,6 @@ const CardGameView = ({ onBack, coupleCode, userRole }) => {
         </div>
       </div>
 
-      <div className="card-container" style={{ perspective: '1000px', marginBottom: '30px' }}>
       <div 
         className="card-container" 
         style={{ 
