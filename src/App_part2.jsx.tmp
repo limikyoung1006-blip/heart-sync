@@ -1,0 +1,120 @@
+
+/* 🔐 Login & Onboarding Views (Direct Restoration from .bak) */
+const LoginView = ({ onLogin }) => {
+  const [email, setEmail] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [password, setPassword] = useState('');
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) alert(error.message);
+    else onLogin(data.user);
+    setLoading(false);
+  };
+
+  return (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col h-full bg-[#1E293B] items-center justify-center p-8">
+      <div className="text-center mb-10">
+        <h2 className="text-3xl font-black text-white mb-2">프리미엄 로그인</h2>
+        <p className="text-[#94A3B8] font-bold">부부의 소중한 공간을 시작하세요</p>
+      </div>
+      <form onSubmit={handleLogin} className="w-full max-w-sm flex flex-col gap-4">
+        <div className="flex flex-col gap-1.5">
+          <label className="text-[11px] font-black text-[#64748B] ml-2">이메일 주소</label>
+          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full bg-[#334155] border-0 rounded-2xl p-4 text-white font-bold" placeholder="your@email.com" />
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <label className="text-[11px] font-black text-[#64748B] ml-2">비밀번호</label>
+          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full bg-[#334155] border-0 rounded-2xl p-4 text-white font-bold" placeholder="••••••••" />
+        </div>
+        <motion.button whileTap={{ scale: 0.95 }} disabled={loading} className="w-full bg-[#D4AF37] text-white py-4 rounded-2xl font-black text-lg shadow-xl shadow-[#D4AF37]/20 mt-4">
+          {loading ? "로그인 중..." : "로그인"}
+        </motion.button>
+      </form>
+    </motion.div>
+  );
+};
+
+/* 🏠 Main Application View (HEART SYNC CORE) */
+const App = () => {
+  const [view, setView] = useState('splash');
+  const [user, setUser] = useState(null);
+  const [userRole, setUserRole] = useState(null);
+  const [activeTab, setActiveTab] = useState('home');
+  const [coupleCode, setCoupleCode] = useState(null);
+  const [husbandInfo, setHusbandInfo] = useState({});
+  const [wifeInfo, setWifeInfo] = useState({});
+  const [mainChannel, setMainChannel] = useState(null);
+  
+  // Luxury UI States
+  const [notifications, setNotifications] = useState([]);
+  const [showNotificationList, setShowNotificationList] = useState(false);
+  const [showReport, setShowReport] = useState(false);
+  const [showGuidePage, setShowGuidePage] = useState(false);
+  const [incomingCardCall, setIncomingCardCall] = useState(null);
+
+  // Persistence (Settings)
+  const [worshipDays, setWorshipDays] = useState(['일']);
+  const [worshipTime, setWorshipTime] = useState('21:00');
+  const [anniversaries, setAnniversaries] = useState([]);
+  const [intimacyBg, setIntimacyBg] = useState(null);
+  const [intimacySubPage, setIntimacySubPage] = useState('main');
+
+  // SSR-Safe Scroll Logic (Fixed)
+  const scrollRef = useRef(null);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+      if (session?.user) {
+        loadUserProfile(session.user);
+      } else {
+        setView('splash');
+      }
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+      if (session?.user) {
+        loadUserProfile(session.user);
+      } else {
+        setView('splash');
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const loadUserProfile = async (currentUser) => {
+    const { data: profile } = await supabase.from('profiles').select('*').eq('id', currentUser.id).single();
+    if (profile) {
+      setUserRole(profile.user_role);
+      setCoupleCode(profile.couple_id);
+      syncCoupleData(profile.couple_id);
+      setView('home');
+    } else {
+      setView('onboarding');
+    }
+  };
+
+  const syncCoupleData = async (code) => {
+    if (!code) return;
+    const { data: profiles } = await supabase.from('profiles').select('*').eq('couple_id', code);
+    if (!profiles) return;
+    
+    profiles.forEach(p => {
+      if (p.user_role === 'husband') setHusbandInfo(p.info || {});
+      else if (p.user_role === 'wife') setWifeInfo(p.info || {});
+    });
+
+    const channel = supabase.channel(`couple-${code}`);
+    channel.on('broadcast', { event: 'card-game-call' }, (payload) => {
+      if (payload.payload.sender !== userRole) {
+        setIncomingCardCall(payload.payload);
+      }
+    }).subscribe();
+
+    setMainChannel(channel);
+  };
