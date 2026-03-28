@@ -396,11 +396,9 @@ const App = () => {
                 <RefreshCw size={40} className="animate-spin" color="#D4AF37" />
               </div>
             }>
-              <AnimatePresence>
-                {/* 🌈 Ultra-fast Rendering: No 'mode="wait"' to prevent stall death */}
-                {/* 🌈 Instant Navigation: No exit animations to save mobile GPU */}
+              <div>
                 {activeTab === 'home' && (
-                  <motion.div key="home" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={false} transition={{ duration: 0.05 }} style={{ width: '100%', height: '100%' }}>
+                  <div key="home" style={{ width: '100%', height: '100%' }}>
                     <HomeView 
                       user={user} userRole={userRole} coupleCode={coupleCode} mainChannel={mainChannel} 
                       mySignal={mySignal} setMySignal={setMySignal} spouseSignal={spouseSignal} partnerPrayers={partnerPrayers} 
@@ -416,19 +414,19 @@ const App = () => {
                       isRevealed={isSecretRevealed} setIsRevealed={setIsSecretRevealed} 
                       notifPermission={notifPermission} supabase={supabase} updateProfileInfo={updateProfileInfo} 
                     />
-                  </motion.div>
+                  </div>
                 )}
                 {activeTab === 'cardGameChoice' && (
-                  <motion.div key="choice" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={false} transition={{ duration: 0.05 }}>
+                  <div key="choice">
                     <DialogueChoiceView 
                       onSelect={(id) => setActiveTab(id === 'cardGame' ? 'cardGameQuestion' : 'imageGame')} 
                       onShowGuide={(id) => { setDialogueGuideId(id); setActiveTab('cardGameGuide'); }} 
                       onBack={() => setActiveTab('home')} 
                     />
-                  </motion.div>
+                  </div>
                 )}
                 {activeTab === 'cardGameQuestion' && (
-                  <motion.div key="card" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={false} transition={{ duration: 0.05 }}>
+                  <div key="card">
                     <CardGameView 
                       coupleCode={coupleCode} 
                       userRole={userRole} 
@@ -437,14 +435,14 @@ const App = () => {
                       wifeInfo={wifeInfo} 
                       onUpdateMemo={updateProfileInfo} 
                       onBack={() => {
-                        setDialogueGuideId('cardSync');
-                        setActiveTab('cardGameGuide');
+                        window.scrollTo(0, 0);
+                        setActiveTab('cardGameChoice');
                       }} 
                     />
-                  </motion.div>
+                  </div>
                 )}
                 {activeTab === 'imageGame' && (
-                  <motion.div key="image" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={false} transition={{ duration: 0.05 }}>
+                  <div key="image">
                     <ImageCardGameView 
                       coupleCode={coupleCode} 
                       userRole={userRole} 
@@ -452,19 +450,19 @@ const App = () => {
                       husbandInfo={husbandInfo} 
                       wifeInfo={wifeInfo} 
                       onBack={() => {
-                        setDialogueGuideId('imageSync');
-                        setActiveTab('cardGameGuide');
+                        window.scrollTo(0, 0);
+                        setActiveTab('cardGameChoice');
                       }} 
                     />
-                  </motion.div>
+                  </div>
                 )}
                 {activeTab === 'cardGameGuide' && (
-                  <motion.div key="guide" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} transition={{ duration: 0.2 }}>
+                  <div key="guide">
                     <GameGuideView gameId={dialogueGuideId} onStart={() => setActiveTab(dialogueGuideId === 'imageSync' ? 'imageGame' : 'cardGameQuestion')} onBack={() => setActiveTab('cardGameChoice')} />
-                  </motion.div>
+                  </div>
                 )}
                 {activeTab === 'counseling' && (
-                  <motion.div key="c" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}>
+                  <div key="c">
                     <ChatView 
                       userRole={userRole} 
                       setUserRole={setUserRole}
@@ -476,10 +474,10 @@ const App = () => {
                       adminStats={adminStats} 
                       onBack={() => setActiveTab('home')} 
                     />
-                  </motion.div>
+                  </div>
                 )}
                 {activeTab === 'profile' && (
-                  <motion.div key="p" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}>
+                  <div key="p">
                     <ProfileView 
                       user={user} 
                       userRole={userRole} 
@@ -490,10 +488,10 @@ const App = () => {
                       coupleCode={coupleCode}
                       isFullPage={true} 
                     />
-                  </motion.div>
+                  </div>
                 )}
                 {activeTab === 'settings' && (
-                  <motion.div key="s" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}>
+                  <div key="s">
                     <SettingsView 
                       user={user} userRole={userRole} 
                       husbandInfo={husbandInfo} setHusbandInfo={setHusbandInfo}
@@ -511,11 +509,11 @@ const App = () => {
                       worshipTime={worshipTime}
                       setWorshipTime={setWorshipTime}
                     />
-                  </motion.div>
+                  </div>
                 )}
-                {activeTab === 'report' && <motion.div key="r" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}><SolutionView onBack={() => setActiveTab('settings')} userRole={userRole} husbandInfo={husbandInfo} wifeInfo={wifeInfo} schedules={schedules} coupleStats={coupleStats} adminStats={adminStats} /></motion.div>}
+                {activeTab === 'report' && <div key="r"><SolutionView onBack={() => setActiveTab('settings')} userRole={userRole} husbandInfo={husbandInfo} wifeInfo={wifeInfo} schedules={schedules} coupleStats={coupleStats} adminStats={adminStats} /></div>}
                 {(activeTab === 'intimacyHub' || activeTab === 'heartPrayer') && (
-                  <motion.div key="intimacy" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}>
+                  <div key="intimacy">
                     <IntimacyHubView 
                       user={user}
                       userRole={userRole} 
@@ -532,19 +530,19 @@ const App = () => {
                       initialTab={activeTab === 'heartPrayer' ? 'prayer' : 'garden'} 
                       onBack={() => setActiveTab('home')} 
                     />
-                  </motion.div>
+                  </div>
                 )}
                 {activeTab === 'worship' && (
-                  <motion.div key="worship" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}>
+                  <div key="worship">
                     <WorshipView 
                       userRole={userRole} 
                       coupleCode={coupleCode} 
                       onAddSchedule={(s) => setSchedules(prev => [...prev.filter(oldS => oldS.id !== s.id), s])}
                     />
-                  </motion.div>
+                  </div>
                 )}
-                {activeTab === 'calendar' && <motion.div key="cal" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}><CalendarView schedules={schedules} onAddSchedule={s => setSchedules([...schedules, s])} onDeleteSchedule={id => setSchedules(schedules.filter(s => s.id !== id))} onBack={() => setActiveTab('home')} /></motion.div>}
-              </AnimatePresence>
+                {activeTab === 'calendar' && <div key="cal"><CalendarView schedules={schedules} onAddSchedule={s => setSchedules([...schedules, s])} onDeleteSchedule={id => setSchedules(schedules.filter(s => s.id !== id))} onBack={() => setActiveTab('home')} /></div>}
+              </div>
             </Suspense>
           </main>
 
