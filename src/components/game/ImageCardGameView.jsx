@@ -116,69 +116,154 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo
       </div>
 
       {gameMode === 'classic' ? (
-        <div style={{ width: '100%' }}>
-          <div style={{ width: '100%', height: '420px', position: 'relative', marginBottom: '30px' }}>
-            <div onClick={() => { if (!isMyTurn) return; setIsFlipped(!isFlipped); setTurnOwner(userRole); }} style={{ width: '100%', height: '100%', position: 'relative' }}>
-               {!isFlipped ? (
-                 <div style={{ position: 'absolute', inset: 0, background: '#2D1F08', borderRadius: '32px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', border: '2px solid #AB47BC' }}>
-                    <p style={{ fontSize: '11px', fontWeight: 800, color: '#AB47BC', letterSpacing: '4px' }}>IMAGE CARD</p>
-                    <Sparkles size={40} color="#AB47BC" />
-                 </div>
-               ) : (
-                 <div style={{ position: 'absolute', inset: 0, background: 'white', borderRadius: '32px', border: '2.5px solid #AB47BC', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-                    <div style={{ width: '100%', height: '70%', position: 'relative', background: '#F9F5FF' }}>
-                      {isImageLoading && <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Sparkles color="#AB47BC" size={32} /></div>}
-                      <img src={currentQuestion?.image} style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: isImageLoading ? 0 : 1 }} onLoad={() => setIsImageLoading(false)} />
-                    </div>
-                    <div style={{ padding: '20px', flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
-                      <p style={{ fontSize: '16px', fontWeight: 900, color: '#2D1F08', lineHeight: 1.5 }}>{currentQuestion?.question}</p>
-                    </div>
-                 </div>
-               )}
+        <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          <div className="card-container" style={{ 
+            perspective: '1200px', 
+            marginBottom: '30px', 
+            width: '100%', 
+            maxWidth: '300px',
+            height: '420px',
+            display: 'flex', 
+            justifyContent: 'center',
+            alignItems: 'center'
+          }}>
+            <div 
+              className={`talking-card ${isFlipped ? 'flipped' : ''}`} 
+              onClick={() => { if (!isMyTurn) return; setIsFlipped(!isFlipped); setTurnOwner(userRole); }}
+            >
+              {/* Card Front: IMAGE CARD logo side */}
+              <div className="card-face card-front" style={{ border: '3px solid #AB47BC', background: '#2D1F08' }}>
+                <p style={{ fontSize: '12px', fontWeight: 900, color: '#AB47BC', letterSpacing: '6px', marginBottom: '20px' }}>IMAGE CARD</p>
+                <Sparkles size={50} color="#AB47BC" />
+                <div style={{ marginTop: '25px', width: '50px', height: '2px', background: '#AB47BC', opacity: 0.4 }} />
+              </div>
+
+              {/* Card Back: The actual image */}
+              <div className="card-face card-back" style={{ border: '3px solid #AB47BC', background: 'white', padding: 0, overflow: 'hidden' }}>
+                <div style={{ width: '100%', height: '75%', position: 'relative', background: '#F9F5FF' }}>
+                  {isImageLoading && <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Sparkles className="animate-pulse" color="#AB47BC" size={32} /></div>}
+                  <img 
+                    src={currentQuestion?.image} 
+                    style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: isImageLoading ? 0 : 1, transition: 'opacity 0.3s' }} 
+                    onLoad={() => setIsImageLoading(false)} 
+                    alt="game card"
+                  />
+                </div>
+                <div style={{ padding: '15px', flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center', background: 'white' }}>
+                  <p style={{ fontSize: '15px', fontWeight: 900, color: '#2D1F08', lineHeight: 1.5, wordBreak: 'keep-all' }}>{currentQuestion?.question}</p>
+                </div>
+              </div>
             </div>
           </div>
-          <button disabled={!isMyTurn || isImageLoading} onClick={() => drawNewCard()} style={{ width: '100%', padding: '18px', borderRadius: '22px', background: (isMyTurn && !isImageLoading) ? '#AB47BC' : '#CCC', color: 'white', fontWeight: 900, border: 'none' }}>다른 이미지 뽑기</button>
+          <button 
+            disabled={!isMyTurn || isImageLoading} 
+            onClick={() => drawNewCard()} 
+            style={{ 
+              width: '100%', 
+              maxWidth: '280px', 
+              padding: '18px', 
+              borderRadius: '22px', 
+              background: (isMyTurn && !isImageLoading) ? '#AB47BC' : '#E5E7EB', 
+              color: (isMyTurn && !isImageLoading) ? 'white' : '#9CA3AF', 
+              fontWeight: 900, 
+              border: 'none',
+              boxShadow: isMyTurn ? '0 10px 20px rgba(171, 71, 188, 0.2)' : 'none' 
+            }}
+          >
+            {isMyTurn ? "다른 이미지 뽑기" : "배우자의 턴입니다"}
+          </button>
         </div>
       ) : (
-        <div style={{ width: '100%' }}>
+        <div style={{ width: '100%', display: 'flex', flexDirection: 'column' }}>
            {!isSharing ? (
              <>
-               <div style={{ background: '#F9F5FF', padding: '20px', borderRadius: '25px', marginBottom: '20px', textAlign: 'center' }}>
-                 <h3 style={{ fontSize: '17px', fontWeight: 900, color: '#2D1F08' }}>"{mainQuestion}"</h3>
-                 <p style={{ fontSize: '12px', color: '#AB47BC', marginTop: '8px', fontWeight: 800 }}>어울리는 사진 2장을 선택해 주세요.</p>
+               <div style={{ background: '#F9F5FF', padding: '18px', borderRadius: '22px', marginBottom: '15px', textAlign: 'center', border: '1px solid rgba(171, 71, 188, 0.1)' }}>
+                 <h3 style={{ fontSize: '16px', fontWeight: 900, color: '#2D1F08', marginBottom: '5px' }}>"{mainQuestion}"</h3>
+                 <p style={{ fontSize: '12px', color: '#8E24AA', fontWeight: 800 }}>어울리는 사진 2장을 선택해 주세요.</p>
                </div>
-               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '10px', marginBottom: '20px' }}>
+               
+               <div style={{ 
+                 display: 'grid', 
+                 gridTemplateColumns: 'repeat(2, 1fr)', 
+                 gap: '12px', 
+                 marginBottom: '20px',
+                 maxHeight: '400px',
+                 overflowY: 'auto',
+                 padding: '5px'
+               }}>
                  {imagePool.map((card, idx) => (
-                    <div key={idx} onClick={() => { if(!isMyTurn) return; setSelectedIndices(prev => prev.includes(idx) ? prev.filter(i => i !== idx) : (prev.length < 2 ? [...prev, idx] : [prev[1], idx])); }} style={{ position: 'relative', height: '140px', borderRadius: '18px', overflow: 'hidden', border: selectedIndices.includes(idx) ? '4px solid #AB47BC' : '1px solid #EEE' }}>
-                      <img src={card.image} style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: selectedIndices.includes(idx) ? 0.7 : 1 }} loading="lazy" />
-                      {selectedIndices.includes(idx) && <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><div style={{ background: '#AB47BC', color: 'white', borderRadius: '50%', width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900 }}>{selectedIndices.indexOf(idx) + 1}</div></div>}
+                    <div 
+                      key={idx} 
+                      onClick={() => { if(!isMyTurn) return; setSelectedIndices(prev => prev.includes(idx) ? prev.filter(i => i !== idx) : (prev.length < 2 ? [...prev, idx] : [prev[1], idx])); }} 
+                      style={{ 
+                        position: 'relative', 
+                        height: '130px', 
+                        borderRadius: '16px', 
+                        overflow: 'hidden', 
+                        cursor: 'pointer',
+                        border: selectedIndices.includes(idx) ? '4px solid #AB47BC' : '2px solid transparent',
+                        boxShadow: selectedIndices.includes(idx) ? '0 4px 15px rgba(171, 71, 188, 0.3)' : '0 2px 8px rgba(0,0,0,0.05)'
+                      }}
+                    >
+                      <img src={card.image} style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: selectedIndices.includes(idx) ? 0.6 : 1 }} loading="lazy" />
+                      {selectedIndices.includes(idx) && (
+                        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(171, 71, 188, 0.2)' }}>
+                          <div style={{ background: '#AB47BC', color: 'white', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: '14px', border: '2px solid white' }}>
+                            {selectedIndices.indexOf(idx) + 1}
+                          </div>
+                        </div>
+                      )}
                     </div>
                  ))}
                </div>
-                <div style={{ display: 'flex', gap: '10px', width: '100%' }}>
-                  <button onClick={() => initPick2Mode()} disabled={!isMyTurn} style={{ flex: 1, padding: '15px', borderRadius: '18px', background: 'white', border: '1px solid #AB47BC', color: '#AB47BC', fontWeight: 900 }}>다시 뽑기</button>
-                  <button onClick={() => { setSharedCards(selectedIndices.map(i => imagePool[i])); setIsSharing(true); setSessionCardCount(prev => prev + 1); if (sessionCardCount+1 >= 10) setShowFinishModal(true); }} disabled={!isMyTurn || selectedIndices.length < 2} style={{ flex: 2, padding: '15px', borderRadius: '18px', background: '#AB47BC', color: 'white', fontWeight: 900, opacity: selectedIndices.length === 2 ? 1 : 0.5 }}>이미지 보여주기</button>
+               
+                <div style={{ display: 'flex', gap: '10px', width: '100%', marginBottom: '20px' }}>
+                  <button onClick={() => initPick2Mode()} disabled={!isMyTurn} style={{ flex: 1, padding: '16px', borderRadius: '18px', background: 'white', border: '2px solid #AB47BC', color: '#AB47BC', fontWeight: 900, fontSize: '14px' }}>다시 뽑기</button>
+                  <button 
+                    onClick={() => { setSharedCards(selectedIndices.map(i => imagePool[i])); setIsSharing(true); setSessionCardCount(prev => prev + 1); if (sessionCardCount+1 >= 10) setShowFinishModal(true); }} 
+                    disabled={!isMyTurn || selectedIndices.length < 2} 
+                    style={{ 
+                      flex: 2, 
+                      padding: '16px', 
+                      borderRadius: '18px', 
+                      background: '#AB47BC', 
+                      color: 'white', 
+                      fontWeight: 900, 
+                      fontSize: '15px',
+                      opacity: selectedIndices.length === 2 ? 1 : 0.4,
+                      boxShadow: selectedIndices.length === 2 ? '0 8px 20px rgba(171, 71, 188, 0.3)' : 'none'
+                    }}
+                  >
+                    이미지 보여주기
+                  </button>
                 </div>
              </>
            ) : (
-             <div style={{ textAlign: 'center' }}>
-               <div style={{ background: '#FDFCF0', padding: '30px 20px', borderRadius: '30px', border: '2px solid #F9F5FF' }}>
-                 <h3 style={{ fontSize: '17px', fontWeight: 900, color: '#2D1F08' }}>{mainQuestion}</h3>
-                 <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', margin: '20px 0' }}>
+             <div style={{ textAlign: 'center', paddingBottom: '30px' }}>
+               <div style={{ background: '#FDFCF0', padding: '30px 20px', borderRadius: '30px', border: '2px solid #F3E5F5', boxShadow: '0 10px 30px rgba(0,0,0,0.05)' }}>
+                 <p style={{ fontSize: '13px', color: '#888', fontWeight: 700, marginBottom: '10px' }}>질문</p>
+                 <h3 style={{ fontSize: '18px', fontWeight: 900, color: '#2D1F08', marginBottom: '20px' }}>"{mainQuestion}"</h3>
+                 <div style={{ display: 'flex', gap: '15px', justifyContent: 'center', margin: '25px 0' }}>
                    {sharedCards.map((card, idx) => (
-                     <div key={idx} style={{ width: '120px', height: '160px', borderRadius: '15px', overflow: 'hidden' }}>
+                     <div key={idx} style={{ width: '130px', height: '170px', borderRadius: '18px', overflow: 'hidden', boxShadow: '0 8px 20px rgba(0,0,0,0.15)', border: '3px solid white' }}>
                        <img src={card.image} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                      </div>
                    ))}
                  </div>
-                 <p style={{ fontSize: '14px', fontWeight: 800, color: '#AB47BC' }}>이미지를 선택한 이유를 설명해 보세요. 😊</p>
+                 <p style={{ fontSize: '15px', fontWeight: 800, color: '#AB47BC', marginTop: '15px' }}>이미지를 선택한 이유를 설명해 보세요. 😊</p>
                </div>
-               <button onClick={() => initPick2Mode()} disabled={!isMyTurn} style={{ marginTop: '25px', width: '100%', padding: '18px', borderRadius: '22px', background: '#AB47BC', color: 'white', fontWeight: 900 }}>새 대화 시작하기</button>
+               <button 
+                 onClick={() => { setIsSharing(false); initPick2Mode(); }} 
+                 disabled={!isMyTurn} 
+                 style={{ marginTop: '25px', width: '100%', maxWidth: '280px', padding: '18px', borderRadius: '22px', background: '#2D1F08', color: 'white', fontWeight: 900, border: 'none', boxShadow: '0 10px 25px rgba(0,0,0,0.15)' }}
+               >
+                 새 대화 시작하기
+               </button>
              </div>
            )}
         </div>
       )}
-      <p style={{ marginTop: '30px', fontSize: '11px', color: '#999', fontWeight: 700 }}>* 아래로 스크롤이 가능합니다.</p>
+      <p style={{ marginTop: '20px', fontSize: '11px', color: '#999', fontWeight: 700, opacity: 0.6 }}>* 화면을 위아래로 스크롤할 수 있습니다.</p>
     </div>
   );
 };

@@ -7,12 +7,7 @@ const CardGameView = ({ onBack, coupleCode, userRole }) => {
   const [category, setCategory] = useState('일상');
   const [isFlipped, setIsFlipped] = useState(false);
   const [currentQuestion, setCurrentQuestion] = useState(null);
-  const [turnOwner, setTurnOwner] = useState(null);
-  const [sessionCardCount, setSessionCardCount] = useState(0);
-  const [showFinishModal, setShowFinishModal] = useState(false);
-  const [history, setHistory] = useState([]);
-
-  const isMounted = useRef(true);
+  const [showTurnWarning, setShowTurnWarning] = useState(false);
 
   // Initialize and check for existing state
   useEffect(() => {
@@ -38,7 +33,11 @@ const CardGameView = ({ onBack, coupleCode, userRole }) => {
 
   // Handle Turn and Drawing
   const drawNewCard = (targetCat = null) => {
-    if (turnOwner && turnOwner !== userRole) return;
+    if (turnOwner && turnOwner !== userRole) {
+      setShowTurnWarning(true);
+      setTimeout(() => setShowTurnWarning(false), 2000);
+      return;
+    }
     const activeCat = targetCat || category;
     const pool = CARD_DATA.filter(q => q.category === activeCat);
     const available = pool.filter(q => !history.includes(q.id));
@@ -66,7 +65,8 @@ const CardGameView = ({ onBack, coupleCode, userRole }) => {
 
   const toggleFlip = () => {
     if (turnOwner && turnOwner !== userRole) {
-      alert(`현재는 ${turnOwner === 'husband' ? '남편' : '아내'}님의 차례입니다.`);
+      setShowTurnWarning(true);
+      setTimeout(() => setShowTurnWarning(false), 2000);
       return;
     }
     const nextFlip = !isFlipped;
@@ -123,7 +123,27 @@ const CardGameView = ({ onBack, coupleCode, userRole }) => {
         </div>
       </div>
 
-      <div style={{ marginBottom: '25px', textAlign: 'center' }}>
+      <div style={{ marginBottom: '25px', textAlign: 'center', position: 'relative' }}>
+        {showTurnWarning && (
+          <div style={{ 
+            position: 'absolute', 
+            top: '-50px', 
+            left: '50%', 
+            transform: 'translateX(-50%)', 
+            background: 'rgba(45, 31, 8, 0.95)', 
+            color: 'white', 
+            padding: '10px 20px', 
+            borderRadius: '15px', 
+            fontSize: '13px', 
+            fontWeight: 800, 
+            whiteSpace: 'nowrap',
+            zIndex: 100,
+            boxShadow: '0 10px 25px rgba(0,0,0,0.2)',
+            animation: 'fadeInOut 2s ease-in-out'
+          }}>
+             ⚠️ {turnOwner === 'husband' ? '남편' : '아내'}님이 답변 중입니다...
+          </div>
+        )}
         <p style={{ letterSpacing: '4px', color: '#8B6500', fontWeight: 900, fontSize: '11px', opacity: 0.7, marginBottom: '5px' }}>CHOOSE A CARD TOGETHER</p>
         <div style={{ display: 'inline-block', background: 'rgba(212, 175, 55, 0.15)', padding: '6px 16px', borderRadius: '12px', border: '1px solid rgba(212, 175, 55, 0.3)' }}>
           <span style={{ fontSize: '12px', color: '#8B6500', fontWeight: 900 }}>현재 답변 턴: {turnOwner ? (turnOwner === 'husband' ? '남편 👨' : '아내 👩') : '자유 선택 🔄'}</span>
