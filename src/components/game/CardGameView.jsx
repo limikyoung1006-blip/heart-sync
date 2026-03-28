@@ -211,26 +211,6 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo }) =
         position: 'relative',
         border: '1px solid rgba(212, 175, 55, 0.2)'
       }}>
-        {showTurnWarning && (
-          <div style={{ 
-            position: 'absolute', 
-            top: '-50px', 
-            left: '50%', 
-            transform: 'translateX(-50%)', 
-            background: 'rgba(45, 31, 8, 0.95)', 
-            color: 'white', 
-            padding: '10px 20px', 
-            borderRadius: '15px', 
-            fontSize: '13px', 
-            fontWeight: 800, 
-            whiteSpace: 'nowrap',
-            zIndex: 100,
-            boxShadow: '0 10px 25px rgba(0,0,0,0.2)',
-            animation: 'fadeInOut 2s ease-in-out'
-          }}>
-             ⚠️ {turnOwner === 'husband' ? '남편' : '아내'}님이 답변 중입니다...
-          </div>
-        )}
         <span style={{ fontSize: '14px', fontWeight: 900, color: isMyTurn ? '#8B6500' : '#8A60FF' }}>
           {isMyTurn 
             ? "✨ 당신의 턴입니다! 마음을 나눠주세요" 
@@ -278,7 +258,7 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo }) =
                 <div style={{ position: 'relative', zIndex: 2, marginTop: '25px', width: '60px', height: '2px', background: 'linear-gradient(90deg, transparent, #D4AF37, transparent)' }} />
                 
                 <div style={{ position: 'relative', zIndex: 2, marginTop: '100px' }}>
-                   <span style={{ background: '#D4AF37', color: 'white', padding: '8px 20px', borderRadius: '12px', fontSize: '14px', fontWeight: 900, boxShadow: '0 4px 10px rgba(0,0,0,0.1)' }}>답변완료/턴</span>
+                   <span style={{ background: '#D4AF37', color: 'white', padding: '8px 20px', borderRadius: '100px', fontSize: '14px', fontWeight: 900, boxShadow: '0 4px 10px rgba(0,0,0,0.1)' }}>답변완료/턴</span>
                 </div>
               </>
             )}
@@ -327,34 +307,35 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo }) =
             }}>
               <span style={{ fontSize: '13px', color: '#8A60FF', fontWeight: 900, display: 'block' }}>
                 서로의 눈을 즐겁게 바라보며 💬<br/>
-                <small style={{ opacity: 0.7, fontSize: '10px', fontWeight: 700 }}>대화를 마친 후 답변완료 버튼을 누르세요</small>
+                <small style={{ opacity: 0.7, fontSize: '10px', fontWeight: 700 }}>대화를 마친 후 완료 버튼을 누르세요</small>
               </span>
             </div>
 
-            <button 
-              onClick={(e) => { e.stopPropagation(); passTurn(); }} 
-              disabled={!isMyTurn}
-              style={{ 
-                marginTop: '15px',
-                width: '100%',
-                padding: '14px',
-                borderRadius: '16px',
-                background: isMyTurn ? '#8A60FF' : '#E5E7EB',
-                color: 'white',
-                fontWeight: 900,
-                fontSize: '14px',
-                border: 'none',
-                boxShadow: isMyTurn ? '0 5px 15px rgba(138, 96, 255, 0.2)' : 'none'
-              }}
-            >
-              답변완료 / 턴 넘기기
-            </button>
+            {isMyTurn && (
+              <button 
+                onClick={(e) => { e.stopPropagation(); passTurn(); }} 
+                style={{ 
+                  marginTop: '15px',
+                  width: 'fit-content',
+                  padding: '8px 20px',
+                  borderRadius: '100px',
+                  background: '#8A60FF',
+                  color: 'white',
+                  fontWeight: 900,
+                  fontSize: '14px',
+                  border: 'none',
+                  boxShadow: '0 5px 15px rgba(138, 96, 255, 0.2)'
+                }}
+              >
+                답변완료/턴
+              </button>
+            )}
           </div>
         </div>
       </div>
 
-      <div style={{ textAlign: 'center', marginBottom: '15px' }}>
-        <p style={{ fontSize: '13px', color: '#2D1F08', fontWeight: 800 }}>{isMyTurn ? "카드를 넘기거나 새로 뽑을 수 있습니다" : "배우자가 대화 중입니다"}</p>
+      <div style={{ textAlign: 'center', height: '20px', marginBottom: '15px' }}>
+        {isMyTurn && <p style={{ fontSize: '13px', color: '#2D1F08', fontWeight: 800 }}>새 주제를 고르거나 질문을 바꾸세요</p>}
       </div>
 
       <button 
