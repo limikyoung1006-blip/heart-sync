@@ -58,11 +58,27 @@ const App = () => {
   const [adminStats, setAdminStats] = useState({ users: 0, couples: 0, activeSessions: 0, recentActivities: [] });
   
   const [spouseSecretAnswer, setSpouseSecretAnswer] = useState(() => localStorage.getItem('spouseSecretAnswer')); 
-  
-  // 🚀 Global UI Stability: Always reset scroll on page change
+
+  // 📱 Mobile Stability: Centralized scroll and history manager
   useEffect(() => {
-    window.scrollTo(0, 0);
+    if (!activeTab) return;
+    const scrollTimer = setTimeout(() => {
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+      const mainArea = document.querySelector('.main-content');
+      if (mainArea) mainArea.scrollTop = 0;
+    }, 10);
+    const historyTimer = setTimeout(() => {
+      try {
+        const currentState = window.history.state;
+        if (!currentState || currentState.tab !== activeTab) {
+          if (activeTab === 'cardGameGuide') window.history.replaceState({ tab: activeTab }, '', '');
+          else window.history.pushState({ tab: activeTab }, '', '');
+        }
+      } catch (e) { console.warn("History sync safely skipped:", e); }
+    }, 80);
+    return () => { clearTimeout(scrollTimer); clearTimeout(historyTimer); };
   }, [activeTab]);
+
   const [mySecretAnswer, setMySecretAnswer] = useState(() => localStorage.getItem('mySecretAnswer') || ""); 
   const [isMySecretAnswered, setIsMySecretAnswered] = useState(() => localStorage.getItem('isMySecretAnswered') === 'true'); 
   const [isSecretRevealed, setIsSecretRevealed] = useState(() => localStorage.getItem('isSecretRevealed') === 'true'); 
@@ -94,41 +110,17 @@ const App = () => {
   const [dialogueTab, setDialogueTab] = useState('choice'); 
   const [dialogueGuideId, setDialogueGuideId] = useState(null);
 
-  // 📱 Mobile Fix: Force scroll to top on tab change to prevent 'white screen' scroll artifacts
-  useEffect(() => {
-    window.scrollTo(0, 0);
-    const mainArea = document.querySelector('.main-content');
-    if (mainArea) mainArea.scrollTop = 0;
-  }, [activeTab]);
-
   // Sync state with browser history for mobile back button support
   useEffect(() => {
     const handlePopState = (event) => {
       if (event.state && event.state.tab) {
         setActiveTab(event.state.tab);
         if (event.state.dialogueTab) setDialogueTab(event.state.dialogueTab);
-      } else {
-        setActiveTab('home');
-      }
+      } else { setActiveTab('home'); }
     };
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
-
-  // Use a safer history push that doesn't block the UI thread during navigation transitions
-  useEffect(() => {
-    const pushTimer = setTimeout(() => {
-      try {
-        const currentState = window.history.state;
-        if (!currentState || currentState.tab !== activeTab) {
-          window.history.pushState({ tab: activeTab }, '', '');
-        }
-      } catch (e) {
-        console.warn("History push failed safely:", e);
-      }
-    }, 100);
-    return () => clearTimeout(pushTimer);
-  }, [activeTab]);
 
   useEffect(() => {
     try {
@@ -403,7 +395,6 @@ const App = () => {
                       user={user} userRole={userRole} coupleCode={coupleCode} mainChannel={mainChannel} 
                       mySignal={mySignal} setMySignal={setMySignal} spouseSignal={spouseSignal} partnerPrayers={partnerPrayers} 
                       onNav={(tab) => {
-                        window.scrollTo(0, 0);
                         setActiveTab(tab === 'cardGame' ? 'cardGameChoice' : tab);
                       }} 
                       onIntimacyClick={() => setActiveTab('intimacyHub')}
@@ -420,7 +411,6 @@ const App = () => {
                   <div key="choice">
                     <DialogueChoiceView 
                       onSelect={(id) => {
-                        window.scrollTo(0, 0);
                         setDialogueGuideId(id);
                         setActiveTab('cardGameGuide');
                       }} 
@@ -438,7 +428,6 @@ const App = () => {
                       wifeInfo={wifeInfo} 
                       onUpdateMemo={updateProfileInfo} 
                       onBack={() => {
-                        window.scrollTo(0, 0);
                         setDialogueGuideId('cardSync');
                         setActiveTab('cardGameGuide');
                       }} 
@@ -454,7 +443,6 @@ const App = () => {
                       husbandInfo={husbandInfo} 
                       wifeInfo={wifeInfo} 
                       onBack={() => {
-                        window.scrollTo(0, 0);
                         setDialogueGuideId('imageSync');
                         setActiveTab('cardGameGuide');
                       }} 
