@@ -5,7 +5,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-// Import All Page Components (Full Original Set)
+// Import All Page Components (Full Original Path Calibration)
 import HomeView from './components/home/HomeView';
 import CardGameView from './components/game/CardGameView';
 import ImageCardGameView from './components/game/ImageCardGameView';
@@ -13,11 +13,12 @@ import SettingsView from './components/settings/SettingsView';
 import IntimacyHubView from './components/intimacy/IntimacyHubView';
 import AdminView from './components/admin/AdminView';
 import AppGuideView from './components/ui/AppGuideView';
+import ChatView from './components/counseling/ChatView'; // 👈 AI 하티 진짜 상담 화면
 
 const NavItem = ({ active, onClick, icon, label }) => (
   <div className={`nav-item ${active ? 'active' : ''}`} onClick={onClick}>
     <div className="nav-icon-wrapper">
-      {React.cloneElement(icon, { size: 22 })}
+       {React.cloneElement(icon, { size: 22 })}
     </div>
     <span>{label}</span>
   </div>
@@ -42,6 +43,15 @@ const App = () => {
         loadUserProfile(session.user);
       }
     });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+         setUser(session.user);
+         loadUserProfile(session.user);
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   const loadUserProfile = async (currentUser) => {
@@ -83,7 +93,13 @@ const App = () => {
             />
           )}
           {activeTab === 'cardGame' && <CardGameView onBack={() => handleNav('home')} />}
-          {activeTab === 'counseling' && <ImageCardGameView onBack={() => handleNav('home')} />}
+          
+          {/* 👈 이미지 대화용 전용 탭/뷰 연결 (사라졌던 기능의 부활!) */}
+          {activeTab === 'imageCardGame' && <ImageCardGameView onBack={() => handleNav('home')} />}
+          
+          {/* 👈 AI 하티 전용 탭 (ChatView 연결로 상담 기능 부활!) */}
+          {activeTab === 'counseling' && <ChatView onBack={() => handleNav('home')} />}
+          
           {activeTab === 'heartPrayer' && <IntimacyHubView onBack={() => handleNav('home')} />}
           {activeTab === 'settings' && (
              <SettingsView userRole={userRole} husbandInfo={husbandInfo} wifeInfo={wifeInfo} onNav={handleNav} />
@@ -96,12 +112,16 @@ const App = () => {
       <nav className="bottom-nav">
         <NavItem active={activeTab === 'home'} onClick={() => handleNav('home')} icon={<Home />} label="홈" />
         <NavItem active={activeTab === 'cardGame'} onClick={() => handleNav('cardGame')} icon={<MessageSquare />} label="대화카드" />
+        <NavItem active={activeTab === 'counseling'} onClick={() => handleNav('counseling')} icon={<Sparkles />} label="AI하티" />
         <NavItem active={activeTab === 'heartPrayer'} onClick={() => handleNav('heartPrayer')} icon={<Heart />} label="작은숲" />
         <NavItem active={activeTab === 'settings'} onClick={() => handleNav('settings')} icon={<Settings />} label="설정" />
-        {isAdmin && <NavItem active={activeTab === 'admin'} onClick={() => handleNav('admin')} icon={<ShieldCheck />} label="관리자" />}
       </nav>
-      {/* 🏔️ Restored the floating Guide Button for that original feel */}
-      <button onClick={() => handleNav('guide')} style={{ position: 'fixed', bottom: '110px', right: '20px', width: '45px', height: '45px', borderRadius: '50%', background: 'white', color: '#D4AF37', border: '1px solid #F5D060', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 5px 15px rgba(0,0,0,0.1)', zIndex: 8000 }}>
+      {isAdmin && (
+        <button onClick={() => handleNav('admin')} style={{ position: 'fixed', bottom: '180px', right: '20px', width: '45px', height: '45px', borderRadius: '50%', background: 'white', color: '#D4AF37', border: '1px solid #F5D060', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 5px 15px rgba(0,0,0,0.1)', zIndex: 8000 }}>
+           <ShieldCheck size={22} />
+        </button>
+      )}
+      <button onClick={() => handleNav('guide')} style={{ position: 'fixed', bottom: '110px', right: '20px', width: '45px', height: '45px', borderRadius: '50%', background: 'white', color: '#8B7355', border: '1px solid #EEE', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 5px 15px rgba(0,0,0,0.1)', zIndex: 8000 }}>
         <Info size={22} />
       </button>
     </div>
