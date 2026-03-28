@@ -16,21 +16,23 @@ function App() {
   const [userRole, setUserRole] = useState(null);
   const [mySignal, setMySignal] = useState('none');
   const [spouseSignal, setSpouseSignal] = useState('none');
+  
+  // 🛡️ Safe Scroll Ref - Avoid using global 'document' during SSR/Mounting
+  const scrollContainerRef = useRef(null);
 
-  // 🛡️ Navigation History Logic - No Animation engine for pure performance
   useEffect(() => {
-    // 1. Initial State Setup
     if (!window.history.state) {
       window.history.replaceState({ activeTab: 'home' }, '');
     }
 
     const handlePopState = (event) => {
       if (event.state && event.state.activeTab) {
-        // Reduced delay to 50ms for snappiness while maintaining safety
+        // Small delay for smooth state transition on mobile
         setTimeout(() => {
           setActiveTab(event.state.activeTab);
-          const scroller = document.getElementById('main-scroller');
-          if (scroller) scroller.scrollTop = 0;
+          if (scrollContainerRef.current) {
+            scrollContainerRef.current.scrollTop = 0;
+          }
         }, 50); 
       }
     };
@@ -41,24 +43,23 @@ function App() {
 
   const changeTab = useCallback((newTab) => {
     if (activeTab === newTab) return;
-    
     window.history.pushState({ activeTab: newTab }, '');
     setActiveTab(newTab);
-    const scroller = document.getElementById('main-scroller');
-    if (scroller) scroller.scrollTop = 0;
+    
+    // Safety check for cross-platform scrolling
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTop = 0;
+    }
   }, [activeTab]);
 
-  // Auth & Session
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => setSession(session));
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => setSession(session));
     return () => subscription.unsubscribe();
   }, []);
 
-  // Fetch Family Data
   useEffect(() => {
     if (!session?.user) return;
-    
     const fetchData = async () => {
       const { data: profile } = await supabase.from('profiles').select('*').eq('id', session.user.id).single();
       if (!profile) return;
@@ -75,7 +76,6 @@ function App() {
         setHusbandInfo(husband);
         setWifeInfo(wife);
         
-        // Signal Sync
         if (role === 'husband') {
           setMySignal(husband?.moodSignal || 'none');
           setSpouseSignal(wife?.moodSignal || 'none');
@@ -88,36 +88,25 @@ function App() {
     fetchData();
   }, [session]);
 
-  // Use the mandatory guide step before entering game
-  const handleSelectGame = (gameId) => {
-    // Navigate from DialogueChoice -> GameGuide
-    changeTab(`guide_${gameId}`);
-  };
-
-  const handleStartGame = (gameId) => {
-    // Navigate from GameGuide -> GAME
-    changeTab(gameId);
-  };
-
   return (
-    <div id="app-root-container" style={{ width: '100%', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-      {/* HEADER: Only show on home and major list pages */}
+    <div id="app-root-container" style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
       {(activeTab === 'home' || activeTab === 'community') && (
         <AppHeader activeTab={activeTab} changeTab={changeTab} user={session?.user} />
       )}
 
-      {/* 🚀 Main Scrollable View Area - High Stability Implementation */}
+      {/* 🚀 Central Master Scroller - Fixed Height Child of App Root */}
       <main 
         id="main-scroller"
+        ref={scrollContainerRef}
         style={{ 
           flex: 1, 
           width: '100%', 
           maxWidth: '500px', 
           margin: '0 auto', 
           overflowX: 'hidden', 
-          overflowY: 'auto', // 🔓 Ensure main container scrolls naturally
+          overflowY: 'auto', 
           WebkitOverflowScrolling: 'touch',
-          paddingBottom: '120px'
+          background: 'transparent'
         }}
       >
         {activeTab === 'home' && (
@@ -132,15 +121,14 @@ function App() {
           />
         )}
 
-        {/* 🚦 Navigation Flow: Choice -> Guide -> Game */}
         {activeTab === 'dialogueChoice' && (
-          <DialogueChoiceView onSelect={handleSelectGame} onBack={() => changeTab('home')} />
+          <DialogueChoiceView onSelect={(gameId) => changeTab(`guide_${gameId}`)} onBack={() => changeTab('home')} />
         )}
 
         {activeTab.startsWith('guide_') && (
           <GameGuideView 
              gameId={activeTab.replace('guide_', '')} 
-             onStart={() => handleStartGame(activeTab.replace('guide_', ''))} 
+             onStart={() => changeTab(activeTab.replace('guide_', ''))} 
              onBack={() => changeTab('dialogueChoice')} 
           />
         )}
@@ -150,7 +138,13 @@ function App() {
         )}
 
         {activeTab === 'imageSync' && (
-          <ImageCardGameView coupleCode={coupleCode} userRole={userRole} onBack={() => changeTab('dialogueChoice')} />
+          <ImageCardGameView 
+            coupleCode={coupleCode} 
+            userRole={userRole} 
+            husbandInfo={husbandInfo} 
+            wifeInfo={wifeInfo}
+            onBack={() => changeTab('dialogueChoice')} 
+          />
         )}
       </main>
     </div>
