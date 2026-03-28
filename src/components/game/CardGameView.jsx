@@ -9,24 +9,45 @@ const CardGameView = ({ onBack, coupleCode, userRole }) => {
   const [currentQuestion, setCurrentQuestion] = useState(null);
   const [showTurnWarning, setShowTurnWarning] = useState(false);
 
+  const [turnOwner, setTurnOwner] = useState(null);
+  const [sessionCardCount, setSessionCardCount] = useState(0);
+  const [showFinishModal, setShowFinishModal] = useState(false);
+  const [history, setHistory] = useState([]);
+  const isMounted = useRef(false);
+
   // Initialize and check for existing state
   useEffect(() => {
     isMounted.current = true;
     const loadState = async () => {
-      if (!coupleCode) return;
-      const { data } = await supabase.from('card_game_state').select('*').eq('couple_id', coupleCode).single();
-      if (isMounted.current && data) {
-        setCategory(data.category || '일상');
-        setIsFlipped(data.is_flipped || false);
-        setTurnOwner(data.turn_owner || null);
-        const q = CARD_DATA.find(item => String(item.id) === String(data.current_question_id));
-        if (q) setCurrentQuestion(q);
-      } else if (isMounted.current && CARD_DATA.length > 0) {
-        // Initial setup
-        const initial = CARD_DATA.find(i => i.category === '일상');
-        if (initial) setCurrentQuestion(initial);
+      try {
+        if (!coupleCode) {
+          // Fallback if no coupleCode
+          if (CARD_DATA.length > 0 && !currentQuestion) {
+            setCurrentQuestion(CARD_DATA.find(i => i.category === '일상') || CARD_DATA[0]);
+          }
+          return;
+        }
+        
+        const { data, error } = await supabase.from('card_game_state').select('*').eq('couple_id', coupleCode).single();
+        
+        if (!isMounted.current) return;
+
+        if (data) {
+          setCategory(data.category || '일상');
+          setIsFlipped(data.is_flipped || false);
+          setTurnOwner(data.turn_owner || null);
+          const q = CARD_DATA.find(item => String(item.id) === String(data.current_question_id));
+          if (q) setCurrentQuestion(q);
+        } else {
+          // Initial setup if no data in DB
+          const initial = CARD_DATA.find(i => i.category === '일상') || CARD_DATA[0];
+          if (initial) setCurrentQuestion(initial);
+        }
+      } catch (err) {
+        console.error("Error loading card state:", err);
       }
     };
+    
     loadState();
     return () => { isMounted.current = false; };
   }, [coupleCode]);
@@ -42,8 +63,10 @@ const CardGameView = ({ onBack, coupleCode, userRole }) => {
     const pool = CARD_DATA.filter(q => q.category === activeCat);
     const available = pool.filter(q => !history.includes(q.id));
     const finalPool = (available.length > 0 ? available : pool);
-    const nextQ = finalPool[Math.floor(Math.random() * finalPool.length)];
+    const nextQ = finalPool[Math.floor(Math.random() * finalPool.length)] || pool[0];
     
+    if (!nextQ) return;
+
     setHistory(prev => [...prev, nextQ.id].slice(-20));
     setCurrentQuestion(nextQ);
     setIsFlipped(false);
@@ -53,14 +76,16 @@ const CardGameView = ({ onBack, coupleCode, userRole }) => {
     if (sessionCardCount + 1 >= 10) setShowFinishModal(true);
     
     // Remote update
-    supabase.from('card_game_state').upsert({
-      couple_id: coupleCode, 
-      category: activeCat, 
-      is_flipped: false, 
-      turn_owner: userRole, 
-      current_question_id: nextQ.id, 
-      updated_at: new Date().toISOString()
-    }, { onConflict: 'couple_id' }).then(() => {});
+    if (coupleCode) {
+      supabase.from('card_game_state').upsert({
+        couple_id: coupleCode, 
+        category: activeCat, 
+        is_flipped: false, 
+        turn_owner: userRole, 
+        current_question_id: nextQ.id, 
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'couple_id' }).then(() => {});
+    }
   };
 
   const toggleFlip = () => {
@@ -71,7 +96,9 @@ const CardGameView = ({ onBack, coupleCode, userRole }) => {
     }
     const nextFlip = !isFlipped;
     setIsFlipped(nextFlip);
-    supabase.from('card_game_state').update({ is_flipped: nextFlip, turn_owner: userRole }).eq('couple_id', coupleCode).then(() => {});
+    if (coupleCode) {
+      supabase.from('card_game_state').update({ is_flipped: nextFlip, turn_owner: userRole }).eq('couple_id', coupleCode).then(() => {});
+    }
   };
 
   return (
@@ -85,7 +112,7 @@ const CardGameView = ({ onBack, coupleCode, userRole }) => {
         padding: '20px', 
         paddingBottom: '160px',
         minHeight: '100%', 
-        WebkitOverflowScrolling: 'touch'
+        overflowY: 'auto'
       }}
     >
       {showFinishModal && (
