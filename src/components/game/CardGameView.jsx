@@ -152,42 +152,53 @@ const CardGameView = ({ onBack, coupleCode, userRole }) => {
              position: 'relative' 
            }}
          >
-           {/* Card Front: The Question Mark/Logo side */}
+           {/* Card Front: Premium Gold Foil & Illustration side */}
            <div style={{ 
              position: 'absolute', 
              inset: 0, 
              backfaceVisibility: 'hidden', 
-             background: 'linear-gradient(145deg, #2D1F08, #1A1205)', 
+             backgroundImage: 'url("/card_bg.png")',
+             backgroundSize: 'cover',
+             backgroundPosition: 'center',
              borderRadius: '35px', 
              display: 'flex', 
              flexDirection: 'column', 
              alignItems: 'center', 
              justifyContent: 'center', 
-             border: '3px solid #D4AF37',
-             boxShadow: '0 20px 40px rgba(0,0,0,0.4), inset 0 0 50px rgba(212,175,55,0.1)'
+             border: '3px solid rgba(212, 175, 55, 0.4)',
+             boxShadow: '0 20px 50px rgba(0,0,0,0.3)',
+             overflow: 'hidden'
            }}>
+              {/* Optional Glass overlay for better contrast if needed */}
+              <div style={{ position: 'absolute', inset: 0, background: 'rgba(255,255,255,0.05)', backdropFilter: 'blur(2px)' }} />
+
               <div style={{ 
+                position: 'relative',
+                zIndex: 2,
                 width: '100px', 
                 height: '100px', 
                 borderRadius: '50%', 
-                background: 'rgba(212, 175, 55, 0.1)', 
+                background: 'rgba(255, 255, 255, 0.15)', 
+                backdropFilter: 'blur(10px)',
                 display: 'flex', 
                 alignItems: 'center', 
                 justifyContent: 'center',
-                marginBottom: '25px',
-                border: '1px solid rgba(212, 175, 55, 0.3)'
+                marginBottom: '40px',
+                border: '1.5px solid rgba(255, 255, 255, 0.4)',
+                boxShadow: '0 8px 32px rgba(0,0,0,0.1)'
               }}>
                 <Sparkles size={50} color="#D4AF37" />
               </div>
-              <span style={{ 
-                color: '#D4AF37', 
-                fontWeight: 900, 
-                fontSize: '18px', 
-                letterSpacing: '5px',
-                fontFamily: "'Cinzel', serif",
-                textShadow: '0 2px 4px rgba(0,0,0,0.3)'
+
+              <span className="brand-text" style={{ 
+                position: 'relative',
+                zIndex: 2,
+                fontSize: '24px', 
+                letterSpacing: '6px',
+                fontWeight: 900
               }}>QUESTION CARD</span>
-              <div style={{ marginTop: '20px', width: '40px', height: '2px', background: '#D4AF37', opacity: 0.5 }} />
+              
+              <div style={{ position: 'relative', zIndex: 2, marginTop: '20px', width: '50px', height: '1.5px', background: 'linear-gradient(90deg, transparent, #D4AF37, transparent)' }} />
            </div>
 
            {/* Card Back: The Question Text side */}
