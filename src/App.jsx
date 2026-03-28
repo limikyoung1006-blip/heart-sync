@@ -419,8 +419,11 @@ const App = () => {
                 {activeTab === 'cardGameChoice' && (
                   <div key="choice">
                     <DialogueChoiceView 
-                      onSelect={(id) => setActiveTab(id === 'cardGame' ? 'cardGameQuestion' : 'imageGame')} 
-                      onShowGuide={(id) => { setDialogueGuideId(id); setActiveTab('cardGameGuide'); }} 
+                      onSelect={(id) => {
+                        window.scrollTo(0, 0);
+                        setDialogueGuideId(id);
+                        setActiveTab('cardGameGuide');
+                      }} 
                       onBack={() => setActiveTab('home')} 
                     />
                   </div>
