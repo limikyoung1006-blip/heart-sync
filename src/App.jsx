@@ -16,9 +16,6 @@ function App() {
   const [userRole, setUserRole] = useState(null);
   const [mySignal, setMySignal] = useState('none');
   const [spouseSignal, setSpouseSignal] = useState('none');
-  const [mainChannel, setMainChannel] = useState(null);
-  
-  const isInitialMount = useRef(true);
 
   // 🛡️ Navigation History Logic - No Animation engine for pure performance
   useEffect(() => {

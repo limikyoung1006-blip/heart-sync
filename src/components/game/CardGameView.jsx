@@ -1,21 +1,17 @@
-import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
-import { ChevronLeft, Sparkles, RefreshCw } from 'lucide-react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { ChevronLeft, Sparkles } from 'lucide-react';
 import { supabase } from '../../supabase';
 import { CARD_DATA } from '../../data/dialogueCards';
 
-const CardGameView = ({ onBack, coupleCode, userRole, mainChannel }) => {
+const CardGameView = ({ onBack, coupleCode, userRole }) => {
   const [category, setCategory] = useState('일상');
   const [isFlipped, setIsFlipped] = useState(false);
   const [currentQuestion, setCurrentQuestion] = useState(null);
-  const [isWaiting, setIsWaiting] = useState(false);
   const [turnOwner, setTurnOwner] = useState(null);
   const [sessionCardCount, setSessionCardCount] = useState(0);
   const [showFinishModal, setShowFinishModal] = useState(false);
   const [history, setHistory] = useState([]);
 
-  // Correctly filter based on the active category
-  const filteredPool = useMemo(() => CARD_DATA.filter(q => q.category === category), [category]);
-  const broadcastRef = useRef(null);
   const isMounted = useRef(true);
 
   // Initialize and check for existing state
@@ -46,7 +42,8 @@ const CardGameView = ({ onBack, coupleCode, userRole, mainChannel }) => {
     const activeCat = targetCat || category;
     const pool = CARD_DATA.filter(q => q.category === activeCat);
     const available = pool.filter(q => !history.includes(q.id));
-    const nextQ = (available.length > 0 ? available : pool)[Math.floor(Math.random() * (available.length > 0 ? available : pool).length)];
+    const finalPool = (available.length > 0 ? available : pool);
+    const nextQ = finalPool[Math.floor(Math.random() * finalPool.length)];
     
     setHistory(prev => [...prev, nextQ.id].slice(-20));
     setCurrentQuestion(nextQ);
@@ -58,8 +55,13 @@ const CardGameView = ({ onBack, coupleCode, userRole, mainChannel }) => {
     
     // Remote update
     supabase.from('card_game_state').upsert({
-      couple_id: coupleCode, category: activeCat, is_flipped: false, turn_owner: userRole, current_question_id: nextQ.id, updated_at: new Date().toISOString()
-    }).then(() => {});
+      couple_id: coupleCode, 
+      category: activeCat, 
+      is_flipped: false, 
+      turn_owner: userRole, 
+      current_question_id: nextQ.id, 
+      updated_at: new Date().toISOString()
+    }, { onConflict: 'couple_id' }).then(() => {});
   };
 
   const toggleFlip = () => {
@@ -81,13 +83,12 @@ const CardGameView = ({ onBack, coupleCode, userRole, mainChannel }) => {
         flexDirection: 'column', 
         alignItems: 'center', 
         padding: '20px', 
-        paddingBottom: '160px', // More space for mobile scrolling
-        minHeight: '100%', // Use full vertical space
-        overflowY: 'visible', // Parent handles scrolling
+        paddingBottom: '160px',
+        minHeight: '100%', 
+        overflowY: 'visible',
         WebkitOverflowScrolling: 'touch'
       }}
     >
-      {/* MODAL: Using absolute positioning for high stability */}
       {showFinishModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
           <div style={{ background: 'white', borderRadius: '35px', width: '100%', maxWidth: '340px', padding: '40px 25px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
@@ -102,7 +103,6 @@ const CardGameView = ({ onBack, coupleCode, userRole, mainChannel }) => {
         </div>
       )}
 
-      {/* BACK BUTTON ROW */}
       <div className="w-full flex justify-start mb-4">
         <button onClick={onBack} style={{ background: 'none', border: 'none', display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer' }}>
           <ChevronLeft size={20} color="#8A60FF" strokeWidth={3} />
@@ -110,14 +110,13 @@ const CardGameView = ({ onBack, coupleCode, userRole, mainChannel }) => {
         </button>
       </div>
 
-      {/* CATEGORY ROW: Crucial to keep it wrapped/scrollable */}
       <div className="w-full mb-6">
         <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '10px', WebkitOverflowScrolling: 'touch' }}>
           {['일상', '상상', '추억', '관계', '신앙', '시크릿'].map(cat => (
             <button 
               key={cat} 
               onClick={() => { setCategory(cat); drawNewCard(cat); }}
-              style={{ padding: '8px 18px', borderRadius: '100px', border: 'none', background: category === cat ? '#D4AF37' : 'white', color: category === cat ? 'white' : '#8B7355', fontWeight: 800, fontSize: '12px', whiteSpace: 'nowrap', boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}
+              style={{ padding: '8px 18px', borderRadius: '100px', border: 'none', background: category === cat ? '#D4AF37' : 'white', color: category === cat ? 'white' : '#8B7355', fontWeight: 800, fontSize: '12px', whiteSpace: 'nowrap' }}
             >
               {cat}
             </button>
@@ -125,7 +124,6 @@ const CardGameView = ({ onBack, coupleCode, userRole, mainChannel }) => {
         </div>
       </div>
 
-      {/* TURN INFO */}
       <div style={{ marginBottom: '25px', textAlign: 'center' }}>
         <p style={{ letterSpacing: '4px', color: '#8B6500', fontWeight: 900, fontSize: '11px', opacity: 0.7, marginBottom: '5px' }}>SELECT YOUR TOPIC</p>
         <div style={{ display: 'inline-block', background: 'rgba(212, 175, 55, 0.1)', padding: '4px 12px', borderRadius: '8px', border: '1px solid rgba(212, 175, 55, 0.2)' }}>
@@ -133,14 +131,12 @@ const CardGameView = ({ onBack, coupleCode, userRole, mainChannel }) => {
         </div>
       </div>
 
-      {/* CARD INTERACTION AREA */}
       <div className="card-container" style={{ perspective: '1000px', marginBottom: '30px' }}>
          <div 
            className={`talking-card ${isFlipped ? 'flipped' : ''}`} 
            onClick={toggleFlip}
            style={{ width: '280px', height: '400px', cursor: 'pointer', transition: 'transform 0.5s', transformStyle: 'preserve-3d', position: 'relative' }}
          >
-           {/* Card Front: UI implementation without external styles for maximum stability */}
            {!isFlipped ? (
              <div style={{ position: 'absolute', inset: 0, backfaceVisibility: 'hidden', background: '#2D1F08', borderRadius: '28px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', border: '2px solid #D4AF37' }}>
                 <Sparkles size={40} color="#D4AF37" style={{ marginBottom: '10px' }} />
@@ -158,16 +154,14 @@ const CardGameView = ({ onBack, coupleCode, userRole, mainChannel }) => {
          </div>
       </div>
 
-      {/* DRAW BUTTON */}
       <button 
         disabled={turnOwner && turnOwner !== userRole} 
         onClick={() => drawNewCard()} 
-        style={{ width: '100%', maxWidth: '280px', padding: '18px', borderRadius: '22px', border: 'none', background: '#2D1F08', color: 'white', fontWeight: 900, fontSize: '16px', opacity: (turnOwner && turnOwner !== userRole) ? 0.3 : 1, boxShadow: '0 8px 20px rgba(0,0,0,0.1)' }}
+        style={{ width: '100%', maxWidth: '280px', padding: '18px', borderRadius: '22px', border: 'none', background: '#2D1F08', color: 'white', fontWeight: 900, fontSize: '16px', opacity: (turnOwner && turnOwner !== userRole) ? 0.3 : 1 }}
       >
         새로운 질문 뽑기
       </button>
 
-      {/* HELP TEXT FOR SCROLLING */}
       <p style={{ marginTop: '20px', fontSize: '11px', color: '#8B7355', fontWeight: 700 }}>* 아래로 스크롤하여 더 많은 메뉴를 확인하세요</p>
     </div>
   );
