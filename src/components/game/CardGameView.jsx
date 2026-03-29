@@ -166,6 +166,16 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo }) =
         overflowY: 'auto'
       }}
     >
+      <style>{`
+        .game-btn-press {
+          transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.15s ease;
+        }
+        .game-btn-press:active {
+          transform: scale(0.95);
+          opacity: 0.85;
+        }
+      `}</style>
+      
       {showFinishModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
           <div style={{ background: 'white', borderRadius: '35px', width: '100%', maxWidth: '340px', padding: '40px 25px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
@@ -313,6 +323,7 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo }) =
 
             {isMyTurn && (
               <button 
+                className="game-btn-press"
                 onClick={(e) => { e.stopPropagation(); passTurn(); }} 
                 style={{ 
                   marginTop: '15px',
@@ -341,6 +352,7 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo }) =
       <button 
         disabled={!isMyTurn} 
         onClick={() => drawNewCard()} 
+        className="game-btn-press"
         style={{ 
           width: '100%', 
           maxWidth: '280px', 
