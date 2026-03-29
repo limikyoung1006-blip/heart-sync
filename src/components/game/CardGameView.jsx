@@ -266,10 +266,9 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo }) =
                 <span style={{ color: 'white', fontWeight: 900, marginTop: '12px' }}>{partnerNameOnly} 대화 중..</span>
               </div>
             )}
-            <div style={{ width: '90%', display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: '15px', background: 'rgba(0,0,0,0.6)', padding: '15px 20px', borderRadius: '25px', backdropFilter: 'blur(12px)', border: '1px solid rgba(255,255,255,0.1)' }}>
-              <p className="sparkling-gold" style={{ fontSize: '20px', letterSpacing: '2px', fontWeight: 900, whiteSpace: 'nowrap' }}>QUESTION CARD</p>
-              <div style={{ width: '1px', height: '20px', background: 'rgba(255,255,255,0.2)' }} />
-              <p style={{ fontSize: '13px', color: 'white', opacity: 0.9, fontWeight: 700, whiteSpace: 'nowrap' }}>클릭해서 확인</p>
+            <div style={{ textAlign: 'center', background: 'rgba(0,0,0,0.6)', padding: '20px 30px', borderRadius: '25px', backdropFilter: 'blur(12px)', border: '1px solid rgba(255,255,255,0.1)' }}>
+              <p className="sparkling-gold" style={{ fontSize: '24px', letterSpacing: '3px', fontWeight: 900, marginBottom: '10px' }}>QUESTION CARD</p>
+              <p style={{ fontSize: '14px', color: 'white', opacity: 0.9, fontWeight: 700 }}>클릭해서 확인</p>
             </div>
           </div>
 
