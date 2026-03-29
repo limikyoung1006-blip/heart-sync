@@ -160,10 +160,10 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo }) =
         display: 'flex', 
         flexDirection: 'column', 
         alignItems: 'center', 
-        padding: '20px', 
+        padding: '10px', 
         paddingBottom: '160px',
         minHeight: '100%', 
-        overflowY: 'auto'
+        overflowY: 'visible'
       }}
     >
       <style>{`

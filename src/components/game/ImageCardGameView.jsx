@@ -123,12 +123,25 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo
     const shuffled = [...dataPool].sort(() => Math.random() - 0.5);
     const pool = shuffled.slice(0, 10);
     const qPool = ["부부 생활을 잘 나타내는 이미지는?", "우리의 미래 소망 모습은?", "오늘 내 마음 상태는?"];
-    setMainQuestion(qPool[Math.floor(Math.random() * qPool.length)]);
+    const nextQ = qPool[Math.floor(Math.random() * qPool.length)];
+    
+    setMainQuestion(nextQ);
     setImagePool(pool); 
     setSelectedIndices([]); 
     setIsSharing(false); 
     setTurnOwner(userRole);
-  }, [userRole]);
+
+    if (coupleCode) {
+      supabase.from('image_game_state').upsert({
+        couple_id: coupleCode,
+        game_mode: 'pick2',
+        is_flipped: false,
+        turn_owner: userRole,
+        shared_cards: null,
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'couple_id' }).then(() => {});
+    }
+  }, [userRole, coupleCode]);
 
   const passTurn = async () => {
     if (turnOwner !== userRole) return;
@@ -153,7 +166,7 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo
         display: 'flex', 
         flexDirection: 'column', 
         alignItems: 'center', 
-        padding: '20px', 
+        padding: '10px', 
         paddingBottom: '160px',
         minHeight: '100%',
         overflowY: 'visible',
@@ -191,7 +204,7 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo
         </button>
         <div style={{ display: 'flex', background: '#F3E5F5', borderRadius: '15px', padding: '3px' }}>
           {['classic', 'pick2'].map((m, i) => (
-            <button key={m} onClick={() => { setGameMode(m); if(m === 'pick2' && imagePool.length === 0) initPick2Mode(); }} style={{ padding: '8px 18px', borderRadius: '12px', border: 'none', fontSize: '12px', fontWeight: 900, background: gameMode === m ? 'white' : 'transparent', color: gameMode === m ? '#AB47BC' : '#9c27b0' }}>방식 {i+1}</button>
+            <button key={m} onClick={() => { if(!isMyTurn) return; setGameMode(m); if(m === 'pick2' && imagePool.length === 0) initPick2Mode(); }} style={{ padding: '8px 18px', borderRadius: '12px', border: 'none', fontSize: '12px', fontWeight: 900, background: gameMode === m ? 'white' : 'transparent', color: gameMode === m ? '#AB47BC' : '#9c27b0' }}>방식 {i+1}</button>
           ))}
         </div>
       </header>
@@ -216,7 +229,7 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo
           }}>
             <div 
               className={`talking-card ${isFlipped ? 'flipped' : ''}`} 
-              onClick={() => { if (!isMyTurn) return; setIsFlipped(!isFlipped); setTurnOwner(userRole); if(coupleCode) supabase.from('image_game_state').update({ is_flipped: !isFlipped, turn_owner: userRole }).eq('couple_id', coupleCode).then(()=>{}); }}
+              onClick={() => { if (!isMyTurn) return; const nextFlip = !isFlipped; setIsFlipped(nextFlip); setTurnOwner(userRole); if(coupleCode) supabase.from('image_game_state').update({ is_flipped: nextFlip, turn_owner: userRole }).eq('couple_id', coupleCode).then(()=>{}); }}
             >
               <div className="card-face card-front" style={{ border: '3px solid #AB47BC', background: '#2D1F08' }}>
                 <p style={{ fontSize: '12px', fontWeight: 900, color: '#AB47BC', letterSpacing: '6px', marginBottom: '20px' }}>IMAGE CARD</p>
@@ -277,7 +290,7 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo
              <>
                <div style={{ background: '#F9F5FF', padding: '18px', borderRadius: '22px', marginBottom: '15px', textAlign: 'center', border: '1px solid rgba(171, 71, 188, 0.1)' }}>
                  <h3 style={{ fontSize: '16px', fontWeight: 900, color: '#2D1F08', marginBottom: '5px' }}>"{mainQuestion}"</h3>
-                 <p style={{ fontSize: '12px', color: '#8E24AA', fontWeight: 800 }}>어울리는 사진 2장을 선택해 주세요.</p>
+                 <p style={{ fontSize: '12px', color: '#AB47BC', fontWeight: 800 }}>어울리는 사진 2장을 선택해 주세요.</p>
                </div>
                
                <div style={{ 
@@ -287,7 +300,10 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo
                  marginBottom: '20px',
                  maxHeight: '400px',
                  overflowY: 'auto',
-                 padding: '5px'
+                 padding: '5px',
+                 WebkitOverflowScrolling: 'touch',
+                 opacity: isMyTurn ? 1 : 0.6,
+                 pointerEvents: isMyTurn ? 'auto' : 'none'
                }}>
                  {imagePool.map((card, idx) => (
                     <div 
@@ -318,7 +334,19 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo
                 <div style={{ display: 'flex', gap: '10px', width: '100%', marginBottom: '20px' }}>
                   <button onClick={() => initPick2Mode()} disabled={!isMyTurn} className="game-btn-press" style={{ flex: 1, padding: '16px', borderRadius: '18px', background: 'white', border: '2px solid #AB47BC', color: '#AB47BC', fontWeight: 900, fontSize: '14px' }}>다시 뽑기</button>
                   <button 
-                    onClick={() => { setSharedCards(selectedIndices.map(i => imagePool[i])); setIsSharing(true); setSessionCardCount(prev => prev + 1); if (sessionCardCount+1 >= 10) setShowFinishModal(true); }} 
+                    onClick={() => { 
+                      const picked = selectedIndices.map(i => imagePool[i]);
+                      setSharedCards(picked); 
+                      setIsSharing(true); 
+                      setSessionCardCount(prev => prev + 1); 
+                      if (coupleCode) {
+                        supabase.from('image_game_state').update({
+                          shared_cards: picked,
+                          updated_at: new Date().toISOString()
+                        }).eq('couple_id', coupleCode).then(()=>{});
+                      }
+                      if (sessionCardCount+1 >= 10) setShowFinishModal(true); 
+                    }} 
                     disabled={!isMyTurn || selectedIndices.length < 2} 
                     className="game-btn-press"
                     style={{ 
@@ -352,12 +380,12 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo
                  <p style={{ fontSize: '15px', fontWeight: 800, color: '#AB47BC', marginTop: '15px' }}>이미지를 선택한 이유를 설명해 보세요. 😊</p>
                </div>
                <button 
-                 onClick={() => { setIsSharing(false); initPick2Mode(); }} 
+                 onClick={() => { passTurn(); initPick2Mode(); }} 
                  disabled={!isMyTurn} 
                  className="game-btn-press"
                  style={{ marginTop: '25px', width: '100%', maxWidth: '280px', padding: '18px', borderRadius: '22px', background: '#2D1F08', color: 'white', fontWeight: 900, border: 'none', boxShadow: '0 10px 25px rgba(0,0,0,0.15)' }}
                >
-                 새 대화 시작하기
+                 답변 완료 및 다음 턴
                </button>
              </div>
            )}
