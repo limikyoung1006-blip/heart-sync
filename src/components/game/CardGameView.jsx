@@ -220,14 +220,14 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo }) =
 
       <div style={{ 
         width: '100%', padding: '16px', borderRadius: '24px', 
-        background: isMyTurn ? 'linear-gradient(135deg, #FFF9EB, #FFF3E0)' : 'rgba(255, 255, 255, 0.5)', 
+        background: isMyTurn ? 'linear-gradient(135deg, #FFF9EB, #FFF3E0)' : 'rgba(255, 255, 255, 0.6)', 
         marginBottom: '25px', textAlign: 'center', border: '2px solid #D4AF37',
         boxShadow: '0 8px 20px rgba(0,0,0,0.04)'
       }}>
         <div className="flex items-center justify-center gap-3">
           {isMyTurn ? <Sparkles size={20} color="#D4AF37" /> : <Timer size={20} color="#8A60FF" className="animate-spin-slow" />}
           <span style={{ fontSize: '16px', fontWeight: 900, color: isMyTurn ? '#8B6500' : '#8A60FF' }}>
-            {isMyTurn ? "✨ 당신의 차례입니다! 질문에 답해주세요" : `⏳ ${partnerNameOnly} 답변 중입니다...`}
+            {isMyTurn ? "당신의 차례입니다! 질문을 확인하세요 ✨" : `${partnerNameOnly} 답변 중입니다...`}
           </span>
         </div>
       </div>
@@ -244,49 +244,99 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo }) =
           {/* Card Front */}
           <div className="card-face card-front" style={{ 
             position: 'absolute', width: '100%', height: '100%', backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden',
-            border: '4px solid #D4AF37', borderRadius: '45px', background: '#2D1F08',
+            border: '3px solid #D4AF37', borderRadius: '45px', 
+            backgroundImage: "url('/card_bg.png')", backgroundSize: 'cover', backgroundPosition: 'center',
             display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
             visibility: isFlipped ? 'hidden' : 'visible', zIndex: isFlipped ? 1 : 2,
-            boxShadow: '0 15px 35px rgba(0,0,0,0.2)'
+            boxShadow: '0 15px 45px rgba(0,0,0,0.25)', overflow: 'hidden'
           }}>
+            {/* Dark Filter for Image Background */}
+            <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1 }} />
+            
             {!isMyTurn && (
-              <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 10, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', borderRadius: '42px' }}>
+              <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 10, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', borderRadius: '42px', backdropFilter: 'blur(3px)' }}>
                 <Lock size={40} color="white" />
-                <span style={{ color: 'white', fontWeight: 900, marginTop: '10px' }}>{partnerNameOnly} 대화 중..</span>
+                <span style={{ color: 'white', fontWeight: 900, marginTop: '12px', fontSize: '15px' }}>{partnerNameOnly} 대화 중..</span>
               </div>
             )}
-            <p style={{ fontSize: '11px', fontWeight: 900, color: '#D4AF37', letterSpacing: '8px', marginBottom: '20px', opacity: 0.7 }}>QUESTION CARD</p>
-            <Sparkles size={50} color="#D4AF37" style={{ marginBottom: '25px' }} />
-            <span style={{ fontSize: '28px', letterSpacing: '8px', fontWeight: 900, color: 'white' }}>HEART SYNC</span>
-            <div style={{ marginTop: '25px', width: '60px', height: '2px', background: 'linear-gradient(90deg, transparent, #D4AF37, transparent)' }} />
-            <div style={{ marginTop: '60px' }}>
-               <span style={{ background: '#D4AF37', color: 'white', padding: '8px 24px', borderRadius: '100px', fontSize: '14px', fontWeight: 900, boxShadow: '0 5px 15px rgba(212, 175, 55, 0.3)' }}>터치하여 확인</span>
+            
+            <div style={{ position: 'relative', zIndex: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', height: '100%', justifyContent: 'center' }}>
+               <p style={{ fontSize: '12px', fontWeight: 900, color: '#F5D060', letterSpacing: '8px', marginBottom: '30px', opacity: 0.8 }}>QUESTION CARD</p>
+               <div style={{ padding: '25px', background: 'rgba(245, 208, 96, 0.1)', borderRadius: '50%', marginBottom: '30px', border: '1px solid rgba(245, 208, 96, 0.2)' }}>
+                 <Sparkles size={55} color="#F5D060" />
+               </div>
+               <span className="brand-text" style={{ 
+                  fontSize: '30px', 
+                  letterSpacing: '8px',
+                  fontWeight: 900,
+                  color: 'white',
+                  textShadow: '0 4px 10px rgba(0,0,0,0.5)'
+               }}>HEART SYNC</span>
+               <div style={{ marginTop: '30px', width: '60px', height: '2px', background: 'linear-gradient(90deg, transparent, #F5D060, transparent)' }} />
+               <div style={{ marginTop: '70px' }}>
+                  <span style={{ background: '#D4AF37', color: 'white', padding: '10px 28px', borderRadius: '100px', fontSize: '14px', fontWeight: 900, boxShadow: '0 8px 20px rgba(212, 175, 55, 0.3)' }}>터치하여 확인</span>
+               </div>
             </div>
           </div>
 
           {/* Card Back */}
           <div className="card-face card-back" style={{ 
             position: 'absolute', width: '100%', height: '100%', backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden',
-            border: '4px solid #D4AF37', borderRadius: '45px', background: 'white', transform: 'rotateY(180deg)',
-            display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '30px',
+            border: '3px solid #D4AF37', borderRadius: '45px', 
+            backgroundColor: 'white',
+            backgroundImage: `
+              linear-gradient(45deg, rgba(0,0,0,0.01) 25%, transparent 25%),
+              linear-gradient(-45deg, rgba(0,0,0,0.01) 25%, transparent 25%),
+              linear-gradient(45deg, transparent 75%, rgba(0,0,0,0.01) 75%),
+              linear-gradient(-45deg, transparent 75%, rgba(0,0,0,0.01) 75%)
+            `,
+            backgroundSize: '20px 20px',
+            transform: 'rotateY(180deg)',
+            padding: '35px',
             visibility: isFlipped ? 'visible' : 'hidden', zIndex: isFlipped ? 2 : 1,
-            boxShadow: '0 15px 35px rgba(0,0,0,0.1)'
+            display: 'flex', flexDirection: 'column', alignItems: 'center',
+            boxShadow: '0 15px 45px rgba(0,0,0,0.1)'
           }}>
-            <div style={{ background: 'linear-gradient(135deg, #D4AF37, #B08D3E)', color: 'white', padding: '6px 20px', borderRadius: '100px', fontSize: '13px', fontWeight: 900, marginBottom: '25px' }}>#{category}</div>
+            <div style={{ background: 'linear-gradient(135deg, #FF4D6D, #FF8fa3)', color: 'white', padding: '6px 20px', borderRadius: '100px', fontSize: '13px', fontWeight: 900, marginBottom: '25px', boxShadow: '0 4px 12px rgba(255, 77, 109, 0.2)' }}>#{category}</div>
+            
             <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
-              <h2 style={{ fontSize: '22px', fontWeight: 900, color: '#2D1F08', lineHeight: 1.7, wordBreak: 'keep-all', fontFamily: "'Noto Serif KR', serif" }}>
-                {currentQuestion?.question || "새로운 질문을 뽑아주세요!"}
+              <h2 style={{ 
+                fontSize: currentQuestion?.question?.length > 40 ? '19px' : '23px', 
+                fontWeight: 900, 
+                color: '#2D1F08', 
+                lineHeight: 1.7, 
+                wordBreak: 'keep-all',
+                fontFamily: "'Noto Serif KR', serif"
+              }}>
+                {currentQuestion?.question || "카드를 뽑아주세요!"}
               </h2>
             </div>
-            <div style={{ width: '100%', background: '#FDFCF0', padding: '15px', borderRadius: '24px', marginTop: '10px', textAlign: 'center', border: '1px solid rgba(212, 175, 55, 0.1)' }}>
-              <span style={{ fontSize: '14px', color: '#D4AF37', fontWeight: 900 }}>서로의 눈을 즐겁게 바라보며 💬</span>
+
+            <div style={{ width: '100%', background: '#FDFCF0', padding: '18px', borderRadius: '25px', border: '1px solid #D4AF3730', marginTop: '15px', textAlign: 'center' }}>
+              <span style={{ fontSize: '14px', color: '#B08D3E', fontWeight: 900 }}>
+                서로의 눈을 바라보며 나눈 마음은<br/>
+                <small style={{ opacity: 0.8, fontSize: '11px', fontWeight: 800 }}>대화를 마친 후 완료 버튼을 누르세요</small>
+              </span>
             </div>
+
             {isMyTurn && (
               <button 
-                className="game-btn-press" onClick={(e) => { e.stopPropagation(); passTurn(); }} 
-                style={{ marginTop: '20px', width: '100%', padding: '18px', borderRadius: '22px', background: '#2D1F08', color: 'white', fontWeight: 900, fontSize: '16px', border: 'none', boxShadow: '0 8px 20px rgba(0,0,0,0.15)' }}
+                className="game-btn-press"
+                onClick={(e) => { e.stopPropagation(); passTurn(); }} 
+                style={{ 
+                  marginTop: '18px',
+                  width: '100%',
+                  padding: '16px',
+                  borderRadius: '100px',
+                  background: '#2D1F08',
+                  color: 'white',
+                  fontWeight: 900,
+                  fontSize: '15px',
+                  border: 'none',
+                  boxShadow: '0 5px 15px rgba(0,0,0,0.15)'
+                }}
               >
-                답변완료 / 턴 넘기기
+                답변완료 / 다음 턴
               </button>
             )}
           </div>
@@ -294,11 +344,21 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo }) =
       </div>
 
       <button 
-        disabled={!isMyTurn} onClick={() => drawNewCard()} className="game-btn-press"
+        disabled={!isMyTurn} 
+        onClick={() => drawNewCard()} 
+        className="game-btn-press"
         style={{ 
-          width: '100%', maxWidth: '300px', padding: '20px', borderRadius: '24px', border: 'none', 
-          background: isMyTurn ? '#2D1F08' : '#E5E7EB', color: isMyTurn ? 'white' : '#9CA3AF', 
-          fontWeight: 900, fontSize: '17px', boxShadow: isMyTurn ? '0 12px 25px rgba(0,0,0,0.15)' : 'none', opacity: isMyTurn ? 1 : 0.6
+          width: '100%', 
+          maxWidth: '300px', 
+          padding: '20px', 
+          borderRadius: '25px', 
+          border: 'none', 
+          background: isMyTurn ? 'linear-gradient(135deg, #2D1F08, #4B3A1A)' : '#E5E7EB', 
+          color: isMyTurn ? 'white' : '#9CA3AF', 
+          fontWeight: 900, 
+          fontSize: '17px',
+          boxShadow: isMyTurn ? '0 12px 30px rgba(0,0,0,0.15)' : 'none',
+          opacity: isMyTurn ? 1 : 0.6
         }}
       >
         {isMyTurn ? '새로운 질문 뽑기' : `${partnerNameOnly} 답변 중입니다`}
