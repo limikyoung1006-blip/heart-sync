@@ -177,7 +177,7 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo }) =
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         
         .sparkling-gold {
-          background: linear-gradient(135deg, 
+          background: linear-gradient(95deg, 
             #BF953F 0%, 
             #FCF6BA 25%, 
             #B38728 50%, 
@@ -186,8 +186,7 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo }) =
           );
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
-          filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
-          animation: shine-gold 3s linear infinite;
+          animation: shine-gold 4s linear infinite;
           background-size: 200% auto;
         }
         
@@ -207,6 +206,12 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo }) =
               <button onClick={() => { setShowFinishModal(false); setSessionCardCount(11); }} style={{ width: '100%', padding: '14px', background: 'none', color: '#B08D3E', fontWeight: 800, fontSize: '14px', border: 'none' }}>조금 더 할게요</button>
             </div>
           </div>
+        </div>
+      )}
+
+      {showTurnWarning && (
+        <div style={{ position: 'fixed', top: '100px', zIndex: 999, background: 'rgba(239, 68, 68, 0.95)', color: 'white', padding: '12px 25px', borderRadius: '100px', fontSize: '14px', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <Lock size={16} /> 배우자가 답변 중일 때는 조작할 수 없어요!
         </div>
       )}
 
@@ -232,17 +237,13 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo }) =
         </div>
       </div>
 
-      <div style={{ 
-        width: '100%', padding: '16px', borderRadius: '24px', 
-        background: isMyTurn ? 'linear-gradient(135deg, #FFF9EB, #FFF3E0)' : 'rgba(255, 255, 255, 0.6)', 
-        marginBottom: '25px', textAlign: 'center', border: '2px solid #D4AF37',
-        boxShadow: '0 8px 20px rgba(0,0,0,0.04)'
-      }}>
-        <div className="flex items-center justify-center gap-3">
-          {isMyTurn ? <Sparkles size={20} color="#D4AF37" /> : <Timer size={20} color="#8A60FF" className="animate-spin-slow" />}
-          <span style={{ fontSize: '16px', fontWeight: 900, color: isMyTurn ? '#8B6500' : '#8A60FF' }}>
-            {isMyTurn ? "당신의 차례입니다! 질문을 확인하세요 ✨" : `${partnerNameOnly} 답변 중입니다...`}
-          </span>
+      <div className="flex flex-col items-center" style={{ marginBottom: '20px' }}>
+        <p style={{ letterSpacing: '5px', color: '#8B6500', fontWeight: '900', fontSize: '13px', opacity: 0.8, marginBottom: '5px' }}>SELECT YOUR TOPIC</p>
+        <p style={{ fontSize: '11px', color: '#8B7355', fontWeight: 700, letterSpacing: '-0.2px' }}>질문 주제를 먼저 고르세요</p>
+        
+        <div style={{ marginTop: '10px', fontSize: '12px', color: turnOwner ? (turnOwner === 'husband' ? '#8B6500' : '#8A60FF') : '#8B7355', fontWeight: 900, background: 'rgba(255,255,255,0.6)', padding: '6px 16px', borderRadius: '100px', border: '1.5px solid rgba(212, 175, 55, 0.3)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            {!isMyTurn ? <Timer size={16} className="animate-pulse" /> : <Sparkles size={16} />}
+            {isMyTurn ? "당신의 차례입니다 ✨" : `${partnerNameOnly} 답변 중입니다...`}
         </div>
       </div>
 
@@ -265,9 +266,10 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo }) =
                 <span style={{ color: 'white', fontWeight: 900, marginTop: '12px' }}>{partnerNameOnly} 대화 중..</span>
               </div>
             )}
-            <div style={{ textAlign: 'center', background: 'rgba(0,0,0,0.6)', padding: '20px 30px', borderRadius: '25px', backdropFilter: 'blur(12px)', border: '1px solid rgba(255,255,255,0.1)' }}>
-              <p className="sparkling-gold" style={{ fontSize: '24px', letterSpacing: '3px', fontWeight: 900, marginBottom: '8px' }}>QUESTION CARD</p>
-              <p style={{ fontSize: '13px', color: 'white', opacity: 0.9, fontWeight: 700 }}>클릭해서 확인</p>
+            <div style={{ width: '90%', display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: '15px', background: 'rgba(0,0,0,0.6)', padding: '15px 20px', borderRadius: '25px', backdropFilter: 'blur(12px)', border: '1px solid rgba(255,255,255,0.1)' }}>
+              <p className="sparkling-gold" style={{ fontSize: '20px', letterSpacing: '2px', fontWeight: 900, whiteSpace: 'nowrap' }}>QUESTION CARD</p>
+              <div style={{ width: '1px', height: '20px', background: 'rgba(255,255,255,0.2)' }} />
+              <p style={{ fontSize: '13px', color: 'white', opacity: 0.9, fontWeight: 700, whiteSpace: 'nowrap' }}>클릭해서 확인</p>
             </div>
           </div>
 
