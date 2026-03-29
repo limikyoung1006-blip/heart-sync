@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { ChevronLeft, Sparkles } from 'lucide-react';
+import { ChevronLeft, Sparkles, Lock, Timer } from 'lucide-react';
 import { supabase } from '../../supabase';
 import { CARD_DATA } from '../../data/dialogueCards';
 
@@ -16,7 +16,6 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo }) =
   const isMounted = useRef(false);
 
   const isMyTurn = !turnOwner || turnOwner === userRole;
-  const partnerNickname = userRole === 'husband' ? (wifeInfo?.nickname || '아내') : (husbandInfo?.nickname || '남편');
   const partnerNameOnly = userRole === 'husband' ? '아내가' : '남편이';
 
   // Initialize and check for existing state + Real-time Sync
@@ -25,7 +24,6 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo }) =
     const loadState = async () => {
       try {
         if (!coupleCode) {
-          // Fallback if no coupleCode
           if (CARD_DATA.length > 0 && !currentQuestion) {
             setCurrentQuestion(CARD_DATA.find(i => i.category === '일상') || CARD_DATA[0]);
           }
@@ -43,7 +41,6 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo }) =
           const q = CARD_DATA.find(item => String(item.id) === String(data.current_question_id));
           if (q) setCurrentQuestion(q);
         } else {
-          // Initial setup if no data in DB
           const initial = CARD_DATA.find(i => i.category === '일상') || CARD_DATA[0];
           if (initial) setCurrentQuestion(initial);
         }
@@ -54,7 +51,6 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo }) =
     
     loadState();
 
-    // Real-time subscription
     let subscription;
     if (coupleCode) {
       subscription = supabase
@@ -83,7 +79,6 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo }) =
     };
   }, [coupleCode]);
 
-  // Handle Turn and Drawing
   const drawNewCard = (targetCat = null) => {
     if (!isMyTurn) {
       setShowTurnWarning(true);
@@ -106,7 +101,6 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo }) =
     
     if (sessionCardCount + 1 >= 10) setShowFinishModal(true);
     
-    // Remote update
     if (coupleCode) {
       supabase.from('card_game_state').upsert({
         couple_id: coupleCode, 
@@ -163,47 +157,73 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo }) =
         padding: '10px', 
         paddingBottom: '160px',
         minHeight: '100%', 
-        overflowY: 'visible'
+        overflowY: 'visible',
+        backgroundColor: 'transparent'
       }}
     >
       <style>{`
         .game-btn-press {
-          transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.15s ease;
+          transition: transform 0.1s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.1s ease;
         }
         .game-btn-press:active {
           transform: scale(0.95);
           opacity: 0.85;
         }
+        .turn-banner-anim {
+          animation: slideDown 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        @keyframes slideDown {
+          from { transform: translateY(-20px); opacity: 0; }
+          to { transform: translateY(0); opacity: 1; }
+        }
       `}</style>
       
       {showFinishModal && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-          <div style={{ background: 'white', borderRadius: '35px', width: '100%', maxWidth: '340px', padding: '40px 25px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
-            <Sparkles size={45} color="#D4AF37" style={{ marginBottom: '20px' }} />
-            <h3 style={{ fontSize: '22px', fontWeight: 900, color: '#2D1F08', marginBottom: '10px' }}>열 번째 대화 완료!</h3>
-            <p style={{ fontSize: '15px', color: '#8B7355', fontWeight: 600, lineHeight: 1.6, marginBottom: '25px', wordBreak: 'keep-all' }}>오늘 나눈 대화가 서로를 더 깊게 이해하는 시간이 되셨나요? ✨</p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', width: '100%' }}>
-              <button onClick={onBack} style={{ width: '100%', padding: '18px', borderRadius: '20px', background: '#2D1F08', color: 'white', fontWeight: 900, border: 'none' }}>대화 선택으로 돌아가기</button>
-              <button onClick={() => { setShowFinishModal(false); setSessionCardCount(11); }} style={{ width: '100%', padding: '12px', background: 'none', color: '#B08D3E', fontWeight: 800, border: 'none' }}>조금 더 할게요</button>
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+          <div style={{ background: 'white', border: '5px solid #D4AF37', borderRadius: '40px', width: '100%', maxWidth: '340px', padding: '40px 25px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', boxShadow: '0 25px 50px rgba(0,0,0,0.3)' }}>
+            <Sparkles size={60} color="#D4AF37" style={{ marginBottom: '20px' }} />
+            <h3 style={{ fontSize: '24px', fontWeight: 900, color: '#2D1F08', marginBottom: '12px' }}>열 번째 대화 완료!</h3>
+            <p style={{ fontSize: '16px', color: '#8B7355', fontWeight: 600, lineHeight: 1.6, marginBottom: '25px', wordBreak: 'keep-all' }}>오늘의 깊은 대화가 부부 사이를 더 단단하게 만들었을 거예요. ✨</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', width: '100%' }}>
+              <button onClick={onBack} style={{ width: '100%', padding: '18px', borderRadius: '22px', background: '#2D1F08', color: 'white', fontWeight: 900, fontSize: '16px', border: 'none', boxShadow: '0 8px 15px rgba(0,0,0,0.1)' }}>대화 선택으로 돌아가기</button>
+              <button onClick={() => { setShowFinishModal(false); setSessionCardCount(11); }} style={{ width: '100%', padding: '14px', background: 'none', color: '#B08D3E', fontWeight: 800, fontSize: '14px', border: 'none' }}>조금 더 할게요</button>
             </div>
           </div>
         </div>
       )}
 
+      {showTurnWarning && (
+        <div style={{ position: 'fixed', top: '100px', zIndex: 999, background: 'rgba(239, 68, 68, 0.95)', color: 'white', padding: '12px 25px', borderRadius: '100px', fontSize: '14px', fontWeight: 900, boxShadow: '0 10px 25px rgba(239, 68, 68, 0.2)', display: 'flex', alignItems: 'center', gap: '8px' }} className="turn-banner-anim">
+          <Lock size={16} /> 배우자가 답변 중일 때는 조작할 수 없어요!
+        </div>
+      )}
+
       <div className="w-full flex justify-start mb-4">
         <button onClick={onBack} style={{ background: 'none', border: 'none', display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer' }}>
-          <ChevronLeft size={20} color="#8A60FF" strokeWidth={3} />
-          <span style={{ fontSize: '14px', fontWeight: 900, color: '#8A60FF' }}>돌아가기</span>
+          <ChevronLeft size={22} color="#8A60FF" strokeWidth={3} />
+          <span style={{ fontSize: '15px', fontWeight: 900, color: '#8A60FF' }}>돌아가기</span>
         </button>
       </div>
 
-      <div className="w-full mb-6">
-        <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '10px', WebkitOverflowScrolling: 'touch' }}>
+      <div style={{ width: '100%', overflowX: 'auto', marginBottom: '25px', pb: '5px', WebkitOverflowScrolling: 'touch' }}>
+        <div style={{ display: 'flex', gap: '10px', padding: '5px' }}>
           {['일상', '상상', '추억', '관계', '신앙', '시크릿'].map(cat => (
             <button 
               key={cat} 
-              onClick={() => { setCategory(cat); drawNewCard(cat); }}
-              style={{ padding: '8px 18px', borderRadius: '100px', border: 'none', background: category === cat ? '#D4AF37' : 'white', color: category === cat ? 'white' : '#8B7355', fontWeight: 800, fontSize: '12px', whiteSpace: 'nowrap' }}
+              onClick={() => { if(!isMyTurn) return; setCategory(cat); drawNewCard(cat); }}
+              className="game-btn-press"
+              style={{ 
+                padding: '10px 22px', 
+                borderRadius: '100px', 
+                border: category === cat ? 'none' : '1.5px solid rgba(212, 175, 55, 0.3)', 
+                background: category === cat ? 'linear-gradient(135deg, #D4AF37, #B08D3E)' : 'white', 
+                color: category === cat ? 'white' : '#8B7355', 
+                fontWeight: 900, 
+                fontSize: '13px', 
+                whiteSpace: 'nowrap',
+                boxShadow: category === cat ? '0 5px 12px rgba(212, 175, 55, 0.25)' : 'none',
+                opacity: isMyTurn ? 1 : 0.6
+              }}
             >
               {cat}
             </button>
@@ -213,111 +233,99 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo }) =
 
       <div style={{ 
         width: '100%', 
-        padding: '14px', 
-        borderRadius: '20px', 
-        background: isMyTurn ? 'rgba(212, 175, 55, 0.12)' : 'rgba(138, 96, 255, 0.08)', 
-        marginBottom: '20px', 
+        padding: '16px', 
+        borderRadius: '24px', 
+        background: isMyTurn ? 'linear-gradient(135deg, #FFF9EB, #FFF3E0)' : 'linear-gradient(135deg, #F3F0FF, #EBE5FF)', 
+        marginBottom: '25px', 
         textAlign: 'center', 
-        position: 'relative',
-        border: '1px solid rgba(212, 175, 55, 0.2)'
+        border: isMyTurn ? '2px solid rgba(212, 175, 55, 0.3)' : '2px solid rgba(138, 96, 255, 0.2)',
+        boxShadow: '0 8px 20px rgba(0,0,0,0.04)'
       }}>
-        <span style={{ fontSize: '14px', fontWeight: 900, color: isMyTurn ? '#8B6500' : '#8A60FF' }}>
-          {isMyTurn 
-            ? "✨ 당신의 턴입니다! 마음을 나눠주세요" 
-            : `⏳ ${partnerNameOnly} 답변 중입니다...`}
-        </span>
+        <div className="flex items-center justify-center gap-3">
+          {isMyTurn ? <Sparkles size={20} color="#D4AF37" /> : <Timer size={20} color="#8A60FF" className="animate-spin-slow" />}
+          <span style={{ fontSize: '16px', fontWeight: 900, color: isMyTurn ? '#8B6500' : '#8A60FF', letterSpacing: '-0.5px' }}>
+            {isMyTurn 
+              ? "당신의 차례입니다! 질문에 답해주세요 ✨" 
+              : `${partnerNameOnly} 답변 중입니다...`}
+          </span>
+        </div>
       </div>
 
-      <p style={{ letterSpacing: '4px', color: '#8B6500', fontWeight: 900, fontSize: '11px', opacity: 0.7, marginBottom: '25px', textAlign: 'center' }}>CHOOSE A CARD TOGETHER</p>
-
       <div className="card-container" style={{ 
-        perspective: '1200px', 
-        marginBottom: '30px', 
-        width: '320px', 
-        height: '440px',
+        perspective: '1500px', 
+        marginBottom: '40px', 
+        width: '100%', 
+        maxWidth: '320px', 
+        height: '460px',
         display: 'flex', 
         justifyContent: 'center',
-        alignItems: 'center'
+        alignItems: 'center',
+        position: 'relative'
       }}>
         <div 
           className={`talking-card ${isFlipped ? 'flipped' : ''}`} 
           onClick={toggleFlip}
-          style={{ width: '100%', height: '100%' }}
+          style={{ width: '100%', height: '100%', cursor: isMyTurn ? 'pointer' : 'default' }}
         >
           {/* Card Front */}
           <div className="card-face card-front" style={{ 
-            border: '3px solid rgba(212, 175, 55, 0.4)',
-            backfaceVisibility: 'hidden',
-            WebkitBackfaceVisibility: 'hidden',
-            visibility: isFlipped ? 'hidden' : 'visible',
-            overflow: 'hidden'
+            border: `4px solid ${isMyTurn ? '#D4AF37' : '#E5E7EB'}`,
+            background: isMyTurn ? '#2D1F08' : '#4B3A1A',
+            transition: 'all 0.3s ease'
           }}>
-            {!isFlipped && (
-              <>
-                <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.1)', zIndex: 1 }} />
-                
-                <span className="brand-text" style={{ 
-                  position: 'relative',
-                  zIndex: 2,
-                  fontSize: '28px', 
-                  letterSpacing: '8px',
-                  fontWeight: 900,
-                  marginTop: '150px'
-                }}>QUESTION CARD</span>
-                
-                <div style={{ position: 'relative', zIndex: 2, marginTop: '25px', width: '60px', height: '2px', background: 'linear-gradient(90deg, transparent, #D4AF37, transparent)' }} />
-                
-                <div style={{ position: 'relative', zIndex: 2, marginTop: '100px' }}>
-                   <span style={{ background: '#D4AF37', color: 'white', padding: '8px 20px', borderRadius: '100px', fontSize: '14px', fontWeight: 900, boxShadow: '0 4px 10px rgba(0,0,0,0.1)' }}>답변완료/턴</span>
-                </div>
-              </>
+            {!isMyTurn && (
+              <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 10, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '15px' }}>
+                <Lock size={40} color="white" opacity={0.8} />
+                <span style={{ color: 'white', fontWeight: 900, fontSize: '15px' }}>{partnerNameOnly} 대화 중..</span>
+              </div>
             )}
+            
+            <div style={{ position: 'relative', zIndex: 2, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+               <p style={{ fontSize: '12px', fontWeight: 900, color: '#D4AF37', letterSpacing: '8px', marginBottom: '30px', opacity: 0.6 }}>HEART SYNC</p>
+               <div style={{ padding: '25px', background: 'rgba(212, 175, 55, 0.1)', borderRadius: '50%', marginBottom: '30px' }}>
+                 <Sparkles size={60} color="#D4AF37" />
+               </div>
+               <h2 style={{ fontSize: '28px', color: 'white', fontWeight: 900, letterSpacing: '4px', textAlign: 'center' }}>오늘의 질문</h2>
+               <div style={{ marginTop: '25px', width: '50px', height: '2px', background: 'linear-gradient(90deg, transparent, #D4AF37, transparent)' }} />
+               <p style={{ marginTop: '80px', color: 'rgba(255,255,255,0.5)', fontSize: '11px', fontWeight: 800 }}>TAP TO OPEN</p>
+            </div>
           </div>
 
           {/* Card Back */}
           <div className="card-face card-back" style={{ 
-            border: '3px solid #8A60FF', 
+            border: '4px solid #8A60FF', 
             background: 'white',
-            backfaceVisibility: 'hidden',
-            WebkitBackfaceVisibility: 'hidden',
             transform: 'rotateY(180deg)',
-            overflow: 'hidden'
+            padding: '20px'
           }}>
             <div style={{ 
-              background: 'linear-gradient(135deg, #FF4D6D, #FF8fa3)', 
+              background: '#8A60FF', 
               color: 'white', 
-              padding: '6px 20px', 
+              padding: '8px 20px', 
               borderRadius: '100px', 
-              fontSize: '13px', 
+              fontSize: '14px', 
               fontWeight: 900,
-              boxShadow: '0 4px 10px rgba(255, 77, 109, 0.3)',
-              marginBottom: '20px'
+              boxShadow: '0 5px 15px rgba(138, 96, 255, 0.3)',
+              marginBottom: '30px'
             }}>#{category}</div>
             
-            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '0 10px' }}>
               <h2 style={{ 
-                fontSize: '21px', 
+                fontSize: '22px', 
                 fontWeight: 900, 
                 color: '#2D1F08', 
                 lineHeight: 1.7, 
                 wordBreak: 'keep-all',
                 fontFamily: "'Noto Serif KR', serif"
               }}>
-                {currentQuestion?.question || "카드를 뽑아주세요!"}
+                {currentQuestion?.question || "새로운 카드를 뽑아주세요!"}
               </h2>
             </div>
 
-            <div style={{ 
-              width: '100%', 
-              background: '#F9F5FF', 
-              padding: '15px', 
-              borderRadius: '20px',
-              border: '1px solid rgba(138, 96, 255, 0.1)',
-              marginTop: '10px'
-            }}>
-              <span style={{ fontSize: '13px', color: '#8A60FF', fontWeight: 900, display: 'block' }}>
-                서로의 눈을 즐겁게 바라보며 💬<br/>
-                <small style={{ opacity: 0.7, fontSize: '10px', fontWeight: 700 }}>대화를 마친 후 완료 버튼을 누르세요</small>
+            <div style={{ width: '100%', background: '#F9F5FF', padding: '18px', borderRadius: '24px', border: '1px solid rgba(138, 96, 255, 0.1)', marginTop: '20px', textAlign: 'center' }}>
+              <span style={{ fontSize: '14px', color: '#8A60FF', fontWeight: 800, lineHeight: 1.5 }}>
+                충분히 대화를 나누셨나요? 😊<br/>
+                <small style={{ opacity: 0.6, fontSize: '11px', fontWeight: 700 }}>대화를 마친 후 완료 버튼을 눌러 턴을 넘기세요</small>
               </span>
             </div>
 
@@ -327,26 +335,22 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo }) =
                 onClick={(e) => { e.stopPropagation(); passTurn(); }} 
                 style={{ 
                   marginTop: '15px',
-                  width: 'fit-content',
-                  padding: '8px 20px',
-                  borderRadius: '100px',
-                  background: '#8A60FF',
+                  width: '100%',
+                  padding: '16px',
+                  borderRadius: '18px',
+                  background: 'linear-gradient(135deg, #8A60FF, #6A38EB)',
                   color: 'white',
                   fontWeight: 900,
-                  fontSize: '14px',
+                  fontSize: '16px',
                   border: 'none',
-                  boxShadow: '0 5px 15px rgba(138, 96, 255, 0.2)'
+                  boxShadow: '0 8px 20px rgba(138, 96, 255, 0.3)'
                 }}
               >
-                답변완료/턴
+                답변완료 / 턴 넘기기
               </button>
             )}
           </div>
         </div>
-      </div>
-
-      <div style={{ textAlign: 'center', height: '20px', marginBottom: '15px' }}>
-        {isMyTurn && <p style={{ fontSize: '13px', color: '#2D1F08', fontWeight: 800 }}>새 주제를 고르거나 질문을 바꾸세요</p>}
       </div>
 
       <button 
@@ -355,20 +359,22 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo }) =
         className="game-btn-press"
         style={{ 
           width: '100%', 
-          maxWidth: '280px', 
-          padding: '18px', 
-          borderRadius: '22px', 
+          maxWidth: '300px', 
+          padding: '20px', 
+          borderRadius: '24px', 
           border: 'none', 
           background: isMyTurn ? '#2D1F08' : '#E5E7EB', 
           color: isMyTurn ? 'white' : '#9CA3AF', 
           fontWeight: 900, 
-          fontSize: '16px',
-          boxShadow: isMyTurn ? '0 10px 20px rgba(0,0,0,0.1)' : 'none'
+          fontSize: '17px',
+          boxShadow: isMyTurn ? '0 12px 25px rgba(0,0,0,0.15)' : 'none',
+          opacity: isMyTurn ? 1 : 0.6
         }}
       >
-        {isMyTurn ? '새로운 질문 뽑기' : '배우자의 답변 차례입니다'}
+        {isMyTurn ? '새로운 질문 뽑기' : `${partnerNameOnly} 답변 중입니다`}
       </button>
 
+      <p style={{ marginTop: '30px', fontSize: '12px', color: '#B08D3E', fontWeight: 800, opacity: 0.6 }}>* 화면을 위아래로 스크롤할 수 있습니다.</p>
     </div>
   );
 };
