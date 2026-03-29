@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { ChevronLeft, Sparkles } from 'lucide-react';
+import { ChevronLeft, Sparkles, Lock, Timer } from 'lucide-react';
 import { supabase } from '../../supabase';
 import { IMAGE_CARD_DATA } from '../../data/imageCards';
 
@@ -77,11 +77,11 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo
       isMounted.current = false;
       subscription.unsubscribe();
     };
-  }, [coupleCode]);
+  }, [coupleCode, userRole]);
 
   const drawNewCard = useCallback(() => {
     if (isImageLoading) return;
-    if (turnOwner && turnOwner !== userRole) {
+    if (!isMyTurn) {
       setShowTurnWarning(true);
       setTimeout(() => setShowTurnWarning(false), 2000);
       return;
@@ -114,9 +114,14 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo
         }, { onConflict: 'couple_id' }).then(() => {});
       }
     }
-  }, [history, sessionCardCount, userRole, isImageLoading, coupleCode, turnOwner]);
+  }, [history, sessionCardCount, userRole, isImageLoading, coupleCode, isMyTurn]);
 
   const initPick2Mode = useCallback(() => {
+    if (!isMyTurn) {
+        setShowTurnWarning(true);
+        setTimeout(() => setShowTurnWarning(false), 2000);
+        return;
+    }
     const dataPool = IMAGE_CARD_DATA || [];
     if (dataPool.length < 10) return;
 
@@ -141,20 +146,39 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo
         updated_at: new Date().toISOString()
       }, { onConflict: 'couple_id' }).then(() => {});
     }
-  }, [userRole, coupleCode]);
+  }, [userRole, coupleCode, isMyTurn]);
 
   const passTurn = async () => {
     if (turnOwner !== userRole) return;
     const nextTurnOwner = userRole === 'husband' ? 'wife' : 'husband';
     setIsFlipped(false);
+    setIsSharing(false);
     setTurnOwner(nextTurnOwner);
     
     if (coupleCode) {
       await supabase.from('image_game_state').update({ 
         turn_owner: nextTurnOwner,
         is_flipped: false,
+        shared_cards: null,
         updated_at: new Date().toISOString()
       }).eq('couple_id', coupleCode);
+    }
+  };
+
+  const toggleFlip = () => {
+    if (!isMyTurn) {
+        setShowTurnWarning(true);
+        setTimeout(() => setShowTurnWarning(false), 2000);
+        return;
+    }
+    const nextFlip = !isFlipped;
+    setIsFlipped(nextFlip);
+    if (coupleCode) {
+        supabase.from('image_game_state').update({
+            is_flipped: nextFlip,
+            turn_owner: userRole,
+            updated_at: new Date().toISOString()
+        }).eq('couple_id', coupleCode).then(()=>{});
     }
   };
 
@@ -174,13 +198,10 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo
       }}
     >
       <style>{`
-        .game-btn-press {
-          transition: transform 0.1s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.1s ease;
-        }
-        .game-btn-press:active {
-          transform: scale(0.95);
-          opacity: 0.85;
-        }
+        .game-btn-press { transition: transform 0.1s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.1s ease; }
+        .game-btn-press:active { transform: scale(0.95); opacity: 0.85; }
+        .animate-spin-slow { animation: spin 8s linear infinite; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
       `}</style>
 
       {showFinishModal && (
@@ -197,6 +218,12 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo
         </div>
       )}
 
+      {showTurnWarning && (
+        <div style={{ position: 'fixed', top: '100px', zIndex: 999, background: 'rgba(239, 68, 68, 0.95)', color: 'white', padding: '12px 25px', borderRadius: '100px', fontSize: '14px', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <Lock size={16} /> 배우자가 답변 중일 때는 조작할 수 없어요!
+        </div>
+      )}
+
       <header style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '15px' }}>
         <button onClick={onBack} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px' }}>
           <ChevronLeft size={24} color="#AB47BC" strokeWidth={3} />
@@ -209,56 +236,70 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo
         </div>
       </header>
       
-      <div style={{ width: '100%', padding: '14px', borderRadius: '20px', background: isMyTurn ? 'rgba(171, 71, 188, 0.08)' : '#F3E5F5', marginBottom: '20px', textAlign: 'center', position: 'relative' }}>
-        <span style={{ fontSize: '13px', fontWeight: 900, color: isMyTurn ? '#AB47BC' : '#9C27B0' }}>
-          {isMyTurn ? "✨ 당신의 턴입니다! 마음을 나눠주세요" : `⏳ ${partnerNameOnly} 답변 중입니다...`}
-        </span>
+      <div style={{ width: '100%', padding: '16px', borderRadius: '24px', background: isMyTurn ? 'rgba(171, 71, 188, 0.08)' : '#F3E5F5', marginBottom: '20px', textAlign: 'center', border: '2px solid #AB47BC', boxShadow: '0 8px 20px rgba(0,0,0,0.04)' }}>
+        <div className="flex items-center justify-center gap-3">
+          {isMyTurn ? <Sparkles size={20} color="#AB47BC" /> : <Timer size={20} color="#9C27B0" className="animate-spin-slow" />}
+          <span style={{ fontSize: '16px', fontWeight: 900, color: isMyTurn ? '#AB47BC' : '#9C27B0' }}>
+            {isMyTurn ? "당신의 차례입니다! 마음을 나눠주세요 ✨" : `⏳ ${partnerNameOnly} 답변 중입니다...`}
+          </span>
+        </div>
       </div>
 
       {gameMode === 'classic' ? (
         <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
           <div className="card-container" style={{ 
-            perspective: '1200px', 
-            marginBottom: '30px', 
-            width: '100%', 
-            maxWidth: '300px',
-            height: '420px',
-            display: 'flex', 
-            justifyContent: 'center',
-            alignItems: 'center'
+            perspective: '1500px', marginBottom: '40px', width: '300px', height: '420px',
+            display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'relative'
           }}>
             <div 
               className={`talking-card ${isFlipped ? 'flipped' : ''}`} 
-              onClick={() => { if (!isMyTurn) return; const nextFlip = !isFlipped; setIsFlipped(nextFlip); setTurnOwner(userRole); if(coupleCode) supabase.from('image_game_state').update({ is_flipped: nextFlip, turn_owner: userRole }).eq('couple_id', coupleCode).then(()=>{}); }}
+              onClick={toggleFlip}
+              style={{ width: '100%', height: '100%', transformStyle: 'preserve-3d', transition: 'transform 0.8s' }}
             >
-              <div className="card-face card-front" style={{ border: '3px solid #AB47BC', background: '#2D1F08' }}>
+              {/* Image Card Front */}
+              <div className="card-face card-front" style={{ 
+                position: 'absolute', width: '100%', height: '100%', backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden',
+                border: '3px solid #AB47BC', borderRadius: '40px', background: '#2D1F08',
+                display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                visibility: isFlipped ? 'hidden' : 'visible', zIndex: isFlipped ? 1 : 2
+              }}>
+                {!isMyTurn && (
+                  <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 10, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', borderRadius: '37px' }}>
+                    <Lock size={40} color="white" />
+                    <span style={{ color: 'white', fontWeight: 900, marginTop: '10px' }}>{partnerNameOnly} 대화 중..</span>
+                  </div>
+                )}
                 <p style={{ fontSize: '12px', fontWeight: 900, color: '#AB47BC', letterSpacing: '6px', marginBottom: '20px' }}>IMAGE CARD</p>
                 <Sparkles size={50} color="#AB47BC" />
                 <div style={{ marginTop: '25px', width: '50px', height: '2px', background: '#AB47BC', opacity: 0.4 }} />
                 <div style={{ marginTop: '60px' }}>
-                   <span style={{ background: '#AB47BC', color: 'white', padding: '6px 15px', borderRadius: '100px', fontSize: '12px', fontWeight: 900 }}>답변완료/턴</span>
+                   <span style={{ background: '#AB47BC', color: 'white', padding: '8px 20px', borderRadius: '100px', fontSize: '12px', fontWeight: 900 }}>터치하여 확인</span>
                 </div>
               </div>
 
-              <div className="card-face card-back" style={{ border: '3px solid #AB47BC', background: 'white', padding: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-                <div style={{ width: '100%', height: '65%', position: 'relative', background: '#F9F5FF' }}>
+              {/* Image Card Back */}
+              <div className="card-face card-back" style={{ 
+                position: 'absolute', width: '100%', height: '100%', backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden',
+                border: '3px solid #AB47BC', borderRadius: '40px', background: 'white', transform: 'rotateY(180deg)',
+                visibility: isFlipped ? 'visible' : 'hidden', zIndex: isFlipped ? 2 : 1, overflow: 'hidden', display: 'flex', flexDirection: 'column'
+              }}>
+                <div style={{ width: '100%', height: '60%', position: 'relative', background: '#F9F5FF' }}>
                   {isImageLoading && <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Sparkles className="animate-pulse" color="#AB47BC" size={32} /></div>}
                   <img 
                     src={currentQuestion?.image} 
-                    style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: isImageLoading ? 0 : 1, transition: 'opacity 0.3s' }} 
+                    style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: isImageLoading ? 0 : 1 }} 
                     onLoad={() => setIsImageLoading(false)} 
-                    alt="game card"
+                    alt="game active card"
                   />
                 </div>
-                <div style={{ padding: '12px', flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', background: 'white' }}>
-                  <p style={{ fontSize: '14px', fontWeight: 900, color: '#2D1F08', lineHeight: 1.4, wordBreak: 'keep-all', marginBottom: '10px' }}>{currentQuestion?.question}</p>
+                <div style={{ padding: '15px', flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
+                  <p style={{ fontSize: '15px', fontWeight: 900, color: '#2D1F08', lineHeight: 1.4, wordBreak: 'keep-all', marginBottom: '15px' }}>{currentQuestion?.question}</p>
                   {isMyTurn && (
                     <button 
-                      className="game-btn-press"
-                      onClick={(e) => { e.stopPropagation(); passTurn(); }}
-                      style={{ padding: '6px 18px', borderRadius: '100px', background: '#AB47BC', color: 'white', fontSize: '12px', fontWeight: 900, border: 'none' }}
+                      className="game-btn-press" onClick={(e) => { e.stopPropagation(); passTurn(); }}
+                      style={{ padding: '10px 24px', borderRadius: '100px', background: '#AB47BC', color: 'white', fontSize: '13px', fontWeight: 900, border: 'none' }}
                     >
-                      답변완료/턴
+                      답변완료 / 다음 턴
                     </button>
                   )}
                 </div>
@@ -266,22 +307,14 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo
             </div>
           </div>
           <button 
-            disabled={!isMyTurn || isImageLoading} 
-            onClick={() => drawNewCard()} 
-            className="game-btn-press"
+            disabled={!isMyTurn || isImageLoading} onClick={() => drawNewCard()} className="game-btn-press"
             style={{ 
-              width: '100%', 
-              maxWidth: '280px', 
-              padding: '18px', 
-              borderRadius: '22px', 
-              background: (isMyTurn && !isImageLoading) ? '#AB47BC' : '#E5E7EB', 
-              color: (isMyTurn && !isImageLoading) ? 'white' : '#9CA3AF', 
-              fontWeight: 900, 
-              border: 'none',
-              boxShadow: isMyTurn ? '0 10px 20px rgba(171, 71, 188, 0.2)' : 'none' 
+              width: '100%', maxWidth: '280px', padding: '20px', borderRadius: '24px', border: 'none',
+              background: (isMyTurn && !isImageLoading) ? '#AB47BC' : '#E5E7EB', color: (isMyTurn && !isImageLoading) ? 'white' : '#9CA3AF', 
+              fontWeight: 900, boxShadow: isMyTurn ? '0 10px 20px rgba(171, 71, 188, 0.2)' : 'none', opacity: isMyTurn ? 1 : 0.6
             }}
           >
-            {isMyTurn ? "다른 이미지 뽑기" : "배우자의 답변 차례입니다"}
+            {isMyTurn ? "다른 이미지 뽑기" : `${partnerNameOnly} 답변 중입니다`}
           </button>
         </div>
       ) : (
@@ -290,33 +323,21 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo
              <>
                <div style={{ background: '#F9F5FF', padding: '18px', borderRadius: '22px', marginBottom: '15px', textAlign: 'center', border: '1px solid rgba(171, 71, 188, 0.1)' }}>
                  <h3 style={{ fontSize: '16px', fontWeight: 900, color: '#2D1F08', marginBottom: '5px' }}>"{mainQuestion}"</h3>
-                 <p style={{ fontSize: '12px', color: '#AB47BC', fontWeight: 800 }}>어울리는 사진 2장을 선택해 주세요.</p>
+                 <p style={{ fontSize: '13px', color: '#AB47BC', fontWeight: 800 }}>어울리는 사진 2장을 선택해 주세요.</p>
                </div>
                
                <div style={{ 
-                 display: 'grid', 
-                 gridTemplateColumns: 'repeat(2, 1fr)', 
-                 gap: '12px', 
-                 marginBottom: '20px',
-                 maxHeight: '400px',
-                 overflowY: 'auto',
-                 padding: '5px',
-                 WebkitOverflowScrolling: 'touch',
-                 opacity: isMyTurn ? 1 : 0.6,
-                 pointerEvents: isMyTurn ? 'auto' : 'none'
+                 display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px', marginBottom: '20px',
+                 maxHeight: '400px', overflowY: 'auto', padding: '5px', WebkitOverflowScrolling: 'touch',
+                 opacity: isMyTurn ? 1 : 0.6, pointerEvents: isMyTurn ? 'auto' : 'none'
                }}>
                  {imagePool.map((card, idx) => (
                     <div 
                       key={idx} 
                       onClick={() => { if(!isMyTurn) return; setSelectedIndices(prev => prev.includes(idx) ? prev.filter(i => i !== idx) : (prev.length < 2 ? [...prev, idx] : [prev[1], idx])); }} 
                       style={{ 
-                        position: 'relative', 
-                        height: '130px', 
-                        borderRadius: '16px', 
-                        overflow: 'hidden', 
-                        cursor: 'pointer',
-                        border: selectedIndices.includes(idx) ? '4px solid #AB47BC' : '2px solid transparent',
-                        boxShadow: selectedIndices.includes(idx) ? '0 4px 15px rgba(171, 71, 188, 0.3)' : '0 2px 8px rgba(0,0,0,0.05)'
+                        position: 'relative', height: '130px', borderRadius: '16px', overflow: 'hidden', 
+                        border: selectedIndices.includes(idx) ? '4px solid #AB47BC' : '2px solid transparent'
                       }}
                     >
                       <img src={card.image} style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: selectedIndices.includes(idx) ? 0.6 : 1 }} loading="lazy" />
@@ -336,30 +357,14 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo
                   <button 
                     onClick={() => { 
                       const picked = selectedIndices.map(i => imagePool[i]);
-                      setSharedCards(picked); 
-                      setIsSharing(true); 
-                      setSessionCardCount(prev => prev + 1); 
+                      setSharedCards(picked); setIsSharing(true); 
                       if (coupleCode) {
-                        supabase.from('image_game_state').update({
-                          shared_cards: picked,
-                          updated_at: new Date().toISOString()
-                        }).eq('couple_id', coupleCode).then(()=>{});
+                        supabase.from('image_game_state').update({ shared_cards: picked, updated_at: new Date().toISOString() }).eq('couple_id', coupleCode).then(()=>{});
                       }
-                      if (sessionCardCount+1 >= 10) setShowFinishModal(true); 
                     }} 
                     disabled={!isMyTurn || selectedIndices.length < 2} 
                     className="game-btn-press"
-                    style={{ 
-                      flex: 2, 
-                      padding: '16px', 
-                      borderRadius: '18px', 
-                      background: '#AB47BC', 
-                      color: 'white', 
-                      fontWeight: 900, 
-                      fontSize: '15px',
-                      opacity: selectedIndices.length === 2 ? 1 : 0.4,
-                      boxShadow: selectedIndices.length === 2 ? '0 8px 20px rgba(171, 71, 188, 0.3)' : 'none'
-                    }}
+                    style={{ flex: 2, padding: '16px', borderRadius: '18px', background: '#AB47BC', color: 'white', fontWeight: 900, fontSize: '15px' }}
                   >
                     이미지 보여주기
                   </button>
@@ -380,7 +385,7 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo
                  <p style={{ fontSize: '15px', fontWeight: 800, color: '#AB47BC', marginTop: '15px' }}>이미지를 선택한 이유를 설명해 보세요. 😊</p>
                </div>
                <button 
-                 onClick={() => { passTurn(); initPick2Mode(); }} 
+                 onClick={() => { passTurn(); }} 
                  disabled={!isMyTurn} 
                  className="game-btn-press"
                  style={{ marginTop: '25px', width: '100%', maxWidth: '280px', padding: '18px', borderRadius: '22px', background: '#2D1F08', color: 'white', fontWeight: 900, border: 'none', boxShadow: '0 10px 25px rgba(0,0,0,0.15)' }}
@@ -391,7 +396,7 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo
            )}
         </div>
       )}
-      <p style={{ marginTop: '20px', fontSize: '11px', color: '#999', fontWeight: 700, opacity: 0.6 }}>* 화면을 위아래로 스크롤할 수 있습니다.</p>
+      <p style={{ marginTop: '30px', fontSize: '11px', color: '#999', fontWeight: 700, opacity: 0.6 }}>* 화면을 위아래로 스크롤할 수 있습니다.</p>
     </div>
   );
 };
