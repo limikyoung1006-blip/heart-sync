@@ -231,17 +231,68 @@ const HomeView = ({
       {/* 3. 오늘 서로에게 남기는 메모 */}
       <div style={{ padding: '22px', background: 'linear-gradient(135deg, #FFF8E1 0%, #FFFDE7 100%)', borderRadius: '24px', border: '1.5px solid #FBC02D', marginBottom: '20px' }}>
          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '15px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><div style={{ padding: '6px', background: '#FBC02D15', borderRadius: '8px' }}><Info size={16} color="#FBC02D" /></div><span style={{ fontSize: '12px', fontWeight: 900, color: '#D4AF37' }}>오늘 꼭 기억해줘요 (한줄 메모)</span></div>
-            {!isEditingMemo && <button onClick={() => setIsEditingMemo(true)} style={{ background: 'none', border: 'none', color: '#D4AF37', fontSize: '11px', fontWeight: 800, textDecoration: 'underline' }}>메모 수정</button>}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div style={{ padding: '6px', background: '#FBC02D15', borderRadius: '8px' }}>
+                <Info size={16} color="#FBC02D" />
+              </div>
+              <span style={{ fontSize: '12px', fontWeight: 900, color: '#D4AF37' }}>오늘 꼭 기억해줘요 (한줄 메모)</span>
+            </div>
+            {!isEditingMemo && (
+              <button 
+                onClick={() => setIsEditingMemo(true)} 
+                style={{ background: 'none', border: 'none', color: '#B08D3E', fontSize: '11px', fontWeight: 900, textDecoration: 'underline', cursor: 'pointer' }}
+              >
+                메모 수정
+              </button>
+            )}
          </div>
-         <div style={{ background: 'white', padding: '15px', borderRadius: '15px', border: '1px solid rgba(251, 192, 45, 0.15)' }}>
-            {!isEditingMemo ? (<p style={{ fontSize: '15px', color: '#4D3A1A', fontWeight: 700, lineHeight: 1.5 }}>{myInfo?.todayMemo || "메모를 입력해보세요."}</p>) : (
-               <div style={{ display: 'flex', gap: '8px' }}><input autoFocus value={memoInput} onChange={(e) => setMemoInput(e.target.value)} onKeyPress={(e) => e.key === 'Enter' && onUpdateMemo(undefined, { todayMemo: memoInput }).then(() => setIsEditingMemo(false))} style={{ flex: 1, border: 'none', background: '#F9FAFB', padding: '10px 15px', borderRadius: '10px', fontSize: '14px', fontWeight: 700, outline: 'none' }} /><button onClick={() => onUpdateMemo(undefined, { todayMemo: memoInput }).then(() => setIsEditingMemo(false))} style={{ padding: '10px 15px', background: '#2D1F08', color: 'white', borderRadius: '10px', border: 'none', fontSize: '12px', fontWeight: 800 }}>저장</button></div>
+         <div style={{ background: 'white', padding: '15px', borderRadius: '15px', border: '1px solid rgba(251, 192, 45, 0.15)', cursor: !isEditingMemo ? 'pointer' : 'default' }} onClick={() => !isEditingMemo && setIsEditingMemo(true)}>
+            {!isEditingMemo ? (
+              <p style={{ fontSize: '15px', color: myInfo?.todayMemo ? '#2D1F08' : '#B08D3E', fontWeight: myInfo?.todayMemo ? 700 : 800, lineHeight: 1.5 }}>
+                {myInfo?.todayMemo || "메모를 입력해보세요. (터치하여 입력)"}
+              </p>
+            ) : (
+               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                 <input 
+                   autoFocus 
+                   value={memoInput} 
+                   onChange={(e) => setMemoInput(e.target.value)} 
+                   onKeyPress={(e) => e.key === 'Enter' && onUpdateMemo(undefined, { todayMemo: memoInput }).then(() => setIsEditingMemo(false))} 
+                   placeholder="배우자에게 남길 한줄 메모를 적어보세요..."
+                   style={{ flex: 1, border: 'none', background: '#FDFCF0', padding: '12px 15px', borderRadius: '12px', fontSize: '14px', fontWeight: 700, outline: 'none', color: '#2D1F08' }} 
+                 />
+                 <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                   {myInfo?.todayMemo && (
+                     <button 
+                       onClick={(e) => { e.stopPropagation(); onUpdateMemo(undefined, { todayMemo: "" }).then(() => { setMemoInput(""); setIsEditingMemo(false); }); }} 
+                       style={{ padding: '10px 18px', background: '#FEE2E2', color: '#EF4444', borderRadius: '10px', border: 'none', fontSize: '12px', fontWeight: 900 }}
+                     >
+                       삭제
+                     </button>
+                   )}
+                   <button 
+                     onClick={(e) => { e.stopPropagation(); setIsEditingMemo(false); setMemoInput(myInfo?.todayMemo || ""); }} 
+                     style={{ padding: '10px 18px', background: '#F1F5F9', color: '#64748B', borderRadius: '10px', border: 'none', fontSize: '12px', fontWeight: 900 }}
+                   >
+                     취소
+                   </button>
+                   <button 
+                     onClick={(e) => { e.stopPropagation(); onUpdateMemo(undefined, { todayMemo: memoInput }).then(() => setIsEditingMemo(false)); }} 
+                     style={{ padding: '10px 25px', background: '#2D1F08', color: 'white', borderRadius: '10px', border: 'none', fontSize: '12px', fontWeight: 900, boxShadow: '0 4px 10px rgba(0,0,0,0.1)' }}
+                   >
+                     저장
+                   </button>
+                 </div>
+               </div>
             )}
          </div>
          <div style={{ marginTop: '15px', paddingTop: '15px', borderTop: '1px solid rgba(251, 192, 45, 0.1)' }}>
             <span style={{ fontSize: '11px', fontWeight: 900, color: '#B08D3E', display: 'block', marginBottom: '8px' }}>배우자의 한줄 메모</span>
-            <div style={{ background: 'rgba(251, 192, 45, 0.05)', padding: '12px 15px', borderRadius: '12px' }}><p style={{ fontSize: '14px', color: '#2D1F08', fontWeight: 600 }}>{spouseInfo?.todayMemo || "아직 작성된 메모가 없습니다."}</p></div>
+            <div style={{ background: 'rgba(251, 192, 45, 0.05)', padding: '12px 15px', borderRadius: '12px' }}>
+              <p style={{ fontSize: '14px', color: spouseInfo?.todayMemo ? '#2D1F08' : '#B08D3E', fontWeight: 600 }}>
+                {spouseInfo?.todayMemo || "아직 작성된 메모가 없습니다."}
+              </p>
+            </div>
          </div>
       </div>
       
