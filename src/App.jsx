@@ -3749,7 +3749,7 @@ const App = () => {
            } else {
               sendNativeNotification(
                 `${senderLabel}님의 대화 요청 🃏`,
-                '함께 깊은 대화를 나누고 싶어해요! 카드 게임으로 오세요.',
+                '배우자가 카드대화를 요청했습니다.',
                 'cardGame'
               );
               setIncomingCardCall({ type: 'card', category: payload.category, questionId: payload.questionId, sender: senderLabel });
@@ -3806,12 +3806,10 @@ const App = () => {
   // Update My Signal to Supabase
   // 🚥 Master Signal Sync (Single Channel Persistence)
   const handleSetMySignal = async (newSignal) => {
-    if (mySignal === newSignal) return;
-    
-    // 🛡️ Lock local state to prevent real-time listener race
+    // 🛡️ Always proceed with sync even if signal is same to ensure remote DB consistency
     signalLockRef.current = newSignal;
     setMySignal(newSignal); 
-    
+    localStorage.setItem('mySignal', newSignal);    
     // 📡 빠른 브로드캐스트 알림 발신
     if (mainChannel) {
        mainChannel.send({
@@ -4300,7 +4298,7 @@ const App = () => {
                      ? `${incomingCardCall.sender}님이 비밀 질문을 확인했습니다! ✨`
                      : incomingCardCall.type === 'garden'
                      ? `${incomingCardCall.sender}님이 소통의 화원에서 메시지를 보냈습니다! 🌹`
-                     : `${incomingCardCall.sender}님이 대화 카드를 뽑았습니다! 🃏`}
+                     : `배우자가 카드대화를 요청했습니다! 🃏`}
                  </p>
                  <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.6)', fontWeight: 700 }}>
                    {incomingCardCall.type === 'heart-prayer-sent' ? '지금 바로 기도제목을 확인해보세요.' :
