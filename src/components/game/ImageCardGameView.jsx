@@ -1,7 +1,15 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { ChevronLeft, RefreshCw, Layout, Grid, Lock, Sparkles, Zap } from 'lucide-react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { ChevronRight, ChevronLeft, RefreshCw, Layout, Grid, Lock, Sparkles, Zap, MessageCircle } from 'lucide-react';
 import { supabase } from '../../supabase';
 import { IMAGE_CARD_DATA } from '../../data/imageCards';
+
+const PIC2_THEMES = [
+  { q: "요즘 당신의 마음 상태를 가장 잘 표현하는 사진 2장을 골라보세요.", pool: [10, 11, 13, 14, 19, 23, 26, 27, 42, 51] },
+  { q: "우리 부부의 미래에 꼭 함께하고 싶은 이미지 2장은?", pool: [6, 16, 17, 18, 20, 21, 24, 25, 29, 44] },
+  { q: "말로는 다 하기 힘든 요즘 나의 속마음이 담긴 사진 2장은?", pool: [1, 7, 8, 12, 15, 22, 28, 30, 31, 34] },
+  { q: "서로에게 더 전달하고 싶은 따뜻한 정서가 느껴지는 사진 2장은?", pool: [2, 3, 5, 9, 32, 33, 35, 37, 39, 40] },
+  { q: "우리 관계의 회복과 기쁨을 위해 꼭 필요한 느낌의 사진 2장을 골라주세요.", pool: [4, 36, 18, 22, 41, 43, 49, 50, 52, 53] }
+];
 
 const ImageCardGameView = ({ onBack, coupleCode, userRole, mainChannel, husbandInfo, wifeInfo }) => {
   const [mode, setMode] = useState(null); // 'classic' or 'pick2'
@@ -10,6 +18,7 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, mainChannel, husbandI
   const [pickedCards, setPickedCards] = useState([]);
   const [turnOwner, setTurnOwner] = useState(null);
   const [showTurnWarning, setShowTurnWarning] = useState(false);
+  const [currentThemeIndex, setCurrentThemeIndex] = useState(0);
   
   const isMounted = useRef(false);
   const partnerLabel = userRole === 'husband' ? '아내' : '남편';
@@ -25,6 +34,7 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, mainChannel, husbandI
         setMode(data.mode);
         setIsFlipped(data.is_flipped);
         setTurnOwner(data.turn_owner);
+        setCurrentThemeIndex(data.current_card_id || 0);
         const card = IMAGE_CARD_DATA.find(c => String(c.id) === String(data.current_card_id));
         if (card) setCurrentCard(card);
         if (data.picked_card_ids) {
@@ -48,6 +58,7 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, mainChannel, husbandI
           setMode(updated.mode);
           setIsFlipped(updated.is_flipped);
           setTurnOwner(updated.turn_owner);
+          setCurrentThemeIndex(updated.current_card_id || 0);
           const card = IMAGE_CARD_DATA.find(c => String(c.id) === String(updated.current_card_id));
           if (card) setCurrentCard(card);
           if (updated.picked_card_ids) {
@@ -92,10 +103,12 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, mainChannel, husbandI
   };
 
   const startPick2 = () => {
+    const themeIdx = Math.floor(Math.random() * PIC2_THEMES.length);
     setMode('pick2');
     setPickedCards([]);
+    setCurrentThemeIndex(themeIdx);
     setTurnOwner(userRole);
-    updateRemoteState({ mode: 'pick2', picked_card_ids: [], turn_owner: userRole, current_card_id: null, is_flipped: false });
+    updateRemoteState({ mode: 'pick2', picked_card_ids: [], turn_owner: userRole, current_card_id: themeIdx, is_flipped: false });
   };
 
   const resetGame = () => {
@@ -150,8 +163,8 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, mainChannel, husbandI
   const passTurnPick2 = () => {
     const nextTurnOwner = userRole === 'husband' ? 'wife' : 'husband';
     setTurnOwner(nextTurnOwner);
-    setPickedCards([]);
-    updateRemoteState({ turn_owner: nextTurnOwner, picked_card_ids: [] });
+    // Keep pickedCards to show the partner
+    updateRemoteState({ turn_owner: nextTurnOwner, picked_card_ids: pickedCards.map(c => c.id) });
   };
 
   return (
@@ -287,52 +300,97 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, mainChannel, husbandI
       ) : (
         <div className="flex flex-col items-center w-full">
           <div style={{ textAlign: 'center', marginBottom: '25px', padding: '0 20px' }}>
-             <h3 style={{ fontSize: '20px', fontWeight: 900, color: '#2D1F08', marginBottom: '4px' }}>질문 {pickedCards.length}/2개 선택</h3>
-             <p style={{ fontSize: '13px', color: '#8A60FF', fontWeight: 800 }}>{isMyTurn ? "마음에 드는 질문을 골라보세요" : `${partnerLabel}님이 질문을 고르는 중...`}</p>
+             <h3 style={{ fontSize: '18px', fontWeight: 900, color: '#8A60FF', marginBottom: '8px', wordBreak: 'keep-all' }}>"{PIC2_THEMES[currentThemeIndex]?.q}"</h3>
+             <p style={{ fontSize: '13px', color: '#2D1F08', fontWeight: 800 }}>
+               {isMyTurn ? `당신이 선택한 질문입니다. ${pickedCards.length}/2개 선택` : `${partnerLabel}님이 고민하며 2장을 선택 중...`}
+             </p>
           </div>
 
           <div style={{ position: 'relative', width: '100%', maxWidth: '600px' }}>
-            {!isMyTurn && (
-              <div style={{ position: 'absolute', inset: 0, zIndex: 100, background: 'rgba(138, 96, 255, 0.1)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', paddingTop: '100px', pointerEvents: 'auto' }}>
-                <div style={{ position: 'sticky', top: '100px', background: 'white', padding: '30px', borderRadius: '30px', boxShadow: '0 20px 50px rgba(0,0,0,0.1)', border: '2px solid #8A60FF', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                   <Lock size={40} color="#8A60FF" style={{ marginBottom: '15px' }} />
-                   <p style={{ fontSize: '18px', fontWeight: 900, color: '#2D1F08' }}>{partnerLabel}님이 선택 중입니다</p>
-                   <p style={{ fontSize: '14px', color: '#8B7355', fontWeight: 700, marginTop: '5px' }}>잠시만 기다려주세요</p>
+            {/* Show Results if Turn Passed and 2 Selected */}
+            {!isMyTurn && pickedCards.length === 2 ? (
+              <div style={{ padding: '0 20px', display: 'flex', flexDirection: 'column', gap: '20px', alignItems: 'center' }}>
+                <div style={{ background: '#F3E8FF', padding: '15px 25px', borderRadius: '100px', display: 'flex', alignItems: 'center', gap: '10px', animation: 'bounce 2s infinite' }}>
+                   <MessageCircle size={18} color="#8A60FF" />
+                   <span style={{ fontSize: '14px', fontWeight: 900, color: '#8A60FF' }}>{partnerLabel}님이 선택한 사진 2장입니다! 이유를 들어보세요 ✨</span>
                 </div>
-              </div>
-            )}
-            
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px', padding: '0 10px', marginBottom: '30px' }}>
-              {IMAGE_CARD_DATA.map(card => {
-                const isPicked = pickedCards.find(c => c.id === card.id);
-                return (
-                  <div 
-                    key={card.id} 
-                    onClick={() => handlePickCard(card)}
-                    style={{ position: 'relative', borderRadius: '22px', overflow: 'hidden', aspectRatio: '4/5', cursor: 'pointer', border: isPicked ? '4px solid #8A60FF' : '2px solid transparent', transition: 'all 0.3s ease', transform: isPicked ? 'scale(1.02)' : 'scale(1)' }}
-                  >
-                    <img src={card.image} style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: isPicked ? 0.6 : 1 }} />
-                    <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 60%)', padding: '15px', display: 'flex', alignItems: 'flex-end' }}>
-                      <p style={{ color: 'white', fontSize: '12px', fontWeight: 800, lineHeight: 1.4, wordBreak: 'keep-all' }}>{card.question}</p>
+                
+                <div style={{ display: 'flex', gap: '15px', width: '100%', justifyContent: 'center' }}>
+                  {pickedCards.map((card, idx) => (
+                    <div key={card.id} style={{ flex: 1, maxWidth: '180px', background: 'white', borderRadius: '25px', overflow: 'hidden', boxShadow: '0 10px 30px rgba(138, 96, 255, 0.2)', border: '4px solid #8A60FF' }}>
+                      <img src={card.image} style={{ width: '100%', aspectRatio: '1/1', objectFit: 'cover' }} />
+                      <div style={{ padding: '12px', textAlign: 'center' }}>
+                        <span style={{ fontSize: '12px', fontWeight: 900, color: '#8A60FF' }}>PICK {idx + 1}</span>
+                      </div>
                     </div>
-                    {isPicked && <div style={{ position: 'absolute', top: '10px', right: '10px', width: '24px', height: '24px', background: '#8A60FF', borderRadius: '50%', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: '14px' }}>{pickedCards.indexOf(isPicked) + 1}</div>}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
+                  ))}
+                </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', width: '100%', maxWidth: '300px' }}>
-            {isMyTurn && pickedCards.length === 2 && (
-              <button 
-                className="image-card-press" 
-                onClick={passTurnPick2}
-                style={{ padding: '18px', borderRadius: '20px', background: '#8A60FF', color: 'white', fontWeight: 900, border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}
-              >
-                선택 완료 & 턴 넘기기 <RefreshCw size={18} />
-              </button>
+                <div style={{ background: 'rgba(255,255,255,0.7)', padding: '20px', borderRadius: '20px', border: '1.5px dashed #8A60FF', width: '100%', textAlign: 'center' }}>
+                   <p style={{ fontSize: '14px', fontWeight: 700, color: '#2D1F08' }}>"{partnerLabel}님, 이 사진 2장을 고른 이유가 궁금해요. 서로 깊은 이야기를 나누어 보세요."</p>
+                </div>
+                
+                <button 
+                  className="image-card-press" 
+                  onClick={() => {
+                    const nextTurnOwner = userRole === 'husband' ? 'wife' : 'husband';
+                    setTurnOwner(nextTurnOwner);
+                    setPickedCards([]);
+                    updateRemoteState({ turn_owner: nextTurnOwner, picked_card_ids: [] });
+                  }}
+                  style={{ padding: '18px', width: '100%', maxWidth: '300px', borderRadius: '20px', background: '#8A60FF', color: 'white', fontWeight: 900, border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}
+                >
+                  제 차례로 가져오기 (새 질문) <ChevronRight size={20} />
+                </button>
+              </div>
+            ) : (
+              <>
+                {!isMyTurn && (
+                  <div style={{ position: 'absolute', inset: 0, zIndex: 100, background: 'rgba(138, 96, 255, 0.05)', backdropFilter: 'blur(3px)', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', paddingTop: '100px', pointerEvents: 'auto' }}>
+                    <div style={{ position: 'sticky', top: '100px', background: 'white', padding: '30px', borderRadius: '30px', boxShadow: '0 20px 50px rgba(0,0,0,0.1)', border: '2px solid #8A60FF', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                       <Lock size={40} color="#8A60FF" style={{ marginBottom: '15px' }} />
+                       <p style={{ fontSize: '18px', fontWeight: 900, color: '#2D1F08' }}>{partnerLabel}님이 선택 중입니다</p>
+                       <p style={{ fontSize: '14px', color: '#8B7355', fontWeight: 700, marginTop: '5px' }}>잠시만 기다려주세요</p>
+                    </div>
+                  </div>
+                )}
+                
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px', padding: '0 10px', marginBottom: '30px' }}>
+                  {PIC2_THEMES[currentThemeIndex]?.pool.map(id => {
+                    const card = IMAGE_CARD_DATA.find(c => c.id === id);
+                    if (!card) return null;
+                    const isPicked = pickedCards.find(c => c.id === card.id);
+                    return (
+                      <div 
+                        key={card.id} 
+                        onClick={() => handlePickCard(card)}
+                        style={{ position: 'relative', borderRadius: '22px', overflow: 'hidden', aspectRatio: '1/1', cursor: 'pointer', border: isPicked ? '4px solid #8A60FF' : '2px solid transparent', transition: 'all 0.3s ease', transform: isPicked ? 'scale(1.02)' : 'scale(1)' }}
+                      >
+                        <img src={card.image} style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: isPicked ? 0.6 : 1 }} />
+                        {isPicked && (
+                          <div style={{ position: 'absolute', inset: 0, background: 'rgba(138, 96, 255, 0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                             <div style={{ width: '40px', height: '40px', background: '#8A60FF', borderRadius: '50%', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: '18px', boxShadow: '0 4px 10px rgba(0,0,0,0.2)' }}>{pickedCards.indexOf(isPicked) + 1}</div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', width: '100%', maxWidth: '300px', margin: '0 auto' }}>
+                  {isMyTurn && pickedCards.length === 2 && (
+                    <button 
+                      className="image-card-press" 
+                      onClick={passTurnPick2}
+                      style={{ padding: '18px', borderRadius: '20px', background: '#8A60FF', color: 'white', fontWeight: 900, border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}
+                    >
+                      선택 완료 & 상대방에게 보여주기 <RefreshCw size={18} />
+                    </button>
+                  )}
+                  <button onClick={resetGame} style={{ padding: '12px', background: 'none', border: 'none', color: '#8B7355', fontWeight: 800, fontSize: '14px' }}>모드 선택으로 돌아가기</button>
+                </div>
+              </>
             )}
-            <button onClick={resetGame} style={{ padding: '12px', background: 'none', border: 'none', color: '#8B7355', fontWeight: 800, fontSize: '14px' }}>모드 선택으로 돌아가기</button>
           </div>
         </div>
       )}
