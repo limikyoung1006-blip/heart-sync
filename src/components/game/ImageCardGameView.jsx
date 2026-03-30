@@ -156,16 +156,14 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, mainChannel, husbandI
 
   return (
     <div 
-      className="game-view-wrapper" 
+      className="image-game-view-wrapper" 
       style={{ 
         width: '100%', 
         display: 'flex', 
         flexDirection: 'column', 
         alignItems: 'center', 
-        padding: '10px', 
-        paddingBottom: '250px', // Extra padding for mobile scroll
-        minHeight: '100%',
-        overflowY: 'visible',
+        padding: '0 20px', 
+        position: 'relative',
         backgroundColor: 'transparent',
         WebkitOverflowScrolling: 'touch'
       }}
@@ -295,8 +293,8 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, mainChannel, husbandI
 
           <div style={{ position: 'relative', width: '100%', maxWidth: '600px' }}>
             {!isMyTurn && (
-              <div style={{ position: 'fixed', inset: 0, zIndex: 100, background: 'rgba(138, 96, 255, 0.1)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'auto' }}>
-                <div style={{ background: 'white', padding: '30px', borderRadius: '30px', boxShadow: '0 20px 50px rgba(0,0,0,0.1)', border: '2px solid #8A60FF', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              <div style={{ position: 'absolute', inset: 0, zIndex: 100, background: 'rgba(138, 96, 255, 0.1)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', paddingTop: '100px', pointerEvents: 'auto' }}>
+                <div style={{ position: 'sticky', top: '100px', background: 'white', padding: '30px', borderRadius: '30px', boxShadow: '0 20px 50px rgba(0,0,0,0.1)', border: '2px solid #8A60FF', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                    <Lock size={40} color="#8A60FF" style={{ marginBottom: '15px' }} />
                    <p style={{ fontSize: '18px', fontWeight: 900, color: '#2D1F08' }}>{partnerLabel}님이 선택 중입니다</p>
                    <p style={{ fontSize: '14px', color: '#8B7355', fontWeight: 700, marginTop: '5px' }}>잠시만 기다려주세요</p>
@@ -342,6 +340,8 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, mainChannel, husbandI
       {mode && (
         <p style={{ marginTop: '30px', fontSize: '11px', color: '#B08D3E', fontWeight: 800, opacity: 0.6 }}>* 화면을 위아래로 스크롤할 수 있습니다.</p>
       )}
+      {/* Spacer for bottom navigation clearance */}
+      <div style={{ height: '300px', width: '100%', flexShrink: 0 }} />
     </div>
   );
 };

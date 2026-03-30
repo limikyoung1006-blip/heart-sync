@@ -177,10 +177,8 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo, mai
         display: 'flex', 
         flexDirection: 'column', 
         alignItems: 'center', 
-        padding: '10px', 
-        paddingBottom: '250px', // Extra padding to ensure bottom buttons are reachable
-        minHeight: '100%', 
-        overflowY: 'visible',
+        padding: '0 20px', 
+        paddingTop: '10px',
         backgroundColor: 'transparent',
         WebkitOverflowScrolling: 'touch'
       }}
@@ -318,6 +316,8 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo, mai
       )}
 
       <p style={{ marginTop: '30px', fontSize: '11px', color: '#B08D3E', fontWeight: 800, opacity: 0.6 }}>* 화면을 위아래로 스크롤할 수 있습니다.</p>
+      {/* Spacer for bottom navigation clearance */}
+      <div style={{ height: '300px', width: '100%', flexShrink: 0 }} />
     </div>
   );
 };
