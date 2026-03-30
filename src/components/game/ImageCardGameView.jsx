@@ -4,11 +4,11 @@ import { supabase } from '../../supabase';
 import { IMAGE_CARD_DATA } from '../../data/imageCards';
 
 const PIC2_THEMES = [
-  { q: "요즘 당신의 마음 상태를 가장 잘 표현하는 사진 2장을 골라보세요.", pool: [10, 11, 13, 14, 19, 23, 26, 27, 42, 51] },
-  { q: "우리 부부의 미래에 꼭 함께하고 싶은 이미지 2장은?", pool: [6, 16, 17, 18, 20, 21, 24, 25, 29, 44] },
-  { q: "말로는 다 하기 힘든 요즘 나의 속마음이 담긴 사진 2장은?", pool: [1, 7, 8, 12, 15, 22, 28, 30, 31, 34] },
-  { q: "서로에게 더 전달하고 싶은 따뜻한 정서가 느껴지는 사진 2장은?", pool: [2, 3, 5, 9, 32, 33, 35, 37, 39, 40] },
-  { q: "우리 관계의 회복과 기쁨을 위해 꼭 필요한 느낌의 사진 2장을 골라주세요.", pool: [4, 36, 18, 22, 41, 43, 49, 50, 52, 53] }
+  { q: "요즘 당신의 마음 상태를 가장 잘 표현하는 사진은 무엇인가요?", pool: [10, 11, 13, 14, 19, 23, 26, 27, 42, 51] },
+  { q: "우리 부부의 미래에 꼭 함께하고 싶은 이미지는?", pool: [6, 16, 17, 18, 20, 21, 24, 25, 29, 44] },
+  { q: "말로는 다 하기 힘든 요즘 나의 속마음이 담긴 사진은?", pool: [1, 7, 8, 12, 15, 22, 28, 30, 31, 34] },
+  { q: "서로에게 더 전달하고 싶은 따뜻한 정서가 느껴지는 이미지는?", pool: [2, 3, 5, 9, 32, 33, 35, 37, 39, 40] },
+  { q: "우리 관계의 회복과 기쁨을 위해 꼭 필요한 느낌의 사진은?", pool: [4, 36, 18, 22, 41, 43, 49, 50, 52, 53] }
 ];
 
 const ImageCardGameView = ({ onBack, coupleCode, userRole, mainChannel, husbandInfo, wifeInfo }) => {
@@ -230,8 +230,8 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, mainChannel, husbandI
               <Grid size={32} color="#8A60FF" />
             </div>
             <div style={{ textAlign: 'center' }}>
-              <h3 style={{ fontSize: '18px', fontWeight: 900, color: '#2D1F08', marginBottom: '4px' }}>방식 2: 질문 두 개 고르기</h3>
-              <p style={{ fontSize: '13px', color: '#8B7355', fontWeight: 600 }}>여러 질문 중 마음에 드는 2개를 고릅니다</p>
+              <h3 style={{ fontSize: '18px', fontWeight: 900, color: '#2D1F08', marginBottom: '4px' }}>방식 2: 사진 고르고 설명하기</h3>
+              <p style={{ fontSize: '13px', color: '#8B7355', fontWeight: 600 }}>10장의 사진 중 2장을 골라 파트너에게 설명합니다</p>
             </div>
           </button>
         </div>
@@ -302,7 +302,7 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, mainChannel, husbandI
           <div style={{ textAlign: 'center', marginBottom: '25px', padding: '0 20px' }}>
              <h3 style={{ fontSize: '18px', fontWeight: 900, color: '#8A60FF', marginBottom: '8px', wordBreak: 'keep-all' }}>"{PIC2_THEMES[currentThemeIndex]?.q}"</h3>
              <p style={{ fontSize: '13px', color: '#2D1F08', fontWeight: 800 }}>
-               {isMyTurn ? `당신이 선택한 질문입니다. ${pickedCards.length}/2개 선택` : `${partnerLabel}님이 고민하며 2장을 선택 중...`}
+               {isMyTurn ? `${pickedCards.length}/2개 선택` : `${partnerLabel}님이 고민하며 선택 중...`}
              </p>
           </div>
 
