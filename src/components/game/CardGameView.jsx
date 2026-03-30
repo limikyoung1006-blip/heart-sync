@@ -137,6 +137,7 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo }) =
     setIsFlipped(false);
     setTurnOwner(nextTurnOwner);
     
+    // Auto-draw for partner immediately to ensure sync when they "open"
     const activeCat = category;
     const pool = CARD_DATA.filter(q => q.category === activeCat);
     const available = pool.filter(q => !history.includes(q.id));
@@ -162,10 +163,11 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo }) =
         flexDirection: 'column', 
         alignItems: 'center', 
         padding: '10px', 
-        paddingBottom: '160px',
+        paddingBottom: '250px', // Extra padding to ensure bottom buttons are reachable
         minHeight: '100%', 
         overflowY: 'visible',
-        backgroundColor: 'transparent'
+        backgroundColor: 'transparent',
+        WebkitOverflowScrolling: 'touch'
       }}
     >
       <style>{`
@@ -210,7 +212,7 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo }) =
       )}
 
       {showTurnWarning && (
-        <div style={{ position: 'fixed', top: '100px', zIndex: 999, background: 'rgba(239, 68, 68, 0.95)', color: 'white', padding: '12px 25px', borderRadius: '100px', fontSize: '14px', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div style={{ position: 'fixed', top: '100px', zIndex: 999, background: 'rgba(239, 68, 68, 0.95)', color: 'white', padding: '12px 25px', borderRadius: '100px', fontSize: '14px', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '8px', boxShadow: '0 8px 20px rgba(0,0,0,0.2)' }}>
           <Lock size={16} /> 배우자가 답변 중일 때는 조작할 수 없어요!
         </div>
       )}
@@ -248,8 +250,9 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo }) =
       </div>
 
       <div className="card-container" style={{ 
-        perspective: '1500px', marginBottom: '40px', width: '320px', height: '440px', 
-        display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'relative' 
+        perspective: '1500px', marginBottom: '40px', width: '300px', height: '420px', 
+        display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'relative',
+        userSelect: 'none'
       }}>
         <div 
           className={`talking-card ${isFlipped ? 'flipped' : ''}`} 
@@ -294,7 +297,7 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo }) =
       </button>
 
       {!isMyTurn && (
-        <div style={{ background: 'rgba(0,0,0,0.05)', padding: '20px 40px', borderRadius: '100px', color: '#8B7355', fontWeight: 800, fontSize: '16px', border: '1.5px dashed rgba(138, 96, 255, 0.2)', textAlign: 'center', width: '100%', maxWidth: '300px' }}>
+        <div style={{ background: 'rgba(0,0,0,0.05)', padding: '20px 40px', borderRadius: '100px', color: '#8B7355', fontWeight: 800, fontSize: '16px', border: '1.5px dashed rgba(138, 96, 255, 0.2)', textAlign: 'center', width: '100%', maxWidth: '300px', marginTop: '20px' }}>
           상대방의 답변을 기다리는 중
         </div>
       )}

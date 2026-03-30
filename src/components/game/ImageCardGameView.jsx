@@ -1,412 +1,338 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { ChevronLeft, Sparkles, Lock, Timer } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { ChevronLeft, RefreshCw, Layout, Grid, Lock, Sparkles, Timer } from 'lucide-react';
 import { supabase } from '../../supabase';
-import { IMAGE_CARD_DATA } from '../../data/imageCards';
+import { IMAGE_CARD_DATA } from '../../data/imageDialogueCards';
 
-const ImageCardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo }) => {
-  const [gameMode, setGameMode] = useState('classic'); 
+const ImageCardGameView = ({ onBack, coupleCode, userRole }) => {
+  const [mode, setMode] = useState(null); // 'classic' or 'pick2'
+  const [currentCard, setCurrentCard] = useState(null);
   const [isFlipped, setIsFlipped] = useState(false);
+  const [pickedCards, setPickedCards] = useState([]);
+  const [turnOwner, setTurnOwner] = useState(null);
   const [showTurnWarning, setShowTurnWarning] = useState(false);
   
-  const [currentQuestion, setCurrentQuestion] = useState(() => {
-    const pool = IMAGE_CARD_DATA || [];
-    if (pool.length === 0) return { id: 0, image: '', question: '데이터를 불러오는 중...' };
-    const randomIndex = Math.floor(Math.random() * pool.length);
-    return pool[randomIndex];
-  });
-
-  const [turnOwner, setTurnOwner] = useState(null);
-  const [mainQuestion, setMainQuestion] = useState("");
-  const [imagePool, setImagePool] = useState([]);
-  const [isImageLoading, setIsImageLoading] = useState(false);
-  const [selectedIndices, setSelectedIndices] = useState([]); 
-  const [isSharing, setIsSharing] = useState(false); 
-  const [sharedCards, setSharedCards] = useState([]); 
-  const [sessionCardCount, setSessionCardCount] = useState(0);
-  const [showFinishModal, setShowFinishModal] = useState(false);
-  const [history, setHistory] = useState([]);
-  
   const isMounted = useRef(false);
+  const partnerLabel = userRole === 'husband' ? '아내' : '남편';
   const isMyTurn = !turnOwner || turnOwner === userRole;
-  const partnerNameOnly = userRole === 'husband' ? '아내가' : '남편이';
 
-  // Multi-device Sync logic
+  // Load and Sync State
   useEffect(() => {
     isMounted.current = true;
-    if (!coupleCode) return;
-
     const loadState = async () => {
+      if (!coupleCode) return;
       const { data } = await supabase.from('image_game_state').select('*').eq('couple_id', coupleCode).single();
-      if (isMounted.current && data) {
-        setGameMode(data.game_mode || 'classic');
-        setIsFlipped(data.is_flipped || false);
-        setTurnOwner(data.turn_owner || null);
-        const q = IMAGE_CARD_DATA.find(item => String(item.id) === String(data.current_question_id));
-        if (q) setCurrentQuestion(q);
-        if (data.shared_cards) {
-           setSharedCards(data.shared_cards);
-           setIsSharing(true);
+      if (data && isMounted.current) {
+        setMode(data.mode);
+        setIsFlipped(data.is_flipped);
+        setTurnOwner(data.turn_owner);
+        const card = IMAGE_CARD_DATA.find(c => String(c.id) === String(data.current_card_id));
+        if (card) setCurrentCard(card);
+        if (data.picked_card_ids) {
+          const picked = data.picked_card_ids.map(id => IMAGE_CARD_DATA.find(c => String(c.id) === String(id))).filter(Boolean);
+          setPickedCards(picked);
         }
       }
     };
-
     loadState();
 
     const subscription = supabase
       .channel(`image_game_${coupleCode}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'image_game_state', filter: `couple_id=eq.${coupleCode}` }, 
-        payload => {
-          const updated = payload.new;
-          if (updated && isMounted.current) {
-            setGameMode(updated.game_mode);
-            setIsFlipped(updated.is_flipped);
-            setTurnOwner(updated.turn_owner);
-            if (updated.shared_cards) {
-              setSharedCards(updated.shared_cards);
-              setIsSharing(true);
-            } else {
-              setIsSharing(false);
-            }
-            const q = IMAGE_CARD_DATA.find(item => String(item.id) === String(updated.current_question_id));
-            if (q) setCurrentQuestion(q);
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'image_game_state', 
+        filter: `couple_id=eq.${coupleCode}` 
+      }, payload => {
+        const updated = payload.new;
+        if (updated && isMounted.current) {
+          setMode(updated.mode);
+          setIsFlipped(updated.is_flipped);
+          setTurnOwner(updated.turn_owner);
+          const card = IMAGE_CARD_DATA.find(c => String(c.id) === String(updated.current_card_id));
+          if (card) setCurrentCard(card);
+          if (updated.picked_card_ids) {
+            const picked = updated.picked_card_ids.map(id => IMAGE_CARD_DATA.find(c => String(c.id) === String(id))).filter(Boolean);
+            setPickedCards(picked);
           }
-        })
+        }
+      })
       .subscribe();
 
     return () => { 
-      isMounted.current = false;
+      isMounted.current = false; 
       subscription.unsubscribe();
     };
   }, [coupleCode, userRole]);
 
-  const drawNewCard = useCallback(() => {
-    if (isImageLoading) return;
+  const updateRemoteState = async (updates) => {
+    if (!coupleCode) return;
+    await supabase.from('image_game_state').upsert({
+      couple_id: coupleCode,
+      ...updates,
+      updated_at: new Date().toISOString()
+    }, { onConflict: 'couple_id' });
+  };
+
+  const startClassic = () => {
+    const card = IMAGE_CARD_DATA[Math.floor(Math.random() * IMAGE_CARD_DATA.length)];
+    setMode('classic');
+    setCurrentCard(card);
+    setIsFlipped(false);
+    setTurnOwner(userRole);
+    updateRemoteState({ mode: 'classic', current_card_id: card.id, is_flipped: false, turn_owner: userRole, picked_card_ids: null });
+  };
+
+  const startPick2 = () => {
+    setMode('pick2');
+    setPickedCards([]);
+    setTurnOwner(userRole);
+    updateRemoteState({ mode: 'pick2', picked_card_ids: [], turn_owner: userRole, current_card_id: null, is_flipped: false });
+  };
+
+  const resetGame = () => {
+    setMode(null);
+    setCurrentCard(null);
+    setIsFlipped(false);
+    setPickedCards([]);
+    setTurnOwner(null);
+    updateRemoteState({ mode: null, current_card_id: null, is_flipped: false, picked_card_ids: null, turn_owner: null });
+  };
+
+  const toggleFlip = () => {
     if (!isMyTurn) {
       setShowTurnWarning(true);
       setTimeout(() => setShowTurnWarning(false), 2000);
       return;
     }
-    const pool = IMAGE_CARD_DATA || [];
-    if (pool.length === 0) return;
+    const nextFlip = !isFlipped;
+    setIsFlipped(nextFlip);
+    updateRemoteState({ is_flipped: nextFlip });
+  };
 
-    const available = pool.filter(q => !history.includes(q.id));
-    const selection = available.length > 0 ? available : pool;
-    const nextQ = selection[Math.floor(Math.random() * selection.length)];
-    
-    if (nextQ) {
-      setIsFlipped(false);
-      setIsImageLoading(true);
-      setTurnOwner(userRole); 
-      setHistory(prev => [...prev, nextQ.id].slice(-30));
-      setCurrentQuestion(nextQ);
-      setSessionCardCount(prev => prev + 1);
-      if (sessionCardCount + 1 >= 10) setShowFinishModal(true);
-
-      if (coupleCode) {
-        supabase.from('image_game_state').upsert({
-          couple_id: coupleCode,
-          game_mode: 'classic',
-          is_flipped: false,
-          turn_owner: userRole,
-          current_question_id: nextQ.id,
-          shared_cards: null,
-          updated_at: new Date().toISOString()
-        }, { onConflict: 'couple_id' }).then(() => {});
-      }
-    }
-  }, [history, sessionCardCount, userRole, isImageLoading, coupleCode, isMyTurn]);
-
-  const initPick2Mode = useCallback(() => {
-    if (!isMyTurn) return;
-    const dataPool = IMAGE_CARD_DATA || [];
-    if (dataPool.length < 10) return;
-
-    const shuffled = [...dataPool].sort(() => Math.random() - 0.5);
-    const pool = shuffled.slice(0, 10);
-    const qPool = ["부부 생활을 잘 나타내는 이미지는?", "우리의 미래 소망 모습은?", "오늘 내 마음 상태는?"];
-    const nextQ = qPool[Math.floor(Math.random() * qPool.length)];
-    
-    setMainQuestion(nextQ);
-    setImagePool(pool); 
-    setSelectedIndices([]); 
-    setIsSharing(false); 
-    setTurnOwner(userRole);
-
-    if (coupleCode) {
-      supabase.from('image_game_state').upsert({
-        couple_id: coupleCode,
-        game_mode: 'pick2',
-        is_flipped: false,
-        turn_owner: userRole,
-        shared_cards: null,
-        updated_at: new Date().toISOString()
-      }, { onConflict: 'couple_id' }).then(() => {});
-    }
-  }, [userRole, coupleCode, isMyTurn]);
-
-  const passTurn = async () => {
-    if (turnOwner !== userRole) return;
+  const passTurn = () => {
     const nextTurnOwner = userRole === 'husband' ? 'wife' : 'husband';
-    setIsFlipped(false);
-    setIsSharing(false);
     setTurnOwner(nextTurnOwner);
+    setIsFlipped(false);
     
-    if (coupleCode) {
-      await supabase.from('image_game_state').update({ 
-        turn_owner: nextTurnOwner,
-        is_flipped: false,
-        shared_cards: null,
-        updated_at: new Date().toISOString()
-      }).eq('couple_id', coupleCode);
+    // Draw next card immediately for sync
+    const nextCard = IMAGE_CARD_DATA[Math.floor(Math.random() * IMAGE_CARD_DATA.length)];
+    setCurrentCard(nextCard);
+    
+    updateRemoteState({ 
+      turn_owner: nextTurnOwner, 
+      is_flipped: false,
+      current_card_id: nextCard.id 
+    });
+  };
+
+  const handlePickCard = (card) => {
+    if (!isMyTurn) return;
+    if (pickedCards.find(c => c.id === card.id)) {
+      const filtered = pickedCards.filter(c => c.id !== card.id);
+      setPickedCards(filtered);
+      updateRemoteState({ picked_card_ids: filtered.map(c => c.id) });
+    } else if (pickedCards.length < 2) {
+      const next = [...pickedCards, card];
+      setPickedCards(next);
+      updateRemoteState({ picked_card_ids: next.map(c => c.id) });
     }
   };
 
-  const toggleFlip = () => {
-    if (!isMyTurn) {
-        setShowTurnWarning(true);
-        setTimeout(() => setShowTurnWarning(false), 2000);
-        return;
-    }
-    const nextFlip = !isFlipped;
-    setIsFlipped(nextFlip);
-    if (coupleCode) {
-        supabase.from('image_game_state').update({
-            is_flipped: nextFlip,
-            turn_owner: userRole,
-            updated_at: new Date().toISOString()
-        }).eq('couple_id', coupleCode).then(()=>{});
-    }
+  const passTurnPick2 = () => {
+    const nextTurnOwner = userRole === 'husband' ? 'wife' : 'husband';
+    setTurnOwner(nextTurnOwner);
+    setPickedCards([]);
+    updateRemoteState({ turn_owner: nextTurnOwner, picked_card_ids: [] });
   };
 
   return (
     <div 
-      className="image-sync-view" 
+      className="game-view-wrapper" 
       style={{ 
-        width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', 
-        padding: '10px', paddingBottom: '160px', minHeight: '100%', 
-        overflowY: 'visible', background: 'transparent'
+        width: '100%', 
+        display: 'flex', 
+        flexDirection: 'column', 
+        alignItems: 'center', 
+        padding: '10px', 
+        paddingBottom: '250px', // Extra padding for mobile scroll
+        minHeight: '100%',
+        overflowY: 'visible',
+        backgroundColor: 'transparent',
+        WebkitOverflowScrolling: 'touch'
       }}
     >
       <style>{`
-        .game-btn-press { transition: transform 0.1s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.1s ease; }
-        .game-btn-press:active { transform: scale(0.95); opacity: 0.85; }
-        .animate-spin-slow { animation: spin 8s linear infinite; }
-        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .image-card-press { transition: transform 0.1s ease, opacity 0.1s ease; cursor: pointer; }
+        .image-card-press:active { transform: scale(0.96); opacity: 0.9; }
+        .sparkling-text {
+          background: linear-gradient(95deg, #BF953F, #FCF6BA, #B38728, #FBF5B7);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-size: 200% auto;
+          animation: shine 4s linear infinite;
+        }
+        @keyframes shine { to { background-position: 200% center; } }
       `}</style>
 
-      {showFinishModal && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-          <div style={{ background: 'white', borderRadius: '35px', width: '100%', maxWidth: '340px', padding: '40px 25px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
-            <Sparkles size={45} color="#AB47BC" style={{ marginBottom: '20px' }} />
-            <h3 style={{ fontSize: '22px', fontWeight: 900, color: '#2D1F08', marginBottom: '10px' }}>열 번째 하트싱크 완료!</h3>
-            <p style={{ fontSize: '15px', color: '#8B7355', fontWeight: 600, lineHeight: 1.6, marginBottom: '25px', wordBreak: 'keep-all' }}>오늘의 감성 연결이 서로를 더 깊게 이해하는 시간이 되셨나요? ✨</p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', width: '100%' }}>
-              <button onClick={onBack} style={{ width: '100%', padding: '18px', borderRadius: '22px', background: '#AB47BC', color: 'white', fontWeight: 900, border: 'none' }}>대화 선택으로 돌아가기</button>
-              <button onClick={() => { setShowFinishModal(false); setSessionCardCount(11); }} style={{ width: '100%', padding: '12px', background: 'none', color: '#9C27B0', fontWeight: 800, border: 'none' }}>조금 더 할게요</button>
-            </div>
-          </div>
-        </div>
-      )}
-
+      {/* Turn Warning Toast */}
       {showTurnWarning && (
-        <div style={{ position: 'fixed', top: '100px', zIndex: 10000, background: 'rgba(239, 68, 68, 0.95)', color: 'white', padding: '12px 25px', borderRadius: '100px', fontSize: '14px', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '8px', boxShadow: '0 10px 20px rgba(0,0,0,0.2)' }}>
-          <Lock size={16} /> 배우자가 답변 중일 때는 조작할 수 없어요!
+        <div style={{ position: 'fixed', top: '100px', zIndex: 9999, background: 'rgba(239, 68, 68, 0.95)', color: 'white', padding: '12px 25px', borderRadius: '100px', fontSize: '14px', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '8px', boxShadow: '0 8px 20px rgba(0,0,0,0.2)' }}>
+          <Lock size={16} /> {partnerLabel} 답변 차례입니다!
         </div>
       )}
 
-      <header style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '15px' }}>
-        <button onClick={onBack} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px' }}>
-          <ChevronLeft size={24} color="#AB47BC" strokeWidth={3} />
-          <span style={{ fontWeight: 900, color: '#AB47BC', fontSize: '14px' }}>돌아가기</span>
+      <div className="w-full flex justify-start mb-6">
+        <button onClick={onBack} style={{ background: 'none', border: 'none', display: 'flex', alignItems: 'center', gap: '4px' }}>
+          <ChevronLeft size={22} color="#8A60FF" strokeWidth={3} />
+          <span style={{ fontSize: '15px', fontWeight: 900, color: '#8A60FF' }}>돌아가기</span>
         </button>
-        <div style={{ display: 'flex', background: '#F3E5F5', borderRadius: '15px', padding: '3px' }}>
-          {['classic', 'pick2'].map((m, i) => (
-            <button key={m} onClick={() => { if(!isMyTurn) return; setGameMode(m); if(m === 'pick2' && imagePool.length === 0) initPick2Mode(); }} style={{ padding: '8px 18px', borderRadius: '12px', border: 'none', fontSize: '12px', fontWeight: 900, background: gameMode === m ? 'white' : 'transparent', color: gameMode === m ? '#AB47BC' : '#9c27b0' }}>방식 {i+1}</button>
-          ))}
-        </div>
-      </header>
-      
-      <div style={{ width: '100%', padding: '16px', borderRadius: '24px', background: isMyTurn ? 'rgba(171, 71, 188, 0.08)' : '#F3E5F5', marginBottom: '20px', textAlign: 'center', border: '2px solid #AB47BC', boxShadow: '0 8px 20px rgba(0,0,0,0.04)' }}>
-        <div className="flex items-center justify-center gap-3">
-          {isMyTurn ? <Sparkles size={20} color="#AB47BC" /> : <Timer size={20} color="#9C27B0" className="animate-spin-slow" />}
-          <span style={{ fontSize: '16px', fontWeight: 900, color: isMyTurn ? '#AB47BC' : '#9C27B0' }}>
-            {isMyTurn ? "당신의 차례입니다! 마음을 나눠주세요 ✨" : `${partnerNameOnly} 답변 중입니다...`}
-          </span>
-        </div>
       </div>
 
-      {gameMode === 'classic' ? (
-        <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-          <div className="card-container" style={{ 
-            perspective: '1500px', marginBottom: '40px', width: '300px', height: '420px',
-            display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'relative'
-          }}>
+      {!mode ? (
+        <div className="flex flex-col gap-6 w-full max-w-[340px] mt-10">
+          <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+             <h2 style={{ fontSize: '28px', fontWeight: 900, color: '#2D1F08', marginBottom: '8px' }}>이미지 대화 카드</h2>
+             <p style={{ fontSize: '15px', color: '#8B7355', fontWeight: 600 }}>진행 방식을 선택해 주세요</p>
+          </div>
+          
+          <button onClick={startClassic} className="image-card-press" style={{ background: 'white', border: '2px solid #F5D060', borderRadius: '30px', padding: '30px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '15px', boxShadow: '0 10px 25px rgba(0,0,0,0.05)' }}>
+            <div style={{ width: '60px', height: '60px', borderRadius: '20px', background: '#FFF9E6', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Layout size={32} color="#D4AF37" />
+            </div>
+            <div style={{ textAlign: 'center' }}>
+              <h3 style={{ fontSize: '18px', fontWeight: 900, color: '#2D1F08', marginBottom: '4px' }}>방식 1: 한 장씩 대화</h3>
+              <p style={{ fontSize: '13px', color: '#8B7355', fontWeight: 600 }}>랜덤 카드를 뒤집어 깊게 대화합니다</p>
+            </div>
+          </button>
+
+          <button onClick={startPick2} className="image-card-press" style={{ background: 'white', border: '2px solid #8A60FF', borderRadius: '30px', padding: '30px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '15px', boxShadow: '0 10px 25px rgba(0,0,0,0.05)' }}>
+            <div style={{ width: '60px', height: '60px', borderRadius: '20px', background: '#F3E8FF', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Grid size={32} color="#8A60FF" />
+            </div>
+            <div style={{ textAlign: 'center' }}>
+              <h3 style={{ fontSize: '18px', fontWeight: 900, color: '#2D1F08', marginBottom: '4px' }}>방식 2: 질문 두 개 고르기</h3>
+              <p style={{ fontSize: '13px', color: '#8B7355', fontWeight: 600 }}>여러 질문 중 마음에 드는 2개를 고릅니다</p>
+            </div>
+          </button>
+        </div>
+      ) : mode === 'classic' ? (
+        <div className="flex flex-col items-center w-full max-w-[400px]">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '25px', padding: '8px 20px', background: 'rgba(255,255,255,0.7)', borderRadius: '100px', border: '1.5px solid #F5D060' }}>
+            {isMyTurn ? <Sparkles size={18} color="#D4AF37" /> : <Timer size={18} className="animate-pulse" color="#8B7355" />}
+            <span style={{ fontSize: '14px', fontWeight: 900, color: isMyTurn ? '#2D1F08' : '#8B7355' }}>
+              {isMyTurn ? "당신의 차례입니다 ✨" : `${partnerLabel}님이 답변 중입니다...`}
+            </span>
+          </div>
+
+          <div style={{ perspective: '1500px', width: '300px', height: '420px', marginBottom: '30px', position: 'relative' }}>
             <div 
-              className={`talking-card ${isFlipped ? 'flipped' : ''}`} 
+              style={{ width: '100%', height: '100%', transformStyle: 'preserve-3d', transition: 'transform 0.8s cubic-bezier(0.4, 0, 0.2, 1)', transform: isFlipped ? 'rotateY(180deg)' : 'none', cursor: isMyTurn ? 'pointer' : 'default' }}
               onClick={toggleFlip}
-              style={{ width: '100%', height: '100%', transformStyle: 'preserve-3d', transition: 'transform 0.8s' }}
             >
-              {/* Image Card Front */}
-              <div className="card-face card-front" style={{ 
-                position: 'absolute', width: '100%', height: '100%', backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden',
-                border: '3px solid #AB47BC', borderRadius: '40px', background: '#2D1F08',
-                display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                visibility: isFlipped ? 'hidden' : 'visible', zIndex: isFlipped ? 1 : 2
-              }}>
-                <p style={{ fontSize: '12px', fontWeight: 900, color: '#AB47BC', letterSpacing: '6px', marginBottom: '20px' }}>IMAGE CARD</p>
-                <Sparkles size={50} color="#AB47BC" />
-                <div style={{ marginTop: '25px', width: '50px', height: '2px', background: '#AB47BC', opacity: 0.4 }} />
-                <div style={{ marginTop: '60px' }}>
-                   <span style={{ background: '#AB47BC', color: 'white', padding: '8px 20px', borderRadius: '100px', fontSize: '12px', fontWeight: 900 }}>터치하여 확인</span>
+              <div style={{ position: 'absolute', inset: 0, backfaceVisibility: 'hidden', borderRadius: '35px', backgroundImage: 'url("/card_bg.png")', backgroundSize: 'cover', border: '2px solid #F5D060', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 15px 40px rgba(0,0,0,0.2)' }}>
+                {!isMyTurn && (
+                  <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.4)', borderRadius: '35px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', zIndex: 10 }}>
+                    <Lock size={40} color="white" />
+                    <span style={{ color: 'white', fontWeight: 900, marginTop: '10px' }}>{partnerLabel} 차례</span>
+                  </div>
+                )}
+                <div style={{ textAlign: 'center', background: 'rgba(0,0,0,0.7)', padding: '20px 30px', borderRadius: '25px', backdropFilter: 'blur(10px)' }}>
+                   <p className="sparkling-text" style={{ fontSize: '22px', fontWeight: 900, letterSpacing: '2px', marginBottom: '8px' }}>IMAGE CARD</p>
+                   <p style={{ color: 'white', opacity: 0.8, fontSize: '13px', fontWeight: 700 }}>클릭해서 확인</p>
                 </div>
               </div>
-
-              {/* Image Card Back */}
-              <div className="card-face card-back" style={{ 
-                position: 'absolute', width: '100%', height: '100%', backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden',
-                border: '3px solid #AB47BC', borderRadius: '40px', background: 'white', transform: 'rotateY(180deg)',
-                visibility: isFlipped ? 'visible' : 'hidden', zIndex: isFlipped ? 2 : 1, overflow: 'hidden', display: 'flex', flexDirection: 'column'
-              }}>
-                <div style={{ width: '100%', height: '60%', position: 'relative', background: '#F9F5FF' }}>
-                  {isImageLoading && <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Sparkles className="animate-pulse" color="#AB47BC" size={32} /></div>}
-                  <img 
-                    src={currentQuestion?.image} 
-                    style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: isImageLoading ? 0 : 1 }} 
-                    onLoad={() => setIsImageLoading(false)} 
-                    alt="game active card"
-                  />
+              
+              <div style={{ position: 'absolute', inset: 0, backfaceVisibility: 'hidden', borderRadius: '35px', transform: 'rotateY(180deg)', background: '#white', overflow: 'hidden', border: '5px solid #F5D060', boxShadow: '0 15px 40px rgba(0,0,0,0.2)' }}>
+                <img src={currentCard?.image} style={{ width: '100%', height: '60%', objectFit: 'cover' }} />
+                <div style={{ height: '40%', background: 'white', padding: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
+                  <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#2D1F08', wordBreak: 'keep-all', lineHeight: 1.5 }}>{currentCard?.question}</h3>
                 </div>
-                <div style={{ padding: '15px', flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
-                  <p style={{ fontSize: '15px', fontWeight: 900, color: '#2D1F08', lineHeight: 1.4, wordBreak: 'keep-all', marginBottom: '15px' }}>{currentQuestion?.question}</p>
-                  {isMyTurn && (
-                    <button 
-                      className="game-btn-press" onClick={(e) => { e.stopPropagation(); passTurn(); }}
-                      style={{ padding: '10px 24px', borderRadius: '100px', background: '#AB47BC', color: 'white', fontSize: '13px', fontWeight: 900, border: 'none' }}
-                    >
-                      답변완료 / 다음 턴
-                    </button>
-                  )}
-                </div>
+                {!isMyTurn && isFlipped && (
+                  <div style={{ position: 'absolute', bottom: '20px', left: '50%', transform: 'translateX(-50%)', background: 'rgba(212, 175, 55, 0.95)', color: 'white', padding: '8px 20px', borderRadius: '100px', fontSize: '12px', fontWeight: 900, zIndex: 20, whiteSpace: 'nowrap', boxShadow: '0 5px 15px rgba(0,0,0,0.2)' }}>
+                    {partnerLabel}님이 답변 중입니다 ✨
+                  </div>
+                )}
               </div>
             </div>
+          </div>
 
-            {/* Global Lock Overlay for Classic Mode */}
-            {!isMyTurn && (
-              <div 
-                style={{ 
-                  position: 'absolute', inset: 0, 
-                  background: 'rgba(0,0,0,0.08)', zIndex: 100, 
-                  display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', 
-                  borderRadius: '40px', pointerEvents: 'none' 
-                }}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', width: '100%', maxWidth: '300px' }}>
+            <button 
+              className="image-card-press" 
+              onClick={startClassic}
+              disabled={!isMyTurn}
+              style={{ padding: '18px', borderRadius: '20px', background: isMyTurn ? '#2D1F08' : '#E5E7EB', color: isMyTurn ? 'white' : '#9CA3AF', fontWeight: 900, border: 'none' }}
+            >
+              다른 카드 뽑기
+            </button>
+            {isMyTurn && isFlipped && (
+              <button 
+                className="image-card-press" 
+                onClick={passTurn}
+                style={{ padding: '18px', borderRadius: '20px', background: '#F5D060', color: '#2D1F08', fontWeight: 900, border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}
               >
-                <div style={{ background: 'rgba(255,255,255,0.9)', padding: '12px 20px', borderRadius: '20px', border: '2px solid #AB47BC', display: 'flex', alignItems: 'center', gap: '10px', boxShadow: '0 8px 25px rgba(171, 71, 188, 0.15)' }}>
-                   <Lock size={20} color="#AB47BC" />
-                   <span style={{ color: '#AB47BC', fontWeight: 900, fontSize: '14px' }}>{partnerNameOnly} 답변 중..</span>
+                답변 완료 & 턴 넘기기 <RefreshCw size={18} />
+              </button>
+            )}
+            <button onClick={resetGame} style={{ padding: '12px', background: 'none', border: 'none', color: '#8B7355', fontWeight: 800, fontSize: '14px' }}>모드 선택으로 돌아가기</button>
+          </div>
+        </div>
+      ) : (
+        <div className="flex flex-col items-center w-full">
+          <div style={{ textAlign: 'center', marginBottom: '25px', padding: '0 20px' }}>
+             <h3 style={{ fontSize: '20px', fontWeight: 900, color: '#2D1F08', marginBottom: '4px' }}>질문 {pickedCards.length}/2개 선택</h3>
+             <p style={{ fontSize: '13px', color: '#8A60FF', fontWeight: 800 }}>{isMyTurn ? "마음에 드는 질문을 골라보세요" : `${partnerLabel}님이 질문을 고르는 중...`}</p>
+          </div>
+
+          <div style={{ position: 'relative', width: '100%', maxWidth: '600px' }}>
+            {!isMyTurn && (
+              <div style={{ position: 'fixed', inset: 0, zIndex: 100, background: 'rgba(138, 96, 255, 0.1)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'auto' }}>
+                <div style={{ background: 'white', padding: '30px', borderRadius: '30px', boxShadow: '0 20px 50px rgba(0,0,0,0.1)', border: '2px solid #8A60FF', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                   <Lock size={40} color="#8A60FF" style={{ marginBottom: '15px' }} />
+                   <p style={{ fontSize: '18px', fontWeight: 900, color: '#2D1F08' }}>{partnerLabel}님이 선택 중입니다</p>
+                   <p style={{ fontSize: '14px', color: '#8B7355', fontWeight: 700, marginTop: '5px' }}>잠시만 기다려주세요</p>
                 </div>
               </div>
             )}
-          </div>
-          <button 
-            disabled={!isMyTurn || isImageLoading} onClick={() => drawNewCard()} className="game-btn-press"
-            style={{ 
-              width: '100%', maxWidth: '280px', padding: '20px', borderRadius: '24px', border: 'none',
-              background: (isMyTurn && !isImageLoading) ? '#AB47BC' : '#E5E7EB', color: (isMyTurn && !isImageLoading) ? 'white' : '#9CA3AF', 
-              fontWeight: 900, boxShadow: isMyTurn ? '0 10px 20px rgba(171, 71, 188, 0.2)' : 'none', opacity: isMyTurn ? 1 : 0.6
-            }}
-          >
-            {isMyTurn ? "다른 이미지 뽑기" : `${partnerNameOnly} 답변 중입니다`}
-          </button>
-        </div>
-      ) : (
-        <div style={{ width: '100%', display: 'flex', flexDirection: 'column', position: 'relative' }}>
-           {/* Lock Overlay for Pick 2 Mode */}
-           {!isMyTurn && (
-              <div style={{ position: 'absolute', inset: '-10px', background: 'rgba(255,255,255,0.4)', zIndex: 50, borderRadius: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(1px)' }}>
-                <div style={{ background: 'white', padding: '15px 25px', borderRadius: '25px', border: '2px solid #AB47BC', display: 'flex', alignItems: 'center', gap: '10px', boxShadow: '0 10px 30px rgba(171, 71, 188, 0.1)' }}>
-                  <Lock size={24} color="#AB47BC" />
-                  <span style={{ color: '#AB47BC', fontWeight: 900, fontSize: '16px' }}>{partnerNameOnly} 답변 중..</span>
-                </div>
-              </div>
-           )}
-
-           {!isSharing ? (
-             <>
-               <div style={{ background: '#F9F5FF', padding: '18px', borderRadius: '22px', marginBottom: '15px', textAlign: 'center', border: '1px solid rgba(171, 71, 188, 0.1)' }}>
-                 <h3 style={{ fontSize: '16px', fontWeight: 900, color: '#2D1F08', marginBottom: '5px' }}>"{mainQuestion}"</h3>
-                 <p style={{ fontSize: '12px', color: '#AB47BC', fontWeight: 800 }}>어울리는 사진 2장을 선택해 주세요.</p>
-               </div>
-               
-               <div style={{ 
-                 display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px', marginBottom: '20px',
-                 maxHeight: '400px', overflowY: 'auto', padding: '5px', WebkitOverflowScrolling: 'touch'
-               }}>
-                 {imagePool.map((card, idx) => (
-                    <div 
-                      key={idx} 
-                      onClick={() => { if(!isMyTurn) return; setSelectedIndices(prev => prev.includes(idx) ? prev.filter(i => i !== idx) : (prev.length < 2 ? [...prev, idx] : [prev[1], idx])); }} 
-                      style={{ 
-                        position: 'relative', height: '130px', borderRadius: '16px', overflow: 'hidden', 
-                        border: selectedIndices.includes(idx) ? '4px solid #AB47BC' : '2px solid transparent'
-                      }}
-                    >
-                      <img src={card.image} style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: selectedIndices.includes(idx) ? 0.6 : 1 }} loading="lazy" />
-                      {selectedIndices.includes(idx) && (
-                        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(171, 71, 188, 0.2)' }}>
-                          <div style={{ background: '#AB47BC', color: 'white', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: '14px', border: '2px solid white' }}>
-                            {selectedIndices.indexOf(idx) + 1}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                 ))}
-               </div>
-               
-                <div style={{ display: 'flex', gap: '10px', width: '100%', marginBottom: '20px' }}>
-                  <button onClick={() => initPick2Mode()} disabled={!isMyTurn} className="game-btn-press" style={{ flex: 1, padding: '16px', borderRadius: '18px', background: 'white', border: '2px solid #AB47BC', color: '#AB47BC', fontWeight: 900, fontSize: '14px' }}>다시 뽑기</button>
-                  <button 
-                    onClick={() => { 
-                      const picked = selectedIndices.map(i => imagePool[i]);
-                      setSharedCards(picked); setIsSharing(true); 
-                      if (coupleCode) {
-                        supabase.from('image_game_state').update({ shared_cards: picked, updated_at: new Date().toISOString() }).eq('couple_id', coupleCode).then(()=>{});
-                      }
-                    }} 
-                    disabled={!isMyTurn || selectedIndices.length < 2} 
-                    className="game-btn-press"
-                    style={{ flex: 2, padding: '16px', borderRadius: '18px', background: '#AB47BC', color: 'white', fontWeight: 900, fontSize: '15px' }}
+            
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px', padding: '0 10px', marginBottom: '30px' }}>
+              {IMAGE_CARD_DATA.map(card => {
+                const isPicked = pickedCards.find(c => c.id === card.id);
+                return (
+                  <div 
+                    key={card.id} 
+                    onClick={() => handlePickCard(card)}
+                    style={{ position: 'relative', borderRadius: '22px', overflow: 'hidden', aspectRatio: '4/5', cursor: 'pointer', border: isPicked ? '4px solid #8A60FF' : '2px solid transparent', transition: 'all 0.3s ease', transform: isPicked ? 'scale(1.02)' : 'scale(1)' }}
                   >
-                    이미지 보여주기
-                  </button>
-                </div>
-             </>
-           ) : (
-             <div style={{ textAlign: 'center', paddingBottom: '30px' }}>
-               <div style={{ background: '#FDFCF0', padding: '30px 20px', borderRadius: '30px', border: '2px solid #F3E5F5', boxShadow: '0 10px 30px rgba(0,0,0,0.05)' }}>
-                 <p style={{ fontSize: '13px', color: '#888', fontWeight: 700, marginBottom: '10px' }}>질문</p>
-                 <h3 style={{ fontSize: '18px', fontWeight: 900, color: '#2D1F08', marginBottom: '20px' }}>"{mainQuestion}"</h3>
-                 <div style={{ display: 'flex', gap: '15px', justifyContent: 'center', margin: '25px 0' }}>
-                   {sharedCards.map((card, idx) => (
-                     <div key={idx} style={{ width: '130px', height: '170px', borderRadius: '18px', overflow: 'hidden', boxShadow: '0 8px 20px rgba(0,0,0,0.15)', border: '3px solid white' }}>
-                       <img src={card.image} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                     </div>
-                   ))}
-                 </div>
-                 <p style={{ fontSize: '15px', fontWeight: 800, color: '#AB47BC', marginTop: '15px' }}>이미지를 선택한 이유를 설명해 보세요. 😊</p>
-               </div>
-               <button 
-                 onClick={() => { passTurn(); }} 
-                 disabled={!isMyTurn} 
-                 className="game-btn-press"
-                 style={{ marginTop: '25px', width: '100%', maxWidth: '280px', padding: '18px', borderRadius: '22px', background: '#2D1F08', color: 'white', fontWeight: 900, border: 'none', boxShadow: '0 10px 25px rgba(0,0,0,0.15)' }}
-               >
-                 답변 완료 및 다음 턴
-               </button>
-             </div>
-           )}
+                    <img src={card.image} style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: isPicked ? 0.6 : 1 }} />
+                    <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 60%)', padding: '15px', display: 'flex', alignItems: 'flex-end' }}>
+                      <p style={{ color: 'white', fontSize: '12px', fontWeight: 800, lineHeight: 1.4, wordBreak: 'keep-all' }}>{card.question}</p>
+                    </div>
+                    {isPicked && <div style={{ position: 'absolute', top: '10px', right: '10px', width: '24px', height: '24px', background: '#8A60FF', borderRadius: '50%', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: '14px' }}>{pickedCards.indexOf(isPicked) + 1}</div>}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', width: '100%', maxWidth: '300px' }}>
+            {isMyTurn && pickedCards.length === 2 && (
+              <button 
+                className="image-card-press" 
+                onClick={passTurnPick2}
+                style={{ padding: '18px', borderRadius: '20px', background: '#8A60FF', color: 'white', fontWeight: 900, border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}
+              >
+                선택 완료 & 턴 넘기기 <RefreshCw size={18} />
+              </button>
+            )}
+            <button onClick={resetGame} style={{ padding: '12px', background: 'none', border: 'none', color: '#8B7355', fontWeight: 800, fontSize: '14px' }}>모드 선택으로 돌아가기</button>
+          </div>
         </div>
       )}
-      <p style={{ marginTop: '30px', fontSize: '11px', color: '#999', fontWeight: 700, opacity: 0.6 }}>* 화면을 위아래로 스크롤할 수 있습니다.</p>
+
+      {mode && (
+        <p style={{ marginTop: '30px', fontSize: '11px', color: '#B08D3E', fontWeight: 800, opacity: 0.6 }}>* 화면을 위아래로 스크롤할 수 있습니다.</p>
+      )}
     </div>
   );
 };
