@@ -3,7 +3,7 @@ import { ChevronLeft, RefreshCw, Layout, Grid, Lock, Sparkles, Zap } from 'lucid
 import { supabase } from '../../supabase';
 import { IMAGE_CARD_DATA } from '../../data/imageCards';
 
-const ImageCardGameView = ({ onBack, coupleCode, userRole }) => {
+const ImageCardGameView = ({ onBack, coupleCode, userRole, mainChannel, husbandInfo, wifeInfo }) => {
   const [mode, setMode] = useState(null); // 'classic' or 'pick2'
   const [currentCard, setCurrentCard] = useState(null);
   const [isFlipped, setIsFlipped] = useState(false);
@@ -71,6 +71,15 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole }) => {
       ...updates,
       updated_at: new Date().toISOString()
     }, { onConflict: 'couple_id' });
+
+    // Optional: Broadcast for faster sync
+    if (typeof mainChannel !== 'undefined' && mainChannel) {
+        mainChannel.send({
+          type: 'broadcast',
+          event: 'game-update',
+          payload: { sender: userRole, ...updates }
+        });
+    }
   };
 
   const startClassic = () => {

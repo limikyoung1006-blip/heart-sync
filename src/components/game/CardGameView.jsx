@@ -3,7 +3,7 @@ import { ChevronLeft, RefreshCw, Sparkles, Lock, Zap } from 'lucide-react';
 import { supabase } from '../../supabase';
 import { CARD_DATA } from '../../data/dialogueCards';
 
-const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo }) => {
+const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo, mainChannel }) => {
   const [category, setCategory] = useState('일상');
   const [isFlipped, setIsFlipped] = useState(false);
   const [currentQuestion, setCurrentQuestion] = useState(null);
@@ -131,7 +131,8 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo }) =
   };
 
   const passTurn = async () => {
-    if (turnOwner !== userRole) return;
+    // BUG FIX: Allow passing if turnOwner matches current user OR if no owner set yet
+    if (turnOwner && turnOwner !== userRole) return;
     
     const nextTurnOwner = userRole === 'husband' ? 'wife' : 'husband';
     setIsFlipped(false);
@@ -151,6 +152,20 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo }) =
         current_question_id: nextQForSpouse.id,
         updated_at: new Date().toISOString()
       }).eq('couple_id', coupleCode);
+
+      // Broadcast the update so the partner's UI refreshes instantly
+      if (typeof mainChannel !== 'undefined' && mainChannel) {
+        mainChannel.send({
+          type: 'broadcast',
+          event: 'card-game-update',
+          payload: { 
+            sender: userRole, 
+            type: 'turn-passed', 
+            nextTurnOwner,
+            questionId: nextQForSpouse.id 
+          }
+        });
+      }
     }
   };
 
