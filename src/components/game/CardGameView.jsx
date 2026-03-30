@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { ChevronLeft, RefreshCw, Sparkles, Lock, Timer } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { ChevronLeft, RefreshCw, Sparkles, Lock, Zap } from 'lucide-react';
 import { supabase } from '../../supabase';
 import { CARD_DATA } from '../../data/dialogueCards';
 
@@ -244,7 +244,7 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo }) =
         <p style={{ fontSize: '11px', color: '#8B7355', fontWeight: 700, letterSpacing: '-0.2px' }}>질문 주제를 먼저 고르세요</p>
         
         <div style={{ marginTop: '10px', fontSize: '12px', color: turnOwner ? (turnOwner === 'husband' ? '#8B6500' : '#8A60FF') : '#8B7355', fontWeight: 900, background: 'rgba(255,255,255,0.6)', padding: '6px 16px', borderRadius: '100px', border: '1.5px solid rgba(212, 175, 55, 0.3)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            {!isMyTurn ? <Timer size={16} className="animate-pulse" /> : <Sparkles size={16} />}
+            {!isMyTurn ? <Zap size={16} className="animate-pulse" /> : <Sparkles size={16} />}
             {isMyTurn ? "당신의 차례입니다 ✨" : `${partnerNameOnly} 답변 중입니다...`}
         </div>
       </div>

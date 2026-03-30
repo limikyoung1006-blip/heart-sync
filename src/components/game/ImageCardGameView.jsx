@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ChevronLeft, RefreshCw, Layout, Grid, Lock, Sparkles, Timer } from 'lucide-react';
+import { ChevronLeft, RefreshCw, Layout, Grid, Lock, Sparkles, Zap } from 'lucide-react';
 import { supabase } from '../../supabase';
-import { IMAGE_CARD_DATA } from '../../data/imageDialogueCards';
+import { IMAGE_CARD_DATA } from '../../data/imageCards';
 
 const ImageCardGameView = ({ onBack, coupleCode, userRole }) => {
   const [mode, setMode] = useState(null); // 'classic' or 'pick2'
@@ -218,7 +218,7 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole }) => {
       ) : mode === 'classic' ? (
         <div className="flex flex-col items-center w-full max-w-[400px]">
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '25px', padding: '8px 20px', background: 'rgba(255,255,255,0.7)', borderRadius: '100px', border: '1.5px solid #F5D060' }}>
-            {isMyTurn ? <Sparkles size={18} color="#D4AF37" /> : <Timer size={18} className="animate-pulse" color="#8B7355" />}
+            {isMyTurn ? <Sparkles size={18} color="#D4AF37" /> : <Zap size={18} className="animate-pulse" color="#8B7355" />}
             <span style={{ fontSize: '14px', fontWeight: 900, color: isMyTurn ? '#2D1F08' : '#8B7355' }}>
               {isMyTurn ? "당신의 차례입니다 ✨" : `${partnerLabel}님이 답변 중입니다...`}
             </span>
@@ -242,7 +242,7 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole }) => {
                 </div>
               </div>
               
-              <div style={{ position: 'absolute', inset: 0, backfaceVisibility: 'hidden', borderRadius: '35px', transform: 'rotateY(180deg)', background: '#white', overflow: 'hidden', border: '5px solid #F5D060', boxShadow: '0 15px 40px rgba(0,0,0,0.2)' }}>
+              <div style={{ position: 'absolute', inset: 0, backfaceVisibility: 'hidden', borderRadius: '35px', transform: 'rotateY(180deg)', background: 'white', overflow: 'hidden', border: '5px solid #F5D060', boxShadow: '0 15px 40px rgba(0,0,0,0.2)' }}>
                 <img src={currentCard?.image} style={{ width: '100%', height: '60%', objectFit: 'cover' }} />
                 <div style={{ height: '40%', background: 'white', padding: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
                   <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#2D1F08', wordBreak: 'keep-all', lineHeight: 1.5 }}>{currentCard?.question}</h3>
