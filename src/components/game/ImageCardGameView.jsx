@@ -117,11 +117,7 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo
   }, [history, sessionCardCount, userRole, isImageLoading, coupleCode, isMyTurn]);
 
   const initPick2Mode = useCallback(() => {
-    if (!isMyTurn) {
-        setShowTurnWarning(true);
-        setTimeout(() => setShowTurnWarning(false), 2000);
-        return;
-    }
+    if (!isMyTurn) return;
     const dataPool = IMAGE_CARD_DATA || [];
     if (dataPool.length < 10) return;
 
@@ -186,15 +182,9 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo
     <div 
       className="image-sync-view" 
       style={{ 
-        width: '100%', 
-        display: 'flex', 
-        flexDirection: 'column', 
-        alignItems: 'center', 
-        padding: '10px', 
-        paddingBottom: '160px',
-        minHeight: '100%',
-        overflowY: 'visible',
-        background: 'transparent'
+        width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', 
+        padding: '10px', paddingBottom: '160px', minHeight: '100%', 
+        overflowY: 'visible', background: 'transparent'
       }}
     >
       <style>{`
@@ -219,7 +209,7 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo
       )}
 
       {showTurnWarning && (
-        <div style={{ position: 'fixed', top: '100px', zIndex: 999, background: 'rgba(239, 68, 68, 0.95)', color: 'white', padding: '12px 25px', borderRadius: '100px', fontSize: '14px', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div style={{ position: 'fixed', top: '100px', zIndex: 10000, background: 'rgba(239, 68, 68, 0.95)', color: 'white', padding: '12px 25px', borderRadius: '100px', fontSize: '14px', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '8px', boxShadow: '0 10px 20px rgba(0,0,0,0.2)' }}>
           <Lock size={16} /> 배우자가 답변 중일 때는 조작할 수 없어요!
         </div>
       )}
@@ -240,7 +230,7 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo
         <div className="flex items-center justify-center gap-3">
           {isMyTurn ? <Sparkles size={20} color="#AB47BC" /> : <Timer size={20} color="#9C27B0" className="animate-spin-slow" />}
           <span style={{ fontSize: '16px', fontWeight: 900, color: isMyTurn ? '#AB47BC' : '#9C27B0' }}>
-            {isMyTurn ? "당신의 차례입니다! 마음을 나눠주세요 ✨" : `⏳ ${partnerNameOnly} 답변 중입니다...`}
+            {isMyTurn ? "당신의 차례입니다! 마음을 나눠주세요 ✨" : `${partnerNameOnly} 답변 중입니다...`}
           </span>
         </div>
       </div>
@@ -263,12 +253,6 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo
                 display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
                 visibility: isFlipped ? 'hidden' : 'visible', zIndex: isFlipped ? 1 : 2
               }}>
-                {!isMyTurn && (
-                  <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 10, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', borderRadius: '37px' }}>
-                    <Lock size={40} color="white" />
-                    <span style={{ color: 'white', fontWeight: 900, marginTop: '10px' }}>{partnerNameOnly} 대화 중..</span>
-                  </div>
-                )}
                 <p style={{ fontSize: '12px', fontWeight: 900, color: '#AB47BC', letterSpacing: '6px', marginBottom: '20px' }}>IMAGE CARD</p>
                 <Sparkles size={50} color="#AB47BC" />
                 <div style={{ marginTop: '25px', width: '50px', height: '2px', background: '#AB47BC', opacity: 0.4 }} />
@@ -305,6 +289,23 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo
                 </div>
               </div>
             </div>
+
+            {/* Global Lock Overlay for Classic Mode */}
+            {!isMyTurn && (
+              <div 
+                style={{ 
+                  position: 'absolute', inset: 0, 
+                  background: 'rgba(0,0,0,0.08)', zIndex: 100, 
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', 
+                  borderRadius: '40px', pointerEvents: 'none' 
+                }}
+              >
+                <div style={{ background: 'rgba(255,255,255,0.9)', padding: '12px 20px', borderRadius: '20px', border: '2px solid #AB47BC', display: 'flex', alignItems: 'center', gap: '10px', boxShadow: '0 8px 25px rgba(171, 71, 188, 0.15)' }}>
+                   <Lock size={20} color="#AB47BC" />
+                   <span style={{ color: '#AB47BC', fontWeight: 900, fontSize: '14px' }}>{partnerNameOnly} 답변 중..</span>
+                </div>
+              </div>
+            )}
           </div>
           <button 
             disabled={!isMyTurn || isImageLoading} onClick={() => drawNewCard()} className="game-btn-press"
@@ -318,18 +319,27 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo
           </button>
         </div>
       ) : (
-        <div style={{ width: '100%', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ width: '100%', display: 'flex', flexDirection: 'column', position: 'relative' }}>
+           {/* Lock Overlay for Pick 2 Mode */}
+           {!isMyTurn && (
+              <div style={{ position: 'absolute', inset: '-10px', background: 'rgba(255,255,255,0.4)', zIndex: 50, borderRadius: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(1px)' }}>
+                <div style={{ background: 'white', padding: '15px 25px', borderRadius: '25px', border: '2px solid #AB47BC', display: 'flex', alignItems: 'center', gap: '10px', boxShadow: '0 10px 30px rgba(171, 71, 188, 0.1)' }}>
+                  <Lock size={24} color="#AB47BC" />
+                  <span style={{ color: '#AB47BC', fontWeight: 900, fontSize: '16px' }}>{partnerNameOnly} 답변 중..</span>
+                </div>
+              </div>
+           )}
+
            {!isSharing ? (
              <>
                <div style={{ background: '#F9F5FF', padding: '18px', borderRadius: '22px', marginBottom: '15px', textAlign: 'center', border: '1px solid rgba(171, 71, 188, 0.1)' }}>
                  <h3 style={{ fontSize: '16px', fontWeight: 900, color: '#2D1F08', marginBottom: '5px' }}>"{mainQuestion}"</h3>
-                 <p style={{ fontSize: '13px', color: '#AB47BC', fontWeight: 800 }}>어울리는 사진 2장을 선택해 주세요.</p>
+                 <p style={{ fontSize: '12px', color: '#AB47BC', fontWeight: 800 }}>어울리는 사진 2장을 선택해 주세요.</p>
                </div>
                
                <div style={{ 
                  display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px', marginBottom: '20px',
-                 maxHeight: '400px', overflowY: 'auto', padding: '5px', WebkitOverflowScrolling: 'touch',
-                 opacity: isMyTurn ? 1 : 0.6, pointerEvents: isMyTurn ? 'auto' : 'none'
+                 maxHeight: '400px', overflowY: 'auto', padding: '5px', WebkitOverflowScrolling: 'touch'
                }}>
                  {imagePool.map((card, idx) => (
                     <div 
