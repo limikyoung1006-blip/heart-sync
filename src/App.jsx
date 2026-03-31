@@ -4139,6 +4139,7 @@ const App = () => {
                   setHusbandInfo={setHusbandInfo}
                   wifeInfo={wifeInfo}
                   setWifeInfo={setWifeInfo}
+                  coupleCode={coupleCode}
                   worshipDays={worshipDays}
                   setWorshipDays={setWorshipDays}
                   worshipTime={worshipTime}
