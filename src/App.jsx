@@ -239,13 +239,28 @@ const WORSHIP_SESSIONS = [
   }
 ];
 
-const WorshipView = ({ userRole, coupleCode }) => {
+const WorshipView = ({ userRole, coupleCode, mainChannel }) => {
   const [currentSession, setCurrentSession] = useState(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [praiseUrl, setPraiseUrl] = useState("");
   const [topic, setTopic] = useState("");
   const [myPrayers, setMyPrayers] = useState(() => JSON.parse(localStorage.getItem('myPrayers') || '[]'));
   const [partnerPrayers, setPartnerPrayers] = useState([]);
+
+  useEffect(() => {
+    if (!mainChannel) return;
+
+    // Listen for worship events
+    const sub = mainChannel.on('broadcast', { event: 'worship-update' }, ({ payload }) => {
+      if (payload.sender !== userRole) {
+        if (payload.session) setCurrentSession(payload.session);
+        if (payload.praiseUrl !== undefined) setPraiseUrl(payload.praiseUrl);
+      }
+    });
+
+    return () => {
+    };
+  }, [mainChannel, userRole]);
 
   useEffect(() => {
     // 1. Initial Fetch
@@ -297,6 +312,15 @@ const WorshipView = ({ userRole, coupleCode }) => {
       const randomSession = WORSHIP_SESSIONS[Math.floor(Math.random() * WORSHIP_SESSIONS.length)];
       setCurrentSession(randomSession);
       setIsGenerating(false);
+      
+      // Sync with partner
+      if (mainChannel) {
+        mainChannel.send({
+          type: 'broadcast',
+          event: 'worship-update',
+          payload: { sender: userRole, session: randomSession }
+        });
+      }
     }, 1500);
   };
 
@@ -396,7 +420,17 @@ const WorshipView = ({ userRole, coupleCode }) => {
               type="text" 
               placeholder="함께 듣고 싶은 찬양 주소를 공유해주세요." 
               value={praiseUrl}
-              onChange={(e) => setPraiseUrl(e.target.value)}
+              onChange={(e) => {
+                const newUrl = e.target.value;
+                setPraiseUrl(newUrl);
+                if (mainChannel) {
+                  mainChannel.send({
+                    type: 'broadcast',
+                    event: 'worship-update',
+                    payload: { sender: userRole, praiseUrl: newUrl }
+                  });
+                }
+              }}
               style={{ border: 'none', background: 'none', flex: 1, fontSize: '13px', fontWeight: 700, outline: 'none', color: '#2D1F08', padding: '0' }}
             />
           </div>
@@ -3760,18 +3794,24 @@ const App = () => {
            setMySignal(info.signal);
         }
         
-        if (payload.new.requestTab && payload.new.navId !== lastNavIdRef.current && payload.new.user_role !== userRole) {
-           setActiveTab(payload.new.requestTab);
-           lastNavIdRef.current = payload.new.navId; 
+        if (info?.requestTab && info.navId !== lastNavIdRef.current && payload.new.user_role !== userRole) {
+           setActiveTab(info.requestTab);
+           lastNavIdRef.current = info.navId; 
            
-           if (payload.new.navId !== lastNotifiedTabNavIdRef.current) {
-             lastNotifiedTabNavIdRef.current = payload.new.navId;
+           // Sync sub-navigation states if present
+           if (info.dialogueTab) setDialogueTab(info.dialogueTab);
+           if (info.dialogueGuideId) setDialogueGuideId(info.dialogueGuideId);
+           if (info.counselingMode) setCounselingMode(info.counselingMode);
+           if (info.intimacySubPage) setIntimacySubPage(info.intimacySubPage);
+           
+           if (info.navId !== lastNotifiedTabNavIdRef.current) {
+             lastNotifiedTabNavIdRef.current = info.navId;
              const senderLabel = payload.new.user_role === 'husband' ? '남편' : '아내';
-             toast.info(`${senderLabel}님이 ${payload.new.requestTab} 탭으로 초대했어요!`);
+             toast.info(`${senderLabel}님이 ${info.requestTab === 'cardGame' ? '대화카드' : info.requestTab === 'worship' ? '가정예배' : info.requestTab} 탭으로 초대했어요!`);
              sendNativeNotification(
                `화면 공유 요청 📱`,
-               `${senderLabel}님이 ${payload.new.requestTab} 화면을 함께 보자고 해요!`,
-               payload.new.requestTab
+               `${senderLabel}님이 ${info.requestTab === 'cardGame' ? '대화카드' : info.requestTab === 'worship' ? '가정예배' : info.requestTab} 화면을 함께 보자고 해요!`,
+               info.requestTab
              );
            }
         }
@@ -3881,6 +3921,9 @@ const App = () => {
       })
       .on('broadcast', { event: 'game-update' }, ({ payload }) => {
         if (payload.sender !== userRole) {
+          if (payload.tab) setActiveTab(payload.tab);
+          if (payload.dialogueTab) setDialogueTab(payload.dialogueTab);
+          if (payload.dialogueGuideId !== undefined) setDialogueGuideId(payload.dialogueGuideId);
           window.dispatchEvent(new CustomEvent('card-game-update', { detail: payload }));
         }
       })
@@ -3953,7 +3996,7 @@ const App = () => {
   };
 
   // 🚀 공유 화면 전환 (UUID 기반으로 확실하게 트리거)
-  const handleSharedNavigate = async (tabName) => {
+  const handleSharedNavigate = async (tabName, extraData = {}) => {
     setActiveTab(tabName);
     const navId = Math.random().toString(36).substring(7); // 랜덤 ID 생성
     lastNavIdRef.current = navId; // 내 기기에서는 중복 반응 안 하도록 저장
@@ -3963,7 +4006,16 @@ const App = () => {
       mainChannel.send({
         type: 'broadcast',
         event: 'card-game-call',
-        payload: { sender: userRole, category: 'general' }
+        payload: { sender: userRole, category: 'general', ...extraData }
+      });
+    }
+
+    // 📡 빠른 브로드캐스트 알림 발송 (가정예배 등 일반 탭 전환)
+    if (mainChannel) {
+      mainChannel.send({
+        type: 'broadcast',
+        event: 'game-update',
+        payload: { sender: userRole, tab: tabName, ...extraData }
       });
     }
 
@@ -3971,6 +4023,7 @@ const App = () => {
     await updateProfileInfo(undefined, { 
       requestTab: tabName, 
       navId: navId,
+      ...extraData,
       updated_at: Date.now() 
     });
   };
@@ -4124,15 +4177,23 @@ const App = () => {
                     <GameGuideView 
                       gameId={dialogueGuideId} 
                       onStart={() => {
-                        setDialogueTab(dialogueGuideId);
+                        const targetMode = dialogueGuideId;
+                        setDialogueTab(targetMode);
                         setDialogueGuideId(null);
+                        handleSharedNavigate('cardGame', { dialogueTab: targetMode, dialogueGuideId: null });
                       }} 
-                      onBack={() => setDialogueGuideId(null)}
+                      onBack={() => {
+                        setDialogueGuideId(null);
+                        handleSharedNavigate('cardGame', { dialogueGuideId: null, dialogueTab: 'choice' });
+                      }}
                     />
                   ) : dialogueTab === 'choice' ? (
                     <DialogueChoiceView 
-                      onSelect={(mode) => setDialogueGuideId(mode)} 
-                      onBack={() => setActiveTab('home')}
+                      onSelect={(mode) => {
+                        setDialogueGuideId(mode);
+                        handleSharedNavigate('cardGame', { dialogueGuideId: mode, dialogueTab: 'choice' });
+                      }} 
+                      onBack={() => handleSharedNavigate('home')}
                     />
                   ) : dialogueTab === 'cardGame' ? (
                     <CardGameView 
@@ -4140,7 +4201,7 @@ const App = () => {
                       coupleCode={coupleCode} 
                       userRole={userRole} 
                       mainChannel={mainChannel}
-                      onBack={() => setDialogueTab('choice')} 
+                      onBack={() => handleSharedNavigate('cardGame', { dialogueTab: 'choice', dialogueGuideId: null })} 
                       husbandInfo={husbandInfo}
                       wifeInfo={wifeInfo}
                       onUpdateMemo={updateProfileInfo}
@@ -4148,7 +4209,7 @@ const App = () => {
                   ) : (
                     <ImageCardGameView 
                       key="imageGame"
-                      onBack={() => setDialogueTab('choice')}
+                      onBack={() => handleSharedNavigate('cardGame', { dialogueTab: 'choice', dialogueGuideId: null })}
                       coupleCode={coupleCode}
                       userRole={userRole}
                       mainChannel={mainChannel}
@@ -4231,7 +4292,7 @@ const App = () => {
                  </div>
               )}
               {activeTab === 'worship' && (
-                <WorshipView key="worship" userRole={userRole} coupleCode={coupleCode} />
+                <WorshipView key="worship" userRole={userRole} coupleCode={coupleCode} mainChannel={mainChannel} />
               )}
                {activeTab === 'heartPrayer' && (
                  <IntimacyHubView 
@@ -4323,31 +4384,31 @@ const App = () => {
           <nav className="bottom-nav">
             <NavItem 
               active={activeTab === 'home'} 
-              onClick={() => setActiveTab('home')} 
+              onClick={() => handleSharedNavigate('home')} 
               icon={<Home size={22} fill={activeTab === 'home' ? appTheme.primary : "none"} color={activeTab === 'home' ? appTheme.primary : undefined} />} 
               label="홈" 
             />
             <NavItem 
               active={activeTab === 'cardGame'} 
-              onClick={() => handleSharedNavigate('cardGame')} 
+              onClick={() => handleSharedNavigate('cardGame', { dialogueTab: 'choice', dialogueGuideId: null })} 
               icon={<MessageSquare size={22} fill={activeTab === 'cardGame' ? appTheme.primary : "none"} color={activeTab === 'cardGame' ? appTheme.primary : undefined} />} 
               label="대화카드" 
             />
             <NavItem 
               active={activeTab === 'counseling'} 
-              onClick={() => setActiveTab('counseling')} 
+              onClick={() => handleSharedNavigate('counseling')} 
               icon={<Sparkles size={22} fill={activeTab === 'counseling' ? appTheme.primary : "none"} color={activeTab === 'counseling' ? appTheme.primary : undefined} />} 
               label="AI하티" 
             />
             <NavItem 
               active={activeTab === 'worship'} 
-              onClick={() => setActiveTab('worship')} 
+              onClick={() => handleSharedNavigate('worship')} 
               icon={<BookOpen size={22} fill={activeTab === 'worship' ? appTheme.primary : "none"} color={activeTab === 'worship' ? appTheme.primary : undefined} />} 
               label="가정예배" 
             />
             <NavItem 
               active={activeTab === 'heartPrayer'} 
-              onClick={() => setActiveTab('heartPrayer')} 
+              onClick={() => handleSharedNavigate('heartPrayer')} 
               icon={<Heart size={22} fill={activeTab === 'heartPrayer' ? appTheme.primary : "none"} color={activeTab === 'heartPrayer' ? appTheme.primary : undefined} />} 
               label="작은숲" 
             />
