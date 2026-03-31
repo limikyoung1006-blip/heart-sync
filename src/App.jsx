@@ -3912,13 +3912,7 @@ const App = () => {
                 '배우자가 카드대화를 요청했습니다.',
                 'cardGame'
               );
-              setIncomingCardCall({ type: 'card', category: payload.category, questionId: payload.questionId, sender: senderLabel });
-              
-              // 📱 Show prominent Join Modal if not already in game
-              if (activeTabRef.current !== 'cardGame') {
-                setDialogueConfirmRole('recipient');
-                setShowDialogueConfirm(true);
-              }
+              setIncomingCardCall({ type: 'card', category: payload.category, sender: senderLabel });
            }
         }
       })
