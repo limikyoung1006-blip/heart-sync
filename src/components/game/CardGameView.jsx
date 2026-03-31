@@ -45,6 +45,10 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo, mai
           setIsFlipped(false);
         }
       }
+      if (payload.sessionCardCount !== undefined) {
+        setSessionCardCount(payload.sessionCardCount);
+        if (payload.sessionCardCount >= 10) setShowFinishModal(true);
+      }
     };
 
     window.addEventListener('card-game-update', handleRemoteUpdate);
@@ -74,6 +78,7 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo, mai
           setCategory(data.category || '일상');
           setIsFlipped(data.is_flipped || false);
           setTurnOwner(data.turn_owner || null);
+          setSessionCardCount(data.session_card_count || 0);
           const q = CARD_DATA.find(item => String(item.id) === String(data.current_question_id));
           if (q) setCurrentQuestion(q);
         } else {
@@ -102,6 +107,7 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo, mai
             setCategory(updated.category);
             setIsFlipped(updated.is_flipped);
             setTurnOwner(updated.turn_owner);
+            setSessionCardCount(updated.session_card_count || 0);
             const q = CARD_DATA.find(item => String(item.id) === String(updated.current_question_id));
             if (q) setCurrentQuestion(q);
           }
@@ -133,9 +139,10 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo, mai
     setCurrentQuestion(nextQ);
     setIsFlipped(false);
     setTurnOwner(userRole);
-    setSessionCardCount(prev => prev + 1);
+    const nextCount = sessionCardCount + 1;
+    setSessionCardCount(nextCount);
     
-    if (sessionCardCount + 1 >= 10) setShowFinishModal(true);
+    if (nextCount >= 10) setShowFinishModal(true);
     
     if (coupleCode) {
       supabase.from('card_game_state').upsert({
@@ -144,10 +151,10 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo, mai
         is_flipped: false, 
         turn_owner: userRole, 
         current_question_id: nextQ.id, 
+        session_card_count: nextCount,
         updated_at: new Date().toISOString()
       }, { onConflict: 'couple_id' }).then(() => {});
 
-      // 📡 방송으로 즉시 알림
       if (mainChannel) {
         mainChannel.send({
           type: 'broadcast',
@@ -157,7 +164,8 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo, mai
             type: 'draw', 
             category: activeCat, 
             questionId: nextQ.id,
-            isFlipped: false 
+            isFlipped: false,
+            sessionCardCount: nextCount
           }
         });
       }
@@ -179,7 +187,6 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo, mai
         updated_at: new Date().toISOString()
       }).eq('couple_id', coupleCode).then(() => {});
 
-      // 📡 방송으로 즉시 알림
       if (mainChannel) {
         mainChannel.send({
           type: 'broadcast',
@@ -196,14 +203,12 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo, mai
   };
 
   const passTurn = async () => {
-    // BUG FIX: Allow passing if turnOwner matches current user OR if no owner set yet
     if (turnOwner && turnOwner !== userRole) return;
     
     const nextTurnOwner = userRole === 'husband' ? 'wife' : 'husband';
     setIsFlipped(false);
     setTurnOwner(nextTurnOwner);
     
-    // Auto-draw for partner immediately to ensure sync when they "open"
     const activeCat = category;
     const pool = CARD_DATA.filter(q => q.category === activeCat);
     const available = pool.filter(q => !history.includes(q.id));
@@ -218,16 +223,16 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo, mai
         updated_at: new Date().toISOString()
       }).eq('couple_id', coupleCode);
 
-      // Broadcast the update so the partner's UI refreshes instantly
       if (mainChannel) {
         mainChannel.send({
           type: 'broadcast',
-          event: 'game-update', // App.jsx에서 game-update를 수신해서 card-game-update 이벤트를 발송함
+          event: 'game-update',
           payload: { 
             sender: userRole, 
             type: 'turn-passed', 
             nextTurnOwner,
-            questionId: nextQForSpouse.id 
+            questionId: nextQForSpouse.id,
+            sessionCardCount: sessionCardCount
           }
         });
       }
@@ -239,7 +244,7 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo, mai
       className="game-view-wrapper" 
       style={{ 
         width: '100%', 
-        minHeight: '101%', /* Force scroll activation */
+        minHeight: '101%', 
         display: 'flex', 
         flexDirection: 'column', 
         alignItems: 'center', 
@@ -285,7 +290,7 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo, mai
             <p style={{ fontSize: '16px', color: '#8B7355', fontWeight: 600, lineHeight: 1.6, marginBottom: '25px', wordBreak: 'keep-all' }}>열 개의 대화 카드를 모두 확인했습니다. ✨</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', width: '100%' }}>
               <button onClick={onBack} style={{ width: '100%', padding: '18px', borderRadius: '22px', background: '#2D1F08', color: 'white', fontWeight: 900, fontSize: '16px', border: 'none' }}>대화 선택으로 돌아가기</button>
-              <button onClick={() => { setShowFinishModal(false); setSessionCardCount(11); }} style={{ width: '100%', padding: '14px', background: 'none', color: '#B08D3E', fontWeight: 800, fontSize: '14px', border: 'none' }}>조금 더 할게요</button>
+              <button onClick={() => { setShowFinishModal(false); }} style={{ width: '100%', padding: '14px', background: 'none', color: '#B08D3E', fontWeight: 800, fontSize: '14px', border: 'none' }}>조금 더 할게요</button>
             </div>
           </div>
         </div>

@@ -19,6 +19,8 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, mainChannel, husbandI
   const [turnOwner, setTurnOwner] = useState(null);
   const [showTurnWarning, setShowTurnWarning] = useState(false);
   const [currentThemeIndex, setCurrentThemeIndex] = useState(0);
+  const [sessionCardCount, setSessionCardCount] = useState(0);
+  const [showFinishModal, setShowFinishModal] = useState(false);
   
   const isMounted = useRef(false);
   const partnerLabel = userRole === 'husband' ? '아내' : '남편';
@@ -41,6 +43,10 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, mainChannel, husbandI
       if (payload.picked_card_ids !== undefined) {
           const picked = (payload.picked_card_ids || []).map(id => IMAGE_CARD_DATA.find(c => String(c.id) === String(id))).filter(Boolean);
           setPickedCards(picked);
+      }
+      if (payload.sessionCardCount !== undefined) {
+        setSessionCardCount(payload.sessionCardCount);
+        if (payload.sessionCardCount >= 10) setShowFinishModal(true);
       }
     };
 
@@ -123,7 +129,10 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, mainChannel, husbandI
     setCurrentCard(card);
     setIsFlipped(false);
     setTurnOwner(userRole);
-    updateRemoteState({ mode: 'classic', current_card_id: card.id, is_flipped: false, turn_owner: userRole, picked_card_ids: null });
+    const nextCount = sessionCardCount + 1;
+    setSessionCardCount(nextCount);
+    if (nextCount >= 10) setShowFinishModal(true);
+    updateRemoteState({ mode: 'classic', current_card_id: card.id, is_flipped: false, turn_owner: userRole, picked_card_ids: null, session_card_count: nextCount });
   };
 
   const startPick2 = () => {
@@ -132,7 +141,10 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, mainChannel, husbandI
     setPickedCards([]);
     setCurrentThemeIndex(themeIdx);
     setTurnOwner(userRole);
-    updateRemoteState({ mode: 'pick2', picked_card_ids: [], turn_owner: userRole, current_card_id: themeIdx, is_flipped: false });
+    const nextCount = sessionCardCount + 1;
+    setSessionCardCount(nextCount);
+    if (nextCount >= 10) setShowFinishModal(true);
+    updateRemoteState({ mode: 'pick2', picked_card_ids: [], turn_owner: userRole, current_card_id: themeIdx, is_flipped: false, session_card_count: nextCount });
   };
 
   const resetGame = () => {
@@ -226,6 +238,20 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, mainChannel, husbandI
         }
         @keyframes shine { to { background-position: 200% center; } }
       `}</style>
+
+      {showFinishModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+          <div style={{ background: 'white', border: '5px solid #D4AF37', borderRadius: '40px', width: '100%', maxWidth: '340px', padding: '40px 25px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', boxShadow: '0 25px 50px rgba(0,0,0,0.3)' }}>
+            <Sparkles size={60} color="#D4AF37" style={{ marginBottom: '20px' }} />
+            <h3 style={{ fontSize: '24px', fontWeight: 900, color: '#2D1F08', marginBottom: '12px' }}>오늘의 대화를 마칠까요?</h3>
+            <p style={{ fontSize: '16px', color: '#8B7355', fontWeight: 600, lineHeight: 1.6, marginBottom: '25px', wordBreak: 'keep-all' }}>열 번의 대화 시도를 모두 확인했습니다. ✨</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', width: '100%' }}>
+              <button onClick={onBack} style={{ width: '100%', padding: '18px', borderRadius: '22px', background: '#2D1F08', color: 'white', fontWeight: 900, fontSize: '16px', border: 'none' }}>대화 선택으로 돌아가기</button>
+              <button onClick={() => { setShowFinishModal(false); }} style={{ width: '100%', padding: '14px', background: 'none', color: '#B08D3E', fontWeight: 800, fontSize: '14px', border: 'none' }}>조금 더 할게요</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Turn Warning Toast */}
       {showTurnWarning && (
@@ -408,9 +434,18 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, mainChannel, husbandI
                   })}
                 </div>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', width: '100%', maxWidth: '300px', margin: '0 auto' }}>
-                  <button onClick={resetGame} style={{ padding: '12px', background: 'none', border: 'none', color: '#8B7355', fontWeight: 800, fontSize: '14px' }}>모드 선택으로 돌아가기</button>
-                </div>
+                 <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', width: '100%', maxWidth: '300px', margin: '0 auto' }}>
+                   {isMyTurn && pickedCards.length === 2 && (
+                     <button 
+                       className="image-card-press" 
+                       onClick={passTurnPick2}
+                       style={{ padding: '18px', borderRadius: '20px', background: '#8A60FF', color: 'white', fontWeight: 900, border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}
+                     >
+                       답변 완료 & 턴 넘기기 <RefreshCw size={18} />
+                     </button>
+                   )}
+                   <button onClick={resetGame} style={{ padding: '12px', background: 'none', border: 'none', color: '#8B7355', fontWeight: 800, fontSize: '14px' }}>모드 선택으로 돌아가기</button>
+                 </div>
               </>
             )}
           </div>
