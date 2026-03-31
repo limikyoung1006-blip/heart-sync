@@ -340,7 +340,7 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo, mai
           <div className="card-face card-front" style={{ 
             position: 'absolute', width: '100%', height: '100%', backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden', borderRadius: '35px', border: '2px solid #F5D060', backgroundImage: "url('/card_bg.png')", backgroundSize: 'cover', backgroundPosition: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center', visibility: isFlipped ? 'hidden' : 'visible', zIndex: isFlipped ? 1 : 2, boxShadow: '0 15px 40px rgba(0,0,0,0.3)', overflow: 'hidden' 
           }}>
-            {!isMyTurn && (
+            {!isMyTurn && !isFlipped && (
               <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 10, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', borderRadius: '42px', backdropFilter: 'blur(3px)' }}>
                 <Lock size={40} color="white" />
                 <span style={{ color: 'white', fontWeight: 900, marginTop: '12px' }}>{partnerNameOnly} 대화 중..</span>
@@ -373,11 +373,11 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo, mai
         다른 카드 뽑기
       </button>
 
-      {!isMyTurn && (
-        <div style={{ background: 'rgba(0,0,0,0.05)', padding: '20px 40px', borderRadius: '100px', color: '#8B7355', fontWeight: 800, fontSize: '16px', border: '1.5px dashed rgba(138, 96, 255, 0.2)', textAlign: 'center', width: '100%', maxWidth: '300px', marginTop: '20px' }}>
-          상대방의 답변을 기다리는 중
-        </div>
-      )}
+        {!isMyTurn && (
+          <div style={{ background: 'rgba(0,0,0,0.05)', padding: '20px 40px', borderRadius: '100px', color: '#8B7355', fontWeight: 800, fontSize: '16px', border: '1.5px dashed rgba(138, 96, 255, 0.2)', textAlign: 'center', width: '100%', maxWidth: '300px', marginTop: '20px' }}>
+            상대방의 답변을 기다리는 중
+          </div>
+        )}
 
       <p style={{ marginTop: '30px', fontSize: '11px', color: '#B08D3E', fontWeight: 800, opacity: 0.6 }}>* 화면을 위아래로 스크롤할 수 있습니다.</p>
       {/* Spacer for bottom navigation clearance */}

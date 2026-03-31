@@ -283,7 +283,7 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, mainChannel, husbandI
               onClick={toggleFlip}
             >
               <div style={{ position: 'absolute', inset: 0, backfaceVisibility: 'hidden', borderRadius: '35px', backgroundImage: 'url("/card_bg.png")', backgroundSize: 'cover', border: '2px solid #F5D060', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 15px 40px rgba(0,0,0,0.2)' }}>
-                {!isMyTurn && (
+                {!isMyTurn && !isFlipped && (
                   <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.4)', borderRadius: '35px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', zIndex: 10 }}>
                     <Lock size={40} color="white" />
                     <span style={{ color: 'white', fontWeight: 900, marginTop: '10px' }}>{partnerLabel} 차례</span>
@@ -301,7 +301,7 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, mainChannel, husbandI
                   <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#2D1F08', wordBreak: 'keep-all', lineHeight: 1.5 }}>{currentCard?.question}</h3>
                 </div>
                 {!isMyTurn && isFlipped && (
-                  <div style={{ position: 'absolute', bottom: '20px', left: '50%', transform: 'translateX(-50%)', background: 'rgba(212, 175, 55, 0.95)', color: 'white', padding: '8px 20px', borderRadius: '100px', fontSize: '12px', fontWeight: 900, zIndex: 20, whiteSpace: 'nowrap', boxShadow: '0 5px 15px rgba(0,0,0,0.2)' }}>
+                  <div style={{ position: 'absolute', top: '20px', left: '50%', transform: 'translateX(-50%)', background: 'rgba(212, 175, 55, 0.95)', color: 'white', padding: '8px 20px', borderRadius: '100px', fontSize: '11px', fontWeight: 900, zIndex: 20, whiteSpace: 'nowrap', boxShadow: '0 5px 15px rgba(0,0,0,0.2)' }}>
                     {partnerLabel}님이 답변 중입니다 ✨
                   </div>
                 )}
