@@ -19,8 +19,12 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo, mai
   useEffect(() => {
     const handleRemoteUpdate = (e) => {
       const payload = e.detail;
-      if (payload.sender === userRole) return; // 내 방송은 무시
+      if (payload.sender === userRole) return; 
 
+      if (payload.sessionCardCount !== undefined) {
+        setSessionCardCount(payload.sessionCardCount);
+        if (payload.sessionCardCount >= 10) setShowFinishModal(true);
+      }
       if (payload.type === 'draw') {
         setCategory(payload.category);
         const q = CARD_DATA.find(item => String(item.id) === String(payload.questionId));
@@ -45,15 +49,17 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo, mai
           setIsFlipped(false);
         }
       }
-      if (payload.sessionCardCount !== undefined) {
-        setSessionCardCount(payload.sessionCardCount);
-        if (payload.sessionCardCount >= 10) setShowFinishModal(true);
-      }
     };
 
     window.addEventListener('card-game-update', handleRemoteUpdate);
     return () => window.removeEventListener('card-game-update', handleRemoteUpdate);
   }, [userRole]);
+
+  useEffect(() => {
+    if (sessionCardCount >= 10) {
+      setShowFinishModal(true);
+    }
+  }, [sessionCardCount]);
 
   const isMyTurn = !turnOwner || turnOwner === userRole;
   const partnerNameOnly = userRole === 'husband' ? '아내가' : '남편이';
@@ -110,6 +116,7 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo, mai
             setSessionCardCount(updated.session_card_count || 0);
             const q = CARD_DATA.find(item => String(item.id) === String(updated.current_question_id));
             if (q) setCurrentQuestion(q);
+            if (updated.session_card_count >= 10) setShowFinishModal(true);
           }
         })
         .subscribe();
@@ -141,8 +148,6 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo, mai
     setTurnOwner(userRole);
     const nextCount = sessionCardCount + 1;
     setSessionCardCount(nextCount);
-    
-    if (nextCount >= 10) setShowFinishModal(true);
     
     if (coupleCode) {
       supabase.from('card_game_state').upsert({

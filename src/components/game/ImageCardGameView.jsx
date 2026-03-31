@@ -95,6 +95,9 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, mainChannel, husbandI
             const picked = updated.picked_card_ids.map(id => IMAGE_CARD_DATA.find(c => String(c.id) === String(id))).filter(Boolean);
             setPickedCards(picked);
           }
+          if (updated.session_card_count !== undefined) {
+            setSessionCardCount(updated.session_card_count);
+          }
         }
       })
       .subscribe();
@@ -104,6 +107,12 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, mainChannel, husbandI
       subscription.unsubscribe();
     };
   }, [coupleCode, userRole]);
+
+  useEffect(() => {
+    if (sessionCardCount >= 10) {
+      setShowFinishModal(true);
+    }
+  }, [sessionCardCount]);
 
   const updateRemoteState = async (updates) => {
     if (!coupleCode) return;
@@ -131,7 +140,6 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, mainChannel, husbandI
     setTurnOwner(userRole);
     const nextCount = sessionCardCount + 1;
     setSessionCardCount(nextCount);
-    if (nextCount >= 10) setShowFinishModal(true);
     updateRemoteState({ mode: 'classic', current_card_id: card.id, is_flipped: false, turn_owner: userRole, picked_card_ids: null, session_card_count: nextCount });
   };
 
@@ -143,7 +151,6 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, mainChannel, husbandI
     setTurnOwner(userRole);
     const nextCount = sessionCardCount + 1;
     setSessionCardCount(nextCount);
-    if (nextCount >= 10) setShowFinishModal(true);
     updateRemoteState({ mode: 'pick2', picked_card_ids: [], turn_owner: userRole, current_card_id: themeIdx, is_flipped: false, session_card_count: nextCount });
   };
 
@@ -367,8 +374,8 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, mainChannel, husbandI
           </div>
 
           <div style={{ position: 'relative', width: '100%', maxWidth: '600px' }}>
-            {/* Show Results if Turn Passed and 2 Selected */}
-            {!isMyTurn && pickedCards.length === 2 ? (
+            {/* Show Results if 2 Selected (Show to both partners) */}
+            {pickedCards.length === 2 ? (
               <div style={{ padding: '0 20px', display: 'flex', flexDirection: 'column', gap: '20px', alignItems: 'center' }}>
                 <div style={{ background: '#F3E8FF', padding: '15px 25px', borderRadius: '100px', display: 'flex', alignItems: 'center', gap: '10px', animation: 'bounce 2s infinite' }}>
                    <MessageCircle size={18} color="#8A60FF" />
@@ -435,15 +442,18 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, mainChannel, husbandI
                 </div>
 
                  <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', width: '100%', maxWidth: '300px', margin: '0 auto' }}>
-                   {isMyTurn && pickedCards.length === 2 && (
                      <button 
                        className="image-card-press" 
-                       onClick={passTurnPick2}
+                       onClick={() => {
+                          const nextTurnOwner = userRole === 'husband' ? 'wife' : 'husband';
+                          setTurnOwner(nextTurnOwner);
+                          setPickedCards([]);
+                          updateRemoteState({ turn_owner: nextTurnOwner, picked_card_ids: [] });
+                       }}
                        style={{ padding: '18px', borderRadius: '20px', background: '#8A60FF', color: 'white', fontWeight: 900, border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}
                      >
                        답변 완료 & 턴 넘기기 <RefreshCw size={18} />
                      </button>
-                   )}
                    <button onClick={resetGame} style={{ padding: '12px', background: 'none', border: 'none', color: '#8B7355', fontWeight: 800, fontSize: '14px' }}>모드 선택으로 돌아가기</button>
                  </div>
               </>
