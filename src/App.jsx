@@ -2001,6 +2001,7 @@ const SettingsView = ({
   wifeInfo, 
   setWifeInfo, 
   coupleCode, 
+  setCoupleCode,
   onReportClick, 
   onGuideClick,
   worshipDays,
@@ -2029,6 +2030,9 @@ const SettingsView = ({
   const [showNotifIntegration, setShowNotifIntegration] = useState(false);
   const [showDeepAnalysis, setShowDeepAnalysis] = useState(false);
   const [showNotifDiag, setShowNotifDiag] = useState(false); // New diagnostic modal state
+
+  const [isEditingCode, setIsEditingCode] = useState(false);
+  const [tempCoupleCode, setTempCoupleCode] = useState(coupleCode);
 
   const [newAnnivTitle, setNewAnnivTitle] = useState("");
   const [newAnnivDate, setNewAnnivDate] = useState("");
@@ -2390,12 +2394,81 @@ const SettingsView = ({
       )}
 
       {showConnectSet && (
-        <div onClick={() => setShowConnectSet(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 5000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+        <div onClick={() => { setShowConnectSet(false); setIsEditingCode(false); }} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 5000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
           <motion.div onClick={(e) => e.stopPropagation()} initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} style={{ background: 'white', borderRadius: '32px', padding: '30px', width: '100%', maxWidth: '340px', textAlign: 'center' }}>
             <Users size={40} color="#15803D" style={{ marginBottom: '15px' }} />
             <h3 style={{ fontSize: '18px', fontWeight: 900, marginBottom: '20px' }}>배우자 연결 코드</h3>
-            <div style={{ padding: '20px', background: '#F9FAFB', borderRadius: '15px', fontSize: '24px', fontWeight: 900, letterSpacing: '4px' }}>{coupleCode}</div>
-            <motion.button whileTap={{ scale: 0.95 }} onClick={() => setShowConnectSet(false)} style={{ width: '100%', padding: '15px', marginTop: '20px', borderRadius: '15px', background: '#2D1F08', color: 'white', fontWeight: 900 }}>닫기</motion.button>
+            
+            {!isEditingCode ? (
+              <>
+                <div style={{ padding: '20px', background: '#F9FAFB', borderRadius: '15px', fontSize: '24px', fontWeight: 900, letterSpacing: '4px' }}>{coupleCode}</div>
+                <p style={{ fontSize: '12px', color: '#8B7355', marginTop: '15px', fontWeight: 600, lineHeight: 1.5 }}>
+                  코드가 잘못되었나요? 연결이 원활하지 않을 때<br/>아래 버튼을 눌러 코드를 수정할 수 있습니다.
+                </p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '20px' }}>
+                  <motion.button 
+                    whileTap={{ scale: 0.95 }} 
+                    onClick={() => { setTempCoupleCode(coupleCode); setIsEditingCode(true); }} 
+                    style={{ width: '100%', padding: '12px', borderRadius: '12px', background: 'rgba(138, 96, 255, 0.1)', color: '#8A60FF', fontWeight: 900, border: '1px solid rgba(138, 96, 255, 0.2)' }}
+                  >
+                    연결 코드 수정하기
+                  </motion.button>
+                  <motion.button whileTap={{ scale: 0.95 }} onClick={() => setShowConnectSet(false)} style={{ width: '100%', padding: '15px', borderRadius: '15px', background: '#2D1F08', color: 'white', fontWeight: 900 }}>닫기</motion.button>
+                </div>
+              </>
+            ) : (
+              <div style={{ textAlign: 'left' }}>
+                <label style={{ fontSize: '12px', fontWeight: 800, color: '#15803D', display: 'block', marginBottom: '8px' }}>새로운 연결 코드 입력 (HS-XXXX)</label>
+                <input 
+                  value={tempCoupleCode} 
+                  onChange={(e) => setTempCoupleCode(e.target.value.toUpperCase())}
+                  placeholder="HS-XXXX"
+                  style={{ width: '100%', padding: '16px', borderRadius: '18px', border: '1.5px solid #EEE', background: '#F9FAFB', fontSize: '20px', fontWeight: 900, letterSpacing: '2px', textAlign: 'center', marginBottom: '15px' }}
+                />
+                <p style={{ fontSize: '11px', color: '#EF4444', fontWeight: 700, marginBottom: '20px', textAlign: 'center' }}>
+                  ⚠️ 경고: 배우자와 동일한 코드를 사용해야 합니다.<br/>코드를 바꾸면 이전 연결의 데이터가 안 보일 수 있습니다.
+                </p>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <button 
+                    onClick={() => setIsEditingCode(false)}
+                    style={{ flex: 1, padding: '15px', borderRadius: '15px', background: '#EEE', color: '#666', fontWeight: 900, border: 'none' }}
+                  >
+                    취소
+                  </button>
+                  <button 
+                    onClick={async () => {
+                      if (!tempCoupleCode || !tempCoupleCode.trim().startsWith('HS-')) {
+                        alert("올바른 코드 형식이 아닙니다. 'HS-'로 시작해야 합니다.");
+                        return;
+                      }
+                      const newCode = tempCoupleCode.trim().toUpperCase();
+                      if (window.confirm(`새로운 코드(${newCode})로 재연결하시겠습니까?\n배우자도 동일한 코드로 변경해야 서로 연결됩니다.`)) {
+                        try {
+                          setCoupleCode(newCode);
+                          localStorage.setItem('coupleCode', newCode);
+                          await supabase.from('profiles').upsert({
+                            id: user.id,
+                            couple_id: newCode,
+                            user_role: userRole,
+                            info: myInfo,
+                            updated_at: new Date().toISOString()
+                          }, { onConflict: 'id' });
+                          alert("코드가 성공적으로 수정되었습니다!");
+                          setIsEditingCode(false);
+                          setShowConnectSet(false);
+                        } catch (err) {
+                          console.error("Update code error:", err);
+                          alert("코드 수정 중 오류가 발생했습니다.");
+                        }
+                      }
+                    }}
+                    style={{ flex: 1, padding: '15px', borderRadius: '15px', background: '#2D1F08', color: 'white', fontWeight: 900, border: 'none' }}
+                  >
+                    수정 및 재연결
+                  </button>
+                </div>
+              </div>
+            )}
           </motion.div>
         </div>
       )}
@@ -4152,6 +4225,7 @@ const App = () => {
                   wifeInfo={wifeInfo}
                   setWifeInfo={setWifeInfo}
                   coupleCode={coupleCode}
+                  setCoupleCode={setCoupleCode}
                   worshipDays={worshipDays}
                   setWorshipDays={setWorshipDays}
                   worshipTime={worshipTime}
