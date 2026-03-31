@@ -19,7 +19,8 @@ const GameGuideView = ({ gameId, onStart, onBack }) => {
         display: 'flex', 
         flexDirection: 'column',
         paddingBottom: '100px',
-        touchAction: 'pan-y'
+        touchAction: 'pan-y',
+        flex: '1 0 auto' /* Ensure it doesn't shrink and allows overflow */
       }}
     >
       <header style={{ marginBottom: '20px', paddingTop: '10px' }}>

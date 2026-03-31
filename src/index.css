@@ -37,7 +37,8 @@ html, body {
   width: 100%;
   height: 100%;
   overflow: hidden; /* Lock the body to prevent double scrolling and bouncy effects */
-  position: fixed; /* Extra precaution for mobile browsers */
+  position: relative; /* Revert position: fixed to avoid layout shifts on mobile */
+  -webkit-touch-callout: none;
 }
 
 body {
@@ -189,10 +190,9 @@ body {
   padding-bottom: 120px; /* Space for bottom navigation */
   scroll-behavior: smooth;
   -webkit-overflow-scrolling: touch;
-  display: flex;
-  flex-direction: column;
+  /* display: block is more reliable for scrolling children with percentage heights */
+  display: block; 
   overscroll-behavior: contain; /* Prevents scroll-chaining to the body */
-  /* Ensure it has a stable start point for flex */
   min-height: 0; 
 }
 

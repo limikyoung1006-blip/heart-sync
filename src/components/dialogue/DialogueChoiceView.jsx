@@ -21,7 +21,8 @@ const DialogueChoiceView = ({ onSelect, onBack }) => {
         background: appTheme.background,
         paddingBottom: '120px',
         touchAction: 'pan-y',
-        width: '100%'
+        width: '100%',
+        flex: '1 0 auto' /* Ensure it doesn't shrink and allows overflow */
       }}
     >
        <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '5px' }}>
