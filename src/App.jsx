@@ -3287,14 +3287,24 @@ const App = () => {
   const defaultWife = { nickname: "박아내", mbti: "ENFP", blood: "B", marriageDate: "2020-05-23" };
 
   const [husbandInfo, setHusbandInfo] = useState(() => {
-    const saved = localStorage.getItem('husbandInfo');
-    const parsed = saved ? JSON.parse(saved) : {};
-    return { ...defaultHusband, ...parsed };
+    try {
+      const saved = localStorage.getItem('husbandInfo');
+      const parsed = saved ? JSON.parse(saved) : {};
+      return { ...defaultHusband, ...parsed };
+    } catch (e) {
+      console.error("Husband Info Parse Error:", e);
+      return defaultHusband;
+    }
   });
   const [wifeInfo, setWifeInfo] = useState(() => {
-    const saved = localStorage.getItem('wifeInfo');
-    const parsed = saved ? JSON.parse(saved) : {};
-    return { ...defaultWife, ...parsed };
+    try {
+      const saved = localStorage.getItem('wifeInfo');
+      const parsed = saved ? JSON.parse(saved) : {};
+      return { ...defaultWife, ...parsed };
+    } catch (e) {
+      console.error("Wife Info Parse Error:", e);
+      return defaultWife;
+    }
   });
   const appTheme = { id: 'warm', primary: '#D4AF37', bg: '#FDFCF0' };
   const [mainChannel, setMainChannel] = useState(null); // 📡 Persistent Shared Channel
@@ -3320,9 +3330,13 @@ const App = () => {
     };
     
     setNotifications(prev => {
-      const updated = [newNotif, ...prev.slice(0, 49)];
-      localStorage.setItem('notifications', JSON.stringify(updated));
-      return updated;
+      try {
+        const updated = [newNotif, ...prev.slice(0, 49)];
+        localStorage.setItem('notifications', JSON.stringify(updated));
+        return updated;
+      } catch (e) {
+        return [newNotif, ...prev.slice(0, 49)];
+      }
     });
 
     // 📳 Haptic Vibration
@@ -3431,16 +3445,20 @@ const App = () => {
   }, []);
 
   useEffect(() => {
-    activeTabRef.current = activeTab;
-    
-    // Check for query param tab on mount
-    const params = new URLSearchParams(window.location.search);
-    const tabParam = params.get('tab');
-    if (tabParam) {
-      setActiveTab(tabParam);
-      // Clean up URL
-      window.history.replaceState({}, document.title, window.location.pathname);
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const tabParam = params.get('tab');
+      if (tabParam) {
+        setActiveTab(tabParam);
+        // Note: We avoid replaceState here to be extra safe on mobile browsers when opening from external links
+      }
+    } catch (e) {
+      console.error("URL Params Error:", e);
     }
+  }, []); // Run only ONCE on mount 
+
+  useEffect(() => {
+    activeTabRef.current = activeTab;
   }, [activeTab]);
 
   // 🕒 날짜가 바뀌었는지 체크하여 비밀 카드 초기화
@@ -3530,23 +3548,43 @@ const App = () => {
   const [showGuidePage, setShowGuidePage] = useState(false);
   
   const [mySignal, setMySignal] = useState(() => {
-    const role = localStorage.getItem('userRole') || 'husband';
-    const info = JSON.parse(localStorage.getItem(role === 'husband' ? 'husbandInfo' : 'wifeInfo') || '{}');
-    return info.signal || 'green';
+    try {
+      const role = localStorage.getItem('userRole') || 'husband';
+      const info = JSON.parse(localStorage.getItem(role === 'husband' ? 'husbandInfo' : 'wifeInfo') || '{}');
+      return info.signal || 'green';
+    } catch (e) {
+      return 'green';
+    }
   });
   const [spouseSignal, setSpouseSignal] = useState(() => {
-    const role = localStorage.getItem('userRole') || 'husband';
-    const partnerRole = role === 'husband' ? 'wife' : 'husband';
-    const info = JSON.parse(localStorage.getItem(partnerRole === 'husband' ? 'husbandInfo' : 'wifeInfo') || '{}');
-    return info.signal || 'green';
+    try {
+      const role = localStorage.getItem('userRole') || 'husband';
+      const partnerRole = role === 'husband' ? 'wife' : 'husband';
+      const info = JSON.parse(localStorage.getItem(partnerRole === 'husband' ? 'husbandInfo' : 'wifeInfo') || '{}');
+      return info.signal || 'green';
+    } catch (e) {
+      return 'green';
+    }
   });
-  const [schedules, setSchedules] = useState(() => JSON.parse(localStorage.getItem('coupleSchedules') || '[]'));
+  const [schedules, setSchedules] = useState(() => { 
+    try { 
+      return JSON.parse(localStorage.getItem('coupleSchedules') || '[]'); 
+    } catch (e) { 
+      return []; 
+    }
+  });
   const [partnerPrayers, setPartnerPrayers] = useState([]);
   const [incomingCardCall, setIncomingCardCall] = useState(null);
   const [dialogueTab, setDialogueTab] = useState('choice'); // 'choice', 'cardGame', 'imageGame'
   const [dialogueGuideId, setDialogueGuideId] = useState(null); // 'cardGame', 'imageGame'
 
-  const [worshipDays, setWorshipDays] = useState(() => JSON.parse(localStorage.getItem('worshipDays') || '["일", "수"]'));
+  const [worshipDays, setWorshipDays] = useState(() => { 
+    try { 
+      return JSON.parse(localStorage.getItem('worshipDays') || '["일", "수"]'); 
+    } catch (e) { 
+      return ["일", "수"]; 
+    }
+  });
   const [worshipTime, setWorshipTime] = useState(() => localStorage.getItem('worshipTime') || '21:00');
   const [anniversaries, setAnniversaries] = useState(() => { try { const saved = localStorage.getItem('anniversaries'); return saved ? JSON.parse(saved) : []; } catch (e) { return []; } });
   const [notifications, setNotifications] = useState(() => { try { const saved = localStorage.getItem('notifications'); return saved ? JSON.parse(saved) : []; } catch (e) { return []; } });
