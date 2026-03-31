@@ -286,7 +286,7 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, mainChannel, husbandI
                 {!isMyTurn && !isFlipped && (
                   <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.4)', borderRadius: '35px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', zIndex: 10 }}>
                     <Lock size={40} color="white" />
-                    <span style={{ color: 'white', fontWeight: 900, marginTop: '10px' }}>{partnerLabel} 차례</span>
+                    <span style={{ color: 'white', fontWeight: 900, marginTop: '10px' }}>{partnerLabel} 답변 중</span>
                   </div>
                 )}
                 <div style={{ textAlign: 'center', background: 'rgba(0,0,0,0.7)', padding: '20px 30px', borderRadius: '25px', backdropFilter: 'blur(10px)' }}>

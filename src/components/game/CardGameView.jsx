@@ -277,8 +277,8 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo, mai
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
           <div style={{ background: 'white', border: '5px solid #D4AF37', borderRadius: '40px', width: '100%', maxWidth: '340px', padding: '40px 25px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', boxShadow: '0 25px 50px rgba(0,0,0,0.3)' }}>
             <Sparkles size={60} color="#D4AF37" style={{ marginBottom: '20px' }} />
-            <h3 style={{ fontSize: '24px', fontWeight: 900, color: '#2D1F08', marginBottom: '12px' }}>열 번째 대화 완료!</h3>
-            <p style={{ fontSize: '16px', color: '#8B7355', fontWeight: 600, lineHeight: 1.6, marginBottom: '25px', wordBreak: 'keep-all' }}>오늘의 깊은 대화가 부부 사이를 더 단단하게 만들었을 거예요. ✨</p>
+            <h3 style={{ fontSize: '24px', fontWeight: 900, color: '#2D1F08', marginBottom: '12px' }}>오늘의 대화를 마칠까요?</h3>
+            <p style={{ fontSize: '16px', color: '#8B7355', fontWeight: 600, lineHeight: 1.6, marginBottom: '25px', wordBreak: 'keep-all' }}>열 개의 대화 카드를 모두 확인했습니다. ✨</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', width: '100%' }}>
               <button onClick={onBack} style={{ width: '100%', padding: '18px', borderRadius: '22px', background: '#2D1F08', color: 'white', fontWeight: 900, fontSize: '16px', border: 'none' }}>대화 선택으로 돌아가기</button>
               <button onClick={() => { setShowFinishModal(false); setSessionCardCount(11); }} style={{ width: '100%', padding: '14px', background: 'none', color: '#B08D3E', fontWeight: 800, fontSize: '14px', border: 'none' }}>조금 더 할게요</button>
@@ -343,7 +343,7 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo, mai
             {!isMyTurn && !isFlipped && (
               <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 10, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', borderRadius: '42px', backdropFilter: 'blur(3px)' }}>
                 <Lock size={40} color="white" />
-                <span style={{ color: 'white', fontWeight: 900, marginTop: '12px' }}>{partnerNameOnly} 대화 중..</span>
+                <span style={{ color: 'white', fontWeight: 900, marginTop: '12px' }}>{partnerNameOnly} 답변 중..</span>
               </div>
             )}
             <div style={{ textAlign: 'center', background: 'rgba(0,0,0,0.6)', padding: '20px 30px', borderRadius: '25px', backdropFilter: 'blur(12px)', border: '1px solid rgba(255,255,255,0.1)' }}>
