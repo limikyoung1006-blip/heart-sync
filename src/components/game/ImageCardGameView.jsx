@@ -379,7 +379,9 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, mainChannel, husbandI
               <div style={{ padding: '0 20px', display: 'flex', flexDirection: 'column', gap: '20px', alignItems: 'center' }}>
                 <div style={{ background: '#F3E8FF', padding: '15px 25px', borderRadius: '100px', display: 'flex', alignItems: 'center', gap: '10px', animation: 'bounce 2s infinite' }}>
                    <MessageCircle size={18} color="#8A60FF" />
-                   <span style={{ fontSize: '14px', fontWeight: 900, color: '#8A60FF' }}>{partnerLabel}님이 선택한 사진 2장입니다! 이유를 들어보세요 ✨</span>
+                   <span style={{ fontSize: '14px', fontWeight: 900, color: '#8A60FF' }}>
+                     {isMyTurn ? "제가 선택한 사진 2장입니다! 이야기를 나눠봐요 ✨" : `${partnerLabel}님이 선택한 사진 2장입니다! 이야기를 들어보세요 ✨`}
+                   </span>
                 </div>
                 
                 <div style={{ display: 'flex', gap: '15px', width: '100%', justifyContent: 'center' }}>
@@ -394,21 +396,25 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, mainChannel, husbandI
                 </div>
 
                 <div style={{ background: 'rgba(255,255,255,0.7)', padding: '20px', borderRadius: '20px', border: '1.5px dashed #8A60FF', width: '100%', textAlign: 'center' }}>
-                   <p style={{ fontSize: '14px', fontWeight: 700, color: '#2D1F08' }}>"{partnerLabel}님, 이 사진 2장을 고른 이유가 궁금해요. 서로 깊은 이야기를 나누어 보세요."</p>
+                   <p style={{ fontSize: '14px', fontWeight: 700, color: '#2D1F08' }}>
+                     {isMyTurn ? "배우자와 함께 이 사진들을 고른 솔직한 마음을 나눠보세요." : `"${partnerLabel}님, 이 사진 2장을 고른 이유가 궁금해요. 서로 깊은 이야기를 나누어 보세요."`}
+                   </p>
                 </div>
                 
-                <button 
-                  className="image-card-press" 
-                  onClick={() => {
-                    const nextTurnOwner = userRole === 'husband' ? 'wife' : 'husband';
-                    setTurnOwner(nextTurnOwner);
-                    setPickedCards([]);
-                    updateRemoteState({ turn_owner: nextTurnOwner, picked_card_ids: [] });
-                  }}
-                  style={{ padding: '18px', width: '100%', maxWidth: '300px', borderRadius: '20px', background: '#8A60FF', color: 'white', fontWeight: 900, border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}
-                >
-                  제 차례로 가져오기 (새 질문) <ChevronRight size={20} />
-                </button>
+                {isMyTurn && (
+                  <button 
+                    className="image-card-press" 
+                    onClick={() => {
+                        const nextTurnOwner = userRole === 'husband' ? 'wife' : 'husband';
+                        setTurnOwner(nextTurnOwner);
+                        setPickedCards([]);
+                        updateRemoteState({ turn_owner: nextTurnOwner, picked_card_ids: [] });
+                    }}
+                    style={{ padding: '18px', width: '100%', maxWidth: '300px', borderRadius: '20px', background: '#8A60FF', color: 'white', fontWeight: 900, border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}
+                  >
+                    답변 완료 & 턴 넘기기 <RefreshCw size={20} />
+                  </button>
+                )}
               </div>
             ) : (
               <>
@@ -442,6 +448,7 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, mainChannel, husbandI
                 </div>
 
                  <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', width: '100%', maxWidth: '300px', margin: '0 auto' }}>
+                   {isMyTurn && pickedCards.length === 2 && (
                      <button 
                        className="image-card-press" 
                        onClick={() => {
@@ -454,6 +461,7 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, mainChannel, husbandI
                      >
                        답변 완료 & 턴 넘기기 <RefreshCw size={18} />
                      </button>
+                   )}
                    <button onClick={resetGame} style={{ padding: '12px', background: 'none', border: 'none', color: '#8B7355', fontWeight: 800, fontSize: '14px' }}>모드 선택으로 돌아가기</button>
                  </div>
               </>
