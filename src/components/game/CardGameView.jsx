@@ -25,10 +25,14 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo, mai
         setCategory(payload.category);
         const q = CARD_DATA.find(item => String(item.id) === String(payload.questionId));
         if (q) setCurrentQuestion(q);
-        setIsFlipped(false);
+        setIsFlipped(payload.isFlipped || false);
         setTurnOwner(payload.sender);
       } else if (payload.type === 'flip') {
         setIsFlipped(payload.isFlipped);
+        if (payload.questionId) {
+          const q = CARD_DATA.find(item => String(item.id) === String(payload.questionId));
+          if (q) setCurrentQuestion(q);
+        }
       } else if (payload.type === 'turn-passed') {
         setTurnOwner(payload.nextTurnOwner);
         const q = CARD_DATA.find(item => String(item.id) === String(payload.questionId));
@@ -148,7 +152,8 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo, mai
             sender: userRole, 
             type: 'draw', 
             category: activeCat, 
-            questionId: nextQ.id 
+            questionId: nextQ.id,
+            isFlipped: false 
           }
         });
       }
@@ -178,7 +183,8 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo, mai
           payload: { 
             sender: userRole, 
             type: 'flip', 
-            isFlipped: nextFlip 
+            isFlipped: nextFlip,
+            questionId: currentQuestion?.id
           }
         });
       }

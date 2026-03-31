@@ -152,7 +152,10 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, mainChannel, husbandI
     }
     const nextFlip = !isFlipped;
     setIsFlipped(nextFlip);
-    updateRemoteState({ is_flipped: nextFlip });
+    updateRemoteState({ 
+      is_flipped: nextFlip, 
+      current_card_id: currentCard?.id 
+    });
   };
 
   const passTurn = () => {
@@ -188,7 +191,11 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, mainChannel, husbandI
     const nextTurnOwner = userRole === 'husband' ? 'wife' : 'husband';
     setTurnOwner(nextTurnOwner);
     // Keep pickedCards to show the partner
-    updateRemoteState({ turn_owner: nextTurnOwner, picked_card_ids: pickedCards.map(c => c.id) });
+    updateRemoteState({ 
+      turn_owner: nextTurnOwner, 
+      picked_card_ids: pickedCards.map(c => c.id),
+      current_card_id: currentThemeIndex
+    });
   };
 
   return (
