@@ -283,16 +283,17 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, mainChannel, husbandI
               onClick={toggleFlip}
             >
               <div style={{ position: 'absolute', inset: 0, backfaceVisibility: 'hidden', borderRadius: '35px', backgroundImage: 'url("/card_bg.png")', backgroundSize: 'cover', border: '2px solid #F5D060', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 15px 40px rgba(0,0,0,0.2)' }}>
-                {!isMyTurn && !isFlipped && (
+                {!isMyTurn && !isFlipped ? (
                   <div style={{ position: 'absolute', inset: 0, zIndex: 10, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
                     <Lock size={32} color="white" style={{ opacity: 0.8, marginBottom: '8px' }} />
                     <span style={{ fontSize: '13px', color: 'white', fontWeight: 900 }}>{partnerLabel} 답변 중..</span>
                   </div>
+                ) : (
+                  <div style={{ textAlign: 'center', background: 'rgba(0,0,0,0.7)', padding: '20px 30px', borderRadius: '25px', backdropFilter: 'blur(10px)' }}>
+                     <p className="sparkling-text" style={{ fontSize: '22px', fontWeight: 900, letterSpacing: '2px', marginBottom: '8px' }}>IMAGE CARD</p>
+                     <p style={{ color: 'white', opacity: 0.8, fontSize: '13px', fontWeight: 700 }}>클릭해서 확인</p>
+                  </div>
                 )}
-                <div style={{ textAlign: 'center', background: 'rgba(0,0,0,0.7)', padding: '20px 30px', borderRadius: '25px', backdropFilter: 'blur(10px)' }}>
-                   <p className="sparkling-text" style={{ fontSize: '22px', fontWeight: 900, letterSpacing: '2px', marginBottom: '8px' }}>IMAGE CARD</p>
-                   <p style={{ color: 'white', opacity: 0.8, fontSize: '13px', fontWeight: 700 }}>클릭해서 확인</p>
-                </div>
               </div>
               
               <div style={{ position: 'absolute', inset: 0, backfaceVisibility: 'hidden', borderRadius: '35px', transform: 'rotateY(180deg)', background: 'white', overflow: 'hidden', border: '5px solid #F5D060', boxShadow: '0 15px 40px rgba(0,0,0,0.2)' }}>
@@ -408,15 +409,6 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, mainChannel, husbandI
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', width: '100%', maxWidth: '300px', margin: '0 auto' }}>
-                  {isMyTurn && pickedCards.length === 2 && (
-                    <button 
-                      className="image-card-press" 
-                      onClick={passTurnPick2}
-                      style={{ padding: '18px', borderRadius: '20px', background: '#8A60FF', color: 'white', fontWeight: 900, border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}
-                    >
-                      선택 완료 & 상대방에게 보여주기 <RefreshCw size={18} />
-                    </button>
-                  )}
                   <button onClick={resetGame} style={{ padding: '12px', background: 'none', border: 'none', color: '#8B7355', fontWeight: 800, fontSize: '14px' }}>모드 선택으로 돌아가기</button>
                 </div>
               </>
