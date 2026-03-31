@@ -15,6 +15,34 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo, mai
   const [history, setHistory] = useState([]);
   const isMounted = useRef(false);
 
+  // 리얼타임 브로드캐스트 리스너 추가 (App.jsx에서 dispatch한 이벤트 수신)
+  useEffect(() => {
+    const handleRemoteUpdate = (e) => {
+      const payload = e.detail;
+      if (payload.sender === userRole) return; // 내 방송은 무시
+
+      if (payload.type === 'draw') {
+        setCategory(payload.category);
+        const q = CARD_DATA.find(item => String(item.id) === String(payload.questionId));
+        if (q) setCurrentQuestion(q);
+        setIsFlipped(false);
+        setTurnOwner(payload.sender);
+      } else if (payload.type === 'flip') {
+        setIsFlipped(payload.isFlipped);
+      } else if (payload.type === 'turn-passed') {
+        setTurnOwner(payload.nextTurnOwner);
+        const q = CARD_DATA.find(item => String(item.id) === String(payload.questionId));
+        if (q) {
+          setCurrentQuestion(q);
+          setIsFlipped(false);
+        }
+      }
+    };
+
+    window.addEventListener('card-game-update', handleRemoteUpdate);
+    return () => window.removeEventListener('card-game-update', handleRemoteUpdate);
+  }, [userRole]);
+
   const isMyTurn = !turnOwner || turnOwner === userRole;
   const partnerNameOnly = userRole === 'husband' ? '아내가' : '남편이';
 
@@ -110,6 +138,20 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo, mai
         current_question_id: nextQ.id, 
         updated_at: new Date().toISOString()
       }, { onConflict: 'couple_id' }).then(() => {});
+
+      // 📡 방송으로 즉시 알림
+      if (mainChannel) {
+        mainChannel.send({
+          type: 'broadcast',
+          event: 'game-update',
+          payload: { 
+            sender: userRole, 
+            type: 'draw', 
+            category: activeCat, 
+            questionId: nextQ.id 
+          }
+        });
+      }
     }
   };
 
@@ -127,6 +169,19 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo, mai
         turn_owner: userRole,
         updated_at: new Date().toISOString()
       }).eq('couple_id', coupleCode).then(() => {});
+
+      // 📡 방송으로 즉시 알림
+      if (mainChannel) {
+        mainChannel.send({
+          type: 'broadcast',
+          event: 'game-update',
+          payload: { 
+            sender: userRole, 
+            type: 'flip', 
+            isFlipped: nextFlip 
+          }
+        });
+      }
     }
   };
 
@@ -154,10 +209,10 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo, mai
       }).eq('couple_id', coupleCode);
 
       // Broadcast the update so the partner's UI refreshes instantly
-      if (typeof mainChannel !== 'undefined' && mainChannel) {
+      if (mainChannel) {
         mainChannel.send({
           type: 'broadcast',
-          event: 'card-game-update',
+          event: 'game-update', // App.jsx에서 game-update를 수신해서 card-game-update 이벤트를 발송함
           payload: { 
             sender: userRole, 
             type: 'turn-passed', 

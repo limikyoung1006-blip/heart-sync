@@ -24,6 +24,30 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, mainChannel, husbandI
   const partnerLabel = userRole === 'husband' ? '아내' : '남편';
   const isMyTurn = !turnOwner || turnOwner === userRole;
 
+  // 리얼타임 브로드캐스트 리스너 추가
+  useEffect(() => {
+    const handleRemoteUpdate = (e) => {
+      const payload = e.detail;
+      if (payload.sender === userRole) return; // 내 방송 무시
+
+      if (payload.mode !== undefined) setMode(payload.mode);
+      if (payload.is_flipped !== undefined) setIsFlipped(payload.is_flipped);
+      if (payload.turn_owner !== undefined) setTurnOwner(payload.turn_owner);
+      if (payload.current_card_id !== undefined) {
+        setCurrentThemeIndex(payload.current_card_id);
+        const card = IMAGE_CARD_DATA.find(c => String(c.id) === String(payload.current_card_id));
+        if (card) setCurrentCard(card);
+      }
+      if (payload.picked_card_ids !== undefined) {
+          const picked = (payload.picked_card_ids || []).map(id => IMAGE_CARD_DATA.find(c => String(c.id) === String(id))).filter(Boolean);
+          setPickedCards(picked);
+      }
+    };
+
+    window.addEventListener('card-game-update', handleRemoteUpdate);
+    return () => window.removeEventListener('card-game-update', handleRemoteUpdate);
+  }, [userRole]);
+
   // Load and Sync State
   useEffect(() => {
     isMounted.current = true;
@@ -83,8 +107,8 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, mainChannel, husbandI
       updated_at: new Date().toISOString()
     }, { onConflict: 'couple_id' });
 
-    // Optional: Broadcast for faster sync
-    if (typeof mainChannel !== 'undefined' && mainChannel) {
+    // 📡 빠른 브로드캐스트 전송 (App.jsx의 game-update 리스너가 card-game-update 이벤트를 발생시킴)
+    if (mainChannel) {
         mainChannel.send({
           type: 'broadcast',
           event: 'game-update',
