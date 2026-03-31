@@ -24,7 +24,10 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo, mai
       if (payload.type === 'draw') {
         setCategory(payload.category);
         const q = CARD_DATA.find(item => String(item.id) === String(payload.questionId));
-        if (q) setCurrentQuestion(q);
+        if (q) {
+          setCurrentQuestion(q);
+          setHistory(prev => [...new Set([...prev, q.id])].slice(-40));
+        }
         setIsFlipped(payload.isFlipped || false);
         setTurnOwner(payload.sender);
       } else if (payload.type === 'flip') {
@@ -38,6 +41,7 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo, mai
         const q = CARD_DATA.find(item => String(item.id) === String(payload.questionId));
         if (q) {
           setCurrentQuestion(q);
+          setHistory(prev => [...new Set([...prev, q.id])].slice(-40));
           setIsFlipped(false);
         }
       }
@@ -125,7 +129,7 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo, mai
     
     if (!nextQ) return;
 
-    setHistory(prev => [...prev, nextQ.id].slice(-20));
+    setHistory(prev => [...new Set([...prev, nextQ.id])].slice(-40));
     setCurrentQuestion(nextQ);
     setIsFlipped(false);
     setTurnOwner(userRole);
@@ -300,14 +304,24 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo, mai
         </button>
       </div>
 
-      <div style={{ width: '100%', overflowX: 'auto', marginBottom: '25px', paddingBottom: '5px' }}>
-        <div style={{ display: 'flex', gap: '8px', padding: '5px' }}>
+      <div style={{ width: '100%', marginBottom: '25px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', padding: '5px' }}>
           {['일상', '상상', '추억', '관계', '신앙', '시크릿'].map(cat => (
             <button 
               key={cat} 
               onClick={() => { if(!isMyTurn) return; setCategory(cat); drawNewCard(cat); }}
               className="game-btn-press"
-              style={{ padding: '10px 22px', borderRadius: '100px', border: category === cat ? 'none' : '1.5px solid rgba(138, 96, 255, 0.2)', background: category === cat ? '#8A60FF' : 'white', color: category === cat ? 'white' : '#8A60FF', fontWeight: 900, fontSize: '13px', whiteSpace: 'nowrap', opacity: isMyTurn ? 1 : 0.6 }}
+              style={{ 
+                padding: '12px 10px', 
+                borderRadius: '16px', 
+                border: category === cat ? 'none' : '1.5px solid rgba(138, 96, 255, 0.2)', 
+                background: category === cat ? '#8A60FF' : 'white', 
+                color: category === cat ? 'white' : '#8A60FF', 
+                fontWeight: 900, 
+                fontSize: '13px', 
+                textAlign: 'center',
+                opacity: isMyTurn ? 1 : 0.6 
+              }}
             >
               {cat}
             </button>

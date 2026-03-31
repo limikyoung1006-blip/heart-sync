@@ -1796,12 +1796,6 @@ const IntimacyModal = ({ user, show, onClose, subPage, setSubPage, bgImage, onBg
   );
 };
 
-
-
-
-
-
-
 /* ⚙️ Settings View (Extended) */
 /* 🧠 Deep Analysis View (전문 성향 진단) */
 const DeepAnalysisView = ({ onBack, myInfo, updateProfile }) => {
@@ -2221,7 +2215,7 @@ const SettingsView = ({
       {/* 💑 Couple Profile Card */}
       <div className="settings-profile-card" style={{ 
         background: 'rgba(255, 255, 255, 0.7)', backdropFilter: 'blur(20px)', borderRadius: '35px',
-        padding: '30px', margin: '0 20px 25px', display: 'flex', flexDirection: 'column', alignItems: 'center', boxShadow: '0 15px 35px rgba(0,0,0,0.05)', border: '1px solid rgba(255,255,255,0.4)', position: 'relative'
+        padding: '30px', margin: '0 20px 25px', display: 'flex', flexDirection: 'column', alignItems: 'center', boxShadow: '0 15px 35px rgba(0,0,0,0.05)', border: '1px solid rgba(255,255,255,4)', position: 'relative'
       }}>
         <button onClick={() => setShowProfileEdit(true)} style={{ position: 'absolute', top: '20px', right: '20px', background: 'white', border: '1px solid #EEE', borderRadius: '12px', padding: '8px', boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}>
           <User size={16} color="#8B7355" />
@@ -2690,9 +2684,6 @@ const SettingsView = ({
     </motion.div>
   );
 };
-
-
-
 
 /* 🚀 Onboarding View (First Time Experience) */
 const OnboardingView = ({ user, userRole, setUserRole, onFinish }) => {
@@ -3212,8 +3203,6 @@ const OnboardingView = ({ user, userRole, setUserRole, onFinish }) => {
   );
 };
 
-
-
 /* 🔐 Auth View (Social Login) */
 const AuthView = ({ onLogoClick, showAdminLogin, setShowAdminLogin, setUser, setSession, setIsAdmin }) => {
   const handleOAuthLogin = async (provider) => {
@@ -3296,7 +3285,6 @@ const AuthView = ({ onLogoClick, showAdminLogin, setShowAdminLogin, setUser, set
     </motion.div>
   );
 };
-
 
 const App = () => {
   const [activeTab, setActiveTab] = useState('home');
@@ -4040,6 +4028,12 @@ const App = () => {
         payload: { sender: userRole, tab: tabName, ...extraData }
       });
     }
+
+    // 🚀 Update Local States for the caller as well
+    if (extraData.dialogueTab) setDialogueTab(extraData.dialogueTab);
+    if (extraData.dialogueGuideId !== undefined) setDialogueGuideId(extraData.dialogueGuideId);
+    if (extraData.counselingMode) setCounselingMode(extraData.counselingMode);
+    if (extraData.intimacySubPage) setIntimacySubPage(extraData.intimacySubPage);
 
     // 내 프로필의 info에 'requestTab'과 'navId'를 실어 배우자에게 보냄 (화면 전환 유도)
     await updateProfileInfo(undefined, { 
