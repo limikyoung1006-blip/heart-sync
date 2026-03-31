@@ -3905,7 +3905,7 @@ const App = () => {
                 `"${payload.title}" 신호가 도착했습니다. 화원에서 확인해보세요!`,
                 'heartPrayer'
               );
-              setIncomingCardCall({ type: 'garden', sender: senderLabel, text: payload.title, msgType: 'chat' });
+              // setIncomingCardCall removed per user request
            } else {
               sendNativeNotification(
                 `${senderLabel}님의 대화 요청 🃏`,
