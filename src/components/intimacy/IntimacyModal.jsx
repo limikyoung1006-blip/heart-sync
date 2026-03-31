@@ -100,13 +100,16 @@ const IntimacyModal = ({ user, show, onClose, subPage, setSubPage, bgImage, onBg
       const payload = e.detail;
       if (payload.sender !== userRole) {
           const partnerMsg = { 
-            id: Date.now(), 
+            id: payload.gardenNavId || payload.id || Date.now(), 
             text: payload.text, 
             sender: 'partner', 
             type: payload.msgType || 'chat', 
-            time: payload.time 
+            time: payload.time || getTime()
           };
-          setMessages(prev => [...prev, partnerMsg]);
+          setMessages(prev => {
+            if (prev.some(m => m.id === partnerMsg.id)) return prev;
+            return [...prev, partnerMsg].slice(-20);
+          });
           setSpouseStatus('done');
       }
     };
