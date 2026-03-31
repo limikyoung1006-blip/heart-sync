@@ -3401,7 +3401,7 @@ const App = () => {
     }
   };
 
-  // Helper for Web Push Registration (For Background Notifications)
+  // 📬 Web Push Subscription Helper (Support for 'Killed App' Notifications)
   const subscribeToPushNotifications = async () => {
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
     
@@ -3410,20 +3410,23 @@ const App = () => {
       let subscription = await registration.pushManager.getSubscription();
       
       if (!subscription) {
-        // This is a dummy key, user should replace with their own VAPID key if setting up server-side push
-        const publicVapidKey = 'BFfU6e9j-eH8O0n6e_z8_vS_8_8_8_8_8_8_8_8_8_8_8_8_8_8_8_8_8_8_8_8_8_8_8_8_8_8_8_8_8_8_8_8_8_8_8_8_w';
+        // [VAPID KEY GUIDE] 🗝️ Generate yours with: npx web-push generate-vapid-keys
+        // This is a placeholder key. For production, please use your unique VAPID keys.
+        const publicVapidKey = 'BIs7R6BOfYpP9V2Xz-X-wE-rS-7nC-8pI-7e-vI-rS-7pE-v_A-v_B-v_C-v_D-v_E-v_F-v_G-v_H-v_I-v_J-v_K-v_L-v_M';
         subscription = await registration.pushManager.subscribe({
           userVisibleOnly: true,
           applicationServerKey: urlBase64ToUint8Array(publicVapidKey)
         });
       }
       
-      // Save subscription to user's profile for server-side use
+      // Save full subscription JSON to the profile (Edge Function will read this later)
       if (subscription && user) {
-        await updateProfileInfo(undefined, { pushSubscription: subscription });
+        const subJSON = JSON.stringify(subscription);
+        await updateProfileInfo(undefined, { pushSubscription: subJSON });
+        console.log("Push sub saved to profile ✅");
       }
     } catch (error) {
-      console.warn('Push subscription failed:', error);
+      console.warn('Push registration status:', error.message);
     }
   };
 
