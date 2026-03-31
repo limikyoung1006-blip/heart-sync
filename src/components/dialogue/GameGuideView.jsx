@@ -14,7 +14,7 @@ const GameGuideView = ({ gameId, onStart, onBack }) => {
       className="game-guide-view"
       style={{ 
         padding: '20px', 
-        minHeight: '100%', 
+        minHeight: '101%', /* Force scroll activation */
         background: '#FDFCF0', 
         display: 'flex', 
         flexDirection: 'column',

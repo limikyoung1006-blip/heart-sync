@@ -172,6 +172,7 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, mainChannel, husbandI
       className="image-game-view-wrapper" 
       style={{ 
         width: '100%', 
+        minHeight: '101%', /* Force scroll activation */
         display: 'flex', 
         flexDirection: 'column', 
         alignItems: 'center', 

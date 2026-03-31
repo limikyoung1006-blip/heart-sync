@@ -17,10 +17,11 @@ const DialogueChoiceView = ({ onSelect, onBack }) => {
         display: 'flex', 
         flexDirection: 'column', 
         gap: '25px', 
-        minHeight: '100%', 
+        minHeight: '101%', /* Force scroll activation */
         background: appTheme.background,
         paddingBottom: '120px',
-        touchAction: 'pan-y'
+        touchAction: 'pan-y',
+        width: '100%'
       }}
     >
        <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '5px' }}>

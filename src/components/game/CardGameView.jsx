@@ -174,6 +174,7 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo, mai
       className="game-view-wrapper" 
       style={{ 
         width: '100%', 
+        minHeight: '101%', /* Force scroll activation */
         display: 'flex', 
         flexDirection: 'column', 
         alignItems: 'center', 
