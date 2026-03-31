@@ -178,7 +178,8 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, mainChannel, husbandI
         padding: '0 20px', 
         position: 'relative',
         backgroundColor: 'transparent',
-        WebkitOverflowScrolling: 'touch'
+        WebkitOverflowScrolling: 'touch',
+        touchAction: 'pan-y'
       }}
     >
       <style>{`
@@ -244,7 +245,7 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, mainChannel, husbandI
             </span>
           </div>
 
-          <div style={{ perspective: '1500px', width: '300px', height: '420px', marginBottom: '30px', position: 'relative' }}>
+          <div style={{ perspective: '1500px', width: '300px', height: '420px', marginBottom: '30px', position: 'relative', touchAction: 'pan-y' }}>
             <div 
               style={{ width: '100%', height: '100%', transformStyle: 'preserve-3d', transition: 'transform 0.8s cubic-bezier(0.4, 0, 0.2, 1)', transform: isFlipped ? 'rotateY(180deg)' : 'none', cursor: isMyTurn ? 'pointer' : 'default' }}
               onClick={toggleFlip}

@@ -180,7 +180,8 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo, mai
         padding: '0 20px', 
         paddingTop: '10px',
         backgroundColor: 'transparent',
-        WebkitOverflowScrolling: 'touch'
+        WebkitOverflowScrolling: 'touch',
+        touchAction: 'pan-y'
       }}
     >
       <style>{`
@@ -265,7 +266,8 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo, mai
       <div className="card-container" style={{ 
         perspective: '1500px', marginBottom: '40px', width: '300px', height: '420px', 
         display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'relative',
-        userSelect: 'none'
+        userSelect: 'none',
+        touchAction: 'pan-y'
       }}>
         <div 
           className={`talking-card ${isFlipped ? 'flipped' : ''}`} 

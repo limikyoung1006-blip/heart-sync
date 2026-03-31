@@ -19,7 +19,8 @@ const DialogueChoiceView = ({ onSelect, onBack }) => {
         gap: '25px', 
         minHeight: '100%', 
         background: appTheme.background,
-        paddingBottom: '120px' 
+        paddingBottom: '120px',
+        touchAction: 'pan-y'
       }}
     >
        <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '5px' }}>
