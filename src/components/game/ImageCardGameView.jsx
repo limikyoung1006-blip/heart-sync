@@ -284,9 +284,9 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, mainChannel, husbandI
             >
               <div style={{ position: 'absolute', inset: 0, backfaceVisibility: 'hidden', borderRadius: '35px', backgroundImage: 'url("/card_bg.png")', backgroundSize: 'cover', border: '2px solid #F5D060', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 15px 40px rgba(0,0,0,0.2)' }}>
                 {!isMyTurn && !isFlipped && (
-                  <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.4)', borderRadius: '35px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', zIndex: 10 }}>
-                    <Lock size={40} color="white" />
-                    <span style={{ color: 'white', fontWeight: 900, marginTop: '10px' }}>{partnerLabel} 답변 중</span>
+                  <div style={{ position: 'absolute', inset: 0, zIndex: 10, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
+                    <Lock size={32} color="white" style={{ opacity: 0.8, marginBottom: '8px' }} />
+                    <span style={{ fontSize: '13px', color: 'white', fontWeight: 900 }}>{partnerLabel} 답변 중..</span>
                   </div>
                 )}
                 <div style={{ textAlign: 'center', background: 'rgba(0,0,0,0.7)', padding: '20px 30px', borderRadius: '25px', backdropFilter: 'blur(10px)' }}>
@@ -379,12 +379,9 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, mainChannel, husbandI
             ) : (
               <>
                 {!isMyTurn && (
-                  <div style={{ position: 'absolute', inset: 0, zIndex: 100, background: 'rgba(138, 96, 255, 0.05)', backdropFilter: 'blur(3px)', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', paddingTop: '100px', pointerEvents: 'auto' }}>
-                    <div style={{ position: 'sticky', top: '100px', background: 'white', padding: '30px', borderRadius: '30px', boxShadow: '0 20px 50px rgba(0,0,0,0.1)', border: '2px solid #8A60FF', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                       <Lock size={40} color="#8A60FF" style={{ marginBottom: '15px' }} />
-                       <p style={{ fontSize: '18px', fontWeight: 900, color: '#2D1F08' }}>{partnerLabel}님이 선택 중입니다</p>
-                       <p style={{ fontSize: '14px', color: '#8B7355', fontWeight: 700, marginTop: '5px' }}>잠시만 기다려주세요</p>
-                    </div>
+                  <div style={{ width: '100%', marginBottom: '20px', padding: '15px', borderRadius: '20px', background: 'rgba(138, 96, 255, 0.1)', border: '1.5px dashed #8A60FF', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
+                    <Lock size={18} color="#8A60FF" />
+                    <p style={{ fontSize: '15px', fontWeight: 800, color: '#2D1F08' }}>{partnerLabel}님이 주제를 선택 중입니다...</p>
                   </div>
                 )}
                 

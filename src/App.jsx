@@ -3611,6 +3611,8 @@ const App = () => {
   const [incomingCardCall, setIncomingCardCall] = useState(null);
   const [dialogueTab, setDialogueTab] = useState('choice'); // 'choice', 'cardGame', 'imageGame'
   const [dialogueGuideId, setDialogueGuideId] = useState(null); // 'cardGame', 'imageGame'
+  const [showDialogueConfirm, setShowDialogueConfirm] = useState(false);
+  const [dialogueConfirmRole, setDialogueConfirmRole] = useState('initiator'); // 'initiator' or 'recipient'
 
   const [worshipDays, setWorshipDays] = useState(() => { 
     try { 
@@ -3795,14 +3797,21 @@ const App = () => {
         }
         
         if (info?.requestTab && info.navId !== lastNavIdRef.current && payload.new.user_role !== userRole) {
-           setActiveTab(info.requestTab);
-           lastNavIdRef.current = info.navId; 
-           
-           // Sync sub-navigation states if present
-           if (info.dialogueTab) setDialogueTab(info.dialogueTab);
-           if (info.dialogueGuideId) setDialogueGuideId(info.dialogueGuideId);
-           if (info.counselingMode) setCounselingMode(info.counselingMode);
-           if (info.intimacySubPage) setIntimacySubPage(info.intimacySubPage);
+           if (info.requestTab === 'cardGame') {
+             // For Dialogue Cards, don't auto-navigate if not already in the game view.
+             // This lets the user click 'Join' in the invitation modal.
+             if (activeTabRef.current === 'cardGame') {
+               if (info.dialogueTab) setDialogueTab(info.dialogueTab);
+               if (info.dialogueGuideId) setDialogueGuideId(info.dialogueGuideId);
+             }
+           } else {
+             setActiveTab(info.requestTab);
+             // Sync sub-navigation states if present
+             if (info.dialogueTab) setDialogueTab(info.dialogueTab);
+             if (info.dialogueGuideId) setDialogueGuideId(info.dialogueGuideId);
+             if (info.counselingMode) setCounselingMode(info.counselingMode);
+             if (info.intimacySubPage) setIntimacySubPage(info.intimacySubPage);
+           }
            
            if (info.navId !== lastNotifiedTabNavIdRef.current) {
              lastNotifiedTabNavIdRef.current = info.navId;
@@ -3916,12 +3925,18 @@ const App = () => {
                 'cardGame'
               );
               setIncomingCardCall({ type: 'card', category: payload.category, questionId: payload.questionId, sender: senderLabel });
+              
+              // 📱 Show prominent Join Modal if not already in game
+              if (activeTabRef.current !== 'cardGame') {
+                setDialogueConfirmRole('recipient');
+                setShowDialogueConfirm(true);
+              }
            }
         }
       })
       .on('broadcast', { event: 'game-update' }, ({ payload }) => {
         if (payload.sender !== userRole) {
-          if (payload.tab) setActiveTab(payload.tab);
+          if (payload.tab && payload.tab !== 'cardGame') setActiveTab(payload.tab);
           if (payload.dialogueTab) setDialogueTab(payload.dialogueTab);
           if (payload.dialogueGuideId !== undefined) setDialogueGuideId(payload.dialogueGuideId);
           window.dispatchEvent(new CustomEvent('card-game-update', { detail: payload }));
@@ -3993,6 +4008,13 @@ const App = () => {
       // 🛡️ Release gate with a small buffer to absorb latencies
       setTimeout(() => { signalLockRef.current = null; }, 1200);
     }
+  };
+
+  // 🚀 Start Card Game Session (Mutual Agreement Flow)
+  const handleInitiateCardGame = () => {
+    if (activeTab === 'cardGame') return;
+    setDialogueConfirmRole('initiator');
+    setShowDialogueConfirm(true);
   };
 
   // 🚀 공유 화면 전환 (UUID 기반으로 확실하게 트리거)
@@ -4390,7 +4412,7 @@ const App = () => {
             />
             <NavItem 
               active={activeTab === 'cardGame'} 
-              onClick={() => handleSharedNavigate('cardGame', { dialogueTab: 'choice', dialogueGuideId: null })} 
+              onClick={handleInitiateCardGame} 
               icon={<MessageSquare size={22} fill={activeTab === 'cardGame' ? appTheme.primary : "none"} color={activeTab === 'cardGame' ? appTheme.primary : undefined} />} 
               label="대화카드" 
             />
@@ -4575,11 +4597,78 @@ const App = () => {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* 🃏 Dialogue Card Start/Join Confirmation Modal */}
+      <AnimatePresence>
+        {showDialogueConfirm && (
+          <motion.div 
+            initial={{ opacity: 0 }} 
+            animate={{ opacity: 1 }} 
+            exit={{ opacity: 0 }}
+            style={{ 
+              position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', 
+              backdropFilter: 'blur(10px)', zIndex: 99999, 
+              display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' 
+            }}
+          >
+            <motion.div 
+              initial={{ scale: 0.9, y: 20 }} 
+              animate={{ scale: 1, y: 0 }} 
+              exit={{ scale: 0.9, y: 20 }}
+              style={{ 
+                width: '100%', maxWidth: '340px', background: 'white', 
+                borderRadius: '35px', padding: '40px 25px', textAlign: 'center', 
+                boxShadow: '0 25px 50px rgba(0,0,0,0.3)', border: '2px solid rgba(212, 175, 55, 0.2)' 
+              }}
+            >
+               <div style={{ 
+                 width: '80px', height: '80px', borderRadius: '24px', 
+                 background: 'rgba(138, 96, 255, 0.1)', display: 'flex', 
+                 alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px' 
+               }}>
+                  <MessageSquare size={40} color="#8A60FF" />
+               </div>
+               <h3 style={{ fontSize: '22px', fontWeight: 900, color: '#2D1F08', marginBottom: '12px' }}>
+                 {dialogueConfirmRole === 'initiator' ? '대화카드를 시작할까요?' : '대화카드 초대 도착!'}
+               </h3>
+               <p style={{ fontSize: '15px', color: '#8B7355', fontWeight: 700, lineHeight: 1.6, marginBottom: '30px', wordBreak: 'keep-all' }}>
+                 {dialogueConfirmRole === 'initiator' 
+                   ? '배우자와 함께 10가지 질문으로 나누는 깊은 소통의 시간을 시작하시겠습니까?' 
+                   : `${userRole === 'husband' ? (wifeInfo?.nickname || '아내') : (husbandInfo?.nickname || '남편')}님이 대화카드 게임에 초대하셨습니다. 함께 참여하시겠습니까?`}
+               </p>
+               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  <button 
+                    onClick={() => {
+                      setShowDialogueConfirm(false);
+                      handleSharedNavigate('cardGame', { dialogueTab: 'choice', dialogueGuideId: null });
+                    }}
+                    style={{ 
+                      width: '100%', padding: '18px', borderRadius: '20px', 
+                      background: '#2D1F08', color: 'white', fontWeight: 900, 
+                      fontSize: '16px', border: 'none', cursor: 'pointer' 
+                    }}
+                  >
+                    참여하기
+                  </button>
+                  <button 
+                    onClick={() => setShowDialogueConfirm(false)}
+                    style={{ 
+                      width: '100%', padding: '15px', borderRadius: '20px', 
+                      background: 'none', color: '#B08D3E', fontWeight: 800, 
+                      fontSize: '14px', border: 'none', cursor: 'pointer' 
+                    }}
+                  >
+                    나중에 하기
+                  </button>
+               </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
 
-export default App;
 
 
 

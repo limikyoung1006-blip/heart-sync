@@ -340,12 +340,6 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo, mai
           <div className="card-face card-front" style={{ 
             position: 'absolute', width: '100%', height: '100%', backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden', borderRadius: '35px', border: '2px solid #F5D060', backgroundImage: "url('/card_bg.png')", backgroundSize: 'cover', backgroundPosition: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center', visibility: isFlipped ? 'hidden' : 'visible', zIndex: isFlipped ? 1 : 2, boxShadow: '0 15px 40px rgba(0,0,0,0.3)', overflow: 'hidden' 
           }}>
-            {!isMyTurn && !isFlipped && (
-              <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 10, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', borderRadius: '42px', backdropFilter: 'blur(3px)' }}>
-                <Lock size={40} color="white" />
-                <span style={{ color: 'white', fontWeight: 900, marginTop: '12px' }}>{partnerNameOnly} 답변 중..</span>
-              </div>
-            )}
             <div style={{ textAlign: 'center', background: 'rgba(0,0,0,0.6)', padding: '20px 30px', borderRadius: '25px', backdropFilter: 'blur(12px)', border: '1px solid rgba(255,255,255,0.1)' }}>
               <p className="sparkling-gold" style={{ fontSize: '24px', letterSpacing: '3px', fontWeight: 900, marginBottom: '10px' }}>QUESTION CARD</p>
               <p style={{ fontSize: '14px', color: 'white', opacity: 0.9, fontWeight: 700 }}>클릭해서 확인</p>
