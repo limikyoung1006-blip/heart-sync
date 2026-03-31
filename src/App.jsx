@@ -3210,8 +3210,19 @@ const App = () => {
   const [isSetupDone, setIsSetupDone] = useState(() => localStorage.getItem('isSetupDone') === 'true');
   const [userRole, setUserRole] = useState(() => localStorage.getItem('userRole') || 'husband');
   const [coupleCode, setCoupleCode] = useState(() => localStorage.getItem('coupleCode') || 'HS-7289');
-  const [husbandInfo, setHusbandInfo] = useState(() => JSON.parse(localStorage.getItem('husbandInfo') || '{"nickname":"김남편", "mbti":"ISTJ", "blood":"A", "marriageDate":"2020-05-23"}'));
-  const [wifeInfo, setWifeInfo] = useState(() => JSON.parse(localStorage.getItem('wifeInfo') || '{"nickname":"박아내", "mbti":"ENFP", "blood":"B", "marriageDate":"2020-05-23"}'));
+  const defaultHusband = { nickname: "김남편", mbti: "ISTJ", blood: "A", marriageDate: "2020-05-23" };
+  const defaultWife = { nickname: "박아내", mbti: "ENFP", blood: "B", marriageDate: "2020-05-23" };
+
+  const [husbandInfo, setHusbandInfo] = useState(() => {
+    const saved = localStorage.getItem('husbandInfo');
+    const parsed = saved ? JSON.parse(saved) : {};
+    return { ...defaultHusband, ...parsed };
+  });
+  const [wifeInfo, setWifeInfo] = useState(() => {
+    const saved = localStorage.getItem('wifeInfo');
+    const parsed = saved ? JSON.parse(saved) : {};
+    return { ...defaultWife, ...parsed };
+  });
   const appTheme = { id: 'warm', primary: '#D4AF37', bg: '#FDFCF0' };
   const [mainChannel, setMainChannel] = useState(null); // 📡 Persistent Shared Channel
   const lastGardenNavIdRef = React.useRef(null);
@@ -3572,8 +3583,8 @@ const App = () => {
         const role = myProfile.user_role;
         setUserRole(role);
         setCoupleCode(myProfile.couple_id);
-        if (role === 'husband') setHusbandInfo(myProfile.info || {});
-        else setWifeInfo(myProfile.info || {});
+        if (role === 'husband') setHusbandInfo(prev => ({ ...prev, ...(myProfile.info || {}) }));
+        else setWifeInfo(prev => ({ ...prev, ...(myProfile.info || {}) }));
         
         if (myProfile.info?.signal) setMySignal(myProfile.info.signal);
         
@@ -3589,8 +3600,8 @@ const App = () => {
         if (profileData) {
           const hP = profileData.find(p => p.user_role === 'husband');
           const wP = profileData.find(p => p.user_role === 'wife');
-          if (hP) setHusbandInfo(hP.info || {});
-          if (wP) setWifeInfo(wP.info || {});
+          if (hP) setHusbandInfo(prev => ({ ...prev, ...(hP.info || {}) }));
+          if (wP) setWifeInfo(prev => ({ ...prev, ...(wP.info || {}) }));
           const commonInfo = hP?.info || wP?.info;
           if (commonInfo) {
             if (commonInfo.worshipDays) setWorshipDays(commonInfo.worshipDays);
@@ -3617,7 +3628,8 @@ const App = () => {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, payload => {
         if (!payload.new || payload.new.couple_id?.toLowerCase() !== final_code) return;
         const { user_role: role, info } = payload.new;
-        if (role === 'husband') setHusbandInfo(info || {}); else if (role === 'wife') setWifeInfo(info || {});
+        if (role === 'husband') setHusbandInfo(prev => ({ ...prev, ...(info || {}) })); 
+        else if (role === 'wife') setWifeInfo(prev => ({ ...prev, ...(info || {}) }));
         if (info?.signal && role !== userRole) {
            if (info.signal !== lastSpouseSignalRef.current) {
               lastSpouseSignalRef.current = info.signal;
