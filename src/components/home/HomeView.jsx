@@ -150,12 +150,17 @@ const HomeView = ({
               <div style={{ padding: '10px', background: 'rgba(138, 96, 255, 0.1)', borderRadius: '14px' }}><Heart size={22} color="#8A60FF" fill={spouseSignal !== 'none' ? "#8A60FF" : "none"} /></div>
               <div className="flex flex-col">
                 <span style={{ fontSize: '11px', fontWeight: 900, color: '#8A60FF', letterSpacing: '1px', marginBottom: '2px' }}>배우자의 신호</span>
-                <span style={{ fontSize: '17px', fontWeight: 900, color: '#2D1F08' }}>{spouseSignal === 'red' ? '휴식이 필요해요' : spouseSignal === 'amber' ? '대화가 필요해요' : '기분 최고예요!'}</span>
+                <span style={{ fontSize: '17px', fontWeight: 900, color: '#2D1F08' }}>
+                  {spouseSignal === 'purple' ? '접근금지! (시간이 필요해요)' : 
+                   spouseSignal === 'red' ? '휴식이 필요해요' : 
+                   spouseSignal === 'amber' ? '대화가 필요해요' : 
+                   '기분 최고예요!'}
+                </span>
                 {spouseInfo?.moodSignal && <span style={{ fontSize: '12px', color: '#B08D3E', fontWeight: 700, marginTop: '4px' }}>💌 {spouseInfo.moodSignal}</span>}
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <div style={{ width: '18px', height: '18px', borderRadius: '50%', backgroundColor: spouseSignal === 'red' ? '#FF4D6D' : spouseSignal === 'amber' ? '#FFD166' : '#06D6A0', boxShadow: '0 0 10px rgba(0,0,0,0.05)' }} />
+              <div style={{ width: '18px', height: '18px', borderRadius: '50%', backgroundColor: spouseSignal === 'purple' ? '#8A60FF' : spouseSignal === 'red' ? '#FF4D6D' : spouseSignal === 'amber' ? '#FFD166' : '#06D6A0', boxShadow: '0 0 10px rgba(0,0,0,0.05)' }} />
               <div style={{ transform: isAdviceOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: '0.2s' }}><ChevronDown size={22} color="#8A60FF" /></div>
             </div>
           </div>
@@ -163,6 +168,7 @@ const HomeView = ({
             <div style={{ marginTop: '5px', background: 'white', padding: '18px', borderRadius: '18px', border: '1px solid #8A60FF' }}>
               <div className="flex items-center gap-3 mb-2"><HattiCharacter size={40} state="floating" /><span style={{ fontSize: '13px', fontWeight: 900, color: '#8A60FF' }}>하티의 대응 가이드</span></div>
               <p style={{ fontSize: '14px', color: '#2D1F08', lineHeight: 1.6, wordBreak: 'keep-all', paddingLeft: '45px' }}>
+                {spouseSignal === 'purple' && "지금은 배우자님에게 절대적인 혼자만의 시간이 필요한 때입니다. 말을 걸거나 다가가는 대신, 멀리서 묵묵히 응원해 주세요."}
                 {spouseSignal === 'red' && "배우자분이 지금 많이 지쳐 계신 것 같아요. 오늘은 집안일을 조금 나눠서 하거나 정적을 지켜주는 건 어떨까요?"}
                 {spouseSignal === 'amber' && "지금 배우자분은 당신과의 깊은 소통을 원하고 있어요. 먼저 오늘 하루는 어땠는지 물어봐 주세요."}
                 {spouseSignal === 'green' && "상대방의 기분이 아주 좋습니다! 지금이 바로 즐거운 계획을 이야기하기 가장 좋은 타이밍이에요."}
@@ -178,12 +184,13 @@ const HomeView = ({
                 <div style={{ padding: '8px', background: 'rgba(245, 208, 96, 0.1)', borderRadius: '12px' }}><User size={20} color="#D4AF37" /></div>
                 <span style={{ fontSize: '11px', fontWeight: 900, color: '#B08D3E', letterSpacing: '1px' }}>나의 신호 보내기</span>
               </div>
-              <div style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: mySignal === 'red' ? '#FF4D6D' : mySignal === 'amber' ? '#FFD166' : '#06D6A0', opacity: 0.8 }} />
+              <div style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: mySignal === 'purple' ? '#8A60FF' : mySignal === 'red' ? '#FF4D6D' : mySignal === 'amber' ? '#FFD166' : '#06D6A0', opacity: 0.8 }} />
             </div>
             <div className="traffic-light-grid" style={{ justifyContent: 'space-around', padding: '5px 0' }}>
-              <div className="flex flex-col items-center gap-3"><div className={`light-btn red ${mySignal === 'red' ? 'active' : ''}`} onClick={() => setMySignal('red')} /><span style={{ fontSize: '12px', fontWeight: 800, color: mySignal === 'red' ? '#FF4D6D' : '#8B7355' }}>휴식 필요</span></div>
-              <div className="flex flex-col items-center gap-3"><div className={`light-btn amber ${mySignal === 'amber' ? 'active' : ''}`} onClick={() => setMySignal('amber')} /><span style={{ fontSize: '12px', fontWeight: 800, color: mySignal === 'amber' ? '#D4AF37' : '#8B7355' }}>대화 필요</span></div>
-              <div className="flex flex-col items-center gap-3"><div className={`light-btn green ${mySignal === 'green' ? 'active' : ''}`} onClick={() => setMySignal('green')} /><span style={{ fontSize: '12px', fontWeight: 800, color: mySignal === 'green' ? '#22C55E' : '#8B7355' }}>안정/최상</span></div>
+              <div className="flex flex-col items-center gap-3"><div className={`light-btn purple ${mySignal === 'purple' ? 'active' : ''}`} onClick={() => setMySignal('purple')} /><span style={{ fontSize: '11px', fontWeight: 800, color: mySignal === 'purple' ? '#8A60FF' : '#8B7355' }}>접근금지</span></div>
+              <div className="flex flex-col items-center gap-3"><div className={`light-btn red ${mySignal === 'red' ? 'active' : ''}`} onClick={() => setMySignal('red')} /><span style={{ fontSize: '11px', fontWeight: 800, color: mySignal === 'red' ? '#FF4D6D' : '#8B7355' }}>휴식 필요</span></div>
+              <div className="flex flex-col items-center gap-3"><div className={`light-btn amber ${mySignal === 'amber' ? 'active' : ''}`} onClick={() => setMySignal('amber')} /><span style={{ fontSize: '11px', fontWeight: 800, color: mySignal === 'amber' ? '#D4AF37' : '#8B7355' }}>대화 필요</span></div>
+              <div className="flex flex-col items-center gap-3"><div className={`light-btn green ${mySignal === 'green' ? 'active' : ''}`} onClick={() => setMySignal('green')} /><span style={{ fontSize: '11px', fontWeight: 800, color: mySignal === 'green' ? '#22C55E' : '#8B7355' }}>안정/최상</span></div>
             </div>
           </div>
         </div>

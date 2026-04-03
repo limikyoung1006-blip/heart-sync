@@ -624,6 +624,15 @@ body {
   box-shadow: 0 0 15px rgba(0, 200, 83, 0.6), inset 0 -2px 5px rgba(0,0,0,0.3);
 }
 
+/* Purple Light Jewel Active (Access Prohibited) */
+.light-btn.purple.active { border-color: #8A60FF; background: rgba(138, 96, 255, 0.1); }
+.light-btn.purple.active::after { 
+  background: radial-gradient(circle at 30% 30%, #C0A8FF, #6200EE);
+  box-shadow: 0 0 15px rgba(0, 200, 83, 0.6), inset 0 -2px 5px rgba(0,0,0,0.3);
+}
+
+.light-btn.purple::after { background: #F3E5F5; }
+
 .light-btn:active {
   transform: scale(0.9);
 }

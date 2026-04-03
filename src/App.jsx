@@ -3412,13 +3412,21 @@ const App = () => {
       if (!subscription) {
         // [VAPID KEY GUIDE] 🗝️ Generate yours with: npx web-push generate-vapid-keys
         // This is a placeholder key. For production, please use your unique VAPID keys.
-        const publicVapidKey = 'BIs7R6BOfYpP9V2Xz-X-wE-rS-7nC-8pI-7e-vI-rS-7pE-v_A-v_B-v_C-v_D-v_E-v_F-v_G-v_H-v_I-v_J-v_K-v_L-v_M';
+        // ⚠️ CRITICAL: Replace this with your REAL VAPID Public Key generated via 'npx web-push generate-vapid-keys'
+        const publicVapidKey = 'REPLACE_WITH_YOUR_ACTUAL_VAPID_PUBLIC_KEY';
         subscription = await registration.pushManager.subscribe({
           userVisibleOnly: true,
           applicationServerKey: urlBase64ToUint8Array(publicVapidKey)
         });
       }
       
+      const signalMsgMap = {
+        green: "오늘 제 마음은 초록색이에요! 아주 좋은 상태입니다. 🟢",
+        amber: "오늘은 조금 정적인 편이에요. 부드러운 관심이 필요해요. 🟡",
+        red: "지금은 제 마음의 정체기예요. 충분한 공감과 대화, 혹은 쉼이 필요한 정체기예요. 🔴",
+        purple: "지금은 저만의 시간이 절대적으로 필요해요. 당분간 접근 금지입니다! 🟣"
+      };
+
       // Save full subscription JSON to the profile (Edge Function will read this later)
       if (subscription && user) {
         const subJSON = JSON.stringify(subscription);
