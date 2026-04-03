@@ -115,42 +115,43 @@ const SecretAnswerInteraction = ({
               </div>
            </div>
 
-           {/* Spouse Answer Section */}
-           <div style={{ 
-             padding: '20px', 
-             borderRadius: '24px', 
-             border: '1.5px solid',
-             borderColor: myAnswer ? 'rgba(138, 96, 255, 0.25)' : 'rgba(148, 163, 184, 0.2)',
-             background: myAnswer ? 'rgba(138, 96, 255, 0.04)' : 'rgba(0,0,0,0.03)',
-             transition: 'all 0.4s ease',
-             display: 'flex',
-             flexDirection: 'column',
-             gap: '12px'
-           }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                 <div style={{ width: '24px', height: '24px', background: myAnswer ? '#8A60FF' : '#64748B', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', boxShadow: myAnswer ? '0 2px 5px rgba(138, 96, 255, 0.3)' : 'none' }}>
-                   {myAnswer ? <Heart size={14} fill="white" /> : <Lock size={12} />}
-                 </div>
-                 <span style={{ fontSize: '13px', fontWeight: 900, color: myAnswer ? '#8A60FF' : '#5D6B7F' }}>배우자의 답변</span>
-              </div>
-              
-              <div style={{ paddingLeft: '4px' }}>
-                {!myAnswer ? (
-                  <div style={{ padding: '8px 0', textAlign: 'center' }}>
-                     <p style={{ fontSize: '12px', fontWeight: 800, color: '#475569', letterSpacing: '-0.3px' }}>내 답변을 완료해야 볼 수 있어요!</p>
+            {/* Spouse Answer Section */}
+            <div style={{ 
+              padding: '20px', 
+              borderRadius: '24px', 
+              border: '1.5px solid',
+              borderColor: myAnswer ? 'rgba(138, 96, 255, 0.4)' : 'rgba(148, 163, 184, 0.3)',
+              background: myAnswer ? 'rgba(255, 255, 255, 0.92)' : 'rgba(255, 255, 255, 0.8)', // Improved contrast
+              transition: 'all 0.4s ease',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '12px',
+              boxShadow: '0 8px 20px rgba(0,0,0,0.05)'
+            }}>
+               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ width: '24px', height: '24px', background: myAnswer ? '#8A60FF' : '#64748B', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', boxShadow: myAnswer ? '0 2px 5px rgba(138, 96, 255, 0.3)' : 'none' }}>
+                    {myAnswer ? <Heart size={14} fill="white" /> : <Lock size={12} />}
                   </div>
-                ) : spouseAnswer ? (
-                  <p style={{ fontSize: '15px', fontWeight: 800, color: '#2D1F08', lineHeight: 1.6 }}>
-                     "{spouseAnswer}"
-                  </p>
-                ) : (
-                  <div style={{ padding: '8px 0', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px' }}>
-                     <HattiCharacter state="thinking" size={40} />
-                     <p style={{ fontSize: '12px', fontWeight: 900, color: '#8A60FF', animation: 'pulse 2s infinite' }}>하티가 배우자의 답변을 기다려요...</p>
-                  </div>
-                )}
-              </div>
-           </div>
+                  <span style={{ fontSize: '13.5px', fontWeight: 900, color: myAnswer ? '#6D28D9' : '#475569' }}>배우자의 답변</span>
+               </div>
+               
+               <div style={{ paddingLeft: '4px' }}>
+                 {!myAnswer ? (
+                   <div style={{ padding: '8px 0', textAlign: 'center' }}>
+                      <p style={{ fontSize: '13px', fontWeight: 800, color: '#475569', letterSpacing: '-0.3px' }}>내 답변을 완료해야 볼 수 있어요!</p>
+                   </div>
+                 ) : spouseAnswer ? (
+                   <p style={{ fontSize: '16px', fontWeight: 800, color: '#2D1F08', lineHeight: 1.6 }}>
+                      "{spouseAnswer}"
+                   </p>
+                 ) : (
+                   <div style={{ padding: '8px 0', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px' }}>
+                      <HattiCharacter state="thinking" size={40} />
+                      <p style={{ fontSize: '13px', fontWeight: 900, color: '#7C3AED', animation: 'pulse 2s infinite' }}>하티가 배우자의 답변을 기다려요...</p>
+                   </div>
+                 )}
+               </div>
+            </div>
         </div>
       </div>
 
