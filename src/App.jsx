@@ -1,25 +1,25 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 // Last Update: Shared Navigation & Turn Sync - 2026-03-22 21:20
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Heart, 
-  MessageCircle, 
+import {
+  Heart,
+  MessageCircle,
   MessageSquare,
-  Calendar, 
-  User, 
-  Smartphone, 
-  Settings, 
-  Lock, 
-  BarChart3, 
-  Info, 
-  Share2, 
-  Users, 
-  Sparkles, 
-  ArrowRight, 
-  ChevronLeft, 
-  ChevronDown, 
-  Plus, 
-  Trash2, 
+  Calendar,
+  User,
+  Smartphone,
+  Settings,
+  Lock,
+  BarChart3,
+  Info,
+  Share2,
+  Users,
+  Sparkles,
+  ArrowRight,
+  ChevronLeft,
+  ChevronDown,
+  Plus,
+  Trash2,
   Edit2,
   RefreshCw,
   Camera,
@@ -65,6 +65,13 @@ const HATTI_TODOS = [
 ];
 import { supabase } from './supabase';
 
+// 🛡️ KakaoTalk / Older Browser Compatibility Fix (Prevent White Screen)
+if (typeof window !== 'undefined' && !window.Notification) {
+  window.Notification = function() { this.close = () => {}; };
+  window.Notification.permission = 'denied';
+  window.Notification.requestPermission = () => Promise.resolve('denied');
+}
+
 // Initial configuration removed - now managed via state and onboarding
 const NavItem = ({ active, onClick, icon, label }) => (
   <div onClick={onClick} className={`nav-item ${active ? 'active' : ''}`}>
@@ -79,8 +86,8 @@ const MenuBtn = ({ icon, title, desc, onClick }) => (
   <button className="menu-btn" onClick={onClick}>
     <span className="menu-icon">{icon}</span>
     <div style={{ display: 'flex', flexDirection: 'column' }}>
-       <span>{title}</span>
-       <small>{desc}</small>
+      <span>{title}</span>
+      <small>{desc}</small>
     </div>
   </button>
 );
@@ -120,15 +127,15 @@ const SettingsSection = ({ title, children }) => (
 );
 
 const SettingsItem = ({ icon, label, onClick }) => (
-  <motion.button 
+  <motion.button
     whileTap={{ scale: 0.98 }}
-    onClick={onClick} 
-    style={{ 
-      background: 'rgba(255, 255, 255, 0.6)', 
-      padding: '18px 20px', 
-      borderRadius: '20px', 
-      display: 'flex', 
-      alignItems: 'center', 
+    onClick={onClick}
+    style={{
+      background: 'rgba(255, 255, 255, 0.6)',
+      padding: '18px 20px',
+      borderRadius: '20px',
+      display: 'flex',
+      alignItems: 'center',
       justifyContent: 'space-between',
       cursor: 'pointer',
       width: '100%',
@@ -146,24 +153,24 @@ const SettingsItem = ({ icon, label, onClick }) => (
 );
 
 const SettingsToggle = ({ icon, label, active, onToggle }) => (
-  <div style={{ 
-    background: 'rgba(255, 255, 255, 0.6)', 
-    padding: '18px 20px', 
-    borderRadius: '20px', 
-    display: 'flex', 
-    alignItems: 'center', 
+  <div style={{
+    background: 'rgba(255, 255, 255, 0.6)',
+    padding: '18px 20px',
+    borderRadius: '20px',
+    display: 'flex',
+    alignItems: 'center',
     justifyContent: 'space-between'
   }}>
     <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
       <span style={{ fontSize: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '24px' }}>{icon}</span>
       <span style={{ fontSize: '16px', fontWeight: 800, color: '#2D1F08' }}>{label}</span>
     </div>
-    <div onClick={onToggle} style={{ 
-      width: '46px', height: '26px', borderRadius: '100px', 
+    <div onClick={onToggle} style={{
+      width: '46px', height: '26px', borderRadius: '100px',
       background: active ? 'linear-gradient(135deg, #FF9966, #FF5E62)' : '#DDD',
       position: 'relative', cursor: 'pointer', transition: '0.3s'
     }}>
-      <div style={{ 
+      <div style={{
         width: '20px', height: '20px', borderRadius: '50%', background: 'white',
         position: 'absolute', top: '3px', left: active ? '23px' : '3px', transition: '0.3s',
         boxShadow: '0 2px 5px rgba(0,0,0,0.1)'
@@ -270,7 +277,7 @@ const WorshipView = ({ userRole, coupleCode, mainChannel }) => {
         .select('*')
         .eq('couple_id', coupleCode)
         .order('created_at', { ascending: false });
-      
+
       if (data) {
         setMyPrayers(data.filter(p => p.user_role === userRole));
         setPartnerPrayers(data.filter(p => p.user_role !== userRole));
@@ -281,11 +288,11 @@ const WorshipView = ({ userRole, coupleCode, mainChannel }) => {
     // 2. Real-time Subscription
     const channel = supabase
       .channel('realtime-prayers')
-      .on('postgres_changes', { 
-        event: 'INSERT', 
-        schema: 'public', 
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
         table: 'prayers',
-        filter: `couple_id=eq.${coupleCode}` 
+        filter: `couple_id=eq.${coupleCode}`
       }, payload => {
         if (payload.new.user_role === userRole) {
           setMyPrayers(prev => [payload.new, ...prev]);
@@ -312,7 +319,7 @@ const WorshipView = ({ userRole, coupleCode, mainChannel }) => {
       const randomSession = WORSHIP_SESSIONS[Math.floor(Math.random() * WORSHIP_SESSIONS.length)];
       setCurrentSession(randomSession);
       setIsGenerating(false);
-      
+
       // Sync with partner
       if (mainChannel) {
         mainChannel.send({
@@ -332,7 +339,7 @@ const WorshipView = ({ userRole, coupleCode, mainChannel }) => {
       text: topic,
       created_at: new Date().toISOString()
     }).select();
-    
+
     if (!error && data) {
       setTopic("");
     }
@@ -361,12 +368,12 @@ const WorshipView = ({ userRole, coupleCode, mainChannel }) => {
 
         {/* Floating Glass Cinema Player */}
         <div style={{ position: 'relative', padding: '0 20px 30px' }}>
-          <div style={{ 
+          <div style={{
             position: 'relative',
-            width: '100%', 
+            width: '100%',
             paddingBottom: '56.25%', /* 16:9 Aspect Ratio */
-            background: '#000', 
-            borderRadius: '32px', 
+            background: '#000',
+            borderRadius: '32px',
             overflow: 'hidden',
             boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.6)',
             border: '1px solid rgba(255,255,255,0.12)',
@@ -375,20 +382,20 @@ const WorshipView = ({ userRole, coupleCode, mainChannel }) => {
             isolation: 'isolate'
           }}>
             {youtubeId ? (
-              <iframe 
+              <iframe
                 style={{ position: 'absolute', top: '-1px', left: '-1px', width: 'calc(100% + 2px)', height: 'calc(100% + 2px)', border: 'none' }}
-                src={`https://www.youtube.com/embed/${youtubeId}?autoplay=0&modestbranding=1&rel=0&iv_load_policy=3&showinfo=0`} 
-                title="Praise Player" 
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                src={`https://www.youtube.com/embed/${youtubeId}?autoplay=0&modestbranding=1&rel=0&iv_load_policy=3&showinfo=0`}
+                title="Praise Player"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen
               />
             ) : (
-              <div style={{ 
-                position: 'absolute', inset: 0, 
+              <div style={{
+                position: 'absolute', inset: 0,
                 display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
                 background: 'linear-gradient(135deg, #1e293b 0%, #000000 100%)'
               }}>
-                <motion.div 
+                <motion.div
                   animate={{ scale: [1, 1.1, 1], opacity: [0.3, 0.6, 0.3] }}
                   transition={{ duration: 3, repeat: Infinity }}
                   style={{ width: '80px', height: '80px', borderRadius: '50%', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
@@ -401,7 +408,7 @@ const WorshipView = ({ userRole, coupleCode, mainChannel }) => {
           </div>
 
           {/* Decorative Glow */}
-          <div style={{ 
+          <div style={{
             position: 'absolute', top: '20%', left: '50%', transform: 'translateX(-50%)',
             width: '80%', height: '60%', background: youtubeId ? 'rgba(255, 77, 109, 0.4)' : 'transparent',
             filter: 'blur(60px)', zIndex: -1, transition: '0.5s'
@@ -409,16 +416,16 @@ const WorshipView = ({ userRole, coupleCode, mainChannel }) => {
         </div>
 
         <div style={{ padding: '0 20px 40px' }}>
-          <div style={{ 
-            background: 'white', padding: '15px 20px', borderRadius: '24px', 
+          <div style={{
+            background: 'white', padding: '15px 20px', borderRadius: '24px',
             boxShadow: '0 10px 30px rgba(0,0,0,0.05)', display: 'flex', alignItems: 'center', gap: '12px',
             border: '1.5px solid #F5E6CC'
           }}>
             <div style={{ color: '#F5D060' }}><Sparkles size={18} /></div>
-            <input 
+            <input
               className="praise-input"
-              type="text" 
-              placeholder="함께 듣고 싶은 찬양 주소를 공유해주세요." 
+              type="text"
+              placeholder="함께 듣고 싶은 찬양 주소를 공유해주세요."
               value={praiseUrl}
               onChange={(e) => {
                 const newUrl = e.target.value;
@@ -441,7 +448,7 @@ const WorshipView = ({ userRole, coupleCode, mainChannel }) => {
       <div className="worship-section-card" style={{ background: 'linear-gradient(135deg, #FDFCF0 0%, #F5F3E6 100%)', textAlign: 'center' }}>
         <h2 style={{ fontSize: '24px', fontWeight: 900, color: '#2D1F08', marginBottom: '8px' }}>가정 예배 가이드</h2>
         <p style={{ fontSize: '14px', color: '#8B7355', fontWeight: 700, marginBottom: '20px' }}>오늘 우리 가정에 주시는 하나님의 메시지</p>
-        
+
         <button className="generate-btn" onClick={handleGenerate} disabled={isGenerating}>
           {isGenerating ? (
             <RefreshCw size={18} className="animate-spin" />
@@ -453,7 +460,7 @@ const WorshipView = ({ userRole, coupleCode, mainChannel }) => {
       </div>
 
       <AnimatePresence mode="wait">
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}
@@ -492,7 +499,7 @@ const WorshipView = ({ userRole, coupleCode, mainChannel }) => {
                 </div>
                 <div className="sharing-list">
                   {currentSession.questions.map((q, i) => (
-                    <div key={i} className="sharing-item">Q{i+1}. {q}</div>
+                    <div key={i} className="sharing-item">Q{i + 1}. {q}</div>
                   ))}
                 </div>
               </div>
@@ -507,56 +514,56 @@ const WorshipView = ({ userRole, coupleCode, mainChannel }) => {
           <div className="worship-icon-circle" style={{ background: '#FF9966' }}><Heart size={16} /></div>
           <span className="worship-label-text">PRAYER 기도의 정원</span>
         </div>
-        
+
         <div className="prayer-input-container">
-           <textarea 
-            className="prayer-textarea-v2" 
-            placeholder="예배를 마치며 함께 나눈 기도제목을 기록하세요..." 
+          <textarea
+            className="prayer-textarea-v2"
+            placeholder="예배를 마치며 함께 나눈 기도제목을 기록하세요..."
             value={topic}
             onChange={(e) => setTopic(e.target.value)}
             style={{ minHeight: '80px', marginBottom: '10px' }}
-           />
-           <button className="generate-btn" onClick={handleRecord} style={{ background: '#2D1F08' }}>
-             <Send size={18} /> <span style={{ marginLeft: '10px', fontWeight: 900 }}>기도제목 기록하기</span>
-           </button>
+          />
+          <button className="generate-btn" onClick={handleRecord} style={{ background: '#2D1F08' }}>
+            <Send size={18} /> <span style={{ marginLeft: '10px', fontWeight: 900 }}>기도제목 기록하기</span>
+          </button>
         </div>
 
         {/* Shared Prayer Wall */}
         <div className="prayer-wall" style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
-           <div className="flex items-center gap-2 mb-3" style={{ paddingLeft: '4px' }}>
-             <Heart size={16} color="#FF4D6D" fill="#FF4D6D" />
-             <span style={{ fontSize: '16px', fontWeight: 900, color: '#2D1F08' }}>서로의 기도 기록</span>
-           </div>
+          <div className="flex items-center gap-2 mb-3" style={{ paddingLeft: '4px' }}>
+            <Heart size={16} color="#FF4D6D" fill="#FF4D6D" />
+            <span style={{ fontSize: '16px', fontWeight: 900, color: '#2D1F08' }}>서로의 기도 기록</span>
+          </div>
 
-           {allPrayers.length === 0 ? (
-             <div className="text-center py-14" style={{ background: 'rgba(255,255,255,0.25)', borderRadius: '28px', border: '1px dashed rgba(0,0,0,0.1)' }}>
-               <Smile size={54} color="#D4AF37" style={{ opacity: 0.4, margin: '0 auto 15px' }} />
-               <p style={{ fontSize: '15px', color: '#5D4037', fontWeight: 700 }}>아직 기록된 기도가 없어요.</p>
-               <p style={{ fontSize: '13px', color: '#8B6500', opacity: 0.8, marginTop: '6px' }}>첫 마음을 담은 기도를 남겨보세요.</p>
-             </div>
-           ) : (
-             allPrayers.slice(0, 20).map((p) => (
-               <motion.div 
+          {allPrayers.length === 0 ? (
+            <div className="text-center py-14" style={{ background: 'rgba(255,255,255,0.25)', borderRadius: '28px', border: '1px dashed rgba(0,0,0,0.1)' }}>
+              <Smile size={54} color="#D4AF37" style={{ opacity: 0.4, margin: '0 auto 15px' }} />
+              <p style={{ fontSize: '15px', color: '#5D4037', fontWeight: 700 }}>아직 기록된 기도가 없어요.</p>
+              <p style={{ fontSize: '13px', color: '#8B6500', opacity: 0.8, marginTop: '6px' }}>첫 마음을 담은 기도를 남겨보세요.</p>
+            </div>
+          ) : (
+            allPrayers.slice(0, 20).map((p) => (
+              <motion.div
                 key={p.id}
                 initial={{ opacity: 0, x: p.type === 'mine' ? -10 : 10 }}
                 animate={{ opacity: 1, x: 0 }}
                 className="prayer-card-v2"
-                style={{ 
+                style={{
                   background: p.type === 'mine' ? 'rgba(255,255,255,0.9)' : 'rgba(138, 96, 255, 0.1)',
                   borderLeft: p.type === 'mine' ? '4px solid #F5D060' : '4px solid #8A60FF',
                   padding: '12px 15px'
                 }}
-               >
-                 <div className="flex justify-between items-center mb-2">
-                   <span style={{ fontSize: '11px', fontWeight: 900, color: p.type === 'mine' ? '#8B6500' : '#8A60FF' }}>
-                     {p.type === 'mine' ? '나의 기도' : '배우자의 기도'}
-                   </span>
-                   <span style={{ fontSize: '10px', opacity: 0.5 }}>{p.date}</span>
-                 </div>
-                 <p style={{ fontSize: '14px', color: '#2D1F08', lineHeight: 1.5 }}>{p.text}</p>
-               </motion.div>
-             ))
-           )}
+              >
+                <div className="flex justify-between items-center mb-2">
+                  <span style={{ fontSize: '11px', fontWeight: 900, color: p.type === 'mine' ? '#8B6500' : '#8A60FF' }}>
+                    {p.type === 'mine' ? '나의 기도' : '배우자의 기도'}
+                  </span>
+                  <span style={{ fontSize: '10px', opacity: 0.5 }}>{p.date}</span>
+                </div>
+                <p style={{ fontSize: '14px', color: '#2D1F08', lineHeight: 1.5 }}>{p.text}</p>
+              </motion.div>
+            ))
+          )}
         </div>
       </div>
     </motion.div>
@@ -576,7 +583,7 @@ const HeartPrayerView = ({ userRole, coupleCode, onBack, partnerPrayers, setPart
       .select('*')
       .eq('couple_id', coupleCode)
       .order('created_at', { ascending: false });
-    
+
     if (data) {
       const processed = data.map(p => ({
         ...p,
@@ -598,7 +605,7 @@ const HeartPrayerView = ({ userRole, coupleCode, onBack, partnerPrayers, setPart
   const handleRecord = async () => {
     if (!topic.trim()) return;
     setIsRecording(true);
-    
+
     const newPrayer = {
       id: Date.now(),
       couple_id: coupleCode,
@@ -664,12 +671,12 @@ const HeartPrayerView = ({ userRole, coupleCode, onBack, partnerPrayers, setPart
       )}
 
       <div style={{ padding: '20px' }}>
-        <div style={{ 
-          background: 'white', padding: '25px', borderRadius: '32px', 
+        <div style={{
+          background: 'white', padding: '25px', borderRadius: '32px',
           boxShadow: '0 15px 40px rgba(0,0,0,0.05)', border: '1.5px solid rgba(212, 175, 55, 0.2)', marginBottom: '30px'
         }}>
           <p style={{ fontSize: '14px', color: '#5D4037', fontWeight: 800, marginBottom: '20px' }}>말하기 힘든 고백을 이곳에 남겨주세요. 🙏</p>
-          <textarea 
+          <textarea
             value={topic} onChange={(e) => setTopic(e.target.value)}
             placeholder="기도하고 싶은 내용을 자유롭게 적어보세요..."
             style={{ width: '100%', minHeight: '120px', border: 'none', background: '#FDFCF0', borderRadius: '20px', padding: '15px', fontSize: '15.5px', outline: 'none', resize: 'none' }}
@@ -679,7 +686,7 @@ const HeartPrayerView = ({ userRole, coupleCode, onBack, partnerPrayers, setPart
             <span>마음 전달하기</span>
           </button>
         </div>
-        
+
         {/* Prayers Timeline */}
         <div className="flex flex-col gap-4">
           <div className="flex items-center gap-2 mb-2" style={{ paddingLeft: '5px' }}>
@@ -702,10 +709,10 @@ const HeartPrayerView = ({ userRole, coupleCode, onBack, partnerPrayers, setPart
                   </div>
                 )}
               </div>
-              
+
               {editingId === p.id ? (
                 <div className="flex flex-col gap-2">
-                  <textarea 
+                  <textarea
                     value={editText} onChange={(e) => setEditText(e.target.value)}
                     style={{ width: '100%', padding: '10px', borderRadius: '12px', border: '1px solid #D4AF3740', background: '#FDFCF0', fontSize: '14px', outline: 'none', minHeight: '80px' }}
                   />
@@ -751,25 +758,25 @@ const IntimacyHubView = ({ user, userRole, coupleCode, supabase, mainChannel, on
         boxShadow: '0 2px 10px rgba(0,0,0,0.03)'
       }}>
         <div className="flex items-center gap-4">
-           <button onClick={onBack} style={{ background: 'none', border: 'none', cursor: 'pointer', outline: 'none' }}>
-             <ChevronLeft size={28} color="#2D1F08" />
-           </button>
-           <div className="flex flex-col">
-              <h2 style={{ fontSize: '24px', fontWeight: 900, color: '#2D1F08' }}>소통의 화원</h2>
-              <span style={{ fontSize: '11px', color: '#B08D3E', fontWeight: 800, letterSpacing: '1px' }}>HUB OF INTIMACY</span>
-           </div>
+          <button onClick={onBack} style={{ background: 'none', border: 'none', cursor: 'pointer', outline: 'none' }}>
+            <ChevronLeft size={28} color="#2D1F08" />
+          </button>
+          <div className="flex flex-col">
+            <h2 style={{ fontSize: '24px', fontWeight: 900, color: '#2D1F08' }}>소통의 화원</h2>
+            <span style={{ fontSize: '11px', color: '#B08D3E', fontWeight: 800, letterSpacing: '1px' }}>HUB OF INTIMACY</span>
+          </div>
         </div>
-        
-        <div style={{ 
-          display: 'flex', 
-          background: 'rgba(0,0,0,0.06)', 
-          borderRadius: '100px', 
+
+        <div style={{
+          display: 'flex',
+          background: 'rgba(0,0,0,0.06)',
+          borderRadius: '100px',
           padding: '6px',
           border: '1px solid rgba(0,0,0,0.02)'
         }}>
-          <button 
+          <button
             onClick={() => setSubTab('prayer')}
-            style={{ 
+            style={{
               flex: 1, padding: '12px', borderRadius: '100px', fontSize: '14px', fontWeight: 900,
               background: subTab === 'prayer' ? 'white' : 'transparent',
               color: subTab === 'prayer' ? '#B08D3E' : '#8B7355',
@@ -779,9 +786,9 @@ const IntimacyHubView = ({ user, userRole, coupleCode, supabase, mainChannel, on
           >
             속마음 기도
           </button>
-          <button 
+          <button
             onClick={() => setSubTab('garden')}
-            style={{ 
+            style={{
               flex: 1, padding: '12px', borderRadius: '100px', fontSize: '14px', fontWeight: 900,
               background: subTab === 'garden' ? 'white' : 'transparent',
               color: subTab === 'garden' ? '#FF4D6D' : '#8B7355',
@@ -797,33 +804,33 @@ const IntimacyHubView = ({ user, userRole, coupleCode, supabase, mainChannel, on
       <div className="flex-1 overflow-y-auto" style={{ background: '#FDFCF0' }}>
         <AnimatePresence mode="wait">
           {subTab === 'prayer' ? (
-            <motion.div 
+            <motion.div
               key="prayer-view"
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -10 }}
             >
-              <HeartPrayerView 
-                userRole={userRole} 
-                coupleCode={coupleCode} 
-                onBack={undefined} 
+              <HeartPrayerView
+                userRole={userRole}
+                coupleCode={coupleCode}
+                onBack={undefined}
                 partnerPrayers={partnerPrayers}
                 setPartnerPrayers={setPartnerPrayers}
                 embedded={true}
               />
             </motion.div>
           ) : (
-            <motion.div 
+            <motion.div
               key="garden-view"
               initial={{ opacity: 0, x: 10 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 10 }}
               className="h-full"
             >
-              <IntimacyModal 
-                show={true} 
+              <IntimacyModal
+                show={true}
                 onClose={() => setSubTab('prayer')}
-                onNav={() => {}} 
+                onNav={() => { }}
                 subPage={modalSubPage}
                 setSubPage={setModalSubPage}
                 bgImage={bgImage}
@@ -932,7 +939,7 @@ const AppGuideView = ({ onBack }) => {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             {utilizationPlans.map((p, i) => (
               <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, color: '#F5D060' }}>{i+1}</div>
+                <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, color: '#F5D060' }}>{i + 1}</div>
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
                   <span style={{ fontSize: '13px', fontWeight: 900, color: '#F5D060' }}>{p.step}</span>
                   <span style={{ fontSize: '15px', fontWeight: 600 }}>{p.act}</span>
@@ -959,90 +966,90 @@ const HattiCharacter = ({ state = 'floating', size = 120, style = {} }) => {
   };
 
   return (
-    <div style={{ 
-      perspective: '1500px', 
-      display: 'flex', 
-      alignItems: 'center', 
-      justifyContent: 'center', 
-      position: 'relative', 
-      filter: 'drop-shadow(0 30px 60px rgba(0,0,0,0.22))', 
-      ...style 
+    <div style={{
+      perspective: '1500px',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      position: 'relative',
+      filter: 'drop-shadow(0 30px 60px rgba(0,0,0,0.22))',
+      ...style
     }}>
-      <motion.div 
+      <motion.div
         initial={{ scale: 1, rotateX: 25 }} // 진입 시 작았다 커지는 효과 제거
-        animate={{ 
+        animate={{
           y: state === 'floating' ? [0, -28, 0] : 0, // 상하 부유만 유지
           rotateY: state === 'floating' ? [-16, 16, -16] : 0,
           rotateX: state === 'floating' ? [6, -6, 6] : 0,
           rotateZ: state === 'floating' ? [-4, 4, -4] : 0
         }}
-        whileTap={{ 
+        whileTap={{
           scale: 1.1, // 터치 시에만 살짝 강조
-          rotateY: 360, 
-          transition: { duration: 1, type: 'spring' } 
+          rotateY: 360,
+          transition: { duration: 1, type: 'spring' }
         }}
-        transition={{ 
-          duration: 4.5, 
-          repeat: Infinity, 
-          ease: "easeInOut" 
+        transition={{
+          duration: 4.5,
+          repeat: Infinity,
+          ease: "easeInOut"
         }}
-        style={{ 
-          width: size, 
-          height: size, 
-          display: 'flex', 
-          alignItems: 'center', 
+        style={{
+          width: size,
+          height: size,
+          display: 'flex',
+          alignItems: 'center',
           justifyContent: 'center',
           position: 'relative',
           zIndex: 100,
           transformStyle: 'preserve-3d'
         }}
       >
-        <img 
-          src="/hatti_3d_v2.png" 
-          alt="Hatti" 
-          style={{ 
-            width: '115%', 
-            height: '115%', 
-            objectFit: 'contain', 
+        <img
+          src="/hatti_3d_v2.png"
+          alt="Hatti"
+          style={{
+            width: '115%',
+            height: '115%',
+            objectFit: 'contain',
             zIndex: 5,
             position: 'relative',
             pointerEvents: 'none'
           }}
         />
-        
+
         {/* 🔮 Radiant Aura (크기 변화 없이 투명도만 은은하게) */}
-        <motion.div 
+        <motion.div
           animate={{ opacity: [0.4, 0.6, 0.4] }}
           transition={{ duration: 3, repeat: Infinity }}
-          style={{ 
-            position: 'absolute', 
-            inset: '-45%', 
-            background: 'radial-gradient(circle, rgba(138, 96, 255, 0.3) 0%, rgba(245, 208, 96, 0.2) 35%, transparent 80%)', 
-            filter: 'blur(50px)', 
+          style={{
+            position: 'absolute',
+            inset: '-45%',
+            background: 'radial-gradient(circle, rgba(138, 96, 255, 0.3) 0%, rgba(245, 208, 96, 0.2) 35%, transparent 80%)',
+            filter: 'blur(50px)',
             zIndex: 1,
             borderRadius: '50%',
             mixBlendMode: 'screen'
-          }} 
+          }}
         />
-        
+
         {/* 🌑 Unreal Shadow (크기 고정, 부유에 따른 투명도 변화만) */}
-        <motion.div 
-          animate={{ 
+        <motion.div
+          animate={{
             opacity: state === 'floating' ? [0.25, 0.1, 0.25] : 0.25,
           }}
           transition={{ duration: 4.5, repeat: Infinity, ease: "easeInOut" }}
-          style={{ 
-            position: 'absolute', 
-            bottom: '-45%', 
-            left: '10%', 
-            right: '10%', 
-            height: '14px', 
-            background: 'rgba(0,0,0,0.3)', 
+          style={{
+            position: 'absolute',
+            bottom: '-45%',
+            left: '10%',
+            right: '10%',
+            height: '14px',
+            background: 'rgba(0,0,0,0.3)',
             filter: 'blur(20px)',
             borderRadius: '50%',
             zIndex: 0,
             transform: 'translateZ(-80px)'
-          }} 
+          }}
         />
       </motion.div>
     </div>
@@ -1053,7 +1060,7 @@ const HattiCharacter = ({ state = 'floating', size = 120, style = {} }) => {
 const SolutionView = ({ onBack, userRole, husbandInfo, wifeInfo, schedules, adminStats, coupleStats }) => {
   const myInfo = userRole === 'husband' ? husbandInfo : wifeInfo;
   const spouseInfo = userRole === 'husband' ? wifeInfo : husbandInfo;
-  
+
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [reportResult, setReportResult] = useState(null);
   const [recentPrayers, setRecentPrayers] = useState([]);
@@ -1122,121 +1129,121 @@ const SolutionView = ({ onBack, userRole, husbandInfo, wifeInfo, schedules, admi
 
   return (
     <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="report-page" style={{ overflowY: 'auto' }}>
-    <div className="flex items-center gap-3 mb-6 p-4">
-      <button onClick={onBack} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '5px' }}>
-        <ChevronLeft size={24} color="#2D1F08" />
-      </button>
-      <span style={{ fontSize: '20px', fontWeight: 900, color: '#2D1F08' }}>뒤로가기</span>
-    </div>
-    <div className="report-card" style={{ padding: '25px', marginBottom: '15px' }}>
-      <div className="flex items-center gap-3 mb-4">
-        <Sparkles size={20} color="#8A60FF" />
-        <span style={{ fontSize: '18px', fontWeight: 900 }}>AI 전문가 정밀 분석</span>
+      <div className="flex items-center gap-3 mb-6 p-4">
+        <button onClick={onBack} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '5px' }}>
+          <ChevronLeft size={24} color="#2D1F08" />
+        </button>
+        <span style={{ fontSize: '20px', fontWeight: 900, color: '#2D1F08' }}>뒤로가기</span>
       </div>
-      <p style={{ fontSize: '13px', color: '#6B7280', marginBottom: '20px', lineHeight: 1.6 }}>
-        최근 한 달간의 대화 패턴, 기도 제목, 감정 신호를 종합하여 AI 하티가 전하는 깊이 있는 조언을 만나보세요.
-      </p>
-      <motion.button 
-        whileTap={{ scale: 0.95 }}
-        onClick={handleDeepAnalysis}
-        disabled={isAnalyzing}
-        style={{ 
-          width: '100%', padding: '18px', borderRadius: '20px', 
-          background: isAnalyzing ? '#CCC' : 'linear-gradient(135deg, #2D1F08 0%, #4D3A1A 100%)',
-          color: 'white', fontWeight: 900, border: 'none', cursor: 'pointer',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
-          boxShadow: '0 10px 20px rgba(0,0,0,0.1)'
-        }}
-      >
-        {isAnalyzing ? (
-          <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}>
-            <RefreshCw size={20} />
-          </motion.div>
-        ) : <Sparkles size={20} />}
-        {isAnalyzing ? "데이터 분석 및 리포트 작성 중..." : "새로운 리분석 요청하기"}
-      </motion.button>
-    </div>
-
-    {/* 📈 이번 달 대화 횟수 현황 */}
-    <div className="report-card" style={{ padding: '25px', marginBottom: '15px' }}>
-      <div className="flex items-center gap-3 mb-6">
-        <div className="report-icon-bg" style={{ background: 'linear-gradient(135deg, #FF9A8B, #FF6A88)' }}>
-          <BarChart3 size={20} color="white" />
+      <div className="report-card" style={{ padding: '25px', marginBottom: '15px' }}>
+        <div className="flex items-center gap-3 mb-4">
+          <Sparkles size={20} color="#8A60FF" />
+          <span style={{ fontSize: '18px', fontWeight: 900 }}>AI 전문가 정밀 분석</span>
         </div>
-        <span className="report-card-label" style={{ fontSize: '18px', fontWeight: 900 }}>이번 달 종합 활동 지표</span>
-      </div>
-      
-      <div className="flex flex-col items-center justify-center py-4 relative">
-        <svg className="gauge-svg" viewBox="0 0 160 160" style={{ width: '150px', height: '150px' }}>
-          <circle className="gauge-circle-bg" cx="80" cy="80" r="70" stroke="rgba(0,0,0,0.05)" strokeWidth="12" fill="none" />
-          <circle className="gauge-circle-fill" cx="80" cy="80" r="70" 
-            stroke="url(#gauge-grad)" strokeWidth="12" strokeLinecap="round" fill="none"
-            style={{ 
-              strokeDasharray: `${Math.min((coupleStats.totalInteractions / 50) * 440, 440)}, 440`, 
-              transform: 'rotate(-90deg)', transformOrigin: 'center',
-              transition: '2s ease-out'
-            }} 
-          />
-          <defs>
-            <linearGradient id="gauge-grad" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor="#FF9A8B" />
-              <stop offset="100%" stopColor="#FF6A88" />
-            </linearGradient>
-          </defs>
-        </svg>
-        <div className="absolute flex flex-col items-center">
-           <span style={{ fontSize: '38px', fontWeight: 900, color: '#FF4D6D' }}>{coupleStats?.totalInteractions || 0}</span>
-          <span style={{ fontSize: '14px', fontWeight: 700, opacity: 0.4 }}>회</span>
-        </div>
-      </div>
-      <p className="text-center" style={{ fontSize: '13px', fontWeight: 800, color: 'rgba(0,0,0,0.5)', marginTop: '15px' }}>
-         {coupleStats.totalInteractions >= 50 ? '축하드려요! 목표를 달성했습니다! 🥳' : `목표 50회 중 ${Math.round((coupleStats.totalInteractions / 50) * 100)}% 달성! 🎉`}
-      </p>
-    </div>
-
-    {/* 📊 대화 테마 분석 (실제 데이터 기반 시뮬레이션) */}
-    <div className="report-card" style={{ padding: '25px', marginBottom: '15px' }}>
-      <div className="flex items-center gap-3 mb-6">
-        <div className="report-icon-bg" style={{ background: 'linear-gradient(135deg, #8A60FF, #AC8AFF)' }}>
-          <Zap size={20} color="white" />
-        </div>
-        <span className="report-card-label" style={{ fontSize: '18px', fontWeight: 900 }}>데이터 종합 분석</span>
+        <p style={{ fontSize: '13px', color: '#6B7280', marginBottom: '20px', lineHeight: 1.6 }}>
+          최근 한 달간의 대화 패턴, 기도 제목, 감정 신호를 종합하여 AI 하티가 전하는 깊이 있는 조언을 만나보세요.
+        </p>
+        <motion.button
+          whileTap={{ scale: 0.95 }}
+          onClick={handleDeepAnalysis}
+          disabled={isAnalyzing}
+          style={{
+            width: '100%', padding: '18px', borderRadius: '20px',
+            background: isAnalyzing ? '#CCC' : 'linear-gradient(135deg, #2D1F08 0%, #4D3A1A 100%)',
+            color: 'white', fontWeight: 900, border: 'none', cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
+            boxShadow: '0 10px 20px rgba(0,0,0,0.1)'
+          }}
+        >
+          {isAnalyzing ? (
+            <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}>
+              <RefreshCw size={20} />
+            </motion.div>
+          ) : <Sparkles size={20} />}
+          {isAnalyzing ? "데이터 분석 및 리포트 작성 중..." : "새로운 리분석 요청하기"}
+        </motion.button>
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginTop: '10px' }}>
-        {[
-          { label: '영적 소통 (기도제목)', value: Math.min(Math.round((coupleStats.prayerCount / Math.max(coupleStats.totalInteractions, 1)) * 100), 100), color: '#8A60FF' },
-          { label: '정서적 교감 (무드시그널)', value: Math.min(Math.round((coupleStats.signalCount / Math.max(coupleStats.totalInteractions, 1)) * 100), 100), color: '#FF8A9D' },
-          { label: '일상 협력 (공유일정)', value: Math.min(Math.round((coupleStats.scheduleCount / Math.max(coupleStats.totalInteractions, 1)) * 100), 100), color: '#F5D060' }
-        ].map((item, idx) => (
-          <div key={idx} style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: '13px', fontWeight: 800, color: '#2D1F08' }}>{item.label}</span>
-              <span style={{ fontSize: '12px', fontWeight: 900, color: item.color }}>{item.value}%</span>
-            </div>
-            <div style={{ width: '100%', height: '8px', background: 'rgba(0,0,0,0.05)', borderRadius: '100px', overflow: 'hidden' }}>
-              <motion.div initial={{ width: 0 }} animate={{ width: `${item.value}%` }} transition={{ duration: 1, delay: idx * 0.1 }}
-                style={{ height: '100%', background: item.color, borderRadius: '100px' }} />
-            </div>
+      {/* 📈 이번 달 대화 횟수 현황 */}
+      <div className="report-card" style={{ padding: '25px', marginBottom: '15px' }}>
+        <div className="flex items-center gap-3 mb-6">
+          <div className="report-icon-bg" style={{ background: 'linear-gradient(135deg, #FF9A8B, #FF6A88)' }}>
+            <BarChart3 size={20} color="white" />
           </div>
-        ))}
+          <span className="report-card-label" style={{ fontSize: '18px', fontWeight: 900 }}>이번 달 종합 활동 지표</span>
+        </div>
+
+        <div className="flex flex-col items-center justify-center py-4 relative">
+          <svg className="gauge-svg" viewBox="0 0 160 160" style={{ width: '150px', height: '150px' }}>
+            <circle className="gauge-circle-bg" cx="80" cy="80" r="70" stroke="rgba(0,0,0,0.05)" strokeWidth="12" fill="none" />
+            <circle className="gauge-circle-fill" cx="80" cy="80" r="70"
+              stroke="url(#gauge-grad)" strokeWidth="12" strokeLinecap="round" fill="none"
+              style={{
+                strokeDasharray: `${Math.min((coupleStats.totalInteractions / 50) * 440, 440)}, 440`,
+                transform: 'rotate(-90deg)', transformOrigin: 'center',
+                transition: '2s ease-out'
+              }}
+            />
+            <defs>
+              <linearGradient id="gauge-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="#FF9A8B" />
+                <stop offset="100%" stopColor="#FF6A88" />
+              </linearGradient>
+            </defs>
+          </svg>
+          <div className="absolute flex flex-col items-center">
+            <span style={{ fontSize: '38px', fontWeight: 900, color: '#FF4D6D' }}>{coupleStats?.totalInteractions || 0}</span>
+            <span style={{ fontSize: '14px', fontWeight: 700, opacity: 0.4 }}>회</span>
+          </div>
+        </div>
+        <p className="text-center" style={{ fontSize: '13px', fontWeight: 800, color: 'rgba(0,0,0,0.5)', marginTop: '15px' }}>
+          {coupleStats.totalInteractions >= 50 ? '축하드려요! 목표를 달성했습니다! 🥳' : `목표 50회 중 ${Math.round((coupleStats.totalInteractions / 50) * 100)}% 달성! 🎉`}
+        </p>
       </div>
-      <p style={{ fontSize: '12px', color: '#8B7355', marginTop: '15px', lineHeight: 1.5 }}>
-        * 한 달간 수집된 활동 비중입니다. 서로를 향한 관심이 구체적인 데이터로 기록되고 있습니다.
-      </p>
-    </div>
 
-    {/* ✝️ 부부를 위한 하티의 제안 (풍성한 상담 리포트) */}
-    <div className="hatti-insight-box" style={{ background: 'rgba(255,255,255,0.7)', border: '1.5px solid #D4AF37', borderRadius: '32px', padding: '25px' }}>
-       <div className="insight-header" style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '15px' }}>
-         <HattiCharacter state={isAnalyzing ? 'thinking' : 'floating'} size={80} />
-         <div className="flex flex-col">
-           <span className="insight-title" style={{ fontSize: '18px', color: '#2D1F08', fontWeight: 900 }}>부부를 위한 하티의 제안</span>
-           <span style={{ fontSize: '11px', color: '#B08D3E', fontWeight: 800, letterSpacing: '1px' }}>SPIRITUAL COUNSELING REPORT</span>
-         </div>
-       </div>
+      {/* 📊 대화 테마 분석 (실제 데이터 기반 시뮬레이션) */}
+      <div className="report-card" style={{ padding: '25px', marginBottom: '15px' }}>
+        <div className="flex items-center gap-3 mb-6">
+          <div className="report-icon-bg" style={{ background: 'linear-gradient(135deg, #8A60FF, #AC8AFF)' }}>
+            <Zap size={20} color="white" />
+          </div>
+          <span className="report-card-label" style={{ fontSize: '18px', fontWeight: 900 }}>데이터 종합 분석</span>
+        </div>
 
-       <div className="expert-content" style={{ display: 'flex', flexDirection: 'column', gap: '22px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginTop: '10px' }}>
+          {[
+            { label: '영적 소통 (기도제목)', value: Math.min(Math.round((coupleStats.prayerCount / Math.max(coupleStats.totalInteractions, 1)) * 100), 100), color: '#8A60FF' },
+            { label: '정서적 교감 (무드시그널)', value: Math.min(Math.round((coupleStats.signalCount / Math.max(coupleStats.totalInteractions, 1)) * 100), 100), color: '#FF8A9D' },
+            { label: '일상 협력 (공유일정)', value: Math.min(Math.round((coupleStats.scheduleCount / Math.max(coupleStats.totalInteractions, 1)) * 100), 100), color: '#F5D060' }
+          ].map((item, idx) => (
+            <div key={idx} style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '13px', fontWeight: 800, color: '#2D1F08' }}>{item.label}</span>
+                <span style={{ fontSize: '12px', fontWeight: 900, color: item.color }}>{item.value}%</span>
+              </div>
+              <div style={{ width: '100%', height: '8px', background: 'rgba(0,0,0,0.05)', borderRadius: '100px', overflow: 'hidden' }}>
+                <motion.div initial={{ width: 0 }} animate={{ width: `${item.value}%` }} transition={{ duration: 1, delay: idx * 0.1 }}
+                  style={{ height: '100%', background: item.color, borderRadius: '100px' }} />
+              </div>
+            </div>
+          ))}
+        </div>
+        <p style={{ fontSize: '12px', color: '#8B7355', marginTop: '15px', lineHeight: 1.5 }}>
+          * 한 달간 수집된 활동 비중입니다. 서로를 향한 관심이 구체적인 데이터로 기록되고 있습니다.
+        </p>
+      </div>
+
+      {/* ✝️ 부부를 위한 하티의 제안 (풍성한 상담 리포트) */}
+      <div className="hatti-insight-box" style={{ background: 'rgba(255,255,255,0.7)', border: '1.5px solid #D4AF37', borderRadius: '32px', padding: '25px' }}>
+        <div className="insight-header" style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '15px' }}>
+          <HattiCharacter state={isAnalyzing ? 'thinking' : 'floating'} size={80} />
+          <div className="flex flex-col">
+            <span className="insight-title" style={{ fontSize: '18px', color: '#2D1F08', fontWeight: 900 }}>부부를 위한 하티의 제안</span>
+            <span style={{ fontSize: '11px', color: '#B08D3E', fontWeight: 800, letterSpacing: '1px' }}>SPIRITUAL COUNSELING REPORT</span>
+          </div>
+        </div>
+
+        <div className="expert-content" style={{ display: 'flex', flexDirection: 'column', gap: '22px' }}>
           {reportResult ? (
             <div style={{ fontSize: '14px', lineHeight: 1.8, color: '#4D3A1A', whiteSpace: 'pre-wrap', textAlign: 'justify' }}>
               {reportResult}
@@ -1247,7 +1254,7 @@ const SolutionView = ({ onBack, userRole, husbandInfo, wifeInfo, schedules, admi
                 <h4 style={{ fontSize: '15px', color: '#8A60FF', fontWeight: 900, marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <Sparkles size={14} /> 영적 친밀도 분석
                 </h4>
-                <p style={{ fontSize: '14px', lineHeight:1.7, color: '#4D3A1A', textAlign: 'justify' }}>
+                <p style={{ fontSize: '14px', lineHeight: 1.7, color: '#4D3A1A', textAlign: 'justify' }}>
                   아직 상세 분석 결과가 생성되지 않았습니다. 상단의 <strong>'분석 요청'</strong> 버튼을 클릭하여 ${husbandInfo.nickname}님과 ${wifeInfo.nickname}님만을 위한 특별한 리포트를 받아보세요. 하티가 두 분의 기록을 바탕으로 깊이 있는 조언을 준비해 드립니다.
                 </p>
               </section>
@@ -1266,9 +1273,9 @@ const SolutionView = ({ onBack, userRole, husbandInfo, wifeInfo, schedules, admi
               </section>
             </>
           )}
-       </div>
-    </div>
-  </motion.div>
+        </div>
+      </div>
+    </motion.div>
   );
 };
 
@@ -1276,11 +1283,11 @@ const SolutionView = ({ onBack, userRole, husbandInfo, wifeInfo, schedules, admi
 const IntimacyModal = ({ user, show, onClose, subPage, setSubPage, bgImage, onBgUpload, partnerLabel, userRole, coupleCode, supabase, mainChannel, isFullPage, onNav, embedded = false, setHusbandInfo, setWifeInfo, husbandInfo, wifeInfo, myInfo, onUpdateProfile, setShowNotificationList }) => {
   const [currentSecretIdx, setCurrentSecretIdx] = useState(0);
   const [inputText, setInputText] = useState('');
-  const [messages, setMessages] = useState([]); 
+  const [messages, setMessages] = useState([]);
   const [myAnswerInput, setMyAnswerInput] = useState('');
-  const [spouseStatus, setSpouseStatus] = useState('none'); 
+  const [spouseStatus, setSpouseStatus] = useState('none');
   const [isTopicFinished, setIsTopicFinished] = useState(false);
-  const [randomMoods, setRandomMoods] = useState([]); 
+  const [randomMoods, setRandomMoods] = useState([]);
   const chatEndRef = useRef(null);
   const lastGardenNavIdRef = useRef(null); // To prevent duplicate messages from DB sync
 
@@ -1303,14 +1310,14 @@ const IntimacyModal = ({ user, show, onClose, subPage, setSubPage, bgImage, onBg
       setRandomMoods(shuffled.slice(0, 5));
     }
   }, [show, moodPool]);
-  
-  const secretQuestions = useMemo(() => 
+
+  const secretQuestions = useMemo(() =>
     (CARD_DATA || []).filter(q => q.category === '시크릿'), []
   );
 
   useEffect(() => {
     if (!show) return;
-    
+
     // 🌐 Internal Message Bus via CustomEvent from Global App Listener
     if (show) {
       // 🔄 Sync latest message from DB when opening
@@ -1320,12 +1327,12 @@ const IntimacyModal = ({ user, show, onClose, subPage, setSubPage, bgImage, onBg
           const partner = data.find(p => p.id !== user.id);
           if (partner?.info?.gardenNavId && partner.info.gardenNavId !== lastGardenNavIdRef.current) {
             lastGardenNavIdRef.current = partner.info.gardenNavId;
-            const msg = { 
-              id: partner.info.gardenNavId, 
-              text: partner.info.gardenMsg, 
-              sender: 'partner', 
-              type: partner.info.gardenMsgType || 'chat', 
-              time: partner.info.gardenTime || '방금 전' 
+            const msg = {
+              id: partner.info.gardenNavId,
+              text: partner.info.gardenMsg,
+              sender: 'partner',
+              type: partner.info.gardenMsgType || 'chat',
+              time: partner.info.gardenTime || '방금 전'
             };
             setMessages(prev => {
               if (prev.some(m => m.id === msg.id)) return prev;
@@ -1340,15 +1347,15 @@ const IntimacyModal = ({ user, show, onClose, subPage, setSubPage, bgImage, onBg
     const handleIncoming = (e) => {
       const payload = e.detail;
       if (payload.sender !== userRole) {
-          const partnerMsg = { 
-            id: Date.now(), 
-            text: payload.text, 
-            sender: 'partner', 
-            type: payload.msgType || 'chat', 
-            time: payload.time 
-          };
-          setMessages(prev => [...prev, partnerMsg]);
-          setSpouseStatus('done');
+        const partnerMsg = {
+          id: Date.now(),
+          text: payload.text,
+          sender: 'partner',
+          type: payload.msgType || 'chat',
+          time: payload.time
+        };
+        setMessages(prev => [...prev, partnerMsg]);
+        setSpouseStatus('done');
       }
     };
 
@@ -1388,7 +1395,7 @@ const IntimacyModal = ({ user, show, onClose, subPage, setSubPage, bgImage, onBg
     const newMsg = { id: gardenNavId, text: q, sender: 'me', type: 'question', time: getTime() };
     setMessages([newMsg]);
     setSpouseStatus('typing');
-    
+
     // 📡 Global Broadcast (High Speed)
     if (mainChannel) {
       mainChannel.send({
@@ -1399,20 +1406,20 @@ const IntimacyModal = ({ user, show, onClose, subPage, setSubPage, bgImage, onBg
     }
 
     // 🔄 DB Profile Sync (Fail-safe reliability)
-    supabase.from('profiles').select('info').eq('id', user.id).single().then(({data}) => {
-       const latestInfo = data?.info || myInfo;
-       const updatedInfo = { ...latestInfo, gardenMsg: q, gardenMsgType: 'question', gardenNavId, gardenTime: getTime() };
-       
-       supabase.from('profiles').upsert({
-         id: user.id, couple_id: coupleCode, user_role: userRole, info: updatedInfo, updated_at: new Date().toISOString()
-       }, { onConflict: 'id' }).then(({error}) => {
-          if(!error) {
-            if (userRole === 'husband') setHusbandInfo(updatedInfo);
-            else setWifeInfo(updatedInfo);
-          }
-       });
+    supabase.from('profiles').select('info').eq('id', user.id).single().then(({ data }) => {
+      const latestInfo = data?.info || myInfo;
+      const updatedInfo = { ...latestInfo, gardenMsg: q, gardenMsgType: 'question', gardenNavId, gardenTime: getTime() };
+
+      supabase.from('profiles').upsert({
+        id: user.id, couple_id: coupleCode, user_role: userRole, info: updatedInfo, updated_at: new Date().toISOString()
+      }, { onConflict: 'id' }).then(({ error }) => {
+        if (!error) {
+          if (userRole === 'husband') setHusbandInfo(updatedInfo);
+          else setWifeInfo(updatedInfo);
+        }
+      });
     });
-    
+
     setTimeout(() => setSpouseStatus('done'), 2000);
   };
 
@@ -1420,30 +1427,30 @@ const IntimacyModal = ({ user, show, onClose, subPage, setSubPage, bgImage, onBg
     if (!inputText.trim()) return;
     const userMsg = { id: Date.now(), text: inputText, sender: 'me', type: 'chat', time: getTime() };
     setMessages(prev => [...prev, userMsg]);
-    
+
     // 🌐 Multi-Layer Sync: Broadcast (High speed) + Profile Sync (100% Reliability)
     const gardenNavId = Date.now();
     const chatMsg = { text: inputText, sender: userRole, time: getTime(), msgType: 'chat', gardenNavId };
-    
+
     if (mainChannel) {
       mainChannel.send({ type: 'broadcast', event: 'garden-chat-sent', payload: chatMsg });
     }
-    
+
     // DB Backup Sync via Profiles (Reliable connection)
     // IMPORTANT: Fetch latest info to prevent clobbering other settings
-    supabase.from('profiles').select('info').eq('id', user.id).single().then(({data}) => {
-       const latestInfo = data?.info || myInfo;
-       const updatedInfo = { ...latestInfo, gardenMsg: inputText, gardenMsgType: 'chat', gardenNavId, gardenTime: getTime() };
-       
-       supabase.from('profiles').upsert({
-         id: user.id, couple_id: coupleCode, user_role: userRole, info: updatedInfo, updated_at: new Date().toISOString()
-       }, { onConflict: 'id' }).then(({error}) => {
-          if(error) console.error("Garden DB Sync failed", error);
-          else {
-            if (userRole === 'husband') setHusbandInfo(updatedInfo);
-            else setWifeInfo(updatedInfo);
-          }
-       });
+    supabase.from('profiles').select('info').eq('id', user.id).single().then(({ data }) => {
+      const latestInfo = data?.info || myInfo;
+      const updatedInfo = { ...latestInfo, gardenMsg: inputText, gardenMsgType: 'chat', gardenNavId, gardenTime: getTime() };
+
+      supabase.from('profiles').upsert({
+        id: user.id, couple_id: coupleCode, user_role: userRole, info: updatedInfo, updated_at: new Date().toISOString()
+      }, { onConflict: 'id' }).then(({ error }) => {
+        if (error) console.error("Garden DB Sync failed", error);
+        else {
+          if (userRole === 'husband') setHusbandInfo(updatedInfo);
+          else setWifeInfo(updatedInfo);
+        }
+      });
     });
 
     setInputText('');
@@ -1455,7 +1462,7 @@ const IntimacyModal = ({ user, show, onClose, subPage, setSubPage, bgImage, onBg
     const gardenNavId = Date.now();
     const answerMsg = { id: gardenNavId, text: myAnswerInput, sender: 'me', type: 'answer', time: getTime() };
     setMessages(prev => [...prev, answerMsg]);
-    
+
     // 📡 Global Broadcast
     if (mainChannel) {
       mainChannel.send({
@@ -1466,16 +1473,16 @@ const IntimacyModal = ({ user, show, onClose, subPage, setSubPage, bgImage, onBg
     }
 
     // 🔄 DB Profile Sync
-    supabase.from('profiles').select('info').eq('id', user.id).single().then(({data}) => {
-       const updatedInfo = { ...data?.info, gardenMsg: myAnswerInput, gardenMsgType: 'answer', gardenNavId };
-       supabase.from('profiles').upsert({
-         id: user.id, couple_id: coupleCode, user_role: userRole, info: updatedInfo, updated_at: new Date().toISOString()
-       }, { onConflict: 'id' }).then(({error}) => {
-          if(!error) {
-            if (userRole === 'husband') setHusbandInfo(updatedInfo);
-            else setWifeInfo(updatedInfo);
-          }
-       });
+    supabase.from('profiles').select('info').eq('id', user.id).single().then(({ data }) => {
+      const updatedInfo = { ...data?.info, gardenMsg: myAnswerInput, gardenMsgType: 'answer', gardenNavId };
+      supabase.from('profiles').upsert({
+        id: user.id, couple_id: coupleCode, user_role: userRole, info: updatedInfo, updated_at: new Date().toISOString()
+      }, { onConflict: 'id' }).then(({ error }) => {
+        if (!error) {
+          if (userRole === 'husband') setHusbandInfo(updatedInfo);
+          else setWifeInfo(updatedInfo);
+        }
+      });
     });
 
     setMyAnswerInput('');
@@ -1484,7 +1491,7 @@ const IntimacyModal = ({ user, show, onClose, subPage, setSubPage, bgImage, onBg
 
   const handleResetChat = async () => {
     if (!window.confirm("대화 내용을 초기화하고 새로운 대화를 시작하시겠습니까?")) return;
-    
+
     // 📡 Global Broadcast
     if (mainChannel) {
       mainChannel.send({
@@ -1501,7 +1508,7 @@ const IntimacyModal = ({ user, show, onClose, subPage, setSubPage, bgImage, onBg
         await supabase.from('profiles').upsert({
           id: p.id, couple_id: coupleCode, user_role: p.user_role, info: updatedInfo, updated_at: new Date().toISOString()
         }, { onConflict: 'id' });
-        
+
         if (p.user_role === 'husband') setHusbandInfo(updatedInfo);
         else if (p.user_role === 'wife') setWifeInfo(updatedInfo);
       }
@@ -1513,54 +1520,54 @@ const IntimacyModal = ({ user, show, onClose, subPage, setSubPage, bgImage, onBg
   const currentBg = bgImage || '/garden_bg_premium.png';
 
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-      className={isFullPage ? "" : "intimacy-modal-overlay"} 
+      className={isFullPage ? "" : "intimacy-modal-overlay"}
       onClick={(!isFullPage && !embedded) ? onClose : undefined}
-      style={{ 
-        position: embedded ? 'relative' : 'absolute', 
-        top: 0, 
-        left: 0, 
-        right: 0, 
-        bottom: embedded ? 'auto' : 0, 
+      style={{
+        position: embedded ? 'relative' : 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: embedded ? 'auto' : 0,
         minHeight: embedded ? '600px' : 'auto',
-        zIndex: 2000, 
-        background: `url(${currentBg}) center center no-repeat`, 
-        backgroundSize: 'cover', 
-        display: 'flex', 
-        flexDirection: 'column', 
+        zIndex: 2000,
+        background: `url(${currentBg}) center center no-repeat`,
+        backgroundSize: 'cover',
+        display: 'flex',
+        flexDirection: 'column',
         alignItems: 'center',
-        padding: '0', 
+        padding: '0',
         overflow: 'hidden'
       }}
     >
       {!embedded && (
         <div style={{ position: 'absolute', top: '70px', right: '45px', display: 'flex', gap: '18px', zIndex: 2010 }}>
-          <Bell 
-            size={22} 
-            color="rgba(45, 31, 8, 0.4)" 
+          <Bell
+            size={22}
+            color="rgba(45, 31, 8, 0.4)"
             style={{ cursor: 'pointer' }}
-            onClick={() => setShowNotificationList(true)} 
+            onClick={() => setShowNotificationList(true)}
           />
-          <Settings 
-            size={22} 
-            color="rgba(45, 31, 8, 0.4)" 
+          <Settings
+            size={22}
+            color="rgba(45, 31, 8, 0.4)"
             style={{ cursor: 'pointer' }}
-            onClick={() => onNav('settings')} 
+            onClick={() => onNav('settings')}
           />
         </div>
       )}
-      <div 
+      <div
         onClick={(e) => e.stopPropagation()}
-        style={{ 
+        style={{
           width: '100%',
           flex: embedded ? 'none' : 1,
           height: embedded ? 'auto' : '100%',
           background: subPage === 'secrets' ? '#B2C7DA' : 'rgba(253, 252, 240, 0.96)',
-          backdropFilter: 'blur(30px) saturate(180%)', 
-          display: 'flex', 
-          flexDirection: 'column', 
-          position: 'relative', 
+          backdropFilter: 'blur(30px) saturate(180%)',
+          display: 'flex',
+          flexDirection: 'column',
+          position: 'relative',
           overflow: embedded ? 'visible' : 'hidden',
           border: (subPage === 'secrets' || embedded) ? 'none' : '1.5px solid rgba(212, 175, 55, 0.25)',
           boxShadow: embedded ? 'none' : '0 30px 60px rgba(0,0,0,0.25)'
@@ -1569,21 +1576,21 @@ const IntimacyModal = ({ user, show, onClose, subPage, setSubPage, bgImage, onBg
         {subPage === 'main' && (
           <div style={{ display: 'flex', flexDirection: 'column', height: embedded ? 'auto' : '100%', padding: embedded ? '20px 24px' : '80px 24px', overflowY: embedded ? 'visible' : 'auto' }}>
             <div style={{ textAlign: 'center', marginBottom: '50px' }}>
-              <h2 style={{ 
+              <h2 style={{
                 background: 'linear-gradient(105deg, #7D5A00 0%, #C8970A 30%, #F5D060 50%, #D4960A 70%, #7D5A00 100%)',
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
-                fontSize: '32px', fontWeight: 900, marginBottom: '12px', letterSpacing: '-0.5px' 
+                fontSize: '32px', fontWeight: 900, marginBottom: '12px', letterSpacing: '-0.5px'
               }}>소통의 화원</h2>
               <p style={{ color: '#8B7355', fontSize: '15px', fontWeight: 700, opacity: 0.8 }}>두 분만의 가장 깊고 은밀한 소통 공간</p>
             </div>
-            
+
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <button 
+              <button
                 onClick={() => setSubPage('secrets')}
-                style={{ 
-                  background: 'rgba(255,255,255,0.7)', padding: '24px', borderRadius: '30px', 
-                  display: 'flex', alignItems: 'center', gap: '16px', border: '1.5px solid white', 
+                style={{
+                  background: 'rgba(255,255,255,0.7)', padding: '24px', borderRadius: '30px',
+                  display: 'flex', alignItems: 'center', gap: '16px', border: '1.5px solid white',
                   boxShadow: '0 8px 30px rgba(0,0,0,0.05)', textAlign: 'left', width: '100%'
                 }}
               >
@@ -1594,11 +1601,11 @@ const IntimacyModal = ({ user, show, onClose, subPage, setSubPage, bgImage, onBg
                 </div>
               </button>
 
-              <button 
+              <button
                 onClick={() => setSubPage('signal')}
-                style={{ 
-                  background: 'rgba(255,255,255,0.7)', padding: '24px', borderRadius: '30px', 
-                  display: 'flex', alignItems: 'center', gap: '16px', border: '1.5px solid white', 
+                style={{
+                  background: 'rgba(255,255,255,0.7)', padding: '24px', borderRadius: '30px',
+                  display: 'flex', alignItems: 'center', gap: '16px', border: '1.5px solid white',
                   boxShadow: '0 8px 30px rgba(0,0,0,0.05)', textAlign: 'left', width: '100%'
                 }}
               >
@@ -1609,14 +1616,14 @@ const IntimacyModal = ({ user, show, onClose, subPage, setSubPage, bgImage, onBg
                 </div>
               </button>
             </div>
-            
+
             {!embedded && (
               <div style={{ marginTop: '50px', display: 'flex', justifyContent: 'center' }}>
-                <button 
-                  onClick={isFullPage ? () => onNav('home') : onClose} 
-                  style={{ 
-                    width: '80px', height: '80px', borderRadius: '50%', background: 'white', 
-                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', 
+                <button
+                  onClick={isFullPage ? () => onNav('home') : onClose}
+                  style={{
+                    width: '80px', height: '80px', borderRadius: '50%', background: 'white',
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
                     fontSize: '14px', fontWeight: 900, border: '4px solid transparent',
                     backgroundImage: 'linear-gradient(white, white), linear-gradient(105deg, #7D5A00 0%, #C8970A 30%, #F5D060 50%, #D4960A 70%, #7D5A00 100%)',
                     backgroundOrigin: 'border-box', backgroundClip: 'padding-box, border-box',
@@ -1711,13 +1718,13 @@ const IntimacyModal = ({ user, show, onClose, subPage, setSubPage, bgImage, onBg
                   </div>
                 </>
               ) : !isTopicFinished && messages.some(m => m.type === 'question') ? (
-                  <div style={{ background: 'white', padding: '15px', borderRadius: '20px', boxShadow: '0 -5px 15px rgba(0,0,0,0.05)', border: '1px solid rgba(0,0,0,0.05)' }}>
-                    <span style={{ fontSize: '12px', fontWeight: 900, color: '#FBC02D', marginBottom: '10px', display: 'block' }}>나의 진솔한 답변</span>
-                    <div style={{ display: 'flex', gap: '10px' }}>
-                      <textarea value={myAnswerInput} onChange={(e) => setMyAnswerInput(e.target.value)} placeholder="마음을 전해보세요..." style={{ flex: 1, border: 'none', background: '#F7F7F7', borderRadius: '12px', padding: '12px', fontSize: '14px', minHeight: '60px', resize: 'none' }} />
-                      <button onClick={handleAnswerSubmit} style={{ width: '60px', borderRadius: '12px', background: '#FEE500', color: '#2D1F08', border: 'none', fontWeight: 900, fontSize: '13px' }}>보내기</button>
-                    </div>
+                <div style={{ background: 'white', padding: '15px', borderRadius: '20px', boxShadow: '0 -5px 15px rgba(0,0,0,0.05)', border: '1px solid rgba(0,0,0,0.05)' }}>
+                  <span style={{ fontSize: '12px', fontWeight: 900, color: '#FBC02D', marginBottom: '10px', display: 'block' }}>나의 진솔한 답변</span>
+                  <div style={{ display: 'flex', gap: '10px' }}>
+                    <textarea value={myAnswerInput} onChange={(e) => setMyAnswerInput(e.target.value)} placeholder="마음을 전해보세요..." style={{ flex: 1, border: 'none', background: '#F7F7F7', borderRadius: '12px', padding: '12px', fontSize: '14px', minHeight: '60px', resize: 'none' }} />
+                    <button onClick={handleAnswerSubmit} style={{ width: '60px', borderRadius: '12px', background: '#FEE500', color: '#2D1F08', border: 'none', fontWeight: 900, fontSize: '13px' }}>보내기</button>
                   </div>
+                </div>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -1755,36 +1762,36 @@ const IntimacyModal = ({ user, show, onClose, subPage, setSubPage, bgImage, onBg
               </div>
 
               <div className="signal-list" style={{ display: 'flex', flexDirection: 'column', gap: '14px', paddingBottom: '40px' }}>
-                 {randomMoods.map((mood, idx) => (
-                   <motion.div key={idx} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: idx * 0.08 }}
-                     onClick={async () => { 
-                       // 📡 Global Broadcast
-                       if (mainChannel) {
-                         mainChannel.send({
-                           type: 'broadcast',
-                           event: 'card-game-call',
-                           payload: { sender: userRole, type: 'mood-signal', title: mood.title }
-                         });
-                       }
-                       
-                       // 🔄 Master Profile Sync (Centralized & Safe)
-                       if (onUpdateProfile) {
-                         await onUpdateProfile(undefined, { moodSignal: mood.title });
-                       }
+                {randomMoods.map((mood, idx) => (
+                  <motion.div key={idx} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: idx * 0.08 }}
+                    onClick={async () => {
+                      // 📡 Global Broadcast
+                      if (mainChannel) {
+                        mainChannel.send({
+                          type: 'broadcast',
+                          event: 'card-game-call',
+                          payload: { sender: userRole, type: 'mood-signal', title: mood.title }
+                        });
+                      }
 
-                       alert(`'${mood.title}' 신호를 보냈습니다!`); 
-                       setSubPage('main'); 
-                     }}
-                     style={{ cursor: 'pointer' }}
-                   >
-                     <SignalOptV2 title={mood.title} desc={mood.desc} />
-                   </motion.div>
-                 ))}
+                      // 🔄 Master Profile Sync (Centralized & Safe)
+                      if (onUpdateProfile) {
+                        await onUpdateProfile(undefined, { moodSignal: mood.title });
+                      }
+
+                      alert(`'${mood.title}' 신호를 보냈습니다!`);
+                      setSubPage('main');
+                    }}
+                    style={{ cursor: 'pointer' }}
+                  >
+                    <SignalOptV2 title={mood.title} desc={mood.desc} />
+                  </motion.div>
+                ))}
               </div>
 
               <div style={{ textAlign: 'center', padding: '20px', background: '#FDFCF0', borderRadius: '24px', border: '1px dashed #D4AF37' }}>
                 <p style={{ fontSize: '12px', color: '#8B7355', fontWeight: 700, lineHeight: 1.6 }}>
-                  💡 선택하신 무드 시그널은 배우자의 홈 화면에<br/>
+                  💡 선택하신 무드 시그널은 배우자의 홈 화면에<br />
                   실시간으로 전달되어 서로를 배려할 수 있게 돕습니다.
                 </p>
               </div>
@@ -1882,7 +1889,7 @@ const DeepAnalysisView = ({ onBack, myInfo, updateProfile }) => {
     let mainInsight = "";
     let loveSummary = "";
     let conflictSummary = "";
-    
+
     // 심리 유형 판독 로직
     const q1 = answers['q1'];
     if (q1 === 'A' || q1 === 'D') {
@@ -1901,10 +1908,10 @@ const DeepAnalysisView = ({ onBack, myInfo, updateProfile }) => {
 
     // 사랑의 언어 판독
     const q3 = answers['q3'];
-    loveSummary = q3 === 'A' ? "『인정하는 말』: 당신은 물질적인 것보다 진심이 담긴 따뜻한 칭찬 한마디에 모든 피로가 녹습니다." : 
-                  q3 === 'B' ? "『함께하는 시간』: 단 10분이라도 스마트폰 없이 오직 나에게만 집중해 주는 온전한 교감을 가장 원합니다." : 
-                  q3 === 'C' ? "『헌신과 봉사』: 백 마디 말보다 묵묵히 밀린 집안일을 대신해 줄 때 사랑받고 있다고 확신합니다." : 
-                  "『선물의 의미』: 평소의 대화를 기억하고 준비해 준 작지만 세심한 선물에서 깊은 사랑과 존재감을 느낍니다.";
+    loveSummary = q3 === 'A' ? "『인정하는 말』: 당신은 물질적인 것보다 진심이 담긴 따뜻한 칭찬 한마디에 모든 피로가 녹습니다." :
+      q3 === 'B' ? "『함께하는 시간』: 단 10분이라도 스마트폰 없이 오직 나에게만 집중해 주는 온전한 교감을 가장 원합니다." :
+        q3 === 'C' ? "『헌신과 봉사』: 백 마디 말보다 묵묵히 밀린 집안일을 대신해 줄 때 사랑받고 있다고 확신합니다." :
+          "『선물의 의미』: 평소의 대화를 기억하고 준비해 준 작지만 세심한 선물에서 깊은 사랑과 존재감을 느낍니다.";
 
     return {
       title: title,
@@ -1916,7 +1923,7 @@ const DeepAnalysisView = ({ onBack, myInfo, updateProfile }) => {
   const handleSelect = (val) => {
     const newSelections = { ...selections, [questions[step].id]: val };
     setSelections(newSelections);
-    
+
     if (step < questions.length - 1) {
       setStep(step + 1);
     } else {
@@ -1934,39 +1941,39 @@ const DeepAnalysisView = ({ onBack, myInfo, updateProfile }) => {
 
   if (showResult && analysisResult) {
     return (
-          <div style={{ position: 'fixed', inset: 0, background: '#F8FAFC', zIndex: 999999, display: 'flex', flexDirection: 'column' }}>
-             <div style={{ display: 'flex', alignItems: 'center', padding: '50px 20px 20px', background: 'white', borderBottom: '1px solid #E2E8F0', position: 'relative' }}>
-               <button onClick={() => setShowResult(false)} style={{ position: 'absolute', left: '20px', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px', color: '#64748B', fontWeight: 700 }}>
-                  <ChevronLeft size={20} /> 뒤로
-               </button>
-               <h2 style={{ fontSize: '18px', fontWeight: 900, color: '#1E293B', margin: '0 auto' }}>진단 결과 보고서</h2>
-             </div>
-         <div style={{ flex: 1, padding: '30px 24px', display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
-            <div style={{ background: 'white', padding: '30px 20px', borderRadius: '24px', boxShadow: '0 10px 30px rgba(0,0,0,0.05)', border: '2px solid rgba(138, 96, 255, 0.2)', marginBottom: '30px' }}>
-               <h1 style={{ fontSize: '20px', fontWeight: 900, color: '#8A60FF', marginBottom: '20px', lineHeight: 1.4, wordBreak: 'keep-all' }}>
-                  {analysisResult.title}
-               </h1>
-               <div style={{ fontSize: '15px', color: '#334155', lineHeight: 1.6, whiteSpace: 'pre-wrap', fontWeight: 700 }}>
-                  {analysisResult.content}
-               </div>
-               
-               <div style={{ marginTop: '20px', padding: '15px', background: '#F3F0FF', borderRadius: '15px', border: '1px dashed #8A60FF' }}>
-                  <p style={{ fontSize: '12px', color: '#6A4DCE', fontWeight: 800 }}>📌 이 결과는 안전하게 암호화되어 데이터베이스에 동기화되며, AI 하티가 앞으로 당신의 성향을 100% 이해한 채로 배우자와의 조율을 코칭하게 됩니다.</p>
-               </div>
+      <div style={{ position: 'fixed', inset: 0, background: '#F8FAFC', zIndex: 999999, display: 'flex', flexDirection: 'column' }}>
+        <div style={{ display: 'flex', alignItems: 'center', padding: '50px 20px 20px', background: 'white', borderBottom: '1px solid #E2E8F0', position: 'relative' }}>
+          <button onClick={() => setShowResult(false)} style={{ position: 'absolute', left: '20px', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px', color: '#64748B', fontWeight: 700 }}>
+            <ChevronLeft size={20} /> 뒤로
+          </button>
+          <h2 style={{ fontSize: '18px', fontWeight: 900, color: '#1E293B', margin: '0 auto' }}>진단 결과 보고서</h2>
+        </div>
+        <div style={{ flex: 1, padding: '30px 24px', display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
+          <div style={{ background: 'white', padding: '30px 20px', borderRadius: '24px', boxShadow: '0 10px 30px rgba(0,0,0,0.05)', border: '2px solid rgba(138, 96, 255, 0.2)', marginBottom: '30px' }}>
+            <h1 style={{ fontSize: '20px', fontWeight: 900, color: '#8A60FF', marginBottom: '20px', lineHeight: 1.4, wordBreak: 'keep-all' }}>
+              {analysisResult.title}
+            </h1>
+            <div style={{ fontSize: '15px', color: '#334155', lineHeight: 1.6, whiteSpace: 'pre-wrap', fontWeight: 700 }}>
+              {analysisResult.content}
             </div>
 
-            <motion.button 
-              whileTap={{ scale: 0.95 }}
-              onClick={handleSaveAndFinish}
-              style={{ 
-                padding: '20px', background: '#1E293B', color: 'white', fontWeight: 900, 
-                borderRadius: '16px', border: 'none', cursor: 'pointer', fontSize: '16px', 
-                boxShadow: '0 8px 25px rgba(0,0,0,0.2)', marginBottom: '40px' 
-              }}
-            >
-              결과 저장 및 AI 엔진에 반영하기
-            </motion.button>
-         </div>
+            <div style={{ marginTop: '20px', padding: '15px', background: '#F3F0FF', borderRadius: '15px', border: '1px dashed #8A60FF' }}>
+              <p style={{ fontSize: '12px', color: '#6A4DCE', fontWeight: 800 }}>📌 이 결과는 안전하게 암호화되어 데이터베이스에 동기화되며, AI 하티가 앞으로 당신의 성향을 100% 이해한 채로 배우자와의 조율을 코칭하게 됩니다.</p>
+            </div>
+          </div>
+
+          <motion.button
+            whileTap={{ scale: 0.95 }}
+            onClick={handleSaveAndFinish}
+            style={{
+              padding: '20px', background: '#1E293B', color: 'white', fontWeight: 900,
+              borderRadius: '16px', border: 'none', cursor: 'pointer', fontSize: '16px',
+              boxShadow: '0 8px 25px rgba(0,0,0,0.2)', marginBottom: '40px'
+            }}
+          >
+            결과 저장 및 AI 엔진에 반영하기
+          </motion.button>
+        </div>
       </div>
     );
   }
@@ -1980,28 +1987,28 @@ const DeepAnalysisView = ({ onBack, myInfo, updateProfile }) => {
       </div>
       <div style={{ flex: 1, padding: '30px 24px', display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '15px' }}>
-           <Sparkles size={24} color="#8A60FF" />
-           <h2 style={{ fontSize: '20px', fontWeight: 900, color: '#1E293B' }}>하티 부부 성향 심층 진단</h2>
+          <Sparkles size={24} color="#8A60FF" />
+          <h2 style={{ fontSize: '20px', fontWeight: 900, color: '#1E293B' }}>하티 부부 성향 심층 진단</h2>
         </div>
-        
+
         {/* Progress Bar */}
         <div style={{ width: '100%', height: '6px', background: '#E2E8F0', borderRadius: '10px', marginBottom: '20px', overflow: 'hidden' }}>
-           <div style={{ width: `${((step)/questions.length)*100}%`, height: '100%', background: '#8A60FF', transition: '0.4s ease' }} />
+          <div style={{ width: `${((step) / questions.length) * 100}%`, height: '100%', background: '#8A60FF', transition: '0.4s ease' }} />
         </div>
 
         <p style={{ fontSize: '13px', color: '#64748B', marginBottom: '30px', lineHeight: 1.5, fontWeight: 700 }}>
           AI 하티가 두 분의 관계 패턴을 더 정확히 이해하기 위한 전문적인 진단 과정입니다. 가장 나에게 가깝다고 느껴지는 항목을 솔직하게 선택해주세요! ({step + 1}/{questions.length})
         </p>
-        
+
         <h3 style={{ fontSize: '18px', fontWeight: 900, color: '#0F172A', marginBottom: '24px', lineHeight: 1.5, wordBreak: 'keep-all' }}>
           {questions[step].title}
         </h3>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', paddingBottom: '30px' }}>
           {questions[step].options.map((opt, i) => (
-            <motion.button 
+            <motion.button
               whileTap={{ scale: 0.98 }}
-              key={i} 
+              key={i}
               onClick={() => handleSelect(opt.value)}
               style={{
                 width: '100%', padding: '24px 20px', borderRadius: '20px', background: 'white',
@@ -2021,16 +2028,16 @@ const DeepAnalysisView = ({ onBack, myInfo, updateProfile }) => {
 };
 
 /* ⚙️ Settings View */
-const SettingsView = ({ 
+const SettingsView = ({
   user,
-  userRole, 
-  husbandInfo, 
-  setHusbandInfo, 
-  wifeInfo, 
-  setWifeInfo, 
-  coupleCode, 
+  userRole,
+  husbandInfo,
+  setHusbandInfo,
+  wifeInfo,
+  setWifeInfo,
+  coupleCode,
   setCoupleCode,
-  onReportClick, 
+  onReportClick,
   onGuideClick,
   worshipDays,
   setWorshipDays,
@@ -2047,7 +2054,7 @@ const SettingsView = ({
   const [notifCard, setNotifCard] = useState(() => JSON.parse(localStorage.getItem('notif_card') ?? 'true'));
   const [notifWorship, setNotifWorship] = useState(() => JSON.parse(localStorage.getItem('notif_worship') ?? 'true'));
   const [notifHatti, setNotifHatti] = useState(() => JSON.parse(localStorage.getItem('notif_hatti') ?? 'false'));
-  
+
   const [showProfileEdit, setShowProfileEdit] = useState(false);
   const [showWorshipSet, setShowWorshipSet] = useState(false);
   const [showAnnivSet, setShowAnnivSet] = useState(false);
@@ -2068,7 +2075,7 @@ const SettingsView = ({
   // 📝 Local states for profile editing (Prevent lag on keystrokes)
   const myInfo = (userRole === 'husband' ? husbandInfo : wifeInfo) || {};
   const setMyInfo = userRole === 'husband' ? setHusbandInfo : setWifeInfo;
-  
+
   const [editInfo, setEditInfo] = useState({
     nickname: myInfo.nickname || "",
     mbti: myInfo.mbti || "",
@@ -2139,19 +2146,19 @@ const SettingsView = ({
   const handleProfileSave = async () => {
     const updatedInfo = { ...myInfo, ...editInfo };
     setMyInfo(updatedInfo);
-    
+
     try {
       // 1. Update My Profile
       await supabase.from('profiles').upsert({
-        id: user.id, 
-        couple_id: coupleCode, 
-        user_role: userRole, 
-        info: updatedInfo, 
+        id: user.id,
+        couple_id: coupleCode,
+        user_role: userRole,
+        info: updatedInfo,
         updated_at: new Date().toISOString()
       }, { onConflict: 'id' });
 
       // 2. Clear local cache to force refresh
-      localStorage.setItem('master_openai_key', ''); 
+      localStorage.setItem('master_openai_key', '');
 
       // 3. If Marriage Date changed, sync with spouse
       if (editInfo.marriageDate !== myInfo.marriageDate) {
@@ -2159,16 +2166,16 @@ const SettingsView = ({
         const spouseSetter = userRole === 'husband' ? setWifeInfo : setHusbandInfo;
         const spouseInfo = userRole === 'husband' ? wifeInfo : husbandInfo;
         const updatedSpouseInfo = { ...spouseInfo, marriageDate: editInfo.marriageDate };
-        
+
         spouseSetter(updatedSpouseInfo);
         await supabase.from('profiles').upsert({
-          couple_id: coupleCode, 
-          user_role: spouseRole, 
-          info: updatedSpouseInfo, 
+          couple_id: coupleCode,
+          user_role: spouseRole,
+          info: updatedSpouseInfo,
           updated_at: new Date().toISOString()
         }, { onConflict: 'couple_id,user_role' });
       }
-      
+
       setShowProfileEdit(false);
       alert("정보가 성공적으로 저장되었습니다!");
     } catch (err) {
@@ -2195,10 +2202,10 @@ const SettingsView = ({
     setAnniversaries(newList);
     setNewAnnivTitle("");
     setNewAnnivDate("");
-    
+
     // ☁️ Sync to DB
     if (onUpdateProfile) {
-       await onUpdateProfile(undefined, { anniversaries: newList });
+      await onUpdateProfile(undefined, { anniversaries: newList });
     }
   };
 
@@ -2206,21 +2213,21 @@ const SettingsView = ({
     const newList = anniversaries.filter(a => a.id !== id);
     setAnniversaries(newList);
     if (onUpdateProfile) {
-       await onUpdateProfile(undefined, { anniversaries: newList });
+      await onUpdateProfile(undefined, { anniversaries: newList });
     }
   };
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="settings-page" style={{ padding: '20px 0 100px' }}>
       {/* 💑 Couple Profile Card */}
-      <div className="settings-profile-card" style={{ 
+      <div className="settings-profile-card" style={{
         background: 'rgba(255, 255, 255, 0.7)', backdropFilter: 'blur(20px)', borderRadius: '35px',
         padding: '30px', margin: '0 20px 25px', display: 'flex', flexDirection: 'column', alignItems: 'center', boxShadow: '0 15px 35px rgba(0,0,0,0.05)', border: '1px solid rgba(255,255,255,4)', position: 'relative'
       }}>
         <button onClick={() => setShowProfileEdit(true)} style={{ position: 'absolute', top: '20px', right: '20px', background: 'white', border: '1px solid #EEE', borderRadius: '12px', padding: '8px', boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}>
           <User size={16} color="#8B7355" />
         </button>
-        <div 
+        <div
           onClick={() => document.getElementById('avatar-upload-main').click()}
           style={{ width: '100px', height: '100px', borderRadius: '50%', background: 'linear-gradient(135deg, #F5D060, #D4AF37)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '15px', overflow: 'hidden', border: '4px solid white', boxShadow: '0 10px 25px rgba(212, 175, 55, 0.25)', cursor: 'pointer', position: 'relative' }}
         >
@@ -2241,18 +2248,18 @@ const SettingsView = ({
             <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
               <div>
                 <label style={{ fontSize: '12px', fontWeight: 800, color: '#8B7355', display: 'block', marginBottom: '6px' }}>애칭</label>
-                <input value={editInfo.nickname} onChange={(e) => setEditInfo({...editInfo, nickname: e.target.value})} style={{ width: '100%', padding: '12px 18px', borderRadius: '14px', background: '#F9FAFB', border: '1px solid #EEE' }} />
+                <input value={editInfo.nickname} onChange={(e) => setEditInfo({ ...editInfo, nickname: e.target.value })} style={{ width: '100%', padding: '12px 18px', borderRadius: '14px', background: '#F9FAFB', border: '1px solid #EEE' }} />
               </div>
               <div>
                 <label style={{ fontSize: '12px', fontWeight: 800, color: '#8B7355', display: 'block', marginBottom: '6px' }}>성격 유형 (MBT-H)</label>
-                <input value={editInfo.mbti} onChange={(e) => setEditInfo({...editInfo, mbti: e.target.value})} style={{ width: '100%', padding: '12px 18px', borderRadius: '14px', background: '#F9FAFB', border: '1px solid #EEE' }} />
+                <input value={editInfo.mbti} onChange={(e) => setEditInfo({ ...editInfo, mbti: e.target.value })} style={{ width: '100%', padding: '12px 18px', borderRadius: '14px', background: '#F9FAFB', border: '1px solid #EEE' }} />
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
                 <div style={{ flex: 1 }}>
                   <label style={{ fontSize: '12px', fontWeight: 800, color: '#8B7355', display: 'block', marginBottom: '6px' }}>결혼 (년)</label>
-                  <select 
-                    value={editInfo.marriageDate.split('-')[0] || "2020"} 
-                    onChange={(e) => setEditInfo({...editInfo, marriageDate: `${e.target.value}-${editInfo.marriageDate.split('-')[1] || "01"}-${editInfo.marriageDate.split('-')[2] || "01"}`})}
+                  <select
+                    value={editInfo.marriageDate.split('-')[0] || "2020"}
+                    onChange={(e) => setEditInfo({ ...editInfo, marriageDate: `${e.target.value}-${editInfo.marriageDate.split('-')[1] || "01"}-${editInfo.marriageDate.split('-')[2] || "01"}` })}
                     style={{ width: '100%', padding: '12px 6px', borderRadius: '14px', background: '#F9FAFB', border: '1px solid #EEE', fontSize: '13px' }}
                   >
                     {Array.from({ length: 50 }, (_, i) => 2026 - i).map(y => <option key={y} value={y}>{y}</option>)}
@@ -2260,9 +2267,9 @@ const SettingsView = ({
                 </div>
                 <div style={{ flex: 1 }}>
                   <label style={{ fontSize: '12px', fontWeight: 800, color: '#8B7355', display: 'block', marginBottom: '6px' }}>월</label>
-                  <select 
-                    value={parseInt(editInfo.marriageDate.split('-')[1] || "1")} 
-                    onChange={(e) => setEditInfo({...editInfo, marriageDate: `${editInfo.marriageDate.split('-')[0] || "2020"}-${String(e.target.value).padStart(2, '0')}-${editInfo.marriageDate.split('-')[2] || "01"}`})}
+                  <select
+                    value={parseInt(editInfo.marriageDate.split('-')[1] || "1")}
+                    onChange={(e) => setEditInfo({ ...editInfo, marriageDate: `${editInfo.marriageDate.split('-')[0] || "2020"}-${String(e.target.value).padStart(2, '0')}-${editInfo.marriageDate.split('-')[2] || "01"}` })}
                     style={{ width: '100%', padding: '12px 6px', borderRadius: '14px', background: '#F9FAFB', border: '1px solid #EEE', fontSize: '13px' }}
                   >
                     {Array.from({ length: 12 }, (_, i) => i + 1).map(m => <option key={m} value={m}>{m}</option>)}
@@ -2270,9 +2277,9 @@ const SettingsView = ({
                 </div>
                 <div style={{ flex: 1 }}>
                   <label style={{ fontSize: '12px', fontWeight: 800, color: '#8B7355', display: 'block', marginBottom: '6px' }}>일</label>
-                  <select 
-                    value={parseInt(editInfo.marriageDate.split('-')[2] || "1")} 
-                    onChange={(e) => setEditInfo({...editInfo, marriageDate: `${editInfo.marriageDate.split('-')[0] || "2020"}-${editInfo.marriageDate.split('-')[1] || "01"}-${String(e.target.value).padStart(2, '0')}`})}
+                  <select
+                    value={parseInt(editInfo.marriageDate.split('-')[2] || "1")}
+                    onChange={(e) => setEditInfo({ ...editInfo, marriageDate: `${editInfo.marriageDate.split('-')[0] || "2020"}-${editInfo.marriageDate.split('-')[1] || "01"}-${String(e.target.value).padStart(2, '0')}` })}
                     style={{ width: '100%', padding: '12px 6px', borderRadius: '14px', background: '#F9FAFB', border: '1px solid #EEE', fontSize: '13px' }}
                   >
                     {Array.from({ length: 31 }, (_, i) => i + 1).map(d => <option key={d} value={d}>{d}</option>)}
@@ -2281,7 +2288,7 @@ const SettingsView = ({
               </div>
               <div>
                 <label style={{ fontSize: '12px', fontWeight: 800, color: '#8B7355', display: 'block', marginBottom: '6px' }}>혈액형</label>
-                <select value={editInfo.blood} onChange={(e) => setEditInfo({...editInfo, blood: e.target.value})} style={{ width: '100%', padding: '12px 10px', borderRadius: '14px', background: '#F9FAFB', border: '1px solid #EEE', fontSize: '13px' }}>
+                <select value={editInfo.blood} onChange={(e) => setEditInfo({ ...editInfo, blood: e.target.value })} style={{ width: '100%', padding: '12px 10px', borderRadius: '14px', background: '#F9FAFB', border: '1px solid #EEE', fontSize: '13px' }}>
                   <option value="A">A형</option>
                   <option value="B">B형</option>
                   <option value="O">O형</option>
@@ -2336,25 +2343,25 @@ const SettingsView = ({
       {/* Modals for Settings functions */}
       <AnimatePresence>
         {showDeepAnalysis && (
-          <DeepAnalysisView 
+          <DeepAnalysisView
             onBack={() => setShowDeepAnalysis(false)}
             myInfo={myInfo}
             updateProfile={onUpdateMemo} // Use onUpdateMemo here
           />
         )}
       </AnimatePresence>
- 
+
       {showWorshipSet && (
         <div onClick={() => setShowWorshipSet(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 5000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
           <motion.div onClick={(e) => e.stopPropagation()} initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} style={{ background: 'white', borderRadius: '32px', padding: '30px', width: '100%', maxWidth: '340px' }}>
             <h3 style={{ fontSize: '18px', fontWeight: 900, color: '#2D1F08', marginBottom: '10px' }}>가정예배 주기 설정</h3>
             <p style={{ fontSize: '13px', color: '#8B7355', marginBottom: '20px', fontWeight: 600 }}>예배를 드리는 요일을 모두 선택해주세요.</p>
-            
+
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '25px' }}>
               {['일', '월', '화', '수', '목', '금', '토'].map(day => {
                 const isSelected = worshipDays.includes(day);
                 return (
-                  <button 
+                  <button
                     key={day}
                     onClick={() => {
                       if (isSelected) setWorshipDays(worshipDays.filter(d => d !== day));
@@ -2374,23 +2381,23 @@ const SettingsView = ({
             </div>
 
             <label style={{ fontSize: '12px', fontWeight: 800, color: '#B08D3E', display: 'block', marginBottom: '8px' }}>예정 시간</label>
-            <input 
-              type="time" 
-              value={worshipTime} 
+            <input
+              type="time"
+              value={worshipTime}
               onChange={(e) => setWorshipTime(e.target.value)}
               style={{ width: '100%', padding: '14px', borderRadius: '15px', border: '1px solid #EEE', background: '#F9FAFB', fontSize: '16px', fontWeight: 800, marginBottom: '25px' }}
             />
 
-            <motion.button 
-              whileTap={{ scale: 0.95 }} 
+            <motion.button
+              whileTap={{ scale: 0.95 }}
               onClick={async () => {
                 setShowWorshipSet(false);
                 // ☁️ Sync to DB
                 if (onUpdateProfile) {
-                   await onUpdateProfile(undefined, { worshipDays, worshipTime });
+                  await onUpdateProfile(undefined, { worshipDays, worshipTime });
                 }
                 alert("설정이 저장되었습니다. 상대방에게도 즉시 반영됩니다!");
-              }} 
+              }}
               style={{ width: '100%', padding: '16px', borderRadius: '18px', background: '#2D1F08', color: 'white', fontWeight: 900, border: 'none' }}
             >
               저장 및 닫기
@@ -2426,17 +2433,17 @@ const SettingsView = ({
           <motion.div onClick={(e) => e.stopPropagation()} initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} style={{ background: 'white', borderRadius: '32px', padding: '30px', width: '100%', maxWidth: '340px', textAlign: 'center' }}>
             <Users size={40} color="#15803D" style={{ marginBottom: '15px' }} />
             <h3 style={{ fontSize: '18px', fontWeight: 900, marginBottom: '20px' }}>배우자 연결 코드</h3>
-            
+
             {!isEditingCode ? (
               <>
                 <div style={{ padding: '20px', background: '#F9FAFB', borderRadius: '15px', fontSize: '24px', fontWeight: 900, letterSpacing: '4px' }}>{coupleCode}</div>
                 <p style={{ fontSize: '12px', color: '#8B7355', marginTop: '15px', fontWeight: 600, lineHeight: 1.5 }}>
-                  코드가 잘못되었나요? 연결이 원활하지 않을 때<br/>아래 버튼을 눌러 코드를 수정할 수 있습니다.
+                  코드가 잘못되었나요? 연결이 원활하지 않을 때<br />아래 버튼을 눌러 코드를 수정할 수 있습니다.
                 </p>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '20px' }}>
-                  <motion.button 
-                    whileTap={{ scale: 0.95 }} 
-                    onClick={() => { setTempCoupleCode(coupleCode); setIsEditingCode(true); }} 
+                  <motion.button
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => { setTempCoupleCode(coupleCode); setIsEditingCode(true); }}
                     style={{ width: '100%', padding: '12px', borderRadius: '12px', background: 'rgba(138, 96, 255, 0.1)', color: '#8A60FF', fontWeight: 900, border: '1px solid rgba(138, 96, 255, 0.2)' }}
                   >
                     연결 코드 수정하기
@@ -2447,23 +2454,23 @@ const SettingsView = ({
             ) : (
               <div style={{ textAlign: 'left' }}>
                 <label style={{ fontSize: '12px', fontWeight: 800, color: '#15803D', display: 'block', marginBottom: '8px' }}>새로운 연결 코드 입력 (HS-XXXX)</label>
-                <input 
-                  value={tempCoupleCode} 
+                <input
+                  value={tempCoupleCode}
                   onChange={(e) => setTempCoupleCode(e.target.value.toUpperCase())}
                   placeholder="HS-XXXX"
                   style={{ width: '100%', padding: '16px', borderRadius: '18px', border: '1.5px solid #EEE', background: '#F9FAFB', fontSize: '20px', fontWeight: 900, letterSpacing: '2px', textAlign: 'center', marginBottom: '15px' }}
                 />
                 <p style={{ fontSize: '11px', color: '#EF4444', fontWeight: 700, marginBottom: '20px', textAlign: 'center' }}>
-                  ⚠️ 경고: 배우자와 동일한 코드를 사용해야 합니다.<br/>코드를 바꾸면 이전 연결의 데이터가 안 보일 수 있습니다.
+                  ⚠️ 경고: 배우자와 동일한 코드를 사용해야 합니다.<br />코드를 바꾸면 이전 연결의 데이터가 안 보일 수 있습니다.
                 </p>
                 <div style={{ display: 'flex', gap: '10px' }}>
-                  <button 
+                  <button
                     onClick={() => setIsEditingCode(false)}
                     style={{ flex: 1, padding: '15px', borderRadius: '15px', background: '#EEE', color: '#666', fontWeight: 900, border: 'none' }}
                   >
                     취소
                   </button>
-                  <button 
+                  <button
                     onClick={async () => {
                       if (!tempCoupleCode || !tempCoupleCode.trim().startsWith('HS-')) {
                         alert("올바른 코드 형식이 아닙니다. 'HS-'로 시작해야 합니다.");
@@ -2506,16 +2513,16 @@ const SettingsView = ({
           <motion.div onClick={(e) => e.stopPropagation()} initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} style={{ background: 'white', borderRadius: '35px', padding: '35px', width: '100%', maxWidth: '360px', textAlign: 'center' }}>
             <Smartphone size={32} color="#3B82F6" style={{ marginBottom: '15px' }} />
             <h3 style={{ fontSize: '19px', fontWeight: 900, marginBottom: '20px' }}>기기 알림 통합 및 활성화</h3>
-            
+
             <div style={{ background: '#F8FAFB', padding: '15px', borderRadius: '20px', marginBottom: '20px', textAlign: 'left' }}>
               <p style={{ fontSize: '13px', color: '#4B5563', lineHeight: 1.6, fontWeight: 700, marginBottom: '10px' }}>
                 🔔 푸시 알림 상태: <span style={{ color: Notification.permission === 'granted' ? '#10B981' : '#F59E0B' }}>
                   {Notification.permission === 'granted' ? '활성화됨' : '비활성'}
                 </span>
               </p>
-              
+
               {Notification.permission !== 'granted' ? (
-                <button 
+                <button
                   onClick={() => {
                     Notification.requestPermission().then(permission => {
                       if (permission === 'granted') {
@@ -2565,33 +2572,33 @@ const SettingsView = ({
               <Activity size={24} color="#EF4444" />
               <h3 style={{ fontSize: '19px', fontWeight: 900 }}>알림 정밀 진단</h3>
             </div>
-            
+
             <div style={{ marginBottom: '25px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <div style={{ background: '#F8FAFB', padding: '15px', borderRadius: '18px', border: '1px solid #EEE' }}>
                 <p style={{ fontSize: '13px', fontWeight: 800, color: '#64748B', marginBottom: '5px' }}>1. 시스템 권한 상태</p>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                   <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: Notification.permission === 'granted' ? '#10B981' : '#F59E0B' }} />
-                   <span style={{ fontSize: '15px', fontWeight: 900, color: '#1E293B' }}>{Notification.permission === 'granted' ? '허용됨 (정상)' : '허용되지 않음'}</span>
+                  <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: Notification.permission === 'granted' ? '#10B981' : '#F59E0B' }} />
+                  <span style={{ fontSize: '15px', fontWeight: 900, color: '#1E293B' }}>{Notification.permission === 'granted' ? '허용됨 (정상)' : '허용되지 않음'}</span>
                 </div>
               </div>
 
               <div style={{ background: '#F8FAFB', padding: '15px', borderRadius: '18px', border: '1px solid #EEE' }}>
                 <p style={{ fontSize: '13px', fontWeight: 800, color: '#64748B', marginBottom: '5px' }}>2. 서비스 워커 상태</p>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                   <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: 'serviceWorker' in navigator ? '#10B981' : '#EF4444' }} />
-                   <span style={{ fontSize: '15px', fontWeight: 900, color: '#1E293B' }}>{'serviceWorker' in navigator ? '활성화됨' : '미지원 브라우저'}</span>
+                  <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: 'serviceWorker' in navigator ? '#10B981' : '#EF4444' }} />
+                  <span style={{ fontSize: '15px', fontWeight: 900, color: '#1E293B' }}>{'serviceWorker' in navigator ? '활성화됨' : '미지원 브라우저'}</span>
                 </div>
               </div>
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '25px' }}>
-              <button 
+              <button
                 onClick={async () => {
                   if (Notification.permission !== 'granted') {
                     const res = await Notification.requestPermission();
                     if (res !== 'granted') return alert("권한이 거부되었습니다. 브라우저 설정에서 수동으로 켜주세요.");
                   }
-                  
+
                   const reg = await navigator.serviceWorker.ready;
                   reg.showNotification('Heart Sync 테스트 알림', {
                     body: '지금 알림이 보인다면 시스템 설정은 정상입니다! ❤️',
@@ -2602,8 +2609,8 @@ const SettingsView = ({
               >
                 테스트 알림 즉시 발송
               </button>
-              
-              <button 
+
+              <button
                 onClick={() => {
                   alert("5초 뒤에 알림이 옵니다. 지금 바로 앱을 최소화(홈으로 이동)하고 기다려보세요!");
                   setTimeout(async () => {
@@ -2637,10 +2644,10 @@ const SettingsView = ({
       {/* 🛡️ 관리자 전용 메뉴 (설정 메뉴 내부로 이동) */}
       {isAdmin && (
         <div style={{ marginTop: '30px', borderTop: '1px solid rgba(0,0,0,0.05)', paddingTop: '30px' }}>
-          <button 
+          <button
             onClick={() => onNav('admin')}
-            style={{ 
-              width: '100%', padding: '20px', borderRadius: '25px', 
+            style={{
+              width: '100%', padding: '20px', borderRadius: '25px',
               background: 'linear-gradient(135deg, #FDFCF0, #FFF)', border: '1.5px solid #F5D060',
               display: 'flex', alignItems: 'center', gap: '15px', color: '#B08D3E', fontWeight: 900,
               boxShadow: '0 8px 20px rgba(245, 208, 96, 0.15)'
@@ -2667,10 +2674,10 @@ const SettingsView = ({
         <motion.button
           whileTap={{ scale: 0.95 }}
           onClick={async () => {
-            if(window.confirm("로그아웃 하시겠습니까?")) {
+            if (window.confirm("로그아웃 하시겠습니까?")) {
               localStorage.clear();
               supabase.auth.signOut().then(() => {
-                window.location.href = '/'; 
+                window.location.href = '/';
               });
               // Fallback redirect if signout hangs
               setTimeout(() => { window.location.href = '/'; }, 800);
@@ -2735,15 +2742,15 @@ const OnboardingView = ({ user, userRole, setUserRole, onFinish }) => {
   };
 
   return (
-    <motion.div 
-      initial={{ opacity: 0 }} 
-      animate={{ opacity: 1 }} 
-      style={{ 
-        display: 'flex', 
-        flexDirection: 'column', 
-        height: '100%', 
-        width: '100%', 
-        backgroundColor: 'white', 
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100%',
+        width: '100%',
+        backgroundColor: 'white',
         padding: '60px 30px 40px',
         position: 'fixed',
         inset: 0,
@@ -2752,7 +2759,7 @@ const OnboardingView = ({ user, userRole, setUserRole, onFinish }) => {
       }}
     >
       {step > 1 && step < 4 && (
-        <button 
+        <button
           onClick={() => setStep(step - 1)}
           style={{ position: 'absolute', top: '15px', left: '15px', display: 'flex', alignItems: 'center', gap: '5px', padding: '10px', background: 'none', border: 'none', color: '#8B7355', fontWeight: 700, fontSize: '14px', zIndex: 10 }}
         >
@@ -2760,7 +2767,7 @@ const OnboardingView = ({ user, userRole, setUserRole, onFinish }) => {
         </button>
       )}
       {step >= 7 && step <= 8 && (
-        <button 
+        <button
           onClick={() => setStep(step - 1)}
           style={{ position: 'absolute', top: '15px', left: '15px', display: 'flex', alignItems: 'center', gap: '5px', padding: '10px', background: 'none', border: 'none', color: '#8B7355', fontWeight: 700, fontSize: '14px', zIndex: 10 }}
         >
@@ -2772,26 +2779,26 @@ const OnboardingView = ({ user, userRole, setUserRole, onFinish }) => {
         {step === 1 && (
           <motion.div key="step1" initial={{ x: 20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} exit={{ x: -20, opacity: 0 }} style={{ display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'center' }}>
             <div style={{ marginBottom: '40px', textAlign: 'left', paddingLeft: '10px' }}>
-              <img 
-                src="/logo_main.png" 
-                alt="Heart Logo" 
+              <img
+                src="/logo_main.png"
+                alt="Heart Logo"
                 style={{ width: '180px', height: 'auto', marginTop: '-25px', marginBottom: '-25px', marginLeft: '-25px', transform: 'scale(1.1)' }}
-                onError={(e) => { e.target.style.display = 'none'; }} 
+                onError={(e) => { e.target.style.display = 'none'; }}
               />
               <p style={{ fontSize: '13px', color: '#B08D3E', fontWeight: 900, letterSpacing: '2px', marginBottom: '4px' }}>부부의 마음을 이어드립니다</p>
               <h1 className="brand-text" style={{ fontSize: '32px', letterSpacing: '6px', color: '#D4AF37', fontWeight: 900, marginBottom: '2px' }}>HEART SYNC</h1>
               <p style={{ fontSize: '11px', color: '#D4AF37', fontWeight: 800, letterSpacing: '3px', marginBottom: '30px', opacity: 0.8 }}>MORE DEEP, MORE CLOSE</p>
-              
+
               <h2 style={{ fontSize: '22px', fontWeight: 900, color: '#2D1F08', marginBottom: '12px', lineHeight: 1.4, wordBreak: 'keep-all' }}>
-                Heart Sync에 오신 여러분을<br/>
+                Heart Sync에 오신 여러분을<br />
                 환영합니다.
               </h2>
               <p style={{ color: '#8B7355', fontSize: '15px', fontWeight: 600 }}>당신의 정보를 입력해주세요</p>
             </div>
 
             <div style={{ display: 'flex', gap: '15px', marginBottom: '30px' }}>
-              <button 
-                onClick={() => { setUserRole('husband'); setStep(2); }} 
+              <button
+                onClick={() => { setUserRole('husband'); setStep(2); }}
                 style={{ flex: 1, padding: '30px 15px', borderRadius: '30px', background: '#FDFCF0', border: '2px solid #F5D060', fontSize: '18px', fontWeight: 900, color: '#2D1F08', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '15px' }}
               >
                 <div style={{ width: '80px', height: '80px', borderRadius: '50%', overflow: 'hidden', border: '2px solid white', boxShadow: '0 4px 10px rgba(0,0,0,0.1)', background: 'white' }}>
@@ -2799,8 +2806,8 @@ const OnboardingView = ({ user, userRole, setUserRole, onFinish }) => {
                 </div>
                 남편입니다
               </button>
-              <button 
-                onClick={() => { setUserRole('wife'); setStep(2); }} 
+              <button
+                onClick={() => { setUserRole('wife'); setStep(2); }}
                 style={{ flex: 1, padding: '30px 15px', borderRadius: '30px', background: '#FDFCF0', border: '2px solid #F5D060', fontSize: '18px', fontWeight: 900, color: '#2D1F08', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '15px' }}
               >
                 <div style={{ width: '80px', height: '80px', borderRadius: '50%', overflow: 'hidden', border: '2px solid white', boxShadow: '0 4px 10px rgba(0,0,0,0.1)', background: 'white' }}>
@@ -2813,7 +2820,7 @@ const OnboardingView = ({ user, userRole, setUserRole, onFinish }) => {
             {/* 🔗 Quick Link for Existing Users */}
             <div style={{ textAlign: 'center' }}>
               <p style={{ fontSize: '14px', color: '#8B7355', fontWeight: 600, marginBottom: '10px' }}>이미 연결된 배우자가 있으신가요?</p>
-              <button 
+              <button
                 onClick={() => setStep(6)}
                 style={{ background: 'none', border: 'none', color: '#8A60FF', fontWeight: 900, fontSize: '15px', borderBottom: '1.5px solid #8A60FF', paddingBottom: '2px' }}
               >
@@ -2828,15 +2835,15 @@ const OnboardingView = ({ user, userRole, setUserRole, onFinish }) => {
             <div style={{ width: '100px', height: '100px', borderRadius: '50%', background: 'rgba(212, 175, 55, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '30px' }}>
               <Bell size={48} color="#D4AF37" />
             </div>
-            <h2 style={{ fontSize: '26px', fontWeight: 900, color: '#2D1F08', marginBottom: '15px' }}>알림을 켜고<br/>마음을 연결하세요!</h2>
+            <h2 style={{ fontSize: '26px', fontWeight: 900, color: '#2D1F08', marginBottom: '15px' }}>알림을 켜고<br />마음을 연결하세요!</h2>
             <p style={{ fontSize: '16px', color: '#8B7355', fontWeight: 600, lineHeight: 1.6, marginBottom: '40px', wordBreak: 'keep-all' }}>
-              배우자의 신호를 실시간으로 확인하고,<br/>
-              함께하는 대화카드를 놓치지 않으려면<br/>
+              배우자의 신호를 실시간으로 확인하고,<br />
+              함께하는 대화카드를 놓치지 않으려면<br />
               푸쉬 알림 허용이 필요해요. 💌
             </p>
-            
+
             <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', width: '100%' }}>
-              <button 
+              <button
                 onClick={() => {
                   if ("Notification" in window) {
                     Notification.requestPermission().then(permission => {
@@ -2853,7 +2860,7 @@ const OnboardingView = ({ user, userRole, setUserRole, onFinish }) => {
               >
                 알림 허용하고 시작하기
               </button>
-              <button 
+              <button
                 onClick={() => setStep(8)}
                 style={{ background: 'none', border: 'none', color: '#B08D3E', fontWeight: 700, fontSize: '14px' }}
               >
@@ -2870,30 +2877,30 @@ const OnboardingView = ({ user, userRole, setUserRole, onFinish }) => {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
               <div>
                 <label style={{ fontSize: '12px', fontWeight: 800, color: '#B08D3E', display: 'block', marginBottom: '8px' }}>앱에서 불릴 이름/애칭</label>
-                <input 
+                <input
                   autoFocus
-                  value={nickname} 
-                  onChange={(e) => setNickname(e.target.value)} 
-                  placeholder="예: 사랑꾼 남편" 
-                  style={{ width: '100%', padding: '16px 22px', borderRadius: '18px', border: '1.5px solid #EEE', background: '#F9FAFB', fontSize: '16px', color: '#2D1F08', fontWeight: 700 }} 
+                  value={nickname}
+                  onChange={(e) => setNickname(e.target.value)}
+                  placeholder="예: 사랑꾼 남편"
+                  style={{ width: '100%', padding: '16px 22px', borderRadius: '18px', border: '1.5px solid #EEE', background: '#F9FAFB', fontSize: '16px', color: '#2D1F08', fontWeight: 700 }}
                 />
               </div>
-              
+
               <div style={{ display: 'flex', gap: '15px' }}>
                 <div style={{ flex: 1 }}>
                   <label style={{ fontSize: '12px', fontWeight: 800, color: '#B08D3E', display: 'block', marginBottom: '8px' }}>결혼기념일 선택</label>
-                  <input 
-                    type="date" 
-                    value={mDate} 
+                  <input
+                    type="date"
+                    value={mDate}
                     onChange={(e) => setMDate(e.target.value)}
                     style={{ width: '100%', padding: '16px 18px', borderRadius: '18px', border: '1.5px solid #EEE', background: '#F9FAFB', fontSize: '15px', color: '#2D1F08', fontWeight: 800, appearance: 'none' }}
                   />
                 </div>
                 <div style={{ width: '100px' }}>
                   <label style={{ fontSize: '12px', fontWeight: 800, color: '#B08D3E', display: 'block', marginBottom: '8px' }}>혈액형</label>
-                  <select 
-                    value={blood} 
-                    onChange={(e) => setBlood(e.target.value)} 
+                  <select
+                    value={blood}
+                    onChange={(e) => setBlood(e.target.value)}
                     style={{ width: '100%', padding: '16px 12px', borderRadius: '18px', border: '1.5px solid #EEE', background: '#F9FAFB', fontSize: '15px', fontWeight: 800, appearance: 'none' }}
                   >
                     <option value="A">A형</option>
@@ -2904,7 +2911,7 @@ const OnboardingView = ({ user, userRole, setUserRole, onFinish }) => {
                 </div>
               </div>
             </div>
-            <button 
+            <button
               onClick={() => nickname && setStep(3)}
               style={{ marginTop: '20px', padding: '18px', borderRadius: '20px', background: '#2D1F08', color: 'white', fontWeight: 900, fontSize: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
             >
@@ -2916,24 +2923,24 @@ const OnboardingView = ({ user, userRole, setUserRole, onFinish }) => {
         {step === 3 && (
           <motion.div key="step3" initial={{ x: 20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} exit={{ x: -20, opacity: 0 }} className="flex flex-col h-full py-10">
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
-               <Fingerprint size={24} color="#8A60FF" />
-               <span style={{ fontSize: '12px', fontWeight: 900, color: '#8A60FF' }}>하티 인사이트 (성격 진단)</span>
+              <Fingerprint size={24} color="#8A60FF" />
+              <span style={{ fontSize: '12px', fontWeight: 900, color: '#8A60FF' }}>하티 인사이트 (성격 진단)</span>
             </div>
             <h2 style={{ fontSize: '22px', fontWeight: 900, color: '#2D1F08', marginBottom: '15px', lineHeight: 1.4 }}>나의 관계 기질은 어떤가요?</h2>
             <p style={{ color: '#8B7355', fontSize: '14px', marginBottom: '30px', fontWeight: 600 }}>4개의 질문으로 배우자와의 소통 방식을 확인해보세요.</p>
-            
+
             <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '24px' }}>
               {insightQuestions.map((iq) => (
                 <div key={iq.key}>
                   <p style={{ fontSize: '14px', fontWeight: 900, color: '#2D1F08', marginBottom: '12px' }}>{iq.title}: {iq.q}</p>
                   <div style={{ display: 'flex', gap: '10px' }}>
-                    <button 
+                    <button
                       onClick={() => setInsightAnswers(prev => ({ ...prev, [iq.key]: iq.a1.charAt(0) }))}
                       style={{ flex: 1, padding: '14px', borderRadius: '14px', border: '1.5px solid #EEE', background: insightAnswers[iq.key] === iq.a1.charAt(0) ? '#8A60FF' : 'white', color: insightAnswers[iq.key] === iq.a1.charAt(0) ? 'white' : '#717171', fontSize: '13px', fontWeight: 800, transition: '0.2s' }}
                     >
                       {iq.a1}
                     </button>
-                    <button 
+                    <button
                       onClick={() => setInsightAnswers(prev => ({ ...prev, [iq.key]: iq.a2.charAt(0) }))}
                       style={{ flex: 1, padding: '14px', borderRadius: '14px', border: '1.5px solid #EEE', background: insightAnswers[iq.key] === iq.a2.charAt(0) ? '#8A60FF' : 'white', color: insightAnswers[iq.key] === iq.a2.charAt(0) ? 'white' : '#717171', fontSize: '13px', fontWeight: 800, transition: '0.2s' }}
                     >
@@ -2943,8 +2950,8 @@ const OnboardingView = ({ user, userRole, setUserRole, onFinish }) => {
                 </div>
               ))}
             </div>
-            
-            <button 
+
+            <button
               onClick={() => Object.values(insightAnswers).every(v => v !== null) && calculateInsight()}
               style={{ marginTop: '30px', padding: '18px', borderRadius: '20px', background: '#8A60FF', color: 'white', fontWeight: 900, fontSize: '16px', boxShadow: '0 8px 20px rgba(138, 96, 255, 0.3)' }}
             >
@@ -2959,15 +2966,15 @@ const OnboardingView = ({ user, userRole, setUserRole, onFinish }) => {
               <span style={{ fontSize: '40px' }}>💝</span>
             </div>
             <h2 style={{ fontSize: '24px', fontWeight: 900, color: '#2D1F08', marginBottom: '10px' }}>준비가 끝났습니다!</h2>
-            <p style={{ color: '#8B7355', fontSize: '15px', fontWeight: 700, marginBottom: '30px' }}>당신의 기질은 <span style={{ color: '#8A60FF' }}>{insightResult}</span>입니다.<br/>이제 배우자와 연결을 시작할까요?</p>
-            
+            <p style={{ color: '#8B7355', fontSize: '15px', fontWeight: 700, marginBottom: '30px' }}>당신의 기질은 <span style={{ color: '#8A60FF' }}>{insightResult}</span>입니다.<br />이제 배우자와 연결을 시작할까요?</p>
+
             {/* 🧠 New Deep Analysis Prompt in Onboarding */}
             {!deepAnalysis && (
               <div style={{ background: 'rgba(138, 96, 255, 0.05)', padding: '24px', borderRadius: '24px', border: '1.5px dashed #8A60FF', marginBottom: '25px', width: '100%' }}>
                 <p style={{ fontSize: '14px', fontWeight: 900, color: '#6A4DCE', marginBottom: '8px' }}>🤖 하티가 당신을 더 잘 이해하고 싶대요!</p>
                 <p style={{ fontSize: '12px', color: '#8B7355', fontWeight: 600, marginBottom: '15px', lineHeight: 1.5 }}>7개의 전문 질문에 답하면, AI 하티가 더욱 정교한 부부 맞춤형 조언을 제공합니다.</p>
-                <button 
-                  onClick={() => setStep(7)} 
+                <button
+                  onClick={() => setStep(7)}
                   style={{ width: '100%', background: '#8A60FF', color: 'white', padding: '12px', borderRadius: '15px', border: 'none', fontWeight: 900, fontSize: '14px' }}
                 >
                   3분 전문 성향 진단 시작 (추천)
@@ -2981,13 +2988,13 @@ const OnboardingView = ({ user, userRole, setUserRole, onFinish }) => {
                 <span style={{ fontSize: '13px', fontWeight: 800, color: '#166534' }}>심층 분석이 완료되었습니다!</span>
               </div>
             )}
-            
+
             <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', width: '100%' }}>
-              <button 
+              <button
                 onClick={async () => {
                   const newCode = 'HS-' + Math.floor(1000 + Math.random() * 9000);
                   setCoupleCode(newCode);
-                  
+
                   // Early upsert for creator so the joiner can find this code
                   try {
                     const { error } = await supabase.from('profiles').upsert({
@@ -2997,21 +3004,21 @@ const OnboardingView = ({ user, userRole, setUserRole, onFinish }) => {
                       info: { nickname, marriageDate: mDate || new Date().toISOString().split('T')[0], mbti: insightResult, blood, deepAnalysis },
                       updated_at: new Date().toISOString()
                     }, { onConflict: 'id' });
-                    
+
                     if (error) throw error;
                     alert("서버에 코드 등록 완료: " + newCode + "\n이제 배우자에게 코드를 알려주세요!");
                   } catch (err) {
                     console.error("Early upsert failed:", err);
                     alert("서버 등록 실패: " + err.message);
                   }
-                  
+
                   setStep(5); // Show created code
                 }}
                 style={{ width: '100%', padding: '18px', borderRadius: '20px', background: '#2D1F08', color: 'white', fontWeight: 900, fontSize: '16px', boxShadow: '0 8px 20px rgba(0,0,0,0.1)' }}
               >
                 새로운 초대 코드 만들기
               </button>
-              <button 
+              <button
                 onClick={() => setStep(6)}
                 style={{ width: '100%', padding: '18px', borderRadius: '20px', background: '#FDFCF0', border: '2.5px solid #F5D060', color: '#2D1F08', fontWeight: 900, fontSize: '16px' }}
               >
@@ -3023,58 +3030,58 @@ const OnboardingView = ({ user, userRole, setUserRole, onFinish }) => {
 
         {step === 5 && (
           <motion.div key="step5" initial={{ x: 20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} className="flex flex-col h-full justify-center items-center text-center">
-             <h2 style={{ fontSize: '22px', fontWeight: 900, color: '#2D1F08', marginBottom: '15px' }}>초대 코드가 생성되었습니다</h2>
-             <div style={{ width: '100%', padding: '30px', background: '#F9FAFB', borderRadius: '24px', border: '2px dashed #D4AF37', marginBottom: '15px' }}>
-                <span style={{ fontSize: '12px', fontWeight: 900, color: '#B08D3E', display: 'block', marginBottom: '10px' }}>우리만의 소중한 연결 코드</span>
-                <div style={{ fontSize: '32px', fontWeight: 900, color: '#2D1F08', letterSpacing: '8px' }}>{coupleCode}</div>
-             </div>
-             <p style={{ color: '#8B7355', fontSize: '14px', marginBottom: '30px', fontWeight: 600, lineHeight: 1.6 }}>이 코드를 복사해서 배우자에게 보내주세요.<br/>배우자와 연결이 확인되면 자동으로 시작됩니다.</p>
-             
-             <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                <button 
-                  onClick={() => {
-                    navigator.clipboard.writeText(coupleCode);
-                    alert("코드가 복사되었습니다!");
-                  }}
-                  style={{ width: '100%', padding: '15px', borderRadius: '15px', background: '#FDFCF0', border: '1.5px solid #F5D060', color: '#2D1F08', fontWeight: 800, fontSize: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
-                >
-                  <Share2 size={18} /> 초대 코드 복사하기
-                </button>
+            <h2 style={{ fontSize: '22px', fontWeight: 900, color: '#2D1F08', marginBottom: '15px' }}>초대 코드가 생성되었습니다</h2>
+            <div style={{ width: '100%', padding: '30px', background: '#F9FAFB', borderRadius: '24px', border: '2px dashed #D4AF37', marginBottom: '15px' }}>
+              <span style={{ fontSize: '12px', fontWeight: 900, color: '#B08D3E', display: 'block', marginBottom: '10px' }}>우리만의 소중한 연결 코드</span>
+              <div style={{ fontSize: '32px', fontWeight: 900, color: '#2D1F08', letterSpacing: '8px' }}>{coupleCode}</div>
+            </div>
+            <p style={{ color: '#8B7355', fontSize: '14px', marginBottom: '30px', fontWeight: 600, lineHeight: 1.6 }}>이 코드를 복사해서 배우자에게 보내주세요.<br />배우자와 연결이 확인되면 자동으로 시작됩니다.</p>
 
-                <button 
-                  onClick={async () => {
-                    setIsConnecting(true);
-                    // Check if spouse has connected (created a profile)
-                    const { data } = await supabase.from('profiles').select('*').eq('couple_id', coupleCode);
-                    if (data && data.length > 1) {
-                      setIsConnected(true);
-                      setTimeout(() => {
-                        onFinish({ nickname, marriageDate: mDate, mbti: insightResult, blood, coupleCode, deepAnalysis });
-                      }, 1000);
-                    } else {
-                      setTimeout(() => {
-                        setIsConnecting(false);
-                        alert("아직 배우자가 연결되지 않았습니다. 코드를 공유했는지 확인해주세요!");
-                      }, 1500);
-                    }
-                  }}
-                  disabled={isConnecting || isConnected}
-                  style={{ width: '100%', padding: '18px', borderRadius: '20px', background: isConnected ? '#22C55E' : '#2D1F08', color: 'white', fontWeight: 900, fontSize: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}
-                >
-                  {isConnecting ? (
-                    <>
-                      <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}><RefreshCw size={20} /></motion.div>
-                      배우자 연결 확인 중...
-                    </>
-                  ) : isConnected ? (
-                    <>
-                      <CheckCircle2 size={20} /> 연결 완료!
-                    </>
-                  ) : (
-                    "배우자 연결 확인 및 시작"
-                  )}
-                </button>
-             </div>
+            <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(coupleCode);
+                  alert("코드가 복사되었습니다!");
+                }}
+                style={{ width: '100%', padding: '15px', borderRadius: '15px', background: '#FDFCF0', border: '1.5px solid #F5D060', color: '#2D1F08', fontWeight: 800, fontSize: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+              >
+                <Share2 size={18} /> 초대 코드 복사하기
+              </button>
+
+              <button
+                onClick={async () => {
+                  setIsConnecting(true);
+                  // Check if spouse has connected (created a profile)
+                  const { data } = await supabase.from('profiles').select('*').eq('couple_id', coupleCode);
+                  if (data && data.length > 1) {
+                    setIsConnected(true);
+                    setTimeout(() => {
+                      onFinish({ nickname, marriageDate: mDate, mbti: insightResult, blood, coupleCode, deepAnalysis });
+                    }, 1000);
+                  } else {
+                    setTimeout(() => {
+                      setIsConnecting(false);
+                      alert("아직 배우자가 연결되지 않았습니다. 코드를 공유했는지 확인해주세요!");
+                    }, 1500);
+                  }
+                }}
+                disabled={isConnecting || isConnected}
+                style={{ width: '100%', padding: '18px', borderRadius: '20px', background: isConnected ? '#22C55E' : '#2D1F08', color: 'white', fontWeight: 900, fontSize: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}
+              >
+                {isConnecting ? (
+                  <>
+                    <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}><RefreshCw size={20} /></motion.div>
+                    배우자 연결 확인 중...
+                  </>
+                ) : isConnected ? (
+                  <>
+                    <CheckCircle2 size={20} /> 연결 완료!
+                  </>
+                ) : (
+                  "배우자 연결 확인 및 시작"
+                )}
+              </button>
+            </div>
           </motion.div>
         )}
 
@@ -3082,11 +3089,11 @@ const OnboardingView = ({ user, userRole, setUserRole, onFinish }) => {
           <motion.div key="step6" initial={{ x: 20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} className="flex flex-col h-full justify-center">
             <h2 style={{ fontSize: '22px', fontWeight: 900, color: '#2D1F08', marginBottom: '15px' }}>초대 코드를 입력해주세요</h2>
             <p style={{ color: '#8B7355', fontSize: '14px', marginBottom: '25px', fontWeight: 600 }}>배우자에게 받은 HS-로 시작하는 코드를 입력하세요.</p>
-            <input 
-              placeholder="예: HS-1234" 
+            <input
+              placeholder="예: HS-1234"
               value={coupleCode}
               onChange={(e) => setCoupleCode(e.target.value.toUpperCase())}
-              style={{ width: '100%', padding: '20px', borderRadius: '20px', border: '2px solid #F5D060', fontSize: '20px', fontWeight: 900, textAlign: 'center', letterSpacing: '4px', marginBottom: '25px' }} 
+              style={{ width: '100%', padding: '20px', borderRadius: '20px', border: '2px solid #F5D060', fontSize: '20px', fontWeight: 900, textAlign: 'center', letterSpacing: '4px', marginBottom: '25px' }}
             />
             {coupleCode && coupleCode.startsWith('HS-') && (
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ textAlign: 'center', marginBottom: '25px' }}>
@@ -3098,21 +3105,21 @@ const OnboardingView = ({ user, userRole, setUserRole, onFinish }) => {
                 </div>
               </motion.div>
             )}
-            <button 
+            <button
               onClick={async () => {
                 if (!coupleCode || !coupleCode.startsWith('HS-')) return;
                 setIsConnecting(true);
-                
+
                 // Try to find existing couple in Supabase
                 const { data } = await supabase.from('profiles').select('*').eq('couple_id', coupleCode);
-                
+
                 if (data && data.length > 0) {
                   // Find spouse info to show a warmer message
                   const spouse = data.find(p => p.id !== user.id);
                   const spouseName = spouse?.info?.nickname || (spouse?.user_role === 'husband' ? '남편' : '아내') || '배우자';
-                  
+
                   alert(`🎉 ${spouseName}님을 찾았습니다! 성공적으로 연결되었습니다.`);
-                  
+
                   // Found existing couple code
                   setIsConnected(true);
                   setTimeout(() => {
@@ -3142,7 +3149,7 @@ const OnboardingView = ({ user, userRole, setUserRole, onFinish }) => {
                 "동기화 및 시작하기"
               )}
             </button>
-            <button 
+            <button
               onClick={() => setStep(4)}
               style={{ marginTop: '15px', background: 'none', border: 'none', color: '#9CA3AF', fontSize: '13px', fontWeight: 600, textDecoration: 'underline' }}
             >
@@ -3154,48 +3161,48 @@ const OnboardingView = ({ user, userRole, setUserRole, onFinish }) => {
         {/* 🧠 Deep Analysis Sync Steps */}
         {step === 7 && (
           <motion.div key="step7" initial={{ x: 20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} className="flex flex-col h-full py-5">
-             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '15px' }}>
-                <Sparkles size={20} color="#8A60FF" />
-                <h2 style={{ fontSize: '18px', fontWeight: 800, color: '#1E293B' }}>하티 전문 성향 진단</h2>
-             </div>
-             <div style={{ width: '100%', height: '4px', background: '#E2E8F0', borderRadius: '10px', marginBottom: '20px' }}>
-                <div style={{ width: `${((deepStep + 1)/deepAnalysisQuestions.length)*100}%`, height: '100%', background: '#8A60FF', transition: '0.3s' }} />
-             </div>
-             <h3 style={{ fontSize: '18px', fontWeight: 900, color: '#0F172A', marginBottom: '24px', lineHeight: 1.5 }}>
-                {deepAnalysisQuestions[deepStep].q}
-             </h3>
-             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', flex: 1, overflowY: 'auto' }}>
-                {deepAnalysisQuestions[deepStep].options.map((opt, i) => (
-                   <button 
-                     key={i}
-                     onClick={() => {
-                        const newSels = { ...deepSelections, [deepAnalysisQuestions[deepStep].key]: opt };
-                        setDeepSelections(newSels);
-                        if (deepStep < deepAnalysisQuestions.length - 1) setDeepStep(deepStep + 1);
-                        else submitDeepAnalysis();
-                     }}
-                     style={{ width: '100%', padding: '20px', borderRadius: '18px', background: 'white', border: '1.5px solid #F1F5F9', textAlign: 'left', fontSize: '14px', fontWeight: 700, color: '#475569', boxShadow: '0 4px 10px rgba(0,0,0,0.02)' }}
-                   >
-                     {opt}
-                   </button>
-                ))}
-             </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '15px' }}>
+              <Sparkles size={20} color="#8A60FF" />
+              <h2 style={{ fontSize: '18px', fontWeight: 800, color: '#1E293B' }}>하티 전문 성향 진단</h2>
+            </div>
+            <div style={{ width: '100%', height: '4px', background: '#E2E8F0', borderRadius: '10px', marginBottom: '20px' }}>
+              <div style={{ width: `${((deepStep + 1) / deepAnalysisQuestions.length) * 100}%`, height: '100%', background: '#8A60FF', transition: '0.3s' }} />
+            </div>
+            <h3 style={{ fontSize: '18px', fontWeight: 900, color: '#0F172A', marginBottom: '24px', lineHeight: 1.5 }}>
+              {deepAnalysisQuestions[deepStep].q}
+            </h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', flex: 1, overflowY: 'auto' }}>
+              {deepAnalysisQuestions[deepStep].options.map((opt, i) => (
+                <button
+                  key={i}
+                  onClick={() => {
+                    const newSels = { ...deepSelections, [deepAnalysisQuestions[deepStep].key]: opt };
+                    setDeepSelections(newSels);
+                    if (deepStep < deepAnalysisQuestions.length - 1) setDeepStep(deepStep + 1);
+                    else submitDeepAnalysis();
+                  }}
+                  style={{ width: '100%', padding: '20px', borderRadius: '18px', background: 'white', border: '1.5px solid #F1F5F9', textAlign: 'left', fontSize: '14px', fontWeight: 700, color: '#475569', boxShadow: '0 4px 10px rgba(0,0,0,0.02)' }}
+                >
+                  {opt}
+                </button>
+              ))}
+            </div>
           </motion.div>
         )}
 
         {step === 8 && deepAnalysis && (
           <motion.div key="step8" initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="flex flex-col h-full justify-center">
-             <div style={{ background: 'white', padding: '30px 20px', borderRadius: '24px', boxShadow: '0 10px 30px rgba(0,0,0,0.05)', border: '2px solid #8A60FF', marginBottom: '30px' }}>
-                <p style={{ fontSize: '12px', fontWeight: 900, color: '#8A60FF' }}>진단 완료!</p>
-                <h1 style={{ fontSize: '19px', fontWeight: 900, color: '#1E293B', marginBottom: '15px' }}>{deepAnalysis.title}</h1>
-                <p style={{ fontSize: '14px', color: '#475569', lineHeight: 1.6 }}>{deepAnalysis.summary}</p>
-             </div>
-             <button 
-                onClick={() => setStep(4)}
-                style={{ width: '100%', padding: '18px', borderRadius: '18px', background: '#1E293B', color: 'white', fontWeight: 900, fontSize: '16px' }}
-             >
-                분석 데이터 저장 및 계속하기
-             </button>
+            <div style={{ background: 'white', padding: '30px 20px', borderRadius: '24px', boxShadow: '0 10px 30px rgba(0,0,0,0.05)', border: '2px solid #8A60FF', marginBottom: '30px' }}>
+              <p style={{ fontSize: '12px', fontWeight: 900, color: '#8A60FF' }}>진단 완료!</p>
+              <h1 style={{ fontSize: '19px', fontWeight: 900, color: '#1E293B', marginBottom: '15px' }}>{deepAnalysis.title}</h1>
+              <p style={{ fontSize: '14px', color: '#475569', lineHeight: 1.6 }}>{deepAnalysis.summary}</p>
+            </div>
+            <button
+              onClick={() => setStep(4)}
+              style={{ width: '100%', padding: '18px', borderRadius: '18px', background: '#1E293B', color: 'white', fontWeight: 900, fontSize: '16px' }}
+            >
+              분석 데이터 저장 및 계속하기
+            </button>
           </motion.div>
         )}
       </AnimatePresence>
@@ -3221,10 +3228,10 @@ const AuthView = ({ onLogoClick, showAdminLogin, setShowAdminLogin, setUser, set
   const handleAdminLogin = (e) => {
     const name = e.target.elements.name.value;
     const password = e.target.elements.password.value;
-    
+
     // Check Super Admin bypass
     if (name === "백동희" && password === "0000") {
-      setIsAdmin(true); 
+      setIsAdmin(true);
       setUser({ id: 'admin-id', email: 'admin@heartsync.com', user_metadata: { full_name: '백동희', role: 'admin' } });
       setSession({ user: { id: 'admin-id', role: 'admin' } });
       localStorage.setItem('isAdmin', 'true');
@@ -3236,22 +3243,22 @@ const AuthView = ({ onLogoClick, showAdminLogin, setShowAdminLogin, setUser, set
   };
 
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0 }} animate={{ opacity: 1 }}
       style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', width: '100%', backgroundColor: 'white', padding: '60px 30px', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}
     >
-      <motion.img 
+      <motion.img
         whileTap={{ scale: 0.9 }}
         onClick={onLogoClick}
-        src="/logo_main.png" 
-        alt="Heart Sync" 
-        style={{ width: '180px', marginBottom: '10px', cursor: 'pointer' }} 
+        src="/logo_main.png"
+        alt="Heart Sync"
+        style={{ width: '180px', marginBottom: '10px', cursor: 'pointer' }}
       />
       <h1 className="brand-text" style={{ fontSize: '28px', color: '#D4AF37', fontWeight: 900, marginBottom: '5px' }}>HEART SYNC</h1>
       <p style={{ fontSize: '14px', color: '#8B7355', marginBottom: '50px', fontWeight: 600 }}>부부의 마음을 더 깊게, 더 가까이</p>
-      
+
       {showAdminLogin ? (
-        <motion.form 
+        <motion.form
           initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
           onSubmit={(e) => { e.preventDefault(); handleAdminLogin(e); }}
           style={{ width: '100%', maxWidth: '320px', display: 'flex', flexDirection: 'column', gap: '12px' }}
@@ -3267,7 +3274,7 @@ const AuthView = ({ onLogoClick, showAdminLogin, setShowAdminLogin, setUser, set
         </motion.form>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', width: '100%', maxWidth: '320px' }}>
-          <button 
+          <button
             onClick={() => handleOAuthLogin('kakao')}
             style={{ width: '100%', padding: '16px', borderRadius: '15px', background: '#FEE500', color: '#3C1E1E', fontWeight: 900, border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', fontSize: '15px' }}
           >
@@ -3277,9 +3284,9 @@ const AuthView = ({ onLogoClick, showAdminLogin, setShowAdminLogin, setUser, set
           <div style={{ height: '10px' }} />
         </div>
       )}
-      
+
       <p style={{ fontSize: '12px', color: '#9CA3AF', marginTop: '40px', lineHeight: 1.6 }}>
-        로그인 시 Heart Sync의 <span style={{ textDecoration: 'underline' }}>이용약관</span> 및<br/>
+        로그인 시 Heart Sync의 <span style={{ textDecoration: 'underline' }}>이용약관</span> 및<br />
         <span style={{ textDecoration: 'underline' }}>개인정보 처리방침</span>에 동의하게 됩니다.
       </p>
     </motion.div>
@@ -3331,26 +3338,26 @@ const App = () => {
   const appTheme = { id: 'warm', primary: '#D4AF37', bg: '#FDFCF0' };
   const [mainChannel, setMainChannel] = useState(null); // 📡 Persistent Shared Channel
   const lastGardenNavIdRef = React.useRef(null);
-  const lastNotifiedCardQIdRef = React.useRef(null); 
+  const lastNotifiedCardQIdRef = React.useRef(null);
   const lastNotifiedGardenNavIdRef = React.useRef(null);
   const lastNotifiedTabNavIdRef = React.useRef(null);
   const activeTabRef = React.useRef(activeTab);
-  const lastNavIdRef = React.useRef(null); 
+  const lastNavIdRef = React.useRef(null);
   const [notifPermission, setNotifPermission] = useState(typeof window !== 'undefined' ? Notification.permission : 'default');
 
   // 🔔 Native Push Notification Helper (with Haptic Vibration)
   const sendNativeNotification = (title, body, tab = null, eventName = null) => {
     // 📬 Inbox Logging for persistence
-    const newNotif = { 
-      id: Date.now(), 
-      title: title || 'Heart Sync', 
-      body: body || '마음 신호가 도착했습니다.', 
-      tab, 
+    const newNotif = {
+      id: Date.now(),
+      title: title || 'Heart Sync',
+      body: body || '마음 신호가 도착했습니다.',
+      tab,
       eventName,
       time: new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
       read: false
     };
-    
+
     setNotifications(prev => {
       try {
         const updated = [newNotif, ...prev.slice(0, 49)];
@@ -3370,7 +3377,7 @@ const App = () => {
 
     const options = {
       body: body || '마음 신호가 도착했습니다.',
-      icon: '/logo_main.png', 
+      icon: '/logo_main.png',
       badge: '/logo_main.png',
       tag: tab || 'general',
       data: { tab, eventName },
@@ -3404,22 +3411,22 @@ const App = () => {
   // 📬 Web Push Subscription Helper (Support for 'Killed App' Notifications)
   const subscribeToPushNotifications = async () => {
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
-    
+
     try {
       const registration = await navigator.serviceWorker.ready;
       let subscription = await registration.pushManager.getSubscription();
-      
+
       if (!subscription) {
         // [VAPID KEY GUIDE] 🗝️ Generate yours with: npx web-push generate-vapid-keys
         // This is a placeholder key. For production, please use your unique VAPID keys.
         // ⚠️ CRITICAL: Replace this with your REAL VAPID Public Key generated via 'npx web-push generate-vapid-keys'
-        const publicVapidKey = 'REPLACE_WITH_YOUR_ACTUAL_VAPID_PUBLIC_KEY';
+        const publicVapidKey = 'BHiG5Sf9bEN47pzCzCbyZEtSrXyL2IXkw45e-l9TQ6hvCd-OP964Zm8zxnq3Ys83FPT8qW5Ep2C86k5WrqUs178KEY';
         subscription = await registration.pushManager.subscribe({
           userVisibleOnly: true,
           applicationServerKey: urlBase64ToUint8Array(publicVapidKey)
         });
       }
-      
+
       const signalMsgMap = {
         green: "오늘 제 마음은 초록색이에요! 아주 좋은 상태입니다. 🟢",
         amber: "오늘은 조금 정적인 편이에요. 부드러운 관심이 필요해요. 🟡",
@@ -3499,14 +3506,14 @@ const App = () => {
     const lastDate = localStorage.getItem('secretLastDate');
     const today = new Date().toDateString();
     if (lastDate && lastDate !== today) {
-       localStorage.removeItem('mySecretAnswer');
-       localStorage.removeItem('isMySecretAnswered');
-       localStorage.removeItem('spouseSecretAnswer');
-       localStorage.removeItem('isSecretRevealed');
-       setMySecretAnswer("");
-       setIsMySecretAnswered(false);
-       setSpouseSecretAnswer(null);
-       setIsSecretRevealed(false);
+      localStorage.removeItem('mySecretAnswer');
+      localStorage.removeItem('isMySecretAnswered');
+      localStorage.removeItem('spouseSecretAnswer');
+      localStorage.removeItem('isSecretRevealed');
+      setMySecretAnswer("");
+      setIsMySecretAnswered(false);
+      setSpouseSecretAnswer(null);
+      setIsSecretRevealed(false);
     }
   }, []);
 
@@ -3529,20 +3536,20 @@ const App = () => {
       setSession(session);
       const currentUser = session?.user ?? null;
       setUser(currentUser);
-      
+
       // 🛡️ Automatic Admin Elevation for '백동희' (Social Login)
       const fullName = currentUser?.user_metadata?.full_name || currentUser?.user_metadata?.name || '';
       if (fullName === '백동희') {
         setIsAdmin(true);
         localStorage.setItem('isAdmin', 'true');
       }
-      
+
       setLoading(false);
     });
 
     return () => subscription.unsubscribe();
   }, []);
-  
+
   // [Modularized] HomeView, AdminView, ChatView extracted to separate files
   useEffect(() => {
     if (session?.user?.email === 'beak0403@gmail.com') {
@@ -3579,7 +3586,7 @@ const App = () => {
   const [counselingMode, setCounselingMode] = useState('chat');
   const [showReport, setShowReport] = useState(false);
   const [showGuidePage, setShowGuidePage] = useState(false);
-  
+
   const [mySignal, setMySignal] = useState(() => {
     try {
       const role = localStorage.getItem('userRole') || 'husband';
@@ -3599,11 +3606,11 @@ const App = () => {
       return 'green';
     }
   });
-  const [schedules, setSchedules] = useState(() => { 
-    try { 
-      return JSON.parse(localStorage.getItem('coupleSchedules') || '[]'); 
-    } catch (e) { 
-      return []; 
+  const [schedules, setSchedules] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('coupleSchedules') || '[]');
+    } catch (e) {
+      return [];
     }
   });
   const [partnerPrayers, setPartnerPrayers] = useState([]);
@@ -3613,11 +3620,11 @@ const App = () => {
   const [showDialogueConfirm, setShowDialogueConfirm] = useState(false);
   const [dialogueConfirmRole, setDialogueConfirmRole] = useState('initiator'); // 'initiator' or 'recipient'
 
-  const [worshipDays, setWorshipDays] = useState(() => { 
-    try { 
-      return JSON.parse(localStorage.getItem('worshipDays') || '["일", "수"]'); 
-    } catch (e) { 
-      return ["일", "수"]; 
+  const [worshipDays, setWorshipDays] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('worshipDays') || '["일", "수"]');
+    } catch (e) {
+      return ["일", "수"];
     }
   });
   const [worshipTime, setWorshipTime] = useState(() => localStorage.getItem('worshipTime') || '21:00');
@@ -3647,21 +3654,21 @@ const App = () => {
 
   const handleOnboardingFinish = async (info) => {
     let finalCode = (info.coupleCode || coupleCode || "").toLowerCase().trim();
-    if (finalCode) { 
-      setCoupleCode(finalCode); 
-      localStorage.setItem('coupleCode', finalCode); 
+    if (finalCode) {
+      setCoupleCode(finalCode);
+      localStorage.setItem('coupleCode', finalCode);
     }
     const baseInfo = userRole === 'husband' ? husbandInfo : wifeInfo;
     const updatedInfo = { ...baseInfo, ...info, coupleCode: finalCode };
     if (userRole === 'husband') setHusbandInfo(updatedInfo);
     else setWifeInfo(updatedInfo);
-    
-    await supabase.from('profiles').upsert({ 
-      id: user.id, 
-      couple_id: finalCode, 
-      user_role: userRole, 
-      info: updatedInfo, 
-      updated_at: new Date().toISOString() 
+
+    await supabase.from('profiles').upsert({
+      id: user.id,
+      couple_id: finalCode,
+      user_role: userRole,
+      info: updatedInfo,
+      updated_at: new Date().toISOString()
     }, { onConflict: 'id' });
 
     localStorage.setItem('userRole', userRole);
@@ -3694,7 +3701,7 @@ const App = () => {
     const baseInfo = userRole === 'husband' ? husbandInfo : wifeInfo;
     await supabase.from('profiles').upsert({ id: user.id, couple_id: coupleCode, user_role: userRole, info: { ...baseInfo, coupleSchedules: newSchedules }, updated_at: new Date().toISOString() }, { onConflict: 'id' });
   };
-  
+
   const updateProfileInfo = async (text, extraInfo = {}) => {
     if (!user?.id) { console.warn("Update attempt without valid session - skipping sync."); return; }
     const baseInfo = userRole === 'husband' ? husbandInfo : wifeInfo;
@@ -3703,15 +3710,15 @@ const App = () => {
     if (mainChannel) mainChannel.send({ type: 'broadcast', event: 'memo-updated', payload: { sender: userRole, text, extraInfo } });
     if (userRole === 'husband') setHusbandInfo(updatedInfo); else setWifeInfo(updatedInfo);
     const finalCode = (coupleCode || "").toLowerCase().trim();
-    await supabase.from('profiles').upsert({ 
-      id: user.id, 
-      couple_id: finalCode, 
-      user_role: userRole, 
-      info: updatedInfo, 
-      updated_at: new Date().toISOString() 
+    await supabase.from('profiles').upsert({
+      id: user.id,
+      couple_id: finalCode,
+      user_role: userRole,
+      info: updatedInfo,
+      updated_at: new Date().toISOString()
     }, { onConflict: 'id' });
   };
-   
+
   useEffect(() => {
     const mainArea = document.querySelector('.main-content');
     if (mainArea) mainArea.scrollTop = 0;
@@ -3720,10 +3727,10 @@ const App = () => {
   useEffect(() => {
     const fetchInitialData = async () => {
       if (!user) return;
-      
+
       // 🕵 Check if this user already has a setup profile in Supabase
       const { data: myProfile } = await supabase.from('profiles').select('*').eq('id', user.id).single();
-      
+
       if (myProfile && myProfile.couple_id && myProfile.couple_id !== 'none') {
         console.log("Restoring session from Supabase profile...");
         const role = myProfile.user_role;
@@ -3731,9 +3738,9 @@ const App = () => {
         setCoupleCode(myProfile.couple_id);
         if (role === 'husband') setHusbandInfo(prev => ({ ...prev, ...(myProfile.info || {}) }));
         else setWifeInfo(prev => ({ ...prev, ...(myProfile.info || {}) }));
-        
+
         if (myProfile.info?.signal) setMySignal(myProfile.info.signal);
-        
+
         // Mark as setup so we show the HomeView
         setIsSetupDone(true);
         localStorage.setItem('isSetupDone', 'true');
@@ -3754,10 +3761,10 @@ const App = () => {
             if (commonInfo.worshipTime) setWorshipTime(commonInfo.worshipTime);
             if (commonInfo.anniversaries) setAnniversaries(commonInfo.anniversaries);
             if (commonInfo.coupleSchedules) setSchedules(commonInfo.coupleSchedules);
-            
+
             // 💍 Sync Marriage Date
             if (commonInfo.marriageDate && !husbandInfo.marriageDate && !wifeInfo.marriageDate) {
-               // Proactively set if needed
+              // Proactively set if needed
             }
           }
         }
@@ -3774,54 +3781,54 @@ const App = () => {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, payload => {
         if (!payload.new || payload.new.couple_id?.toLowerCase() !== final_code) return;
         const { user_role: role, info } = payload.new;
-        if (role === 'husband') setHusbandInfo(prev => ({ ...prev, ...(info || {}) })); 
+        if (role === 'husband') setHusbandInfo(prev => ({ ...prev, ...(info || {}) }));
         else if (role === 'wife') setWifeInfo(prev => ({ ...prev, ...(info || {}) }));
         if (info?.signal && role !== userRole) {
-           if (info.signal !== lastSpouseSignalRef.current) {
-              lastSpouseSignalRef.current = info.signal;
-              const signalMsgMap = {
-                 green: "오늘 제 마음은 초록색이에요! 아주 좋은 상태입니다. 🟢",
-                 amber: "오늘은 조금 정적인 편이에요. 부드러운 관심이 필요해요. 🟡",
-                 red: "지금은 제 마음의 정체기예요. 충분한 공감과 대화가 필요합니다. 🔴"
-              };
-              sendNativeNotification(
-                `${role === 'husband' ? '남편' : '아내'}님의 현재 마음 신호 🚦`,
-                signalMsgMap[info.signal] || "새로운 마음 신호가 도착했습니다.",
-                'home'
-              );
-           }
-           setSpouseSignal(info.signal);
+          if (info.signal !== lastSpouseSignalRef.current) {
+            lastSpouseSignalRef.current = info.signal;
+            const signalMsgMap = {
+              green: "오늘 제 마음은 초록색이에요! 아주 좋은 상태입니다. 🟢",
+              amber: "오늘은 조금 정적인 편이에요. 부드러운 관심이 필요해요. 🟡",
+              red: "지금은 제 마음의 정체기예요. 충분한 공감과 대화가 필요합니다. 🔴"
+            };
+            sendNativeNotification(
+              `${role === 'husband' ? '남편' : '아내'}님의 현재 마음 신호 🚦`,
+              signalMsgMap[info.signal] || "새로운 마음 신호가 도착했습니다.",
+              'home'
+            );
+          }
+          setSpouseSignal(info.signal);
         } else if (info?.signal && role === userRole && !signalLockRef.current) {
-           setMySignal(info.signal);
+          setMySignal(info.signal);
         }
-        
+
         if (info?.requestTab && info.navId !== lastNavIdRef.current && payload.new.user_role !== userRole) {
-           if (info.requestTab === 'cardGame') {
-             // For Dialogue Cards, don't auto-navigate if not already in the game view.
-             // This lets the user click 'Join' in the invitation modal.
-             if (activeTabRef.current === 'cardGame') {
-               if (info.dialogueTab) setDialogueTab(info.dialogueTab);
-               if (info.dialogueGuideId) setDialogueGuideId(info.dialogueGuideId);
-             }
-           } else {
-             setActiveTab(info.requestTab);
-             // Sync sub-navigation states if present
-             if (info.dialogueTab) setDialogueTab(info.dialogueTab);
-             if (info.dialogueGuideId) setDialogueGuideId(info.dialogueGuideId);
-             if (info.counselingMode) setCounselingMode(info.counselingMode);
-             if (info.intimacySubPage) setIntimacySubPage(info.intimacySubPage);
-           }
-           
-           if (info.navId !== lastNotifiedTabNavIdRef.current) {
-             lastNotifiedTabNavIdRef.current = info.navId;
-             const senderLabel = payload.new.user_role === 'husband' ? '남편' : '아내';
-             toast.info(`${senderLabel}님이 ${info.requestTab === 'cardGame' ? '대화카드' : info.requestTab === 'worship' ? '가정예배' : info.requestTab} 탭으로 초대했어요!`);
-             sendNativeNotification(
-               `화면 공유 요청 📱`,
-               `${senderLabel}님이 ${info.requestTab === 'cardGame' ? '대화카드' : info.requestTab === 'worship' ? '가정예배' : info.requestTab} 화면을 함께 보자고 해요!`,
-               info.requestTab
-             );
-           }
+          if (info.requestTab === 'cardGame') {
+            // For Dialogue Cards, don't auto-navigate if not already in the game view.
+            // This lets the user click 'Join' in the invitation modal.
+            if (activeTabRef.current === 'cardGame') {
+              if (info.dialogueTab) setDialogueTab(info.dialogueTab);
+              if (info.dialogueGuideId) setDialogueGuideId(info.dialogueGuideId);
+            }
+          } else {
+            setActiveTab(info.requestTab);
+            // Sync sub-navigation states if present
+            if (info.dialogueTab) setDialogueTab(info.dialogueTab);
+            if (info.dialogueGuideId) setDialogueGuideId(info.dialogueGuideId);
+            if (info.counselingMode) setCounselingMode(info.counselingMode);
+            if (info.intimacySubPage) setIntimacySubPage(info.intimacySubPage);
+          }
+
+          if (info.navId !== lastNotifiedTabNavIdRef.current) {
+            lastNotifiedTabNavIdRef.current = info.navId;
+            const senderLabel = payload.new.user_role === 'husband' ? '남편' : '아내';
+            toast.info(`${senderLabel}님이 ${info.requestTab === 'cardGame' ? '대화카드' : info.requestTab === 'worship' ? '가정예배' : info.requestTab} 탭으로 초대했어요!`);
+            sendNativeNotification(
+              `화면 공유 요청 📱`,
+              `${senderLabel}님이 ${info.requestTab === 'cardGame' ? '대화카드' : info.requestTab === 'worship' ? '가정예배' : info.requestTab} 화면을 함께 보자고 해요!`,
+              info.requestTab
+            );
+          }
         }
 
         // 🌿 Garden Message Catch-up (Fail-safe for missed broadcasts)
@@ -3837,20 +3844,20 @@ const App = () => {
       })
       .on('broadcast', { event: 'signal-changed' }, ({ payload }) => {
         if (payload.sender !== userRole) {
-           if (payload.signal !== lastSpouseSignalRef.current) {
-              lastSpouseSignalRef.current = payload.signal;
-              const signalMsgMap = {
-                 green: "오늘 제 마음은 초록색이에요! 아주 좋은 상태입니다. 🟢",
-                 amber: "오늘은 조금 정적인 편이에요. 부드러운 관심이 필요해요. 🟡",
-                 red: "지금은 제 마음의 정체기예요. 충분한 공감과 대화가 필요합니다. 🔴"
-              };
-              sendNativeNotification(
-                `${payload.sender === 'husband' ? '남편' : '아내'}님의 현재 마음 신호 🚦`,
-                signalMsgMap[payload.signal] || "새로운 마음 신호가 도착했습니다.",
-                'home'
-              );
-              setSpouseSignal(payload.signal);
-           }
+          if (payload.signal !== lastSpouseSignalRef.current) {
+            lastSpouseSignalRef.current = payload.signal;
+            const signalMsgMap = {
+              green: "오늘 제 마음은 초록색이에요! 아주 좋은 상태입니다. 🟢",
+              amber: "오늘은 조금 정적인 편이에요. 부드러운 관심이 필요해요. 🟡",
+              red: "지금은 제 마음의 정체기예요. 충분한 공감과 대화가 필요합니다. 🔴"
+            };
+            sendNativeNotification(
+              `${payload.sender === 'husband' ? '남편' : '아내'}님의 현재 마음 신호 🚦`,
+              signalMsgMap[payload.signal] || "새로운 마음 신호가 도착했습니다.",
+              'home'
+            );
+            setSpouseSignal(payload.signal);
+          }
         }
       })
       .on('broadcast', { event: 'garden-chat-sent' }, ({ payload }) => {
@@ -3863,7 +3870,7 @@ const App = () => {
             'heartPrayer'
           );
           if (activeTabRef.current !== 'heartPrayer') {
-            setIncomingCardCall({ 
+            setIncomingCardCall({
               type: 'garden',
               sender: senderLabel,
               text: payload.text,
@@ -3874,57 +3881,57 @@ const App = () => {
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'prayers' }, payload => {
         if (payload.new && payload.new.couple_id === coupleCode) {
-           fetchGlobalPrayers();
-           window.dispatchEvent(new CustomEvent('prayers-updated'));
-           if (payload.new.user_role !== userRole) {
-             const senderLabel = payload.new.user_role === 'husband' ? '남편' : '아내';
-             sendNativeNotification(
-               `${senderLabel}님의 속마음 기도 🙏`,
-               payload.new.text?.substring(0, 50) || '새로운 기도 제목이 도착했습니다.',
-               'heartPrayer'
-             );
-           }
+          fetchGlobalPrayers();
+          window.dispatchEvent(new CustomEvent('prayers-updated'));
+          if (payload.new.user_role !== userRole) {
+            const senderLabel = payload.new.user_role === 'husband' ? '남편' : '아내';
+            sendNativeNotification(
+              `${senderLabel}님의 속마음 기도 🙏`,
+              payload.new.text?.substring(0, 50) || '새로운 기도 제목이 도착했습니다.',
+              'heartPrayer'
+            );
+          }
         }
       })
       .on('broadcast', { event: 'memo-updated' }, ({ payload }) => {
         if (payload.sender !== userRole) {
-           const isHusband = payload.sender === 'husband';
-           if (isHusband) {
-              setHusbandInfo(prev => ({ ...prev, ...payload.extraInfo, todayMemo: payload.text }));
-           } else {
-              setWifeInfo(prev => ({ ...prev, ...payload.extraInfo, todayMemo: payload.text }));
-           }
+          const isHusband = payload.sender === 'husband';
+          if (isHusband) {
+            setHusbandInfo(prev => ({ ...prev, ...payload.extraInfo, todayMemo: payload.text }));
+          } else {
+            setWifeInfo(prev => ({ ...prev, ...payload.extraInfo, todayMemo: payload.text }));
+          }
         }
       })
       .on('broadcast', { event: 'garden-chat-reset' }, async () => {
         window.dispatchEvent(new CustomEvent('garden-chat-reset'));
         const { data } = await supabase.from('profiles').select('info').eq('id', user.id).single();
         if (data) {
-           const updatedInfo = { ...data.info, gardenMsg: null, gardenMsgType: null, gardenNavId: null, gardenAnswer: null };
-           await supabase.from('profiles').upsert({
-             id: user.id, couple_id: coupleCode, user_role: userRole, info: updatedInfo, updated_at: new Date().toISOString()
-           }, { onConflict: 'id' });
-           if (userRole === 'husband') setHusbandInfo(updatedInfo); else setWifeInfo(updatedInfo);
+          const updatedInfo = { ...data.info, gardenMsg: null, gardenMsgType: null, gardenNavId: null, gardenAnswer: null };
+          await supabase.from('profiles').upsert({
+            id: user.id, couple_id: coupleCode, user_role: userRole, info: updatedInfo, updated_at: new Date().toISOString()
+          }, { onConflict: 'id' });
+          if (userRole === 'husband') setHusbandInfo(updatedInfo); else setWifeInfo(updatedInfo);
         }
       })
       .on('broadcast', { event: 'card-game-call' }, ({ payload }) => {
         if (payload.sender !== userRole && activeTabRef.current !== 'cardGame' && activeTabRef.current !== 'heartPrayer') {
-           const senderLabel = payload.sender === 'husband' ? '남편' : '아내';
-           if (payload.type === 'mood-signal') {
-              sendNativeNotification(
-                `${senderLabel}님의 마음 신호 ✨`,
-                `"${payload.title}" 신호가 도착했습니다. 화원에서 확인해보세요!`,
-                'heartPrayer'
-              );
-              // setIncomingCardCall removed per user request
-           } else {
-              sendNativeNotification(
-                `${senderLabel}님의 대화 요청 🃏`,
-                '배우자가 카드대화를 요청했습니다.',
-                'cardGame'
-              );
-              setIncomingCardCall({ type: 'card', category: payload.category, sender: senderLabel });
-           }
+          const senderLabel = payload.sender === 'husband' ? '남편' : '아내';
+          if (payload.type === 'mood-signal') {
+            sendNativeNotification(
+              `${senderLabel}님의 마음 신호 ✨`,
+              `"${payload.title}" 신호가 도착했습니다. 화원에서 확인해보세요!`,
+              'heartPrayer'
+            );
+            // setIncomingCardCall removed per user request
+          } else {
+            sendNativeNotification(
+              `${senderLabel}님의 대화 요청 🃏`,
+              '배우자가 카드대화를 요청했습니다.',
+              'cardGame'
+            );
+            setIncomingCardCall({ type: 'card', category: payload.category, sender: senderLabel });
+          }
         }
       })
       .on('broadcast', { event: 'game-update' }, ({ payload }) => {
@@ -3937,25 +3944,25 @@ const App = () => {
       })
       .on('broadcast', { event: 'secret-revealed' }, ({ payload }) => {
         if (payload?.sender !== userRole) {
-           const senderLabel = payload.sender === 'husband' ? '남편' : '아내';
-           toast.success(`${senderLabel}님께서 비밀 질문의 정답을 확인했습니다! 🔓`);
-           sendNativeNotification(`비밀 질문 공개! 🔓`, `${senderLabel}님께서 당신의 비밀 답변을 확인했습니다. 대화를 나눠보세요!`, 'intimacy');
-           setIncomingCardCall({ type: 'secret-revealed', sender: senderLabel });
+          const senderLabel = payload.sender === 'husband' ? '남편' : '아내';
+          toast.success(`${senderLabel}님께서 비밀 질문의 정답을 확인했습니다! 🔓`);
+          sendNativeNotification(`비밀 질문 공개! 🔓`, `${senderLabel}님께서 당신의 비밀 답변을 확인했습니다. 대화를 나눠보세요!`, 'intimacy');
+          setIncomingCardCall({ type: 'secret-revealed', sender: senderLabel });
         }
       })
       .on('broadcast', { event: 'secret-answer-update' }, ({ payload }) => {
         if (payload.user_role !== userRole) {
-           const senderLabel = payload.user_role === 'husband' ? '남편' : '아내';
-           setSpouseSecretAnswer(payload.answer);
-           sendNativeNotification(`비밀 답변 도착! 🎁`, `${senderLabel}님께서 오늘의 비밀 질문에 답변했습니다. 지금 확인해보세요!`, 'intimacy');
-           setIncomingCardCall({ type: 'secret-answer-received', sender: senderLabel });
+          const senderLabel = payload.user_role === 'husband' ? '남편' : '아내';
+          setSpouseSecretAnswer(payload.answer);
+          sendNativeNotification(`비밀 답변 도착! 🎁`, `${senderLabel}님께서 오늘의 비밀 질문에 답변했습니다. 지금 확인해보세요!`, 'intimacy');
+          setIncomingCardCall({ type: 'secret-answer-received', sender: senderLabel });
         }
       })
       .on('broadcast', { event: 'heart-prayer-sent' }, ({ payload }) => {
         if (payload.userRole !== userRole) {
-           const senderLabel = payload.userRole === 'husband' ? '남편' : '아내';
-           sendNativeNotification(`속마음 기도 요청 🙏`, `${senderLabel}님께서 새로운 기도 제목을 남겼습니다.`, 'heartPrayer');
-           setIncomingCardCall({ type: 'heart-prayer-sent', sender: senderLabel, text: payload.text });
+          const senderLabel = payload.userRole === 'husband' ? '남편' : '아내';
+          sendNativeNotification(`속마음 기도 요청 🙏`, `${senderLabel}님께서 새로운 기도 제목을 남겼습니다.`, 'heartPrayer');
+          setIncomingCardCall({ type: 'heart-prayer-sent', sender: senderLabel, text: payload.text });
         }
       })
       .subscribe((status) => {
@@ -3967,7 +3974,7 @@ const App = () => {
           setSyncStatus('ERROR');
           setMainChannel(null);
           if (isSetupDone && coupleCode) {
-             setTimeout(() => { window.location.reload(); }, 3000);
+            setTimeout(() => { window.location.reload(); }, 3000);
           }
         }
       });
@@ -3982,15 +3989,15 @@ const App = () => {
   const handleSetMySignal = async (newSignal) => {
     // 🛡️ Always proceed with sync even if signal is same to ensure remote DB consistency
     signalLockRef.current = newSignal;
-    setMySignal(newSignal); 
-    localStorage.setItem('mySignal', newSignal);    
+    setMySignal(newSignal);
+    localStorage.setItem('mySignal', newSignal);
     // 📡 빠른 브로드캐스트 알림 발신
     if (mainChannel) {
-       mainChannel.send({
-         type: 'broadcast',
-         event: 'signal-changed',
-         payload: { sender: userRole, signal: newSignal }
-       });
+      mainChannel.send({
+        type: 'broadcast',
+        event: 'signal-changed',
+        payload: { sender: userRole, signal: newSignal }
+      });
     }
 
     try {
@@ -4015,7 +4022,7 @@ const App = () => {
     setActiveTab(tabName);
     const navId = Math.random().toString(36).substring(7); // 랜덤 ID 생성
     lastNavIdRef.current = navId; // 내 기기에서는 중복 반응 안 하도록 저장
-    
+
     // 🔔 대화카드 요청일 경우 배우자에게 직접 방송 알림 발신
     if (tabName === 'cardGame' && mainChannel) {
       mainChannel.send({
@@ -4041,11 +4048,11 @@ const App = () => {
     if (extraData.intimacySubPage) setIntimacySubPage(extraData.intimacySubPage);
 
     // 내 프로필의 info에 'requestTab'과 'navId'를 실어 배우자에게 보냄 (화면 전환 유도)
-    await updateProfileInfo(undefined, { 
-      requestTab: tabName, 
+    await updateProfileInfo(undefined, {
+      requestTab: tabName,
       navId: navId,
       ...extraData,
-      updated_at: Date.now() 
+      updated_at: Date.now()
     });
   };
 
@@ -4060,7 +4067,7 @@ const App = () => {
       )}
 
       {!loading && !session && !isAdmin && (
-        <AuthView 
+        <AuthView
           onLogoClick={() => {
             const newCount = logoClickCount + 1;
             setLogoClickCount(newCount);
@@ -4078,21 +4085,21 @@ const App = () => {
       )}
 
       {!loading && (session || isAdmin) && !isSetupDone && (
-        <OnboardingView 
+        <OnboardingView
           user={user}
-          userRole={userRole} 
-          setUserRole={setUserRole} 
-          onFinish={handleOnboardingFinish} 
+          userRole={userRole}
+          setUserRole={setUserRole}
+          onFinish={handleOnboardingFinish}
         />
       )}
 
       {!loading && (session || isAdmin) && isSetupDone && (
         <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, height: '100%', pointerEvents: 'none', zIndex: -1, background: `radial-gradient(circle at 50% -20%, ${appTheme.primary}15, transparent)` }} />
       )}
-      
+
       {!loading && (session || isAdmin) && isSetupDone && (
         <>
-          <div className="app-bg" style={{ 
+          <div className="app-bg" style={{
             backgroundColor: appTheme.bg,
             backgroundImage: `
               radial-gradient(circle at 10% 10%, ${appTheme.primary}15, transparent 40%),
@@ -4103,9 +4110,9 @@ const App = () => {
             opacity: 1,
             zIndex: -1
           }} />
-          
+
           {/* Top Bar */}
-          <div className="top-bar" style={{ 
+          <div className="top-bar" style={{
             visibility: (activeTab === 'intimacy' || activeTab === 'heartPrayer') ? 'hidden' : 'visible',
             borderBottom: `1px solid ${appTheme.primary}20`,
             background: 'rgba(255, 255, 255, 0.4)',
@@ -4121,21 +4128,21 @@ const App = () => {
                 </span>
               </div>
               {/* Sync Status Dot */}
-              <div 
+              <div
                 title={syncStatus === 'SUBSCRIBED' ? '실시간 동기화 중' : '동기화 확인 중...'}
-                style={{ 
-                  width: '8px', 
-                  height: '8px', 
-                  borderRadius: '50%', 
+                style={{
+                  width: '8px',
+                  height: '8px',
+                  borderRadius: '50%',
                   background: syncStatus === 'SUBSCRIBED' ? '#4BD991' : syncStatus === 'ERROR' ? '#FF5E5E' : '#FFBE61',
                   boxShadow: `0 0 8px ${syncStatus === 'SUBSCRIBED' ? '#4BD991' : '#FFBE61'}`,
                   marginLeft: '-4px'
-                }} 
+                }}
               />
             </div>
             <div className="top-bar-icons">
-              <button 
-                className="icon-btn-top" 
+              <button
+                className="icon-btn-top"
                 onClick={() => {
                   setShowNotificationList(true);
                   // Mark all as read when opening
@@ -4156,236 +4163,236 @@ const App = () => {
 
           <main className="main-content">
             {/* 🛡️ Removed AnimatePresence to prevent stuck renders durante rapid signal updates */}
-              {activeTab === 'home' && (
-                <HomeView 
-                  key="home"
-                  userRole={userRole}
-                  coupleCode={coupleCode}
-                  mainChannel={mainChannel}
-                  mySignal={mySignal} 
-                  setMySignal={handleSetMySignal}
-                  spouseSignal={spouseSignal}
-                  partnerPrayers={partnerPrayers}
-                  onIntimacyClick={() => setActiveTab('intimacy')}
-                  onNav={(tab) => setActiveTab(tab)}
-                  schedules={schedules}
-                  husbandInfo={husbandInfo}
-                  wifeInfo={wifeInfo}
-                  onUpdateMemo={updateProfileInfo}
-                  notifPermission={notifPermission}
-                  spouseSecretAnswer={spouseSecretAnswer}
-                  setSpouseSecretAnswer={setSpouseSecretAnswer}
-                  mySecretAnswer={mySecretAnswer}
-                  setMySecretAnswer={setMySecretAnswer}
-                  isMySecretAnswered={isMySecretAnswered}
-                  setIsMySecretAnswered={setIsMySecretAnswered}
-                  isRevealed={isSecretRevealed}
-                  setIsRevealed={setIsSecretRevealed}
-                />
-              )}
-              {activeTab === 'calendar' && (
-                <CalendarView 
-                  key="calendar" 
-                  schedules={schedules} 
-                  onAddSchedule={addSchedule} 
-                  onDeleteSchedule={deleteSchedule} 
-                  onBack={() => setActiveTab('home')} 
-                />
-              )}
-              {activeTab === 'cardGame' && (
-                <>
-                  {dialogueGuideId ? (
-                    <GameGuideView 
-                      gameId={dialogueGuideId} 
-                      onStart={() => {
-                        const targetMode = dialogueGuideId;
-                        setDialogueTab(targetMode);
-                        setDialogueGuideId(null);
-                        handleSharedNavigate('cardGame', { dialogueTab: targetMode, dialogueGuideId: null });
-                      }} 
-                      onBack={() => {
-                        setDialogueGuideId(null);
-                        handleSharedNavigate('cardGame', { dialogueGuideId: null, dialogueTab: 'choice' });
+            {activeTab === 'home' && (
+              <HomeView
+                key="home"
+                userRole={userRole}
+                coupleCode={coupleCode}
+                mainChannel={mainChannel}
+                mySignal={mySignal}
+                setMySignal={handleSetMySignal}
+                spouseSignal={spouseSignal}
+                partnerPrayers={partnerPrayers}
+                onIntimacyClick={() => setActiveTab('intimacy')}
+                onNav={(tab) => setActiveTab(tab)}
+                schedules={schedules}
+                husbandInfo={husbandInfo}
+                wifeInfo={wifeInfo}
+                onUpdateMemo={updateProfileInfo}
+                notifPermission={notifPermission}
+                spouseSecretAnswer={spouseSecretAnswer}
+                setSpouseSecretAnswer={setSpouseSecretAnswer}
+                mySecretAnswer={mySecretAnswer}
+                setMySecretAnswer={setMySecretAnswer}
+                isMySecretAnswered={isMySecretAnswered}
+                setIsMySecretAnswered={setIsMySecretAnswered}
+                isRevealed={isSecretRevealed}
+                setIsRevealed={setIsSecretRevealed}
+              />
+            )}
+            {activeTab === 'calendar' && (
+              <CalendarView
+                key="calendar"
+                schedules={schedules}
+                onAddSchedule={addSchedule}
+                onDeleteSchedule={deleteSchedule}
+                onBack={() => setActiveTab('home')}
+              />
+            )}
+            {activeTab === 'cardGame' && (
+              <>
+                {dialogueGuideId ? (
+                  <GameGuideView
+                    gameId={dialogueGuideId}
+                    onStart={() => {
+                      const targetMode = dialogueGuideId;
+                      setDialogueTab(targetMode);
+                      setDialogueGuideId(null);
+                      handleSharedNavigate('cardGame', { dialogueTab: targetMode, dialogueGuideId: null });
+                    }}
+                    onBack={() => {
+                      setDialogueGuideId(null);
+                      handleSharedNavigate('cardGame', { dialogueGuideId: null, dialogueTab: 'choice' });
+                    }}
+                  />
+                ) : dialogueTab === 'choice' ? (
+                  <DialogueChoiceView
+                    onSelect={(mode) => {
+                      setDialogueGuideId(mode);
+                      handleSharedNavigate('cardGame', { dialogueGuideId: mode, dialogueTab: 'choice' });
+                    }}
+                    onBack={() => handleSharedNavigate('home')}
+                  />
+                ) : dialogueTab === 'cardGame' ? (
+                  <CardGameView
+                    key="cardGame"
+                    coupleCode={coupleCode}
+                    userRole={userRole}
+                    mainChannel={mainChannel}
+                    onBack={() => handleSharedNavigate('cardGame', { dialogueTab: 'choice', dialogueGuideId: null })}
+                    husbandInfo={husbandInfo}
+                    wifeInfo={wifeInfo}
+                    onUpdateMemo={updateProfileInfo}
+                  />
+                ) : (
+                  <ImageCardGameView
+                    key="imageGame"
+                    onBack={() => handleSharedNavigate('cardGame', { dialogueTab: 'choice', dialogueGuideId: null })}
+                    coupleCode={coupleCode}
+                    userRole={userRole}
+                    mainChannel={mainChannel}
+                    husbandInfo={husbandInfo}
+                    wifeInfo={wifeInfo}
+                  />
+                )}
+              </>
+            )}
+            {activeTab === 'counseling' && (
+              <div className={`flex flex-col pt-4 ${counselingMode === 'chat' ? 'flex-1 min-h-0' : ''}`}>
+                {/* 💊 AI Hatti Sub-Navigation (Chat vs Solution) */}
+
+                {/* 💊 AI Hatti Sub-Navigation (Chat vs Solution) */}
+                <div className="flex justify-center mb-4">
+                  <div style={{
+                    display: 'flex',
+                    background: 'rgba(0,0,0,0.05)',
+                    borderRadius: '100px',
+                    padding: '4px',
+                    border: '1px solid rgba(0,0,0,0.03)'
+                  }}>
+                    <button
+                      onClick={() => setCounselingMode('chat')}
+                      style={{
+                        padding: '8px 20px',
+                        borderRadius: '100px',
+                        fontSize: '13px',
+                        fontWeight: 900,
+                        background: counselingMode === 'chat' ? 'white' : 'transparent',
+                        color: counselingMode === 'chat' ? '#8A60FF' : '#8B7355',
+                        boxShadow: counselingMode === 'chat' ? '0 4px 10px rgba(0,0,0,0.05)' : 'none',
+                        transition: '0.3s'
                       }}
-                    />
-                  ) : dialogueTab === 'choice' ? (
-                    <DialogueChoiceView 
-                      onSelect={(mode) => {
-                        setDialogueGuideId(mode);
-                        handleSharedNavigate('cardGame', { dialogueGuideId: mode, dialogueTab: 'choice' });
-                      }} 
-                      onBack={() => handleSharedNavigate('home')}
-                    />
-                  ) : dialogueTab === 'cardGame' ? (
-                    <CardGameView 
-                      key="cardGame" 
-                      coupleCode={coupleCode} 
-                      userRole={userRole} 
-                      mainChannel={mainChannel}
-                      onBack={() => handleSharedNavigate('cardGame', { dialogueTab: 'choice', dialogueGuideId: null })} 
-                      husbandInfo={husbandInfo}
-                      wifeInfo={wifeInfo}
-                      onUpdateMemo={updateProfileInfo}
-                    />
-                  ) : (
-                    <ImageCardGameView 
-                      key="imageGame"
-                      onBack={() => handleSharedNavigate('cardGame', { dialogueTab: 'choice', dialogueGuideId: null })}
-                      coupleCode={coupleCode}
-                      userRole={userRole}
-                      mainChannel={mainChannel}
-                      husbandInfo={husbandInfo}
-                      wifeInfo={wifeInfo}
-                    />
-                  )}
-                </>
-              )}
-              {activeTab === 'counseling' && (
-                 <div className={`flex flex-col pt-4 ${counselingMode === 'chat' ? 'flex-1 min-h-0' : ''}`}>
-                    {/* 💊 AI Hatti Sub-Navigation (Chat vs Solution) */}
+                    >
+                      AI 고민상담
+                    </button>
+                    <button
+                      onClick={() => setCounselingMode('solution')}
+                      style={{
+                        padding: '8px 20px',
+                        borderRadius: '100px',
+                        fontSize: '13px',
+                        fontWeight: 900,
+                        background: counselingMode === 'solution' ? 'white' : 'transparent',
+                        color: counselingMode === 'solution' ? '#8A60FF' : '#8B7355',
+                        boxShadow: counselingMode === 'solution' ? '0 4px 10px rgba(0,0,0,0.05)' : 'none',
+                        transition: '0.3s'
+                      }}
+                    >
+                      매월 관계 솔루션
+                    </button>
+                  </div>
+                </div>
+                {counselingMode === 'chat' ? (
+                  <ChatView
+                    key="chat"
+                    userRole={userRole}
+                    setUserRole={setUserRole}
+                    husbandInfo={husbandInfo}
+                    setHusbandInfo={setHusbandInfo}
+                    wifeInfo={wifeInfo}
+                    setWifeInfo={setWifeInfo}
+                    adminStats={adminStats}
+                    schedules={schedules}
+                    onBack={() => setActiveTab('home')}
+                  />
+                ) : (
+                  <SolutionView
+                    key="solution"
+                    userRole={userRole}
+                    husbandInfo={husbandInfo}
+                    wifeInfo={wifeInfo}
+                    schedules={schedules}
+                    adminStats={adminStats}
+                    coupleStats={coupleStats}
+                    onBack={() => setCounselingMode('chat')}
+                  />
+                )}
+              </div>
+            )}
+            {activeTab === 'worship' && (
+              <WorshipView key="worship" userRole={userRole} coupleCode={coupleCode} mainChannel={mainChannel} />
+            )}
+            {activeTab === 'heartPrayer' && (
+              <IntimacyHubView
+                user={user}
+                supabase={supabase}
+                mainChannel={mainChannel}
+                userRole={userRole}
+                coupleCode={coupleCode}
+                onBack={() => setActiveTab('home')}
+                partnerPrayers={partnerPrayers}
+                setPartnerPrayers={setPartnerPrayers}
+                bgImage={intimacyBg}
+                onBgUpload={setIntimacyBg}
+                partnerLabel={partnerLabel}
+                husbandInfo={husbandInfo}
+                wifeInfo={wifeInfo}
+                setHusbandInfo={setHusbandInfo}
+                setWifeInfo={setWifeInfo}
+              />
+            )}
 
-                    {/* 💊 AI Hatti Sub-Navigation (Chat vs Solution) */}
-                   <div className="flex justify-center mb-4">
-                     <div style={{ 
-                       display: 'flex', 
-                       background: 'rgba(0,0,0,0.05)', 
-                       borderRadius: '100px', 
-                       padding: '4px',
-                       border: '1px solid rgba(0,0,0,0.03)'
-                     }}>
-                       <button 
-                         onClick={() => setCounselingMode('chat')}
-                         style={{ 
-                           padding: '8px 20px', 
-                           borderRadius: '100px', 
-                           fontSize: '13px', 
-                           fontWeight: 900,
-                           background: counselingMode === 'chat' ? 'white' : 'transparent',
-                           color: counselingMode === 'chat' ? '#8A60FF' : '#8B7355',
-                           boxShadow: counselingMode === 'chat' ? '0 4px 10px rgba(0,0,0,0.05)' : 'none',
-                           transition: '0.3s'
-                         }}
-                       >
-                         AI 고민상담
-                       </button>
-                       <button 
-                         onClick={() => setCounselingMode('solution')}
-                         style={{ 
-                           padding: '8px 20px', 
-                           borderRadius: '100px', 
-                           fontSize: '13px', 
-                           fontWeight: 900,
-                           background: counselingMode === 'solution' ? 'white' : 'transparent',
-                           color: counselingMode === 'solution' ? '#8A60FF' : '#8B7355',
-                           boxShadow: counselingMode === 'solution' ? '0 4px 10px rgba(0,0,0,0.05)' : 'none',
-                           transition: '0.3s'
-                         }}
-                       >
-                         매월 관계 솔루션
-                       </button>
-                     </div>
-                   </div>
-                   {counselingMode === 'chat' ? (
-                     <ChatView 
-                        key="chat" 
-                        userRole={userRole} 
-                        setUserRole={setUserRole}
-                        husbandInfo={husbandInfo} 
-                        setHusbandInfo={setHusbandInfo}
-                        wifeInfo={wifeInfo} 
-                        setWifeInfo={setWifeInfo}
-                        adminStats={adminStats}
-                        schedules={schedules}
-                        onBack={() => setActiveTab('home')} 
-                      />
-                   ) : (
-                     <SolutionView 
-                        key="solution" 
-                        userRole={userRole}
-                        husbandInfo={husbandInfo}
-                        wifeInfo={wifeInfo}
-                        schedules={schedules}
-                        adminStats={adminStats}
-                        coupleStats={coupleStats}
-                        onBack={() => setCounselingMode('chat')} 
-                     />
-                   )}
-                 </div>
-              )}
-              {activeTab === 'worship' && (
-                <WorshipView key="worship" userRole={userRole} coupleCode={coupleCode} mainChannel={mainChannel} />
-              )}
-               {activeTab === 'heartPrayer' && (
-                 <IntimacyHubView 
-                   user={user}
-                   supabase={supabase}
-                   mainChannel={mainChannel}
-                   userRole={userRole} 
-                   coupleCode={coupleCode} 
-                   onBack={() => setActiveTab('home')}
-                   partnerPrayers={partnerPrayers}
-                   setPartnerPrayers={setPartnerPrayers}
-                   bgImage={intimacyBg}
-                   onBgUpload={setIntimacyBg}
-                   partnerLabel={partnerLabel}
-                   husbandInfo={husbandInfo}
-                   wifeInfo={wifeInfo}
-                   setHusbandInfo={setHusbandInfo}
-                   setWifeInfo={setWifeInfo}
-                 />
-               )}
-
-               {activeTab === 'settings' && (
-                <SettingsView 
-                  key="settings" 
-                  user={user}
-                  userRole={userRole}
-                  husbandInfo={husbandInfo}
-                  setHusbandInfo={setHusbandInfo}
-                  wifeInfo={wifeInfo}
-                  setWifeInfo={setWifeInfo}
-                  coupleCode={coupleCode}
-                  setCoupleCode={setCoupleCode}
-                  worshipDays={worshipDays}
-                  setWorshipDays={setWorshipDays}
-                  worshipTime={worshipTime}
-                  setWorshipTime={setWorshipTime}
-                  anniversaries={anniversaries}
-                  setAnniversaries={setAnniversaries}
-                  onReportClick={() => setShowReport(true)} 
-                  onGuideClick={() => setShowGuidePage(true)}
-                  isAdmin={isAdmin}
-                  onNav={setActiveTab}
-                  onUpdateMemo={updateProfileInfo}
-                  subscribeToPushNotifications={subscribeToPushNotifications}
-                />
-              )}
-              {activeTab === 'admin' && isAdmin && (
-                <AdminView 
-                  key="admin" 
-                  onBack={() => setActiveTab('home')}
-                  usersCount={adminStats.users}
-                  couplesCount={adminStats.couples}
-                  activeSessions={adminStats.activeSessions}
-                  recentActivities={adminStats.recentActivities}
-                />
-              )}
-              {activeTab === 'intimacy' && (
-                <IntimacyModal 
-                  key="intimacy"
-                  show={true} 
-                  onClose={() => setActiveTab('home')}
-                  onNav={setActiveTab}
-                  subPage={intimacySubPage}
-                  setSubPage={setIntimacySubPage}
-                  bgImage={intimacyBg}
-                  onBgUpload={setIntimacyBg}
-                  partnerLabel={partnerLabel}
-                  user={user}
-                  userRole={userRole}
-                  coupleCode={coupleCode}
-                  supabase={supabase}
-                  mainChannel={mainChannel}
+            {activeTab === 'settings' && (
+              <SettingsView
+                key="settings"
+                user={user}
+                userRole={userRole}
+                husbandInfo={husbandInfo}
+                setHusbandInfo={setHusbandInfo}
+                wifeInfo={wifeInfo}
+                setWifeInfo={setWifeInfo}
+                coupleCode={coupleCode}
+                setCoupleCode={setCoupleCode}
+                worshipDays={worshipDays}
+                setWorshipDays={setWorshipDays}
+                worshipTime={worshipTime}
+                setWorshipTime={setWorshipTime}
+                anniversaries={anniversaries}
+                setAnniversaries={setAnniversaries}
+                onReportClick={() => setShowReport(true)}
+                onGuideClick={() => setShowGuidePage(true)}
+                isAdmin={isAdmin}
+                onNav={setActiveTab}
+                onUpdateMemo={updateProfileInfo}
+                subscribeToPushNotifications={subscribeToPushNotifications}
+              />
+            )}
+            {activeTab === 'admin' && isAdmin && (
+              <AdminView
+                key="admin"
+                onBack={() => setActiveTab('home')}
+                usersCount={adminStats.users}
+                couplesCount={adminStats.couples}
+                activeSessions={adminStats.activeSessions}
+                recentActivities={adminStats.recentActivities}
+              />
+            )}
+            {activeTab === 'intimacy' && (
+              <IntimacyModal
+                key="intimacy"
+                show={true}
+                onClose={() => setActiveTab('home')}
+                onNav={setActiveTab}
+                subPage={intimacySubPage}
+                setSubPage={setIntimacySubPage}
+                bgImage={intimacyBg}
+                onBgUpload={setIntimacyBg}
+                partnerLabel={partnerLabel}
+                user={user}
+                userRole={userRole}
+                coupleCode={coupleCode}
+                supabase={supabase}
+                mainChannel={mainChannel}
                 setWifeInfo={setWifeInfo}
                 husbandInfo={husbandInfo}
                 wifeInfo={wifeInfo}
@@ -4393,45 +4400,45 @@ const App = () => {
               />
             )}
             {activeTab === 'profile' && (
-               <ProfileView 
-                  key="profile" user={user} userRole={userRole} coupleCode={coupleCode} setHusbandInfo={setHusbandInfo} 
-                  setWifeInfo={setWifeInfo} husbandInfo={husbandInfo} wifeInfo={wifeInfo} onUpdateProfile={updateProfileInfo} 
-                  myInfo={userRole === 'husband' ? husbandInfo : wifeInfo} isFullPage={true}
-                />
+              <ProfileView
+                key="profile" user={user} userRole={userRole} coupleCode={coupleCode} setHusbandInfo={setHusbandInfo}
+                setWifeInfo={setWifeInfo} husbandInfo={husbandInfo} wifeInfo={wifeInfo} onUpdateProfile={updateProfileInfo}
+                myInfo={userRole === 'husband' ? husbandInfo : wifeInfo} isFullPage={true}
+              />
             )}
           </main>
 
           {/* Luxury Bottom Nav - 5 Core Tabs */}
           <nav className="bottom-nav">
-            <NavItem 
-              active={activeTab === 'home'} 
-              onClick={() => handleSharedNavigate('home')} 
-              icon={<Home size={22} fill={activeTab === 'home' ? appTheme.primary : "none"} color={activeTab === 'home' ? appTheme.primary : undefined} />} 
-              label="홈" 
+            <NavItem
+              active={activeTab === 'home'}
+              onClick={() => handleSharedNavigate('home')}
+              icon={<Home size={22} fill={activeTab === 'home' ? appTheme.primary : "none"} color={activeTab === 'home' ? appTheme.primary : undefined} />}
+              label="홈"
             />
-            <NavItem 
-              active={activeTab === 'cardGame'} 
-              onClick={handleInitiateCardGame} 
-              icon={<MessageSquare size={22} fill={activeTab === 'cardGame' ? appTheme.primary : "none"} color={activeTab === 'cardGame' ? appTheme.primary : undefined} />} 
-              label="대화카드" 
+            <NavItem
+              active={activeTab === 'cardGame'}
+              onClick={handleInitiateCardGame}
+              icon={<MessageSquare size={22} fill={activeTab === 'cardGame' ? appTheme.primary : "none"} color={activeTab === 'cardGame' ? appTheme.primary : undefined} />}
+              label="대화카드"
             />
-            <NavItem 
-              active={activeTab === 'counseling'} 
-              onClick={() => handleSharedNavigate('counseling')} 
-              icon={<Sparkles size={22} fill={activeTab === 'counseling' ? appTheme.primary : "none"} color={activeTab === 'counseling' ? appTheme.primary : undefined} />} 
-              label="AI하티" 
+            <NavItem
+              active={activeTab === 'counseling'}
+              onClick={() => handleSharedNavigate('counseling')}
+              icon={<Sparkles size={22} fill={activeTab === 'counseling' ? appTheme.primary : "none"} color={activeTab === 'counseling' ? appTheme.primary : undefined} />}
+              label="AI하티"
             />
-            <NavItem 
-              active={activeTab === 'worship'} 
-              onClick={() => handleSharedNavigate('worship')} 
-              icon={<BookOpen size={22} fill={activeTab === 'worship' ? appTheme.primary : "none"} color={activeTab === 'worship' ? appTheme.primary : undefined} />} 
-              label="가정예배" 
+            <NavItem
+              active={activeTab === 'worship'}
+              onClick={() => handleSharedNavigate('worship')}
+              icon={<BookOpen size={22} fill={activeTab === 'worship' ? appTheme.primary : "none"} color={activeTab === 'worship' ? appTheme.primary : undefined} />}
+              label="가정예배"
             />
-            <NavItem 
-              active={activeTab === 'heartPrayer'} 
-              onClick={() => handleSharedNavigate('heartPrayer')} 
-              icon={<Heart size={22} fill={activeTab === 'heartPrayer' ? appTheme.primary : "none"} color={activeTab === 'heartPrayer' ? appTheme.primary : undefined} />} 
-              label="작은숲" 
+            <NavItem
+              active={activeTab === 'heartPrayer'}
+              onClick={() => handleSharedNavigate('heartPrayer')}
+              icon={<Heart size={22} fill={activeTab === 'heartPrayer' ? appTheme.primary : "none"} color={activeTab === 'heartPrayer' ? appTheme.primary : undefined} />}
+              label="작은숲"
             />
           </nav>
         </>
@@ -4440,29 +4447,29 @@ const App = () => {
       {/* 📊 Full Screen Relationship Report Overlay */}
       <AnimatePresence>
         {showReport && (
-          <motion.div 
+          <motion.div
             initial={{ y: '100%' }}
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            style={{ 
-              position: 'fixed', 
-              inset: 0, 
-              zIndex: 9999, 
-              background: '#FDFCF0', 
+            style={{
+              position: 'fixed',
+              inset: 0,
+              zIndex: 9999,
+              background: '#FDFCF0',
               overflowY: 'auto',
               WebkitOverflowScrolling: 'touch'
             }}
           >
             <div style={{ minHeight: '100%', paddingBottom: '50px' }}>
-              <SolutionView 
+              <SolutionView
                 userRole={userRole}
                 husbandInfo={husbandInfo}
                 wifeInfo={wifeInfo}
                 schedules={schedules}
                 adminStats={adminStats}
                 coupleStats={coupleStats}
-                onBack={() => setShowReport(false)} 
+                onBack={() => setShowReport(false)}
               />
             </div>
           </motion.div>
@@ -4471,89 +4478,89 @@ const App = () => {
 
       {/* 🔔 Card Game & Secret Card Real-time Toast Notification */}
       <AnimatePresence>
-         {incomingCardCall && activeTab !== 'heartPrayer' && activeTab !== 'cardGame' && (
-            <motion.div 
-              initial={{ opacity: 0, y: 100, scale: 0.9 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 100, scale: 0.9 }}
-              style={{
-                position: 'fixed', bottom: '120px', left: '20px', right: '20px',
-                background: 'rgba(30, 41, 59, 0.95)', backdropFilter: 'blur(20px)',
-                borderRadius: '24px', padding: '20px', color: 'white', zIndex: 100000,
-                boxShadow: '0 20px 40px rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)',
-                display: 'flex', alignItems: 'center', gap: '15px'
-              }}
-            >
-              <div style={{ 
-                background: (incomingCardCall.type?.startsWith('secret') || incomingCardCall.type === 'heart-prayer-sent') ? '#D4AF37' : 
-                            incomingCardCall.type === 'garden' ? '#FF4D6D' : '#8A60FF', 
-                padding: '12px', 
-                borderRadius: '16px' 
-              }}>
-                 {incomingCardCall.type === 'garden' ? "🌹" :
-                  incomingCardCall.type?.startsWith('secret') ? <Lock size={24} color="white" /> : 
+        {incomingCardCall && activeTab !== 'heartPrayer' && activeTab !== 'cardGame' && (
+          <motion.div
+            initial={{ opacity: 0, y: 100, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 100, scale: 0.9 }}
+            style={{
+              position: 'fixed', bottom: '120px', left: '20px', right: '20px',
+              background: 'rgba(30, 41, 59, 0.95)', backdropFilter: 'blur(20px)',
+              borderRadius: '24px', padding: '20px', color: 'white', zIndex: 100000,
+              boxShadow: '0 20px 40px rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)',
+              display: 'flex', alignItems: 'center', gap: '15px'
+            }}
+          >
+            <div style={{
+              background: (incomingCardCall.type?.startsWith('secret') || incomingCardCall.type === 'heart-prayer-sent') ? '#D4AF37' :
+                incomingCardCall.type === 'garden' ? '#FF4D6D' : '#8A60FF',
+              padding: '12px',
+              borderRadius: '16px'
+            }}>
+              {incomingCardCall.type === 'garden' ? "🌹" :
+                incomingCardCall.type?.startsWith('secret') ? <Lock size={24} color="white" /> :
                   incomingCardCall.type === 'heart-prayer-sent' ? <Heart size={24} color="white" fill="white" /> :
-                  <Sparkles size={24} color="white" />}
-              </div>
-              <div style={{ flex: 1 }}>
-                 <p style={{ fontSize: '15px', fontWeight: 900, marginBottom: '2px' }}>
-                   {incomingCardCall.type === 'secret-answer-received' 
-                     ? `${incomingCardCall.sender}님이 비밀 답변을 남겼습니다! 🎁`
-                     : incomingCardCall.type === 'heart-prayer-sent'
-                     ? `${incomingCardCall.sender}님이 기도를 요청했습니다! 🙏`
-                     : incomingCardCall.type === 'secret-revealed'
-                     ? `${incomingCardCall.sender}님이 비밀 질문을 확인했습니다! ✨`
-                     : incomingCardCall.type === 'garden'
-                     ? `${incomingCardCall.sender}님이 소통의 화원에서 메시지를 보냈습니다! 🌹`
-                     : `배우자가 카드대화를 요청했습니다! 🃏`}
-                 </p>
-                 <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.6)', fontWeight: 700 }}>
-                   {incomingCardCall.type === 'heart-prayer-sent' ? '지금 바로 기도제목을 확인해보세요.' :
-                    incomingCardCall.type === 'garden' ? (incomingCardCall.msgType === 'question' ? '배우자가 새로운 질문을 보냈습니다.' : '배우자와의 은밀한 소통을 이어가세요.') :
+                    <Sparkles size={24} color="white" />}
+            </div>
+            <div style={{ flex: 1 }}>
+              <p style={{ fontSize: '15px', fontWeight: 900, marginBottom: '2px' }}>
+                {incomingCardCall.type === 'secret-answer-received'
+                  ? `${incomingCardCall.sender}님이 비밀 답변을 남겼습니다! 🎁`
+                  : incomingCardCall.type === 'heart-prayer-sent'
+                    ? `${incomingCardCall.sender}님이 기도를 요청했습니다! 🙏`
+                    : incomingCardCall.type === 'secret-revealed'
+                      ? `${incomingCardCall.sender}님이 비밀 질문을 확인했습니다! ✨`
+                      : incomingCardCall.type === 'garden'
+                        ? `${incomingCardCall.sender}님이 소통의 화원에서 메시지를 보냈습니다! 🌹`
+                        : `배우자가 카드대화를 요청했습니다! 🃏`}
+              </p>
+              <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.6)', fontWeight: 700 }}>
+                {incomingCardCall.type === 'heart-prayer-sent' ? '지금 바로 기도제목을 확인해보세요.' :
+                  incomingCardCall.type === 'garden' ? (incomingCardCall.msgType === 'question' ? '배우자가 새로운 질문을 보냈습니다.' : '배우자와의 은밀한 소통을 이어가세요.') :
                     incomingCardCall.type?.startsWith('secret') ? '지금 바로 정답을 확인해보세요.' : '지금 수락해서 함께 깊은 대화를 나눠보세요.'}
-                 </p>
-              </div>
-              <button 
-                onClick={() => {
-                  if (incomingCardCall.type === 'heart-prayer-sent' || incomingCardCall.type === 'garden') {
-                    setActiveTab('heartPrayer');
-                    if (incomingCardCall.type === 'garden') {
-                      setTimeout(() => window.dispatchEvent(new CustomEvent('nav-to-garden')), 300);
-                    }
-                  } else if (incomingCardCall.type?.startsWith('secret')) {
-                    setActiveTab('home');
-                  } else {
-                    setActiveTab('cardGame');
+              </p>
+            </div>
+            <button
+              onClick={() => {
+                if (incomingCardCall.type === 'heart-prayer-sent' || incomingCardCall.type === 'garden') {
+                  setActiveTab('heartPrayer');
+                  if (incomingCardCall.type === 'garden') {
+                    setTimeout(() => window.dispatchEvent(new CustomEvent('nav-to-garden')), 300);
                   }
-                  setIncomingCardCall(null);
-                }}
-                style={{ background: 'white', color: '#1E293B', padding: '10px 18px', borderRadius: '12px', border: 'none', fontWeight: 900, fontSize: '13px' }}
-              >
-                확인
-              </button>
-              <button 
-                onClick={() => setIncomingCardCall(null)}
-                style={{ background: 'rgba(255,255,255,0.1)', color: 'white', padding: '10px', borderRadius: '12px', border: 'none', display: 'flex' }}
-              >
-                <X size={18} />
-              </button>
-            </motion.div>
-         )}
+                } else if (incomingCardCall.type?.startsWith('secret')) {
+                  setActiveTab('home');
+                } else {
+                  setActiveTab('cardGame');
+                }
+                setIncomingCardCall(null);
+              }}
+              style={{ background: 'white', color: '#1E293B', padding: '10px 18px', borderRadius: '12px', border: 'none', fontWeight: 900, fontSize: '13px' }}
+            >
+              확인
+            </button>
+            <button
+              onClick={() => setIncomingCardCall(null)}
+              style={{ background: 'rgba(255,255,255,0.1)', color: 'white', padding: '10px', borderRadius: '12px', border: 'none', display: 'flex' }}
+            >
+              <X size={18} />
+            </button>
+          </motion.div>
+        )}
       </AnimatePresence>
 
       {/* 📘 Full Screen App Guide Overlay */}
       <AnimatePresence>
         {showGuidePage && (
-          <motion.div 
+          <motion.div
             initial={{ x: '100%' }}
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            style={{ 
-              position: 'fixed', 
-              inset: 0, 
-              zIndex: 9999, 
-              background: '#FDFCF0', 
+            style={{
+              position: 'fixed',
+              inset: 0,
+              zIndex: 9999,
+              background: '#FDFCF0',
               overflowY: 'auto',
               WebkitOverflowScrolling: 'touch'
             }}
@@ -4565,12 +4572,12 @@ const App = () => {
       {/* 🔔 Notification List Overlay */}
       <AnimatePresence>
         {showNotificationList && (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             onClick={() => setShowNotificationList(false)}
             style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(10px)', zIndex: 1000000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}
           >
-            <motion.div 
+            <motion.div
               initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }}
               onClick={(e) => e.stopPropagation()}
               style={{ width: '100%', maxWidth: '400px', background: 'white', borderRadius: '32px', overflow: 'hidden', boxShadow: '0 25px 50px rgba(0,0,0,0.3)' }}
@@ -4581,7 +4588,7 @@ const App = () => {
               </div>
               <div style={{ maxHeight: '400px', overflowY: 'auto', padding: '10px' }}>
                 {notifications.length === 0 ? (
-                   <div style={{ padding: '40px 20px', textAlign: 'center', color: '#8B7355', opacity: 0.6 }}>새로운 알림이 없습니다.</div>
+                  <div style={{ padding: '40px 20px', textAlign: 'center', color: '#8B7355', opacity: 0.6 }}>새로운 알림이 없습니다.</div>
                 ) : (
                   notifications.map((notif, i) => (
                     <div key={i} style={{ padding: '15px', borderRadius: '16px', marginBottom: '8px', background: '#FDFCF0', border: '1px solid rgba(212, 175, 55, 0.1)' }}>
@@ -4600,66 +4607,66 @@ const App = () => {
       {/* 🃏 Dialogue Card Start/Join Confirmation Modal */}
       <AnimatePresence>
         {showDialogueConfirm && (
-          <motion.div 
-            initial={{ opacity: 0 }} 
-            animate={{ opacity: 1 }} 
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            style={{ 
-              position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', 
-              backdropFilter: 'blur(10px)', zIndex: 99999, 
-              display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' 
+            style={{
+              position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)',
+              backdropFilter: 'blur(10px)', zIndex: 99999,
+              display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px'
             }}
           >
-            <motion.div 
-              initial={{ scale: 0.9, y: 20 }} 
-              animate={{ scale: 1, y: 0 }} 
+            <motion.div
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.9, y: 20 }}
-              style={{ 
-                width: '100%', maxWidth: '340px', background: 'white', 
-                borderRadius: '35px', padding: '40px 25px', textAlign: 'center', 
-                boxShadow: '0 25px 50px rgba(0,0,0,0.3)', border: '2px solid rgba(212, 175, 55, 0.2)' 
+              style={{
+                width: '100%', maxWidth: '340px', background: 'white',
+                borderRadius: '35px', padding: '40px 25px', textAlign: 'center',
+                boxShadow: '0 25px 50px rgba(0,0,0,0.3)', border: '2px solid rgba(212, 175, 55, 0.2)'
               }}
             >
-               <div style={{ 
-                 width: '80px', height: '80px', borderRadius: '24px', 
-                 background: 'rgba(138, 96, 255, 0.1)', display: 'flex', 
-                 alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px' 
-               }}>
-                  <MessageSquare size={40} color="#8A60FF" />
-               </div>
-               <h3 style={{ fontSize: '22px', fontWeight: 900, color: '#2D1F08', marginBottom: '12px' }}>
-                 {dialogueConfirmRole === 'initiator' ? '대화카드를 시작할까요?' : '대화카드 초대 도착!'}
-               </h3>
-               <p style={{ fontSize: '15px', color: '#8B7355', fontWeight: 700, lineHeight: 1.6, marginBottom: '30px', wordBreak: 'keep-all' }}>
-                 {dialogueConfirmRole === 'initiator' 
-                   ? '배우자와 함께 10가지 질문으로 나누는 깊은 소통의 시간을 시작하시겠습니까?' 
-                   : `${userRole === 'husband' ? (wifeInfo?.nickname || '아내') : (husbandInfo?.nickname || '남편')}님이 대화카드 게임에 초대하셨습니다. 함께 참여하시겠습니까?`}
-               </p>
-               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                  <button 
-                    onClick={() => {
-                      setShowDialogueConfirm(false);
-                      handleSharedNavigate('cardGame', { dialogueTab: 'choice', dialogueGuideId: null });
-                    }}
-                    style={{ 
-                      width: '100%', padding: '18px', borderRadius: '20px', 
-                      background: '#2D1F08', color: 'white', fontWeight: 900, 
-                      fontSize: '16px', border: 'none', cursor: 'pointer' 
-                    }}
-                  >
-                    참여하기
-                  </button>
-                  <button 
-                    onClick={() => setShowDialogueConfirm(false)}
-                    style={{ 
-                      width: '100%', padding: '15px', borderRadius: '20px', 
-                      background: 'none', color: '#B08D3E', fontWeight: 800, 
-                      fontSize: '14px', border: 'none', cursor: 'pointer' 
-                    }}
-                  >
-                    나중에 하기
-                  </button>
-               </div>
+              <div style={{
+                width: '80px', height: '80px', borderRadius: '24px',
+                background: 'rgba(138, 96, 255, 0.1)', display: 'flex',
+                alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px'
+              }}>
+                <MessageSquare size={40} color="#8A60FF" />
+              </div>
+              <h3 style={{ fontSize: '22px', fontWeight: 900, color: '#2D1F08', marginBottom: '12px' }}>
+                {dialogueConfirmRole === 'initiator' ? '대화카드를 시작할까요?' : '대화카드 초대 도착!'}
+              </h3>
+              <p style={{ fontSize: '15px', color: '#8B7355', fontWeight: 700, lineHeight: 1.6, marginBottom: '30px', wordBreak: 'keep-all' }}>
+                {dialogueConfirmRole === 'initiator'
+                  ? '배우자와 함께 10가지 질문으로 나누는 깊은 소통의 시간을 시작하시겠습니까?'
+                  : `${userRole === 'husband' ? (wifeInfo?.nickname || '아내') : (husbandInfo?.nickname || '남편')}님이 대화카드 게임에 초대하셨습니다. 함께 참여하시겠습니까?`}
+              </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <button
+                  onClick={() => {
+                    setShowDialogueConfirm(false);
+                    handleSharedNavigate('cardGame', { dialogueTab: 'choice', dialogueGuideId: null });
+                  }}
+                  style={{
+                    width: '100%', padding: '18px', borderRadius: '20px',
+                    background: '#2D1F08', color: 'white', fontWeight: 900,
+                    fontSize: '16px', border: 'none', cursor: 'pointer'
+                  }}
+                >
+                  참여하기
+                </button>
+                <button
+                  onClick={() => setShowDialogueConfirm(false)}
+                  style={{
+                    width: '100%', padding: '15px', borderRadius: '20px',
+                    background: 'none', color: '#B08D3E', fontWeight: 800,
+                    fontSize: '14px', border: 'none', cursor: 'pointer'
+                  }}
+                >
+                  나중에 하기
+                </button>
+              </div>
             </motion.div>
           </motion.div>
         )}
