@@ -2597,33 +2597,63 @@ const SettingsView = ({
                 onClick={async () => {
                   if (!subscribeToPushNotifications) return alert("데이터 로딩 중입니다. 잠시 후 다시 시도해주세요.");
                   try {
+                    alert("📡 테스트를 시작합니다. 잠시만 기다려주세요...");
+                    
+                    // 1. Try with Supabase-js first
                     const { data, error } = await supabase.functions.invoke('send-push', {
                       body: {
                         type: 'UPDATE',
-                        record: {
-                          couple_id: coupleCode,
-                          user_role: userRole,
-                          info: { signal: 'green' } 
-                        },
-                        old_record: {
-                          info: { signal: 'none' }
-                        }
+                        record: { couple_id: coupleCode, user_role: userRole, info: { signal: 'green' } },
+                        old_record: { info: { signal: 'none' } }
                       }
                     });
-                    if (error) {
-                      const detail = error.context?.statusText || error.message;
-                      const status = error.context?.status ? ` (Status: ${error.context.status})` : "";
-                      throw new Error(`${detail}${status}`);
+                    
+                    if (!error) {
+                      return alert("✅ [성공] 테스트 알림이 서버로 요청되었습니다!");
                     }
-                    alert("✅ 테스트 알림이 서버로 요청되었습니다! 기기 수신을 확인해주세요.");
+
+                    // 2. If it fails, try RAW fetch to diagnose CORS
+                    console.log("Supabase-js failed, attempting raw fetch for diagnosis...");
+                    const rawRes = await fetch('https://vnxxqjdfcvwiuwlstebu.supabase.co/functions/v1/send-push', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ check_config: true })
+                    }).catch(err => {
+                      throw new Error("네트워크 연결 자체에 실패했습니다. (CORS 또는 오프라인)");
+                    });
+
+                    if (rawRes.ok) {
+                      const debugInfo = await rawRes.json();
+                      alert(`⚠️ 서버는 응답하지만 인증에 실패했습니다.\n- 상태: ${debugInfo.status}\n- VAPID 설정: ${debugInfo.vapid_configured ? 'OK' : '미설정'}\n\n💡 배포 시 --no-verify-jwt 옵션을 사용해 보세요!`);
+                    } else {
+                      alert(`❌ 서버 응답 오류: ${rawRes.status} ${rawRes.statusText}`);
+                    }
                   } catch (e) {
-                    alert("❌ 테스트 실패 상세: " + e.message + "\n\n💡 Supabase에 send-push 함수를 배포했는지 다시 확인해 주세요.");
-                    console.error("Manual test error details:", e);
+                    alert("❌ 진단 결과: " + e.message + "\n\n💡 터미널에서 'supabase functions deploy send-push --no-verify-jwt' 명령어로 배포해 보셨나요?");
                   }
                 }}
                 style={{ width: '100%', padding: '16px', borderRadius: '14px', background: 'linear-gradient(135deg, #FF9966, #FF5E62)', color: 'white', fontWeight: 900, border: 'none' }}
               >
                 지금 바로 테스트 알림 보내기 🚀
+              </button>
+
+              <button
+                onClick={async () => {
+                  try {
+                    const res = await fetch('https://vnxxqjdfcvwiuwlstebu.supabase.co/functions/v1/send-push', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ check_config: true })
+                    });
+                    const info = await res.json();
+                    alert(`⚙️ 서버 설정 상태:\n- VAPID Private Key: ${info.vapid_configured ? '✅ 설정됨' : '❌ 미설정'}\n- VAPID Public Key: ${info.vapid_public_key_exists ? '✅ 설정됨' : '❌ 미설정'}`);
+                  } catch (e) {
+                    alert("❌ 서버 설정 확인 실패. 먼저 배포(deploy)를 완료해 주세요.");
+                  }
+                }}
+                style={{ width: '100%', padding: '14px', borderRadius: '14px', background: '#F8FAFB', color: '#64748B', fontWeight: 800, border: '1px solid #EEE' }}
+              >
+                ⚙️ 서버 설정 상태 점검 (VAPID 키 확인)
               </button>
 
               <button
