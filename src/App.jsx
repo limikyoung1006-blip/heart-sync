@@ -2047,7 +2047,8 @@ const SettingsView = ({
   setAnniversaries,
   onUpdateMemo,
   isAdmin,
-  onNav
+  onNav,
+  subscribeToPushNotifications // 🔔 Added prop
 }) => {
   // Persistence for user preferences
   const [notifSignal, setNotifSignal] = useState(() => JSON.parse(localStorage.getItem('notif_signal') ?? 'true'));
@@ -2312,7 +2313,7 @@ const SettingsView = ({
         <h3 className="settings-section-title">연결 및 통합</h3>
         <SettingsItem icon={<Users size={18} />} label="배우자 연결 관리 (코드 공유)" onClick={() => setShowConnectSet(true)} />
         <SettingsItem icon={<Smartphone size={18} />} label="기기 알림 통합 설정" onClick={() => setShowNotifIntegration(true)} />
-        <SettingsItem icon={<Activity size={18} />} label="🚨 알림 정밀 진단 및 테스트" onClick={() => setShowNotifDiag(true)} />
+        <SettingsItem icon={<Activity size={18} color="#EF4444" />} label="알림 전송 장애 진단하기" onClick={() => setShowNotifDiag(true)} />
       </div>
 
       {/* 🔔 Notifications Section */}
@@ -2594,36 +2595,62 @@ const SettingsView = ({
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '25px' }}>
               <button
                 onClick={async () => {
-                  if (Notification.permission !== 'granted') {
-                    const res = await Notification.requestPermission();
-                    if (res !== 'granted') return alert("권한이 거부되었습니다. 브라우저 설정에서 수동으로 켜주세요.");
+                  if (!subscribeToPushNotifications) return alert("데이터 로딩 중입니다. 잠시 후 다시 시도해주세요.");
+                  try {
+                    const { data, error } = await supabase.functions.invoke('send-push', {
+                      body: {
+                        type: 'UPDATE',
+                        record: {
+                          couple_id: coupleCode,
+                          user_role: userRole,
+                          info: { signal: 'green' } 
+                        },
+                        old_record: {
+                          info: { signal: 'none' }
+                        }
+                      }
+                    });
+                    if (error) throw error;
+                    alert("✅ 테스트 알림이 서버로 요청되었습니다! 기기 수신을 확인해주세요.");
+                  } catch (e) {
+                    alert("❌ 테스트 요청 실패: " + e.message);
                   }
-
-                  const reg = await navigator.serviceWorker.ready;
-                  reg.showNotification('Heart Sync 테스트 알림', {
-                    body: '지금 알림이 보인다면 시스템 설정은 정상입니다! ❤️',
-                    icon: '/logo_main.png'
-                  });
                 }}
-                style={{ width: '100%', padding: '16px', borderRadius: '14px', background: '#8A60FF', color: 'white', fontWeight: 900, border: 'none' }}
+                style={{ width: '100%', padding: '16px', borderRadius: '14px', background: 'linear-gradient(135deg, #FF9966, #FF5E62)', color: 'white', fontWeight: 900, border: 'none' }}
               >
-                테스트 알림 즉시 발송
+                지금 바로 테스트 알림 보내기 🚀
               </button>
 
               <button
-                onClick={() => {
-                  alert("5초 뒤에 알림이 옵니다. 지금 바로 앱을 최소화(홈으로 이동)하고 기다려보세요!");
-                  setTimeout(async () => {
-                    const reg = await navigator.serviceWorker.ready;
-                    reg.showNotification('백그라운드 테스트 성공!', {
-                      body: '앱이 닫혀있을 때도 알림이 정상 작동합니다. ✨',
-                      icon: '/logo_main.png'
-                    });
-                  }, 5000);
+                onClick={async () => {
+                  if (!subscribeToPushNotifications) return;
+                  try {
+                    await subscribeToPushNotifications();
+                    alert("✅ 알림 구독 정보가 강제 갱신되었습니다! 이제 알림이 정상적으로 수신됩니다.");
+                  } catch (e) {
+                    alert("❌ 갱신 중 오류: " + e.message);
+                  }
                 }}
-                style={{ width: '100%', padding: '16px', borderRadius: '14px', background: '#2D1F08', color: 'white', fontWeight: 900, border: 'none' }}
+                style={{ width: '100%', padding: '16px', borderRadius: '14px', background: '#3B82F6', color: 'white', fontWeight: 900, border: 'none' }}
               >
-                백그라운드 동작 테스트 (5초 후)
+                알림 구독 강제 갱신
+              </button>
+
+              <button
+                onClick={async () => {
+                  if (Notification.permission !== 'granted') {
+                    const res = await Notification.requestPermission();
+                    if (res !== 'granted') return alert("권한이 거부되었습니다.");
+                  }
+                  const reg = await navigator.serviceWorker.ready;
+                  reg.showNotification('Heart Sync 로컬 테스트', {
+                    body: '브라우저 알림 기능이 활성화 상태입니다. ❤️',
+                    icon: '/logo_main.png'
+                  });
+                }}
+                style={{ width: '100%', padding: '16px', borderRadius: '14px', background: '#8A60FF', color: 'white', fontWeight: 900, border: 'none', opacity: 0.8 }}
+              >
+                로컬 알림 테스트 발송
               </button>
             </div>
 
