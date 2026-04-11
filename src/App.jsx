@@ -3730,8 +3730,9 @@ const App = () => {
       const currentRemoteInfo = latestProfile?.info || {};
       
       const baseInfo = userRole === 'husband' ? husbandInfo : wifeInfo;
-      // Merge: Local State + Remote Latest + New Changes
-      const updatedInfo = { ...baseInfo, ...currentRemoteInfo, ...extraInfo };
+      // 🚀 CRITICAL FIX: Put currentRemoteInfo FIRST so that local baseInfo (latest user intent)
+      // takes priority over potentially stale data fetched from the DB.
+      const updatedInfo = { ...currentRemoteInfo, ...baseInfo, ...extraInfo };
       if (text !== undefined) updatedInfo.todayMemo = text;
 
       // Update local state immediately
@@ -3842,7 +3843,11 @@ const App = () => {
           }
           setSpouseSignal(info.signal);
         } else if (info?.signal && role === userRole && !signalLockRef.current) {
-          setMySignal(info.signal);
+          // Only update if it's actually different from what we think we have locally
+          setMySignal(prev => {
+            if (prev !== info.signal) return info.signal;
+            return prev;
+          });
         }
 
         if (info?.requestTab && info.navId !== lastNavIdRef.current && payload.new.user_role !== userRole) {
@@ -4055,7 +4060,8 @@ const App = () => {
     } catch (err) {
       console.error("Signal Sync Error:", err);
     } finally {
-      setTimeout(() => { signalLockRef.current = null; }, 1500);
+      // 🛡️ Lock for 3 seconds to ensure DB roundtrip and Realtime echo are absorbed
+      setTimeout(() => { signalLockRef.current = null; }, 3000);
     }
   };
 
