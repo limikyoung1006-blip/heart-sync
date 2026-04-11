@@ -62,7 +62,10 @@ serve(async (req) => {
             tab: 'home'
           })
           
-          await webpush.sendNotification(subscription, payload)
+          await webpush.sendNotification(subscription, payload, {
+            TTL: 86400, // 24 hours
+            urgency: 'high'
+          })
           console.log(`Push sent to ${receiverLabel} ✅`)
        }
     }

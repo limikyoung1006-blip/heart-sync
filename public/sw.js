@@ -16,17 +16,19 @@ self.addEventListener('fetch', (event) => {
   event.respondWith(fetch(event.request));
 });
 
-// Handle Push Events (if using a push server)
+// Handle Push Events
 self.addEventListener('push', (event) => {
   let data = {};
-  if (event.data) {
-    try {
+  
+  try {
+    if (event.data) {
       data = event.data.json();
-    } catch (e) {
-      data = { title: 'Heart Sync', body: event.data.text() };
+    } else {
+      data = { title: 'Heart Sync', body: '새로운 소식이 도착했습니다! ❤️' };
     }
-  } else {
-    data = { title: 'Heart Sync', body: '새로운 소식이 도착했습니다! ❤️' };
+  } catch (e) {
+    console.error('Push data parse error:', e);
+    data = { title: 'Heart Sync', body: event.data ? event.data.text() : '새로운 소식이 도착했습니다!' };
   }
 
   const options = {
@@ -42,8 +44,10 @@ self.addEventListener('push', (event) => {
     }
   };
 
+  // event.waitUntil ensures the service worker doesn't terminate before the notification is shown
   event.waitUntil(
     self.registration.showNotification(data.title || 'Heart Sync', options)
+      .catch(err => console.error('Notification show error:', err))
   );
 });
 
