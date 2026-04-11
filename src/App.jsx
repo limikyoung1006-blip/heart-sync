@@ -3733,6 +3733,9 @@ const App = () => {
       // 🚀 CRITICAL FIX: Put currentRemoteInfo FIRST so that local baseInfo (latest user intent)
       // takes priority over potentially stale data fetched from the DB.
       const updatedInfo = { ...currentRemoteInfo, ...baseInfo, ...extraInfo };
+      // 🛡️ Ensure our own signal is ALWAYS preserved from the master local state mySignal
+      updatedInfo.signal = mySignal; 
+      
       if (text !== undefined) updatedInfo.todayMemo = text;
 
       // Update local state immediately
@@ -3842,12 +3845,11 @@ const App = () => {
             );
           }
           setSpouseSignal(info.signal);
-        } else if (info?.signal && role === userRole && !signalLockRef.current) {
-          // Only update if it's actually different from what we think we have locally
-          setMySignal(prev => {
-            if (prev !== info.signal) return info.signal;
-            return prev;
-          });
+        } else if (info?.signal && role === userRole) {
+          // 🛡️ Local Authority: We do NOT update our own signal from the DB. 
+          // Our local 'mySignal' state is the master source of truth.
+          // This prevents clobbering by stale updates from other devices/syncs.
+          console.log("Self-signal event received - ignoring to prevent clobbering.");
         }
 
         if (info?.requestTab && info.navId !== lastNavIdRef.current && payload.new.user_role !== userRole) {
