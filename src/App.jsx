@@ -2657,6 +2657,15 @@ const SettingsView = ({
               >
                 로컬 알림 테스트 발송
               </button>
+
+              <button
+                onClick={() => {
+                  window.open('https://vnxxqjdfcvwiuwlstebu.supabase.co/functions/v1/send-push', '_blank');
+                }}
+                style={{ width: '100%', padding: '12px', marginTop: '10px', borderRadius: '15px', border: '1px solid #EEE', background: '#F8FAFB', fontSize: '11px', fontWeight: 800, color: '#64748B' }}
+              >
+                🌐 서버 주소 직접 접속 테스트 (404 확인용)
+              </button>
             </div>
 
             <div style={{ padding: '15px', background: 'rgba(239, 68, 68, 0.05)', borderRadius: '18px', border: '1px solid rgba(239, 68, 68, 0.1)' }}>
