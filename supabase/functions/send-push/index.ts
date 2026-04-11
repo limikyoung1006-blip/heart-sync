@@ -12,7 +12,17 @@ if (VAPID_PRIVATE_KEY) {
   webpush.setVapidDetails(`mailto:${VAPID_EMAIL}`, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY)
 }
 
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
+
 serve(async (req) => {
+  // ✅ CORS preflight handling
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders })
+  }
+
   try {
     const payload_raw = await req.json()
     console.log("Push trigger received:", JSON.stringify(payload_raw, null, 2))
@@ -88,10 +98,10 @@ serve(async (req) => {
       console.log("No signal change or not an UPDATE type. Skipping push.")
     }
 
-    return new Response(JSON.stringify({ message: "Success" }), { headers: { "Content-Type": "application/json" } })
+    return new Response(JSON.stringify({ message: "Success" }), { headers: { ...corsHeaders, "Content-Type": "application/json" } })
 
   } catch (err) {
     console.error("Function Error:", err.message)
-    return new Response(JSON.stringify({ error: err.message }), { status: 500, headers: { "Content-Type": "application/json" } })
+    return new Response(JSON.stringify({ error: err.message }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } })
   }
 })
