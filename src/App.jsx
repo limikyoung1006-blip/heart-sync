@@ -1405,20 +1405,8 @@ const IntimacyModal = ({ user, show, onClose, subPage, setSubPage, bgImage, onBg
       });
     }
 
-    // 🔄 DB Profile Sync (Fail-safe reliability)
-    supabase.from('profiles').select('info').eq('id', user.id).single().then(({ data }) => {
-      const latestInfo = data?.info || myInfo;
-      const updatedInfo = { ...latestInfo, gardenMsg: q, gardenMsgType: 'question', gardenNavId, gardenTime: getTime() };
-
-      supabase.from('profiles').upsert({
-        id: user.id, couple_id: coupleCode, user_role: userRole, info: updatedInfo, updated_at: new Date().toISOString()
-      }, { onConflict: 'id' }).then(({ error }) => {
-        if (!error) {
-          if (userRole === 'husband') setHusbandInfo(updatedInfo);
-          else setWifeInfo(updatedInfo);
-        }
-      });
-    });
+    // 🔄 DB Profile Sync (Consolidated & Safe)
+    updateProfileInfo(undefined, { gardenMsg: q, gardenMsgType: 'question', gardenNavId, gardenTime: getTime() });
 
     setTimeout(() => setSpouseStatus('done'), 2000);
   };
@@ -1436,22 +1424,8 @@ const IntimacyModal = ({ user, show, onClose, subPage, setSubPage, bgImage, onBg
       mainChannel.send({ type: 'broadcast', event: 'garden-chat-sent', payload: chatMsg });
     }
 
-    // DB Backup Sync via Profiles (Reliable connection)
-    // IMPORTANT: Fetch latest info to prevent clobbering other settings
-    supabase.from('profiles').select('info').eq('id', user.id).single().then(({ data }) => {
-      const latestInfo = data?.info || myInfo;
-      const updatedInfo = { ...latestInfo, gardenMsg: inputText, gardenMsgType: 'chat', gardenNavId, gardenTime: getTime() };
-
-      supabase.from('profiles').upsert({
-        id: user.id, couple_id: coupleCode, user_role: userRole, info: updatedInfo, updated_at: new Date().toISOString()
-      }, { onConflict: 'id' }).then(({ error }) => {
-        if (error) console.error("Garden DB Sync failed", error);
-        else {
-          if (userRole === 'husband') setHusbandInfo(updatedInfo);
-          else setWifeInfo(updatedInfo);
-        }
-      });
-    });
+    // DB Backup Sync via Consolidated Update
+    updateProfileInfo(undefined, { gardenMsg: inputText, gardenMsgType: 'chat', gardenNavId, gardenTime: getTime() });
 
     setInputText('');
     setSpouseStatus('done');
@@ -1472,18 +1446,8 @@ const IntimacyModal = ({ user, show, onClose, subPage, setSubPage, bgImage, onBg
       });
     }
 
-    // 🔄 DB Profile Sync
-    supabase.from('profiles').select('info').eq('id', user.id).single().then(({ data }) => {
-      const updatedInfo = { ...data?.info, gardenMsg: myAnswerInput, gardenMsgType: 'answer', gardenNavId };
-      supabase.from('profiles').upsert({
-        id: user.id, couple_id: coupleCode, user_role: userRole, info: updatedInfo, updated_at: new Date().toISOString()
-      }, { onConflict: 'id' }).then(({ error }) => {
-        if (!error) {
-          if (userRole === 'husband') setHusbandInfo(updatedInfo);
-          else setWifeInfo(updatedInfo);
-        }
-      });
-    });
+    // 🔄 DB Profile Sync (Safe)
+    updateProfileInfo(undefined, { gardenMsg: myAnswerInput, gardenMsgType: 'answer', gardenNavId });
 
     setMyAnswerInput('');
     setIsTopicFinished(true);
@@ -1505,6 +1469,7 @@ const IntimacyModal = ({ user, show, onClose, subPage, setSubPage, bgImage, onBg
     if (allProfiles) {
       for (const p of allProfiles) {
         const updatedInfo = { ...p.info, gardenMsg: null, gardenMsgType: null, gardenNavId: null, gardenAnswer: null };
+        // This is a special bulk update, but we ensure it uses the fetched p.info
         await supabase.from('profiles').upsert({
           id: p.id, couple_id: coupleCode, user_role: p.user_role, info: updatedInfo, updated_at: new Date().toISOString()
         }, { onConflict: 'id' });
@@ -2111,14 +2076,7 @@ const SettingsView = ({
     localStorage.setItem('anniversaries', JSON.stringify(anniversaries));
 
     const syncSettings = async () => {
-      const updatedInfo = { ...myInfo, worshipDays, worshipTime, anniversaries };
-      await supabase.from('profiles').upsert({
-        id: user.id,
-        couple_id: coupleCode,
-        user_role: userRole,
-        info: updatedInfo,
-        updated_at: new Date().toISOString()
-      }, { onConflict: 'id' });
+      await updateProfileInfo(undefined, { worshipDays, worshipTime, anniversaries });
     };
     syncSettings();
   }, [worshipDays, worshipTime, anniversaries, coupleCode, userRole]);
@@ -2148,15 +2106,8 @@ const SettingsView = ({
     const updatedInfo = { ...myInfo, ...editInfo };
     setMyInfo(updatedInfo);
 
-    try {
-      // 1. Update My Profile
-      await supabase.from('profiles').upsert({
-        id: user.id,
-        couple_id: coupleCode,
-        user_role: userRole,
-        info: updatedInfo,
-        updated_at: new Date().toISOString()
-      }, { onConflict: 'id' });
+      // 1. Update My Profile (Consolidated)
+      await updateProfileInfo(undefined, editInfo);
 
       // 2. Clear local cache to force refresh
       localStorage.setItem('master_openai_key', '');
@@ -2169,12 +2120,14 @@ const SettingsView = ({
         const updatedSpouseInfo = { ...spouseInfo, marriageDate: editInfo.marriageDate };
 
         spouseSetter(updatedSpouseInfo);
+        // Special case: update spouse's profile
         await supabase.from('profiles').upsert({
+          id: spouseInfo.id, // Ensure we have ID
           couple_id: coupleCode,
           user_role: spouseRole,
           info: updatedSpouseInfo,
           updated_at: new Date().toISOString()
-        }, { onConflict: 'couple_id,user_role' });
+        }, { onConflict: 'id' });
       }
 
       setShowProfileEdit(false);
@@ -2482,13 +2435,8 @@ const SettingsView = ({
                         try {
                           setCoupleCode(newCode);
                           localStorage.setItem('coupleCode', newCode);
-                          await supabase.from('profiles').upsert({
-                            id: user.id,
-                            couple_id: newCode,
-                            user_role: userRole,
-                            info: myInfo,
-                            updated_at: new Date().toISOString()
-                          }, { onConflict: 'id' });
+                          // Centralized update handles fetching latest info and merging HS code
+                          await updateProfileInfo(undefined, {});
                           alert("코드가 성공적으로 수정되었습니다!");
                           setIsEditingCode(false);
                           setShowConnectSet(false);
@@ -3739,16 +3687,9 @@ const App = () => {
     }
     const baseInfo = userRole === 'husband' ? husbandInfo : wifeInfo;
     const updatedInfo = { ...baseInfo, ...info, coupleCode: finalCode };
-    if (userRole === 'husband') setHusbandInfo(updatedInfo);
-    else setWifeInfo(updatedInfo);
-
-    await supabase.from('profiles').upsert({
-      id: user.id,
-      couple_id: finalCode,
-      user_role: userRole,
-      info: updatedInfo,
-      updated_at: new Date().toISOString()
-    }, { onConflict: 'id' });
+    
+    // Use the robust update instead of a shallow upsert
+    await updateProfileInfo(undefined, info);
 
     localStorage.setItem('userRole', userRole);
     localStorage.setItem('isSetupDone', 'true');
@@ -3770,32 +3711,47 @@ const App = () => {
   const addSchedule = async (s) => {
     const newSchedules = [...schedules, s];
     setSchedules(newSchedules);
-    const baseInfo = userRole === 'husband' ? husbandInfo : wifeInfo;
-    await supabase.from('profiles').upsert({ id: user.id, couple_id: coupleCode, user_role: userRole, info: { ...baseInfo, coupleSchedules: newSchedules }, updated_at: new Date().toISOString() }, { onConflict: 'id' });
+    await updateProfileInfo(undefined, { coupleSchedules: newSchedules });
   };
 
   const deleteSchedule = async (id) => {
     const newSchedules = schedules.filter(s => s.id !== id);
     setSchedules(newSchedules);
-    const baseInfo = userRole === 'husband' ? husbandInfo : wifeInfo;
-    await supabase.from('profiles').upsert({ id: user.id, couple_id: coupleCode, user_role: userRole, info: { ...baseInfo, coupleSchedules: newSchedules }, updated_at: new Date().toISOString() }, { onConflict: 'id' });
+    await updateProfileInfo(undefined, { coupleSchedules: newSchedules });
   };
 
   const updateProfileInfo = async (text, extraInfo = {}) => {
     if (!user?.id) { console.warn("Update attempt without valid session - skipping sync."); return; }
-    const baseInfo = userRole === 'husband' ? husbandInfo : wifeInfo;
-    const updatedInfo = { ...baseInfo, ...extraInfo };
-    if (text !== undefined) updatedInfo.todayMemo = text;
-    if (mainChannel) mainChannel.send({ type: 'broadcast', event: 'memo-updated', payload: { sender: userRole, text, extraInfo } });
-    if (userRole === 'husband') setHusbandInfo(updatedInfo); else setWifeInfo(updatedInfo);
-    const finalCode = (coupleCode || "").toLowerCase().trim();
-    await supabase.from('profiles').upsert({
-      id: user.id,
-      couple_id: finalCode,
-      user_role: userRole,
-      info: updatedInfo,
-      updated_at: new Date().toISOString()
-    }, { onConflict: 'id' });
+    
+    try {
+      // 🕵️ Get latest data from DB first to prevent clobbering other settings
+      const { data: latestProfile } = await supabase.from('profiles').select('info').eq('id', user.id).single();
+      const currentRemoteInfo = latestProfile?.info || {};
+      
+      const baseInfo = userRole === 'husband' ? husbandInfo : wifeInfo;
+      // Merge: Local State + Remote Latest + New Changes
+      const updatedInfo = { ...baseInfo, ...currentRemoteInfo, ...extraInfo };
+      if (text !== undefined) updatedInfo.todayMemo = text;
+
+      // Update local state immediately
+      if (userRole === 'husband') setHusbandInfo(updatedInfo); else setWifeInfo(updatedInfo);
+      
+      if (mainChannel) mainChannel.send({ type: 'broadcast', event: 'memo-updated', payload: { sender: userRole, text, extraInfo } });
+
+      const finalCode = (coupleCode || "").toLowerCase().trim();
+      await supabase.from('profiles').upsert({
+        id: user.id,
+        couple_id: finalCode,
+        user_role: userRole,
+        info: updatedInfo,
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'id' });
+      
+      return updatedInfo;
+    } catch (err) {
+      console.error("Profile sync error details:", err);
+      throw err;
+    }
   };
 
   useEffect(() => {
@@ -4078,12 +4034,10 @@ const App = () => {
     setMySignal(newSignal);
     localStorage.setItem('mySignal', newSignal);
     
-    // 🛡️ Sync to info object to ensure useEffect saves it to localStorage correctly
-    if (userRole === 'husband') {
-      setHusbandInfo(prev => ({ ...prev, signal: newSignal }));
-    } else {
-      setWifeInfo(prev => ({ ...prev, signal: newSignal }));
-    }
+    // 🛡️ Pre-emptive local cache update
+    const roleKey = userRole === 'husband' ? 'husbandInfo' : 'wifeInfo';
+    const currentLocal = JSON.parse(localStorage.getItem(roleKey) || '{}');
+    localStorage.setItem(roleKey, JSON.stringify({ ...currentLocal, signal: newSignal }));
 
     // 📡 빠른 브로드캐스트 알림 발신
     if (mainChannel) {
@@ -4095,12 +4049,12 @@ const App = () => {
     }
 
     try {
+      // 🚀 Using the robust fetch-and-merge update method
       await updateProfileInfo(undefined, { signal: newSignal });
     } catch (err) {
       console.error("Signal Sync Error:", err);
     } finally {
-      // 🛡️ Release gate with a small buffer to absorb latencies
-      setTimeout(() => { signalLockRef.current = null; }, 1200);
+      setTimeout(() => { signalLockRef.current = null; }, 1500);
     }
   };
 
