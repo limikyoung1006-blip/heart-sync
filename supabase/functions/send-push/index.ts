@@ -14,13 +14,18 @@ if (VAPID_PRIVATE_KEY) {
 
 serve(async (req) => {
   try {
-    const { record, old_record, type } = await req.json()
+    const payload_raw = await req.json()
+    console.log("Push trigger received:", JSON.stringify(payload_raw, null, 2))
+    
+    const { record, old_record, type } = payload_raw
     
     // ✅ 1. 신호(Green/Amber/Red)가 변경되었을 때만 발송
-    if (type === 'UPDATE' && record.info.signal !== old_record.info.signal) {
+    if (type === 'UPDATE' && record?.info?.signal !== old_record?.info?.signal) {
        const userRole = record.user_role
        const coupleCode = record.couple_id
        const newSignal = record.info.signal
+       
+       console.log(`Signal Change detected for ${userRole} in couple ${coupleCode}: ${old_record?.info?.signal} -> ${newSignal}`)
        
        const signalMap = { 
          green: '🟢 초록 (기분 좋음)', 
@@ -37,14 +42,19 @@ serve(async (req) => {
          Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
        )
        
-       const { data: partnerProfile } = await supabase
+       const { data: partnerProfile, error: profileError } = await supabase
          .from('profiles')
          .select('info')
          .eq('couple_id', coupleCode)
          .neq('user_role', userRole)
          .single()
        
+       if (profileError) {
+         console.error("Error fetching partner profile:", profileError)
+       }
+
        if (partnerProfile?.info?.pushSubscription) {
+          console.log(`Found push subscription for ${receiverLabel}`)
           const subscription = JSON.parse(partnerProfile.info.pushSubscription)
           
           let title = `${senderLabel}님의 마음 신호가 도착했습니다 🚦`
@@ -62,12 +72,20 @@ serve(async (req) => {
             tab: 'home'
           })
           
-          await webpush.sendNotification(subscription, payload, {
-            TTL: 86400, // 24 hours
-            urgency: 'high'
-          })
-          console.log(`Push sent to ${receiverLabel} ✅`)
+          try {
+            await webpush.sendNotification(subscription, payload, {
+              TTL: 86400, // 24 hours
+              urgency: 'high'
+            })
+            console.log(`Push sent to ${receiverLabel} successfully ✅`)
+          } catch (pushErr) {
+            console.error("WebPush send error:", pushErr)
+          }
+       } else {
+         console.warn(`No push subscription found for ${receiverLabel}. Info object:`, JSON.stringify(partnerProfile?.info))
        }
+    } else {
+      console.log("No signal change or not an UPDATE type. Skipping push.")
     }
 
     return new Response(JSON.stringify({ message: "Success" }), { headers: { "Content-Type": "application/json" } })

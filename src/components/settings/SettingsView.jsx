@@ -400,8 +400,11 @@ const SettingsView = ({
             
             {diagStep === 0 && (
               <>
-                <p style={{ fontSize: '14px', color: '#4B5563', lineHeight: 1.6, marginBottom: '20px' }}>알림 수신에 문제가 있나요? 하티 엔진이 현재 기기의 알림 통로를 점검합니다.</p>
-                <button onClick={() => setDiagStep(1)} style={{ width: '100%', padding: '15px', borderRadius: '15px', background: '#1E293B', color: 'white', fontWeight: 900 }}>진단 시작하기</button>
+                <p style={{ fontSize: '14px', color: '#4B5563', lineHeight: 1.6, marginBottom: '20px' }}>푸쉬 알림이 오지 않나요? 하티 엔진이 현재 기기의 알림 연결 상태를 분석하고 즉시 복구를 시도합니다.</p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  <button onClick={() => setDiagStep(1)} style={{ width: '100%', padding: '15px', borderRadius: '15px', background: '#1E293B', color: 'white', fontWeight: 900 }}>점검 및 복구 시작</button>
+                  <button onClick={() => { setShowNotifDiag(false); }} style={{ width: '100%', padding: '15px', borderRadius: '15px', background: '#F1F5F9', color: '#475569', fontWeight: 900 }}>닫기</button>
+                </div>
               </>
             )}
             
@@ -409,28 +412,70 @@ const SettingsView = ({
               <>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '25px' }}>
                   <div style={{ fontSize: '13px', display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #F1F5F9', paddingBottom: '8px' }}>
-                    <span>브라우저 지원 여부</span>
-                    <span style={{ color: '#10B981', fontWeight: 800 }}>통과</span>
-                  </div>
-                  <div style={{ fontSize: '13px', display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #F1F5F9', paddingBottom: '8px' }}>
                     <span>시스템 권한 상태</span>
-                    <span style={{ color: Notification.permission === 'granted' ? '#10B981' : '#EF4444', fontWeight: 800 }}>{Notification.permission === 'granted' ? '허용' : '차단됨'}</span>
+                    <span style={{ color: Notification.permission === 'granted' ? '#10B981' : '#EF4444', fontWeight: 800 }}>{Notification.permission === 'granted' ? '정상' : '차단됨'}</span>
                   </div>
                   <div style={{ fontSize: '13px', display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #F1F5F9', paddingBottom: '8px' }}>
-                    <span>서비스 워커 등록</span>
-                    <span style={{ color: '#10B981', fontWeight: 800 }}>활성</span>
+                    <span>브라우저 푸쉬 지원 (VAPID)</span>
+                    <span style={{ color: ('PushManager' in window) ? '#10B981' : '#EF4444', fontWeight: 800 }}>{('PushManager' in window) ? '지원' : '미지원'}</span>
                   </div>
                   <div style={{ fontSize: '13px', display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #F1F5F9', paddingBottom: '8px' }}>
-                    <span>종단간 동기화 채널</span>
-                    <span style={{ color: '#10B981', fontWeight: 800 }}>정상</span>
+                    <span>서비스 워커 상태</span>
+                    <span style={{ color: 'serviceWorker' in navigator ? '#10B981' : '#EF4444', fontWeight: 800 }}>{'serviceWorker' in navigator ? '활성' : '오류'}</span>
                   </div>
                 </div>
-                {Notification.permission !== 'granted' ? (
-                  <p style={{ fontSize: '12px', color: '#EF4444', fontWeight: 800, marginBottom: '20px' }}>⚠️ 시스템 설정에서 브라우저의 알림 권한을 먼저 허용해주세요.</p>
-                ) : (
-                  <p style={{ fontSize: '12px', color: '#10B981', fontWeight: 800, marginBottom: '20px' }}>✅ 기기 수준의 알림 통로는 모두 정상입니다.</p>
-                )}
-                <button onClick={() => { setShowNotifDiag(false); setDiagStep(0); }} style={{ width: '100%', padding: '15px', borderRadius: '15px', background: '#F1F5F9', color: '#475569', fontWeight: 900 }}>진단 종료</button>
+
+                <div style={{ background: '#F8FAFB', padding: '15px', borderRadius: '15px', marginBottom: '20px' }}>
+                  <p style={{ fontSize: '12px', color: '#475569', fontWeight: 700, lineHeight: 1.5 }}>
+                    💡 <b>Tip:</b> 알림이 여전히 오지 않는다면 '알림 구독 강제 갱신' 버튼을 눌러보세요. 서버에 저장된 내 기기 정보를 최신화합니다.
+                  </p>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  <button 
+                    onClick={async () => {
+                      if (!subscribeToPushNotifications) return;
+                      try {
+                        const { data, error } = await supabase.functions.invoke('send-push', {
+                          body: {
+                            type: 'UPDATE',
+                            record: {
+                              couple_id: coupleCode,
+                              user_role: userRole,
+                              info: { signal: 'green' } // Mock signal change
+                            },
+                            old_record: {
+                              info: { signal: 'none' }
+                            }
+                          }
+                        });
+                        if (error) throw error;
+                        alert("✅ 테스트 요청이 서버로 전달되었습니다. 잠시 후 알림이 오는지 확인해 주세요! (대시보드 로그에서 결과를 볼 수 있습니다)");
+                      } catch (e) {
+                        alert("❌ 테스트 요청 실패: " + e.message);
+                        console.error("Manual test error:", e);
+                      }
+                    }} 
+                    style={{ width: '100%', padding: '15px', borderRadius: '15px', background: 'linear-gradient(135deg, #FF9966, #FF5E62)', color: 'white', fontWeight: 900 }}
+                  >
+                    지금 바로 테스트 알림 보내기 🚀
+                  </button>
+                  <button 
+                    onClick={async () => {
+                      if (!subscribeToPushNotifications) return;
+                      try {
+                        await subscribeToPushNotifications();
+                        alert("✅ 알림 구독 정보가 성공적으로 갱신되었습니다. 이제 테스트를 다시 시도해 보세요!");
+                      } catch (e) {
+                        alert("❌ 갱신 중 오류 발생: " + e.message);
+                      }
+                    }} 
+                    style={{ width: '100%', padding: '15px', borderRadius: '15px', background: '#3B82F6', color: 'white', fontWeight: 900 }}
+                  >
+                    알림 구독 강제 갱신
+                  </button>
+                  <button onClick={() => { setShowNotifDiag(false); setDiagStep(0); }} style={{ width: '100%', padding: '15px', borderRadius: '15px', background: '#F1F5F9', color: '#475569', fontWeight: 900 }}>종료</button>
+                </div>
               </>
             )}
           </motion.div>
