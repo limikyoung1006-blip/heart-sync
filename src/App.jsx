@@ -3841,6 +3841,13 @@ const App = () => {
             if (commonInfo.anniversaries) setAnniversaries(commonInfo.anniversaries);
             if (commonInfo.coupleSchedules) setSchedules(commonInfo.coupleSchedules);
 
+            // 🚦 Load Partner's Signal
+            const partnerProfile = profileData.find(p => p.user_role !== role);
+            if (partnerProfile?.info?.signal) {
+              setSpouseSignal(partnerProfile.info.signal);
+              lastSpouseSignalRef.current = partnerProfile.info.signal;
+            }
+
             // 💍 Sync Marriage Date
             if (commonInfo.marriageDate && !husbandInfo.marriageDate && !wifeInfo.marriageDate) {
               // Proactively set if needed
@@ -4070,6 +4077,14 @@ const App = () => {
     signalLockRef.current = newSignal;
     setMySignal(newSignal);
     localStorage.setItem('mySignal', newSignal);
+    
+    // 🛡️ Sync to info object to ensure useEffect saves it to localStorage correctly
+    if (userRole === 'husband') {
+      setHusbandInfo(prev => ({ ...prev, signal: newSignal }));
+    } else {
+      setWifeInfo(prev => ({ ...prev, signal: newSignal }));
+    }
+
     // 📡 빠른 브로드캐스트 알림 발신
     if (mainChannel) {
       mainChannel.send({
