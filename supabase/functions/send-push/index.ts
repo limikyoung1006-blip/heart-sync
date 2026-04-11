@@ -28,6 +28,15 @@ serve(async (req) => {
     const payload_raw = await req.json()
     console.log("Push trigger received:", JSON.stringify(payload_raw, null, 2))
     
+    // 🔍 Health Check & Config Status (Debug only)
+    if (payload_raw.check_config) {
+      return new Response(JSON.stringify({
+        status: "alive",
+        vapid_configured: !!VAPID_PRIVATE_KEY,
+        vapid_public_key_exists: !!VAPID_PUBLIC_KEY,
+      }), { headers: { ...corsHeaders, "Content-Type": "application/json" } })
+    }
+
     const { record, old_record, type } = payload_raw
     
     // ✅ 1. 신호(Green/Amber/Red)가 변경되었을 때만 발송
