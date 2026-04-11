@@ -2106,6 +2106,7 @@ const SettingsView = ({
     const updatedInfo = { ...myInfo, ...editInfo };
     setMyInfo(updatedInfo);
 
+    try {
       // 1. Update My Profile (Consolidated)
       await updateProfileInfo(undefined, editInfo);
 
