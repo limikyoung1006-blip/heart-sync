@@ -63,7 +63,7 @@ const HATTI_TODOS = [
   { id: 4, action: "선물", text: "퇴근길에 배우자가 좋아하는 편의점 간식을 하나 사서 건네보세요." },
   { id: 5, action: "경청", text: "오늘 배우자의 이야기를 10분 동안 조언 없이 온전히 들어주세요." }
 ];
-import { supabase } from './supabase';
+import { supabase, supabaseUrl, supabaseAnonKey } from './supabase';
 
 // 🛡️ KakaoTalk / Older Browser Compatibility Fix (Prevent White Screen)
 if (typeof window !== 'undefined' && !window.Notification) {
@@ -2614,9 +2614,13 @@ const SettingsView = ({
 
                     // 2. If it fails, try RAW fetch to diagnose CORS
                     console.log("Supabase-js failed, attempting raw fetch for diagnosis...");
-                    const rawRes = await fetch('https://vnxxqjdfcvwiuwlstebu.supabase.co/functions/v1/send-push', {
+                    const rawRes = await fetch(`${supabaseUrl}/functions/v1/send-push`, {
                       method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
+                      headers: { 
+                        'Content-Type': 'application/json',
+                        'apikey': supabaseAnonKey,
+                        'Authorization': `Bearer ${supabaseAnonKey}`
+                      },
                       body: JSON.stringify({ check_config: true })
                     }).catch(err => {
                       throw new Error("네트워크 연결 자체에 실패했습니다. (CORS 또는 오프라인)");
@@ -2640,15 +2644,19 @@ const SettingsView = ({
               <button
                 onClick={async () => {
                   try {
-                    const res = await fetch('https://vnxxqjdfcvwiuwlstebu.supabase.co/functions/v1/send-push', {
+                    const res = await fetch(`${supabaseUrl}/functions/v1/send-push`, {
                       method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
+                      headers: { 
+                        'Content-Type': 'application/json',
+                        'apikey': supabaseAnonKey,
+                        'Authorization': `Bearer ${supabaseAnonKey}`
+                      },
                       body: JSON.stringify({ check_config: true })
                     });
                     const info = await res.json();
                     alert(`⚙️ 서버 설정 상태:\n- VAPID Private Key: ${info.vapid_configured ? '✅ 설정됨' : '❌ 미설정'}\n- VAPID Public Key: ${info.vapid_public_key_exists ? '✅ 설정됨' : '❌ 미설정'}`);
                   } catch (e) {
-                    alert("❌ 서버 설정 확인 실패. 먼저 배포(deploy)를 완료해 주세요.");
+                    alert("❌ 서버 설정 확인 실패. (배포 전이거나 CORS 차단 발생)");
                   }
                 }}
                 style={{ width: '100%', padding: '14px', borderRadius: '14px', background: '#F8FAFB', color: '#64748B', fontWeight: 800, border: '1px solid #EEE' }}
