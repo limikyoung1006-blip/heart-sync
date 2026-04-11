@@ -2610,10 +2610,15 @@ const SettingsView = ({
                         }
                       }
                     });
-                    if (error) throw error;
+                    if (error) {
+                      const detail = error.context?.statusText || error.message;
+                      const status = error.context?.status ? ` (Status: ${error.context.status})` : "";
+                      throw new Error(`${detail}${status}`);
+                    }
                     alert("✅ 테스트 알림이 서버로 요청되었습니다! 기기 수신을 확인해주세요.");
                   } catch (e) {
-                    alert("❌ 테스트 요청 실패: " + e.message);
+                    alert("❌ 테스트 실패 상세: " + e.message + "\n\n💡 Supabase에 send-push 함수를 배포했는지 다시 확인해 주세요.");
+                    console.error("Manual test error details:", e);
                   }
                 }}
                 style={{ width: '100%', padding: '16px', borderRadius: '14px', background: 'linear-gradient(135deg, #FF9966, #FF5E62)', color: 'white', fontWeight: 900, border: 'none' }}
