@@ -107,12 +107,12 @@ const SignalOptV2 = ({ title, desc }) => (
     display: 'flex',
     flexDirection: 'column',
     gap: '4px',
-    textAlign: 'center',
+    textAlign: 'left',
     boxShadow: '0 4px 12px rgba(0,0,0,0.04)',
     border: '1px solid rgba(0,0,0,0.03)',
     cursor: 'pointer'
   }}>
-    <strong style={{ color: '#800F2F', fontSize: '15px', fontWeight: 800 }}>{title}</strong>
+    <strong style={{ color: '#800F2F', fontSize: '15px', fontWeight: 800, textAlign: 'left' }}>{title}</strong>
     <span style={{ color: '#A4133C', fontSize: '12px', fontWeight: 600, opacity: 0.7 }}>{desc}</span>
   </button>
 );
@@ -445,9 +445,9 @@ const WorshipView = ({ userRole, coupleCode, mainChannel }) => {
       </div>
 
       {/* 2. Header Section (Moved down) */}
-      <div className="worship-section-card" style={{ background: 'linear-gradient(135deg, #FDFCF0 0%, #F5F3E6 100%)', textAlign: 'center' }}>
-        <h2 style={{ fontSize: '24px', fontWeight: 900, color: '#2D1F08', marginBottom: '8px' }}>가정 예배 가이드</h2>
-        <p style={{ fontSize: '14px', color: '#8B7355', fontWeight: 700, marginBottom: '20px' }}>오늘 우리 가정에 주시는 하나님의 메시지</p>
+      <div className="worship-section-card" style={{ background: 'linear-gradient(135deg, #FDFCF0 0%, #F5F3E6 100%)', textAlign: 'left' }}>
+        <h2 style={{ fontSize: '24px', fontWeight: 900, color: '#2D1F08', marginBottom: '8px', textAlign: 'left' }}>가정 예배 가이드</h2>
+        <p style={{ fontSize: '14px', color: '#8B7355', fontWeight: 700, marginBottom: '20px', textAlign: 'left' }}>오늘 우리 가정에 주시는 하나님의 메시지</p>
 
         <button className="generate-btn" onClick={handleGenerate} disabled={isGenerating}>
           {isGenerating ? (
@@ -1245,7 +1245,7 @@ const SolutionView = ({ onBack, userRole, husbandInfo, wifeInfo, schedules, admi
 
         <div className="expert-content" style={{ display: 'flex', flexDirection: 'column', gap: '22px' }}>
           {reportResult ? (
-            <div style={{ fontSize: '14px', lineHeight: 1.8, color: '#4D3A1A', whiteSpace: 'pre-wrap', textAlign: 'justify' }}>
+            <div style={{ fontSize: '14px', lineHeight: 1.8, color: '#4D3A1A', whiteSpace: 'pre-wrap', textAlign: 'left' }}>
               {reportResult}
             </div>
           ) : (
@@ -1254,7 +1254,7 @@ const SolutionView = ({ onBack, userRole, husbandInfo, wifeInfo, schedules, admi
                 <h4 style={{ fontSize: '15px', color: '#8A60FF', fontWeight: 900, marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <Sparkles size={14} /> 영적 친밀도 분석
                 </h4>
-                <p style={{ fontSize: '14px', lineHeight: 1.7, color: '#4D3A1A', textAlign: 'justify' }}>
+                <p style={{ fontSize: '14px', lineHeight: 1.7, color: '#4D3A1A', textAlign: 'left' }}>
                   아직 상세 분석 결과가 생성되지 않았습니다. 상단의 <strong>'분석 요청'</strong> 버튼을 클릭하여 ${husbandInfo.nickname}님과 ${wifeInfo.nickname}님만을 위한 특별한 리포트를 받아보세요. 하티가 두 분의 기록을 바탕으로 깊이 있는 조언을 준비해 드립니다.
                 </p>
               </section>
@@ -1539,15 +1539,15 @@ const IntimacyModal = ({ user, show, onClose, subPage, setSubPage, bgImage, onBg
         }}
       >
         {subPage === 'main' && (
-          <div style={{ display: 'flex', flexDirection: 'column', height: embedded ? 'auto' : '100%', padding: embedded ? '20px 24px' : '80px 24px', overflowY: embedded ? 'visible' : 'auto' }}>
-            <div style={{ textAlign: 'center', marginBottom: '50px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', height: embedded ? 'auto' : '100%', padding: embedded ? '20px 24px' : '80px 24px', overflowY: embedded ? 'visible' : 'auto', textAlign: 'left' }}>
+            <div style={{ textAlign: 'left', marginBottom: '50px' }}>
               <h2 style={{
                 background: 'linear-gradient(105deg, #7D5A00 0%, #C8970A 30%, #F5D060 50%, #D4960A 70%, #7D5A00 100%)',
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
                 fontSize: '32px', fontWeight: 900, marginBottom: '12px', letterSpacing: '-0.5px'
               }}>소통의 화원</h2>
-              <p style={{ color: '#8B7355', fontSize: '15px', fontWeight: 700, opacity: 0.8 }}>두 분만의 가장 깊고 은밀한 소통 공간</p>
+              <p style={{ color: '#8B7355', fontSize: '15px', fontWeight: 700, opacity: 0.8, textAlign: 'left' }}>두 분만의 가장 깊고 은밀한 소통 공간</p>
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -1622,7 +1622,7 @@ const IntimacyModal = ({ user, show, onClose, subPage, setSubPage, bgImage, onBg
 
             {/* Chat Area */}
             <div style={{ flex: 1, overflowY: 'auto', padding: '16px 14px 180px', display: 'flex', flexDirection: 'column', gap: '12px', minHeight: 0 }}>
-              <div style={{ textAlign: 'center', margin: '10px 0' }}>
+              <div style={{ textAlign: 'left', margin: '10px 0' }}>
                 <span style={{ padding: '5px 14px', borderRadius: '15px', background: 'rgba(0,0,0,0.08)', fontSize: '10px', color: 'white', fontWeight: 800 }}>오직 두 분만을 위한 보안 대화방입니다</span>
               </div>
 
@@ -1719,9 +1719,9 @@ const IntimacyModal = ({ user, show, onClose, subPage, setSubPage, bgImage, onBg
             </div>
 
             <div style={{ padding: '30px 24px', flexGrow: 1, overflowY: 'auto' }}>
-              <div className="text-center mb-10">
-                <h3 style={{ color: '#2D1F08', fontSize: '26px', fontWeight: 900, marginBottom: '10px', letterSpacing: '-0.5px' }}>지금 내 기분은 어떤가요?</h3>
-                <div style={{ display: 'flex', justifyContent: 'center' }}>
+              <div className="text-left mb-10">
+                <h3 style={{ color: '#2D1F08', fontSize: '26px', fontWeight: 900, marginBottom: '10px', letterSpacing: '-0.5px', textAlign: 'left' }}>지금 내 기분은 어떤가요?</h3>
+                <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
                   <div style={{ height: '3px', width: '40px', background: '#F5D060', borderRadius: '10px' }} />
                 </div>
               </div>
@@ -1754,8 +1754,8 @@ const IntimacyModal = ({ user, show, onClose, subPage, setSubPage, bgImage, onBg
                 ))}
               </div>
 
-              <div style={{ textAlign: 'center', padding: '20px', background: '#FDFCF0', borderRadius: '24px', border: '1px dashed #D4AF37' }}>
-                <p style={{ fontSize: '12px', color: '#8B7355', fontWeight: 700, lineHeight: 1.6 }}>
+              <div style={{ textAlign: 'left', padding: '20px', background: '#FDFCF0', borderRadius: '24px', border: '1px dashed #D4AF37' }}>
+                <p style={{ fontSize: '12px', color: '#8B7355', fontWeight: 700, lineHeight: 1.6, textAlign: 'left' }}>
                   💡 선택하신 무드 시그널은 배우자의 홈 화면에<br />
                   실시간으로 전달되어 서로를 배려할 수 있게 돕습니다.
                 </p>
@@ -1914,16 +1914,16 @@ const DeepAnalysisView = ({ onBack, myInfo, updateProfile }) => {
           <h2 style={{ fontSize: '18px', fontWeight: 900, color: '#1E293B', margin: '0 auto' }}>진단 결과 보고서</h2>
         </div>
         <div style={{ flex: 1, padding: '30px 24px', display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
-          <div style={{ background: 'white', padding: '30px 20px', borderRadius: '24px', boxShadow: '0 10px 30px rgba(0,0,0,0.05)', border: '2px solid rgba(138, 96, 255, 0.2)', marginBottom: '30px' }}>
-            <h1 style={{ fontSize: '20px', fontWeight: 900, color: '#8A60FF', marginBottom: '20px', lineHeight: 1.4, wordBreak: 'keep-all' }}>
+          <div style={{ background: 'white', padding: '30px 20px', borderRadius: '24px', boxShadow: '0 10px 30px rgba(0,0,0,0.05)', border: '2px solid rgba(138, 96, 255, 0.2)', marginBottom: '30px', textAlign: 'left' }}>
+            <h1 style={{ fontSize: '20px', fontWeight: 900, color: '#8A60FF', marginBottom: '20px', lineHeight: 1.4, wordBreak: 'keep-all', textAlign: 'left' }}>
               {analysisResult.title}
             </h1>
-            <div style={{ fontSize: '15px', color: '#334155', lineHeight: 1.6, whiteSpace: 'pre-wrap', fontWeight: 700 }}>
+            <div style={{ fontSize: '15px', color: '#334155', lineHeight: 1.6, whiteSpace: 'pre-wrap', fontWeight: 700, textAlign: 'left' }}>
               {analysisResult.content}
             </div>
 
-            <div style={{ marginTop: '20px', padding: '15px', background: '#F3F0FF', borderRadius: '15px', border: '1px dashed #8A60FF' }}>
-              <p style={{ fontSize: '12px', color: '#6A4DCE', fontWeight: 800 }}>📌 이 결과는 안전하게 암호화되어 데이터베이스에 동기화되며, AI 하티가 앞으로 당신의 성향을 100% 이해한 채로 배우자와의 조율을 코칭하게 됩니다.</p>
+            <div style={{ marginTop: '20px', padding: '15px', background: '#F3F0FF', borderRadius: '15px', border: '1px dashed #8A60FF', textAlign: 'left' }}>
+              <p style={{ fontSize: '12px', color: '#6A4DCE', fontWeight: 800, textAlign: 'left' }}>📌 이 결과는 안전하게 암호화되어 데이터베이스에 동기화되며, AI 하티가 앞으로 당신의 성향을 100% 이해한 채로 배우자와의 조율을 코칭하게 됩니다.</p>
             </div>
           </div>
 
@@ -2684,9 +2684,9 @@ const SettingsView = ({
 
       {/* Logout & Reset Buttons (Bottom of Settings) */}
       <div style={{ padding: '0 20px', marginTop: '30px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-        <div style={{ textAlign: 'center', padding: '10px', background: 'rgba(212, 175, 55, 0.1)', borderRadius: '15px' }}>
-          <p style={{ fontSize: '11px', color: '#8B7355', fontWeight: 800 }}>현재 연결 상태: <span style={{ color: '#D4AF37' }}>{coupleCode}</span> | <span style={{ color: userRole === 'husband' ? '#3B82F6' : '#EC4899' }}>{userRole === 'husband' ? '남편' : '아내'}</span></p>
-          <p style={{ fontSize: '10px', color: '#8B7355', opacity: 0.7 }}>배우자와 '서로 다른 역할'이어야 하며 '동일한 코드'여야 합니다.</p>
+        <div style={{ textAlign: 'left', padding: '10px', background: 'rgba(212, 175, 55, 0.1)', borderRadius: '15px' }}>
+          <p style={{ fontSize: '11px', color: '#8B7355', fontWeight: 800, textAlign: 'left' }}>현재 연결 상태: <span style={{ color: '#D4AF37' }}>{coupleCode}</span> | <span style={{ color: userRole === 'husband' ? '#3B82F6' : '#EC4899' }}>{userRole === 'husband' ? '남편' : '아내'}</span></p>
+          <p style={{ fontSize: '10px', color: '#8B7355', opacity: 0.7, textAlign: 'left' }}>배우자와 '서로 다른 역할'이어야 하며 '동일한 코드'여야 합니다.</p>
         </div>
         <motion.button
           whileTap={{ scale: 0.95 }}
@@ -2802,9 +2802,9 @@ const OnboardingView = ({ user, userRole, setUserRole, onFinish }) => {
                 style={{ width: '180px', height: 'auto', marginTop: '-25px', marginBottom: '-25px', marginLeft: '-25px', transform: 'scale(1.1)' }}
                 onError={(e) => { e.target.style.display = 'none'; }}
               />
-              <p style={{ fontSize: '13px', color: '#B08D3E', fontWeight: 900, letterSpacing: '2px', marginBottom: '4px' }}>부부의 마음을 이어드립니다</p>
-              <h1 className="brand-text" style={{ fontSize: '32px', letterSpacing: '6px', color: '#D4AF37', fontWeight: 900, marginBottom: '2px' }}>HEART SYNC</h1>
-              <p style={{ fontSize: '11px', color: '#D4AF37', fontWeight: 800, letterSpacing: '3px', marginBottom: '30px', opacity: 0.8 }}>MORE DEEP, MORE CLOSE</p>
+              <p style={{ fontSize: '13px', color: '#B08D3E', fontWeight: 900, letterSpacing: '2px', marginBottom: '4px', textAlign: 'left' }}>부부의 마음을 이어드립니다</p>
+              <h1 className="brand-text" style={{ fontSize: '32px', letterSpacing: '6px', color: '#D4AF37', fontWeight: 900, marginBottom: '2px', textAlign: 'left' }}>HEART SYNC</h1>
+              <p style={{ fontSize: '11px', color: '#D4AF37', fontWeight: 800, letterSpacing: '3px', marginBottom: '30px', opacity: 0.8, textAlign: 'left' }}>MORE DEEP, MORE CLOSE</p>
 
               <h2 style={{ fontSize: '22px', fontWeight: 900, color: '#2D1F08', marginBottom: '12px', lineHeight: 1.4, wordBreak: 'keep-all' }}>
                 Heart Sync에 오신 여러분을<br />
@@ -2848,12 +2848,12 @@ const OnboardingView = ({ user, userRole, setUserRole, onFinish }) => {
         )}
 
         {step === 9 && (
-          <motion.div key="step9" initial={{ x: 20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} exit={{ x: -20, opacity: 0 }} style={{ display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'center', alignItems: 'center', textAlign: 'center' }}>
+          <motion.div key="step9" initial={{ x: 20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} exit={{ x: -20, opacity: 0 }} style={{ display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'center', alignItems: 'flex-start', textAlign: 'left' }}>
             <div style={{ width: '100px', height: '100px', borderRadius: '50%', background: 'rgba(212, 175, 55, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '30px' }}>
               <Bell size={48} color="#D4AF37" />
             </div>
-            <h2 style={{ fontSize: '26px', fontWeight: 900, color: '#2D1F08', marginBottom: '15px' }}>알림을 켜고<br />마음을 연결하세요!</h2>
-            <p style={{ fontSize: '16px', color: '#8B7355', fontWeight: 600, lineHeight: 1.6, marginBottom: '40px', wordBreak: 'keep-all' }}>
+            <h2 style={{ fontSize: '26px', fontWeight: 900, color: '#2D1F08', marginBottom: '15px', textAlign: 'left' }}>알림을 켜고<br />마음을 연결하세요!</h2>
+            <p style={{ fontSize: '16px', color: '#8B7355', fontWeight: 600, lineHeight: 1.6, marginBottom: '40px', wordBreak: 'keep-all', textAlign: 'left' }}>
               배우자의 신호를 실시간으로 확인하고,<br />
               함께하는 대화카드를 놓치지 않으려면<br />
               푸쉬 알림 허용이 필요해요. 💌
@@ -2978,12 +2978,12 @@ const OnboardingView = ({ user, userRole, setUserRole, onFinish }) => {
         )}
 
         {step === 4 && (
-          <motion.div key="step4" initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="flex flex-col h-full justify-center items-center text-center">
+          <motion.div key="step4" initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="flex flex-col h-full justify-center items-start text-left">
             <div style={{ width: '100px', height: '100px', background: '#F5D060', borderRadius: '35px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '25px', boxShadow: '0 10px 25px rgba(245, 208, 96, 0.2)' }}>
               <span style={{ fontSize: '40px' }}>💝</span>
             </div>
-            <h2 style={{ fontSize: '24px', fontWeight: 900, color: '#2D1F08', marginBottom: '10px' }}>준비가 끝났습니다!</h2>
-            <p style={{ color: '#8B7355', fontSize: '15px', fontWeight: 700, marginBottom: '30px' }}>당신의 기질은 <span style={{ color: '#8A60FF' }}>{insightResult}</span>입니다.<br />이제 배우자와 연결을 시작할까요?</p>
+            <h2 style={{ fontSize: '24px', fontWeight: 900, color: '#2D1F08', marginBottom: '10px', textAlign: 'left' }}>준비가 끝났습니다!</h2>
+            <p style={{ color: '#8B7355', fontSize: '15px', fontWeight: 700, marginBottom: '30px', textAlign: 'left' }}>당신의 기질은 <span style={{ color: '#8A60FF' }}>{insightResult}</span>입니다.<br />이제 배우자와 연결을 시작할까요?</p>
 
             {/* 🧠 New Deep Analysis Prompt in Onboarding */}
             {!deepAnalysis && (
@@ -3046,13 +3046,13 @@ const OnboardingView = ({ user, userRole, setUserRole, onFinish }) => {
         )}
 
         {step === 5 && (
-          <motion.div key="step5" initial={{ x: 20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} className="flex flex-col h-full justify-center items-center text-center">
-            <h2 style={{ fontSize: '22px', fontWeight: 900, color: '#2D1F08', marginBottom: '15px' }}>초대 코드가 생성되었습니다</h2>
-            <div style={{ width: '100%', padding: '30px', background: '#F9FAFB', borderRadius: '24px', border: '2px dashed #D4AF37', marginBottom: '15px' }}>
+          <motion.div key="step5" initial={{ x: 20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} className="flex flex-col h-full justify-center items-start text-left">
+            <h2 style={{ fontSize: '22px', fontWeight: 900, color: '#2D1F08', marginBottom: '15px', textAlign: 'left' }}>초대 코드가 생성되었습니다</h2>
+            <div style={{ width: '100%', padding: '30px', background: '#F9FAFB', borderRadius: '24px', border: '2px dashed #D4AF37', marginBottom: '15px', textAlign: 'center' }}>
               <span style={{ fontSize: '12px', fontWeight: 900, color: '#B08D3E', display: 'block', marginBottom: '10px' }}>우리만의 소중한 연결 코드</span>
               <div style={{ fontSize: '32px', fontWeight: 900, color: '#2D1F08', letterSpacing: '8px' }}>{coupleCode}</div>
             </div>
-            <p style={{ color: '#8B7355', fontSize: '14px', marginBottom: '30px', fontWeight: 600, lineHeight: 1.6 }}>이 코드를 복사해서 배우자에게 보내주세요.<br />배우자와 연결이 확인되면 자동으로 시작됩니다.</p>
+            <p style={{ color: '#8B7355', fontSize: '14px', marginBottom: '30px', fontWeight: 600, lineHeight: 1.6, textAlign: 'left' }}>이 코드를 복사해서 배우자에게 보내주세요.<br />배우자와 연결이 확인되면 자동으로 시작됩니다.</p>
 
             <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <button
@@ -3103,9 +3103,9 @@ const OnboardingView = ({ user, userRole, setUserRole, onFinish }) => {
         )}
 
         {step === 6 && (
-          <motion.div key="step6" initial={{ x: 20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} className="flex flex-col h-full justify-center">
-            <h2 style={{ fontSize: '22px', fontWeight: 900, color: '#2D1F08', marginBottom: '15px' }}>초대 코드를 입력해주세요</h2>
-            <p style={{ color: '#8B7355', fontSize: '14px', marginBottom: '25px', fontWeight: 600 }}>배우자에게 받은 HS-로 시작하는 코드를 입력하세요.</p>
+          <motion.div key="step6" initial={{ x: 20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} className="flex flex-col h-full justify-center items-start text-left">
+            <h2 style={{ fontSize: '22px', fontWeight: 900, color: '#2D1F08', marginBottom: '15px', textAlign: 'left' }}>초대 코드를 입력해주세요</h2>
+            <p style={{ color: '#8B7355', fontSize: '14px', marginBottom: '25px', fontWeight: 600, textAlign: 'left' }}>배우자에게 받은 HS-로 시작하는 코드를 입력하세요.</p>
             <input
               placeholder="예: HS-1234"
               value={coupleCode}
@@ -3262,7 +3262,7 @@ const AuthView = ({ onLogoClick, showAdminLogin, setShowAdminLogin, setUser, set
   return (
     <motion.div
       initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-      style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', width: '100%', backgroundColor: 'white', padding: '60px 30px', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}
+      style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', width: '100%', backgroundColor: 'white', padding: '60px 30px', alignItems: 'center', justifyContent: 'center', textAlign: 'left' }}
     >
       <motion.img
         whileTap={{ scale: 0.9 }}
@@ -3271,8 +3271,8 @@ const AuthView = ({ onLogoClick, showAdminLogin, setShowAdminLogin, setUser, set
         alt="Heart Sync"
         style={{ width: '180px', marginBottom: '10px', cursor: 'pointer' }}
       />
-      <h1 className="brand-text" style={{ fontSize: '28px', color: '#D4AF37', fontWeight: 900, marginBottom: '5px' }}>HEART SYNC</h1>
-      <p style={{ fontSize: '14px', color: '#8B7355', marginBottom: '50px', fontWeight: 600 }}>부부의 마음을 더 깊게, 더 가까이</p>
+      <h1 className="brand-text" style={{ fontSize: '28px', color: '#D4AF37', fontWeight: 900, marginBottom: '5px', textAlign: 'left', width: '100%', maxWidth: '320px' }}>HEART SYNC</h1>
+      <p style={{ fontSize: '14px', color: '#8B7355', marginBottom: '50px', fontWeight: 600, textAlign: 'left', width: '100%', maxWidth: '320px' }}>부부의 마음을 더 깊게, 더 가까이</p>
 
       {showAdminLogin ? (
         <motion.form
@@ -4703,10 +4703,10 @@ const App = () => {
               }}>
                 <MessageSquare size={40} color="#8A60FF" />
               </div>
-              <h3 style={{ fontSize: '22px', fontWeight: 900, color: '#2D1F08', marginBottom: '12px' }}>
+              <h3 style={{ fontSize: '22px', fontWeight: 900, color: '#2D1F08', marginBottom: '12px', textAlign: 'left' }}>
                 {dialogueConfirmRole === 'initiator' ? '대화카드를 시작할까요?' : '대화카드 초대 도착!'}
               </h3>
-              <p style={{ fontSize: '15px', color: '#8B7355', fontWeight: 700, lineHeight: 1.6, marginBottom: '30px', wordBreak: 'keep-all' }}>
+              <p style={{ fontSize: '15px', color: '#8B7355', fontWeight: 700, lineHeight: 1.6, marginBottom: '30px', wordBreak: 'keep-all', textAlign: 'left' }}>
                 {dialogueConfirmRole === 'initiator'
                   ? '배우자와 함께 10가지 질문으로 나누는 깊은 소통의 시간을 시작하시겠습니까?'
                   : `${userRole === 'husband' ? (wifeInfo?.nickname || '아내') : (husbandInfo?.nickname || '남편')}님이 대화카드 게임에 초대하셨습니다. 함께 참여하시겠습니까?`}
