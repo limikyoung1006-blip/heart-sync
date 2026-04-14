@@ -2010,7 +2010,8 @@ const SettingsView = ({
   setWorshipTime,
   anniversaries,
   setAnniversaries,
-  onUpdateMemo,
+  onAnniversarySave,
+  onUpdateProfile,
   isAdmin,
   onNav,
   subscribeToPushNotifications // 🔔 Added prop
@@ -2068,18 +2069,6 @@ const SettingsView = ({
     localStorage.setItem('notif_worship', JSON.stringify(notifWorship));
     localStorage.setItem('notif_hatti', JSON.stringify(notifHatti));
   }, [notifSignal, notifCard, notifWorship, notifHatti]);
-
-  // Sync Shared Settings to Supabase and LocalStorage
-  useEffect(() => {
-    localStorage.setItem('worshipDays', JSON.stringify(worshipDays));
-    localStorage.setItem('worshipTime', worshipTime);
-    localStorage.setItem('anniversaries', JSON.stringify(anniversaries));
-
-    const syncSettings = async () => {
-      await updateProfileInfo(undefined, { worshipDays, worshipTime, anniversaries });
-    };
-    syncSettings();
-  }, [worshipDays, worshipTime, anniversaries, coupleCode, userRole]);
 
   // Marriage D-Day Calculation
   const sharedMarriageDate = husbandInfo.marriageDate || wifeInfo.marriageDate || '2020-05-23';
@@ -3661,6 +3650,18 @@ const App = () => {
   const [showNotificationList, setShowNotificationList] = useState(false);
   const signalLockRef = useRef(null);
   const lastSpouseSignalRef = useRef(null);
+  const mySignalRef = useRef(mySignal);
+  const myMemoRef = useRef("");
+
+  useEffect(() => {
+    mySignalRef.current = mySignal;
+  }, [mySignal]);
+
+  useEffect(() => {
+    const role = userRole || localStorage.getItem('userRole') || 'husband';
+    const info = role === 'husband' ? husbandInfo : wifeInfo;
+    myMemoRef.current = info?.todayMemo || "";
+  }, [husbandInfo, wifeInfo, userRole]);
 
   // Persistence
   useEffect(() => {
@@ -3733,10 +3734,13 @@ const App = () => {
       // 🚀 CRITICAL FIX: Put currentRemoteInfo FIRST so that local baseInfo (latest user intent)
       // takes priority over potentially stale data fetched from the DB.
       const updatedInfo = { ...currentRemoteInfo, ...baseInfo, ...extraInfo };
-      // 🛡️ Ensure our own signal is ALWAYS preserved from the master local state mySignal
-      updatedInfo.signal = mySignal; 
       
-      if (text !== undefined) updatedInfo.todayMemo = text;
+      // 🛡️ CRITICAL FIX: Use the latest value from Ref to avoid stale closure issues
+      // If extraInfo doesn't specify a new signal/memo, we use the Ref (master local truth)
+      updatedInfo.signal = extraInfo.signal || mySignalRef.current || mySignal;
+      
+      const currentMemo = text !== undefined ? text : (extraInfo.todayMemo !== undefined ? extraInfo.todayMemo : myMemoRef.current);
+      updatedInfo.todayMemo = currentMemo;
 
       // Update local state immediately
       if (userRole === 'husband') setHusbandInfo(updatedInfo); else setWifeInfo(updatedInfo);
@@ -3946,10 +3950,11 @@ const App = () => {
       .on('broadcast', { event: 'memo-updated' }, ({ payload }) => {
         if (payload.sender !== userRole) {
           const isHusband = payload.sender === 'husband';
+          const memoText = payload.text || payload.extraInfo?.todayMemo;
           if (isHusband) {
-            setHusbandInfo(prev => ({ ...prev, ...payload.extraInfo, todayMemo: payload.text }));
+            setHusbandInfo(prev => ({ ...prev, ...payload.extraInfo, todayMemo: memoText }));
           } else {
-            setWifeInfo(prev => ({ ...prev, ...payload.extraInfo, todayMemo: payload.text }));
+            setWifeInfo(prev => ({ ...prev, ...payload.extraInfo, todayMemo: memoText }));
           }
         }
       })
@@ -4420,7 +4425,7 @@ const App = () => {
                 onGuideClick={() => setShowGuidePage(true)}
                 isAdmin={isAdmin}
                 onNav={setActiveTab}
-                onUpdateMemo={updateProfileInfo}
+                onUpdateProfile={updateProfileInfo}
                 subscribeToPushNotifications={subscribeToPushNotifications}
               />
             )}
