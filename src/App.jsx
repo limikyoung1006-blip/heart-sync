@@ -3606,6 +3606,9 @@ const App = () => {
 
   const [mySignal, setMySignal] = useState(() => {
     try {
+      const direct = localStorage.getItem('mySignal');
+      if (direct) return direct;
+      
       const role = localStorage.getItem('userRole') || 'husband';
       const info = JSON.parse(localStorage.getItem(role === 'husband' ? 'husbandInfo' : 'wifeInfo') || '{}');
       return info.signal || 'green';
