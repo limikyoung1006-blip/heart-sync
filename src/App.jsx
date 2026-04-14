@@ -3786,7 +3786,11 @@ const App = () => {
         if (role === 'husband') setHusbandInfo(prev => ({ ...prev, ...(myProfile.info || {}) }));
         else setWifeInfo(prev => ({ ...prev, ...(myProfile.info || {}) }));
 
-        if (myProfile.info?.signal) setMySignal(myProfile.info.signal);
+        // 🛡️ Only load signal from DB if we don't already have one in localStorage to avoid hydration clobbering
+        const cachedLocalSignal = localStorage.getItem('mySignal');
+        if (myProfile.info?.signal && !cachedLocalSignal) {
+          setMySignal(myProfile.info.signal);
+        }
 
         // Mark as setup so we show the HomeView
         setIsSetupDone(true);
