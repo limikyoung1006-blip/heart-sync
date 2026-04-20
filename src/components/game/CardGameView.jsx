@@ -323,7 +323,7 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo, mai
         </button>
       </div>
 
-      <div style={{ width: '100%', marginBottom: '25px' }}>
+{/* topic selection UI removed */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', padding: '5px' }}>
           {['일상', '상상', '추억', '관계', '신앙', '시크릿'].map(cat => (
             <button 
