@@ -362,24 +362,50 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo, mai
             <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
               <h2 style={{ fontSize: currentQuestion?.question?.length > 40 ? '18px' : '22px', color: '#1a1a1a', lineHeight: 1.6, wordBreak: 'keep-all', fontWeight: 800 }}>{currentQuestion?.question || "새로운 카드를 뽑아주세요!"}</h2>
             </div>
-            {isMyTurn && (
-              <button className="game-btn-press" onClick={(e) => { e.stopPropagation(); passTurn(); }} style={{ background: '#2D1F08', borderRadius: '100px', height: '52px', padding: '0 28px', color: 'white', fontWeight: 900, fontSize: '15px', border: 'none', display: 'flex', alignItems: 'center', gap: '10px', boxShadow: '0 8px 20px rgba(0,0,0,0.2)' }}>
-                답변 완료 & 턴 넘기기 <RefreshCw size={18} color="#F5D060" />
-              </button>
-            )}
           </div>
         </div>
       </div>
 
-      <button disabled={!isMyTurn} onClick={() => drawNewCard()} className="game-btn-press" style={{ width: '100%', maxWidth: '300px', padding: '18px', borderRadius: '16px', background: isMyTurn ? '#2D1F08' : '#E5E7EB', color: isMyTurn ? 'white' : '#9CA3AF', fontWeight: 900, fontSize: '16px', boxShadow: '0 10px 20px rgba(0,0,0,0.1)', border: 'none' }}>
-        다른 카드 뽑기
-      </button>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', width: '100%', maxWidth: '300px', marginTop: '20px' }}>
+        {/* 1. 다른 카드 뽑기 */}
+        <button 
+          disabled={!isMyTurn} 
+          onClick={() => drawNewCard()} 
+          className="game-btn-press" 
+          style={{ 
+            width: '100%', padding: '18px', borderRadius: '16px', 
+            background: isMyTurn ? '#2D1F08' : '#E5E7EB', 
+            color: isMyTurn ? 'white' : '#9CA3AF', 
+            fontWeight: 900, fontSize: '16px', 
+            boxShadow: '0 10px 20px rgba(0,0,0,0.1)', border: 'none' 
+          }}
+        >
+          다른 카드 뽑기
+        </button>
+
+        {/* 2. 답변 완료 & 턴 넘기기 */}
+        {isMyTurn && isFlipped && (
+          <button 
+            className="game-btn-press" 
+            onClick={(e) => { e.stopPropagation(); passTurn(); }} 
+            style={{ 
+              width: '100%', padding: '18px', borderRadius: '16px', 
+              background: '#2D1F08',
+              color: 'white', fontWeight: 900, fontSize: '16px', 
+              boxShadow: '0 8px 20px rgba(0,0,0,0.2)', border: 'none',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px'
+            }}
+          >
+            답변 완료 & 턴 넘기기 <RefreshCw size={18} color="#F5D060" />
+          </button>
+        )}
 
         {!isMyTurn && (
-          <div style={{ background: 'rgba(0,0,0,0.05)', padding: '20px 40px', borderRadius: '100px', color: '#8B7355', fontWeight: 800, fontSize: '16px', border: '1.5px dashed rgba(138, 96, 255, 0.2)', textAlign: 'center', width: '100%', maxWidth: '300px', marginTop: '20px' }}>
+          <div style={{ background: 'rgba(0,0,0,0.05)', padding: '20px 40px', borderRadius: '100px', color: '#8B7355', fontWeight: 800, fontSize: '16px', border: '1.5px dashed rgba(138, 96, 255, 0.2)', textAlign: 'center', width: '100%', marginTop: '10px' }}>
             상대방의 답변을 기다리는 중
           </div>
         )}
+      </div>
 
       <p style={{ marginTop: '30px', fontSize: '11px', color: '#B08D3E', fontWeight: 800, opacity: 0.6 }}>* 화면을 위아래로 스크롤할 수 있습니다.</p>
       {/* Spacer for bottom navigation clearance */}

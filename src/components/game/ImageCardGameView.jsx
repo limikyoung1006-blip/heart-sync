@@ -402,18 +402,41 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, mainChannel, husbandI
                 </div>
                 
                 {isMyTurn && (
-                  <button 
-                    className="image-card-press" 
-                    onClick={() => {
-                        const nextTurnOwner = userRole === 'husband' ? 'wife' : 'husband';
-                        setTurnOwner(nextTurnOwner);
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', width: '100%', maxWidth: '300px' }}>
+                    <button 
+                      className="image-card-press" 
+                      onClick={() => {
+                          const themeIdx = Math.floor(Math.random() * PIC2_THEMES.length);
+                          setCurrentThemeIndex(themeIdx);
+                          const nextTurnOwner = userRole === 'husband' ? 'wife' : 'husband';
+                          setTurnOwner(nextTurnOwner);
+                          setPickedCards([]);
+                          updateRemoteState({ 
+                            turn_owner: nextTurnOwner, 
+                            picked_card_ids: [],
+                            current_card_id: themeIdx
+                          });
+                      }}
+                      style={{ padding: '18px', width: '100%', borderRadius: '20px', background: '#2D1F08', color: 'white', fontWeight: 900, border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}
+                    >
+                      답변 완료 & 턴 넘기기 <RefreshCw size={20} />
+                    </button>
+                    <button 
+                      className="image-card-press" 
+                      onClick={() => {
+                        const themeIdx = Math.floor(Math.random() * PIC2_THEMES.length);
+                        setCurrentThemeIndex(themeIdx);
                         setPickedCards([]);
-                        updateRemoteState({ turn_owner: nextTurnOwner, picked_card_ids: [] });
-                    }}
-                    style={{ padding: '18px', width: '100%', maxWidth: '300px', borderRadius: '20px', background: '#8A60FF', color: 'white', fontWeight: 900, border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}
-                  >
-                    답변 완료 & 턴 넘기기 <RefreshCw size={20} />
-                  </button>
+                        updateRemoteState({ 
+                          current_card_id: themeIdx,
+                          picked_card_ids: []
+                        });
+                      }}
+                      style={{ padding: '10px', background: 'none', border: 'none', color: '#8A60FF', fontWeight: 800, fontSize: '14px', textDecoration: 'underline' }}
+                    >
+                      다른 주제 뽑기
+                    </button>
+                  </div>
                 )}
               </div>
             ) : (
@@ -447,23 +470,23 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, mainChannel, husbandI
                   })}
                 </div>
 
-                 <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', width: '100%', maxWidth: '300px', margin: '0 auto' }}>
-                   {isMyTurn && pickedCards.length === 2 && (
-                     <button 
-                       className="image-card-press" 
-                       onClick={() => {
-                          const nextTurnOwner = userRole === 'husband' ? 'wife' : 'husband';
-                          setTurnOwner(nextTurnOwner);
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', width: '100%', maxWidth: '300px', margin: '0 auto' }}>
+                    {isMyTurn && (
+                      <button 
+                        className="image-card-press" 
+                        onClick={() => {
+                          const themeIdx = Math.floor(Math.random() * PIC2_THEMES.length);
+                          setCurrentThemeIndex(themeIdx);
                           setPickedCards([]);
-                          updateRemoteState({ turn_owner: nextTurnOwner, picked_card_ids: [] });
-                       }}
-                       style={{ padding: '18px', borderRadius: '20px', background: '#8A60FF', color: 'white', fontWeight: 900, border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}
-                     >
-                       답변 완료 & 턴 넘기기 <RefreshCw size={18} />
-                     </button>
-                   )}
-                   <button onClick={resetGame} style={{ padding: '12px', background: 'none', border: 'none', color: '#8B7355', fontWeight: 800, fontSize: '14px' }}>모드 선택으로 돌아가기</button>
-                 </div>
+                          updateRemoteState({ current_card_id: themeIdx, picked_card_ids: [] });
+                        }}
+                        style={{ padding: '15px', borderRadius: '20px', background: 'rgba(138, 96, 255, 0.1)', color: '#8A60FF', fontWeight: 900, border: '1.5px solid #8A60FF' }}
+                      >
+                        다른 주제 뽑기
+                      </button>
+                    )}
+                    <button onClick={resetGame} style={{ padding: '12px', background: 'none', border: 'none', color: '#8B7355', fontWeight: 800, fontSize: '14px' }}>모드 선택으로 돌아가기</button>
+                  </div>
               </>
             )}
           </div>
