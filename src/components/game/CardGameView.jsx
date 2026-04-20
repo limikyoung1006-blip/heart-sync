@@ -134,15 +134,24 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo, mai
       setTimeout(() => setShowTurnWarning(false), 2000);
       return;
     }
-    const activeCat = targetCat || category;
+    // 🎲 If no specific category is forced, pick a random one from all available categories
+    const allCategories = [...new Set(CARD_DATA.map(q => q.category))];
+    const activeCat = targetCat || allCategories[Math.floor(Math.random() * allCategories.length)];
+
     const pool = CARD_DATA.filter(q => q.category === activeCat);
+    // Exclude already shown questions (track up to 100 recent items)
     const available = pool.filter(q => !history.includes(q.id));
-    const finalPool = (available.length > 0 ? available : pool);
+    const finalPool = available.length > 0 ? available : pool;
     const nextQ = finalPool[Math.floor(Math.random() * finalPool.length)] || pool[0];
     
     if (!nextQ) return;
 
-    setHistory(prev => [...new Set([...prev, nextQ.id])].slice(-40));
+    // Keep a longer history to avoid repeats across many turns
+    setHistory(prev => {
+      const newHist = [...new Set([...prev, nextQ.id])];
+      // Keep only the most recent 100 entries
+      return newHist.slice(-100);
+    });
     setCurrentQuestion(nextQ);
     setIsFlipped(false);
     setTurnOwner(userRole);
