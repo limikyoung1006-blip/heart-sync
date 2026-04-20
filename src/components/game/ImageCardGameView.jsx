@@ -122,13 +122,29 @@ const ImageCardGameView = ({ onBack, coupleCode, userRole, mainChannel, husbandI
       updated_at: new Date().toISOString()
     }, { onConflict: 'couple_id' });
 
-    // 📡 빠른 브로드캐스트 전송 (App.jsx의 game-update 리스너가 card-game-update 이벤트를 발생시킴)
+    // 📡 빠른 브로드캐스트 전송
     if (mainChannel) {
         mainChannel.send({
           type: 'broadcast',
           event: 'game-update',
           payload: { sender: userRole, ...updates }
         });
+    }
+
+    // 📬 [Push Notification] Notify partner (Works even if app is closed)
+    if (updates.turn_owner === userRole || updates.mode) {
+      try {
+        supabase.functions.invoke('send-push', {
+          body: {
+            type: 'IMAGE_GAME',
+            sender_role: userRole,
+            couple_id: coupleCode,
+            custom_title: "📸 이미지 대화가 시작되었습니다!",
+            custom_body: `${userRole === 'husband' ? '남편' : '아내'}님이 새로운 이미지 카드를 제안했습니다. ✨`,
+            target_tab: 'cardGame'
+          }
+        });
+      } catch (pushErr) { console.warn("Image Game Push failed:", pushErr); }
     }
   };
 

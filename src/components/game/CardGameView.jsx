@@ -169,20 +169,17 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo, mai
         updated_at: new Date().toISOString()
       }, { onConflict: 'couple_id' }).then(() => {});
 
-      if (mainChannel) {
-        mainChannel.send({
-          type: 'broadcast',
-          event: 'game-update',
-          payload: { 
-            sender: userRole, 
-            type: 'draw', 
-            category: activeCat, 
-            questionId: nextQ.id,
-            isFlipped: false,
-            sessionCardCount: nextCount
+      try {
+        supabase.functions.invoke('send-push', {
+          body: {
+            type: 'GAME',
+            sender_role: userRole,
+            couple_id: coupleCode,
+            custom_title: "🃏 새로운 대화 카드가 도착했습니다!",
+            custom_body: `${husbandInfo?.nickname || wifeInfo?.nickname || '배우자'}님이 새로운 질문을 뽑았어요. 어서 확인해보세요!`
           }
         });
-      }
+      } catch (e) { console.error("Push failed:", e); }
     }
   };
 
@@ -250,6 +247,19 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo, mai
           }
         });
       }
+      
+      try {
+        supabase.functions.invoke('send-push', {
+          body: {
+            type: 'GAME',
+            sender_role: userRole,
+            couple_id: coupleCode,
+            custom_title: "🔄 배우자가 답변의 턴을 넘겼습니다!",
+            custom_body: "이제 당신이 대화 카드를 뽑아 대화를 이끌어갈 차례입니다. ✨",
+            target_tab: 'cardGame'
+          }
+        });
+      } catch (e) { console.error("Push failed:", e); }
     }
   };
 
