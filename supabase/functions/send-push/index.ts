@@ -4,7 +4,7 @@ import webpush from "npm:web-push"
 
 // 🗝️ VAPID Details (서버 설정에서 VAPID_PRIVATE_KEY를 가져옵니다)
 // ⚠️ CRITICAL: Set these as project-level environment variables in your Supabase Dashboard
-const VAPID_PUBLIC_KEY = Deno.env.get("VAPID_PUBLIC_KEY") || "REPLACE_WITH_YOUR_ACTUAL_VAPID_PUBLIC_KEY"
+const VAPID_PUBLIC_KEY = Deno.env.get("VAPID_PUBLIC_KEY") || "BHiG5Sf9bEN47pzCzCbyZEtSrXyL2IXkw45e-l9TQ6hvCd-OP964Zm8zxnq3Ys83FPT8qW5Ep2C86k5WrqUs178KEY"
 const VAPID_PRIVATE_KEY = Deno.env.get("VAPID_PRIVATE_KEY")
 const VAPID_EMAIL = Deno.env.get("VAPID_EMAIL") || "admin@heartsync.com"
 
@@ -19,7 +19,6 @@ const corsHeaders = {
 }
 
 serve(async (req) => {
-  // ✅ CORS preflight handling
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
@@ -28,7 +27,6 @@ serve(async (req) => {
     const payload_raw = await req.json()
     console.log("Push trigger received:", JSON.stringify(payload_raw, null, 2))
     
-    // 🔍 Health Check & Config Status (Debug only)
     if (payload_raw.check_config) {
       return new Response(JSON.stringify({
         status: "alive",
@@ -37,75 +35,65 @@ serve(async (req) => {
       }), { headers: { ...corsHeaders, "Content-Type": "application/json" } })
     }
 
-    const { record, old_record, type } = payload_raw
+    const { type, record, sender_role, couple_id, custom_title, custom_body, target_tab } = payload_raw
     
-    // ✅ 1. 신호(Green/Amber/Red)가 변경되었을 때만 발송
-    if (type === 'UPDATE' && record?.info?.signal !== old_record?.info?.signal) {
-       const userRole = record.user_role
-       const coupleCode = record.couple_id
-       const newSignal = record.info.signal
-       
-       console.log(`Signal Change detected for ${userRole} in couple ${coupleCode}: ${old_record?.info?.signal} -> ${newSignal}`)
-       
-       const signalMap = { 
-         green: '🟢 초록 (기분 좋음)', 
-         amber: '🟡 주황 (대화 필요)', 
-         red: '🔴 빨강 (휴식 필요)', 
-         purple: '🟣 보라 (접근 금지/혼자만의 시간)' 
-       }
-       const senderLabel = userRole === 'husband' ? '남편' : '아내'
-       const receiverLabel = userRole === 'husband' ? '아내' : '남편'
-       
-       // 📡 Supabase에서 상대방의 푸시 구독 정보 가져오기
-       const supabase = createClient(
-         Deno.env.get('SUPABASE_URL') ?? '',
-         Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-       )
-       
-       const { data: partnerProfile, error: profileError } = await supabase
-         .from('profiles')
-         .select('info')
-         .eq('couple_id', coupleCode)
-         .neq('user_role', userRole)
-         .single()
-       
-       if (profileError) {
-         console.error("Error fetching partner profile:", profileError)
-       }
+    // Determine target user and couple
+    const final_couple_id = couple_id || record?.couple_id
+    const final_sender_role = sender_role || record?.user_role
+    
+    if (!final_couple_id || !final_sender_role) {
+      throw new Error("Missing couple_id or sender_role")
+    }
 
-       if (partnerProfile?.info?.pushSubscription) {
-          console.log(`Found push subscription for ${receiverLabel}`)
-          const subscription = JSON.parse(partnerProfile.info.pushSubscription)
-          
-          let title = `${senderLabel}님의 마음 신호가 도착했습니다 🚦`
-          let body = `배우자의 마음이 ${signalMap[newSignal]}색으로 바뀌었어요! 확인해보세요.`
-          
-          if (newSignal === 'purple') {
-             title = `⚠️ ${senderLabel}님이 절대적인 혼자만의 시간이 필요합니다.`
-             body = `지금은 접근 금지(보라색) 상태입니다. 배우자를 위해 조용히 기다려주세요. 💜`
-          }
-          
-          const payload = JSON.stringify({
-            title,
-            body,
-            url: '/',
-            tab: 'home'
-          })
-          
-          try {
-            await webpush.sendNotification(subscription, payload, {
-              TTL: 86400, // 24 hours
-              urgency: 'high'
-            })
-            console.log(`Push sent to ${receiverLabel} successfully ✅`)
-          } catch (pushErr) {
-            console.error("WebPush send error:", pushErr)
-          }
-       } else {
-         console.warn(`No push subscription found for ${receiverLabel}. Info object:`, JSON.stringify(partnerProfile?.info))
-       }
-    } else {
-      console.log("No signal change or not an UPDATE type. Skipping push.")
+    // 1. Prepare Content
+    let title = custom_title || 'Heart Sync'
+    let body = custom_body || '새로운 소식이 도착했습니다!'
+    let tab = target_tab || 'home'
+
+    // 2. Automate content for specific table triggers (Webhooks)
+    if (type === 'PRAYER' || (payload_raw.table === 'prayers' && payload_raw.type === 'INSERT')) {
+      const senderLabel = final_sender_role === 'husband' ? '남편' : '아내'
+      title = `${senderLabel}님의 속마음 기도 🙏`
+      body = record?.text?.substring(0, 50) || '새로운 기도 제목이 도착했습니다.'
+      tab = 'heartPrayer'
+    } else if (type === 'SIGNAL' || (record?.info?.signal && payload_raw.old_record?.info?.signal !== record?.info?.signal)) {
+      const senderLabel = final_sender_role === 'husband' ? '남편' : '아내'
+      const newSignal = record?.info?.signal
+      const signalMap: Record<string, string> = { green: '🟢 초록', amber: '🟡 주황', red: '🔴 빨강', purple: '🟣 보라' }
+      title = `${senderLabel}님의 마음 신호가 도착했습니다 🚦`
+      body = `배우자의 마음이 ${signalMap[newSignal] || newSignal}색으로 바뀌었어요!`
+      if (newSignal === 'purple') {
+        title = `⚠️ ${senderLabel}님의 집중 시간`
+        body = `지금은 접근 금지(보라색) 상태입니다. 잠시 기다려주세요. 💜`
+      }
+    } else if (type === 'GARDEN') {
+      title = '🌱 마음 정원 알림'
+      body = '배우자가 마음 정원에 새로운 변화를 주었어요!'
+      tab = 'garden'
+    }
+
+    // 3. Get Partner Subscription
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    )
+
+    const { data: partnerProfile } = await supabase
+      .from('profiles')
+      .select('info')
+      .eq('couple_id', final_couple_id)
+      .neq('user_role', final_sender_role)
+      .single()
+
+    if (partnerProfile?.info?.pushSubscription) {
+      const subscription = JSON.parse(partnerProfile.info.pushSubscription)
+      const pushPayload = JSON.stringify({ title, body, url: '/', tab })
+      
+      await webpush.sendNotification(subscription, pushPayload, {
+        TTL: 86400,
+        urgency: 'high'
+      })
+      console.log("Push sent successfully ✅")
     }
 
     return new Response(JSON.stringify({ message: "Success" }), { headers: { ...corsHeaders, "Content-Type": "application/json" } })

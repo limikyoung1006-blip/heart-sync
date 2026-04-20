@@ -117,7 +117,7 @@ const HeartPrayerView = ({ userRole, coupleCode, onBack, partnerPrayers, setPart
           <p style={{ fontSize: '14px', color: '#5D4037', fontWeight: 800, marginBottom: '20px' }}>말하기 힘든 고백을 이곳에 남겨주세요. 🙏</p>
           <textarea 
             value={topic} onChange={(e) => setTopic(e.target.value)}
-            placeholder="기도하고 싶은 내용을 자유롭게 적어보세요..."
+            placeholder="배우자와 함께 나눌 기도제목을 자유롭게 적어보세요..."
             style={{ width: '100%', minHeight: '120px', border: 'none', background: '#FDFCF0', borderRadius: '20px', padding: '15px', fontSize: '15.5px', outline: 'none', resize: 'none' }}
           />
           <button onClick={handleRecord} disabled={isRecording || !topic.trim()} style={{ width: '100%', marginTop: '15px', padding: '16px', borderRadius: '100px', background: '#2D1F08', color: 'white', fontWeight: 900, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '10px' }}>
@@ -138,7 +138,7 @@ const HeartPrayerView = ({ userRole, coupleCode, onBack, partnerPrayers, setPart
             >
               <div className="flex justify-between items-start mb-2">
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
-                  <span style={{ fontSize: '11px', fontWeight: 900, color: p.type === 'mine' ? '#B08D3E' : '#8A60FF' }}>{p.type === 'mine' ? '나의 기록' : '배우자의 기도'}</span>
+                  <span style={{ fontSize: '11px', fontWeight: 900, color: p.type === 'mine' ? '#B08D3E' : '#8A60FF' }}>{p.type === 'mine' ? '나의 기도제목' : '배우자의 기도제목'}</span>
                   <span style={{ fontSize: '10px', color: '#AAA' }}>{p.date}</span>
                 </div>
                 {p.type === 'mine' && (
