@@ -422,10 +422,10 @@ const OnboardingView = ({ user, userRole, setUserRole, onFinish }) => {
             <input 
               placeholder="예: HS-1234" 
               value={coupleCode?.toUpperCase()}
-              onChange={(e) => setCoupleCode(e.target.value.toLowerCase())}
+              onChange={(e) => setCoupleCode(e.target.value.toUpperCase())}
               style={{ width: '100%', padding: '20px', borderRadius: '20px', border: '2px solid #F5D060', fontSize: '20px', fontWeight: 900, textAlign: 'center', letterSpacing: '4px', marginBottom: '25px' }} 
             />
-            {coupleCode && coupleCode.startsWith('hs-') && (
+            {coupleCode && coupleCode.toUpperCase().startsWith('HS-') && (
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ textAlign: 'center', marginBottom: '25px' }}>
                 <div className="flex items-center justify-center gap-2" style={{ color: '#8A60FF', fontWeight: 900 }}>
                   <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}>
@@ -467,8 +467,8 @@ const OnboardingView = ({ user, userRole, setUserRole, onFinish }) => {
                   setIsConnecting(false);
                 }
               }}
-              disabled={!coupleCode || !coupleCode.startsWith('HS-') || isConnecting || isConnected}
-              style={{ width: '100%', padding: '18px', borderRadius: '20px', background: isConnected ? '#22C55E' : (coupleCode && coupleCode.startsWith('HS-') ? '#2D1F08' : '#CCC'), color: 'white', fontWeight: 900, fontSize: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}
+              disabled={!coupleCode || !coupleCode.toUpperCase().startsWith('HS-') || isConnecting || isConnected}
+              style={{ width: '100%', padding: '18px', borderRadius: '20px', background: isConnected ? '#22C55E' : (coupleCode && coupleCode.toUpperCase().startsWith('HS-') ? '#2D1F08' : '#CCC'), color: 'white', fontWeight: 900, fontSize: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}
             >
               {isConnecting ? (
                 <>

@@ -201,7 +201,11 @@ const HomeView = ({
         <div className="glass-card-wrap">
           <div className="glass-card" style={{ padding: '30px 20px' }}>
             {!isRevealed ? (
-              <div className="flex flex-col items-center" style={{ cursor: 'pointer' }} onClick={() => { setIsRevealed(true); if (mainChannel) mainChannel.send({ type: 'broadcast', event: 'secret-revealed', payload: { sender: userRole, ts: Date.now() } }); }}>
+              <div className="flex flex-col items-center" style={{ cursor: 'pointer' }} onClick={() => { 
+                setIsRevealed(true); 
+                if (onUpdateMemo) onUpdateMemo(undefined, { isSecretRevealed: true });
+                if (mainChannel) mainChannel.send({ type: 'broadcast', event: 'secret-revealed', payload: { sender: userRole, ts: Date.now() } }); 
+              }}>
                 <span style={{ fontSize: '11px', fontWeight: 900, color: '#8B6500', letterSpacing: '2.5px', marginBottom: '8px' }}>SECRET CARD</span>
                 <h2 className="card-question" style={{ fontSize: '22px', textAlign: 'center', color: '#2D1F08', fontWeight: 900 }}>비밀 질문 도착!</h2>
                 <div style={{ marginTop: '12px', background: 'rgba(255,255,255,0.8)', padding: '10px', borderRadius: '50%' }}><Lock size={22} color="#D4AF37" strokeWidth={2.5} /></div>
@@ -210,7 +214,7 @@ const HomeView = ({
             ) : (
               <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                 <SecretAnswerInteraction userRole={userRole} coupleCode={coupleCode} questionText={todaySecretQuestion} supabase={supabase} mainChannel={mainChannel} spouseAnswer={spouseSecretAnswer} setSpouseAnswer={setSpouseSecretAnswer} myAnswer={mySecretAnswer} setMyAnswer={setMySecretAnswer} answered={isMySecretAnswered} setAnswered={setIsMySecretAnswered} />
-                <button onClick={(e) => { e.stopPropagation(); setIsRevealed(false); }} style={{ marginTop: '30px', background: 'rgba(255, 255, 255, 0.9)', border: '1px solid rgba(139, 101, 0, 0.2)', padding: '8px 18px', borderRadius: '100px', color: '#6F4E00', fontSize: '13px', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '4px' }}><ChevronLeft size={14} strokeWidth={3} /> 카드 뒤집기</button>
+                <button onClick={(e) => { e.stopPropagation(); setIsRevealed(false); if (onUpdateMemo) onUpdateMemo(undefined, { isSecretRevealed: false }); }} style={{ marginTop: '30px', background: 'rgba(255, 255, 255, 0.9)', border: '1px solid rgba(139, 101, 0, 0.2)', padding: '8px 18px', borderRadius: '100px', color: '#6F4E00', fontSize: '13px', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '4px' }}><ChevronLeft size={14} strokeWidth={3} /> 카드 뒤집기</button>
               </div>
             )}
           </div>

@@ -287,7 +287,7 @@ const WorshipView = ({ userRole, coupleCode, mainChannel }) => {
 
     // 2. Real-time Subscription
     const channel = supabase
-      .channel('realtime-prayers')
+      .channel(`worship-${coupleCode}`)
       .on('postgres_changes', {
         event: 'INSERT',
         schema: 'public',
@@ -3693,8 +3693,8 @@ const App = () => {
     const baseInfo = userRole === 'husband' ? husbandInfo : wifeInfo;
     const updatedInfo = { ...baseInfo, ...info, coupleCode: finalCode };
     
-    // Use the robust update instead of a shallow upsert
-    await updateProfileInfo(undefined, info);
+    // Use the robust update instead of a shallow upsert, passing the code explicitly to avoid state race condition
+    await updateProfileInfo(undefined, info, finalCode);
 
     localStorage.setItem('userRole', userRole);
     localStorage.setItem('isSetupDone', 'true');
@@ -3725,7 +3725,7 @@ const App = () => {
     await updateProfileInfo(undefined, { coupleSchedules: newSchedules });
   };
 
-  const updateProfileInfo = async (text, extraInfo = {}) => {
+  const updateProfileInfo = async (text, extraInfo = {}, overrideCode = null) => {
     if (!user?.id) { console.warn("Update attempt without valid session - skipping sync."); return; }
     
     try {
@@ -3749,8 +3749,9 @@ const App = () => {
       if (userRole === 'husband') setHusbandInfo(updatedInfo); else setWifeInfo(updatedInfo);
       
       if (mainChannel) mainChannel.send({ type: 'broadcast', event: 'memo-updated', payload: { sender: userRole, text, extraInfo } });
-
-      const finalCode = (coupleCode || "").toLowerCase().trim();
+      
+      const targetCode = (overrideCode || coupleCode || "").toLowerCase().trim();
+      const finalCode = targetCode;
       await supabase.from('profiles').upsert({
         id: user.id,
         couple_id: finalCode,
@@ -3891,6 +3892,11 @@ const App = () => {
             );
           }
         }
+        
+        // 🗝️ Sync Secret Revealed state from DB
+        if (info?.isSecretRevealed !== undefined && role !== userRole) {
+          setIsSecretRevealed(info.isSecretRevealed);
+        }
 
         // 🌿 Garden Message Catch-up (Fail-safe for missed broadcasts)
         if (info?.gardenNavId && role !== userRole && info.gardenNavId !== lastNotifiedGardenNavIdRef.current) {
@@ -4009,6 +4015,7 @@ const App = () => {
           const senderLabel = payload.sender === 'husband' ? '남편' : '아내';
           toast.success(`${senderLabel}님께서 비밀 질문의 정답을 확인했습니다! 🔓`);
           sendNativeNotification(`비밀 질문 공개! 🔓`, `${senderLabel}님께서 당신의 비밀 답변을 확인했습니다. 대화를 나눠보세요!`, 'intimacy');
+          setIsSecretRevealed(true);
           setIncomingCardCall({ type: 'secret-revealed', sender: senderLabel });
         }
       })
@@ -4033,11 +4040,11 @@ const App = () => {
           setMainChannel(channel);
         }
         if (status === 'CLOSED' || status === 'CHANNEL_ERROR') {
+          console.error("Supabase Realtime Channel Error/Closed:", status);
           setSyncStatus('ERROR');
           setMainChannel(null);
-          if (isSetupDone && coupleCode) {
-            setTimeout(() => { window.location.reload(); }, 3000);
-          }
+          // 🛡️ CRITICAL: Removed automatic window.location.reload() to prevent infinite loops.
+          // In unstable network conditions, a reload-loop renders the app unusable.
         }
       });
 

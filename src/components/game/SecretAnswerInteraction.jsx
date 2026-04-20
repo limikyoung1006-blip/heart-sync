@@ -41,10 +41,10 @@ const SecretAnswerInteraction = ({
     if (mainChannel) {
       mainChannel.send({
         type: 'broadcast',
-        event: 'secret-answered',
+        event: 'secret-answer-update',
         payload: { 
-          sender: userRole, 
-          text: localInput, 
+          user_role: userRole, 
+          answer: localInput, 
           ts: Date.now() 
         }
       });
@@ -53,17 +53,29 @@ const SecretAnswerInteraction = ({
     // Sync to Database
     try {
       if (supabase && coupleCode) {
-        const { data: profile } = await supabase.auth.getSession();
-        if (profile?.session?.user?.id) {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user?.id) {
+           // 🛡️ Fetch current info first to prevent data loss
+           const { data: currentProfile } = await supabase
+             .from('profiles')
+             .select('info')
+             .eq('id', session.user.id)
+             .single();
+           
+           const existingInfo = currentProfile?.info || {};
+           const updatedInfo = {
+             ...existingInfo,
+             lastSecretAnswer: localInput,
+             lastSecretAnswerDate: new Date().toISOString().split('T')[0]
+           };
+
            await supabase.from('profiles').upsert({
-             id: profile.session.user.id,
+             id: session.user.id,
              couple_id: coupleCode.toLowerCase().trim(),
              user_role: userRole,
-             info: {
-               lastSecretAnswer: localInput,
-               lastSecretAnswerDate: new Date().toISOString().split('T')[0]
-             }
-           });
+             info: updatedInfo,
+             updated_at: new Date().toISOString()
+           }, { onConflict: 'id' });
         }
       }
     } catch (e) {
