@@ -19,12 +19,28 @@ const corsHeaders = {
 }
 
 serve(async (req) => {
+  // 1. CORS preflight handling
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
 
+  // 2. Simple GET check (Health Check via Browser)
+  if (req.method === 'GET') {
+    return new Response(JSON.stringify({ 
+      status: "online", 
+      message: "Heart Sync Push Server is running! 🚀",
+      usage: "Please send a POST request with JSON payload to trigger notifications."
+    }), { headers: { ...corsHeaders, "Content-Type": "application/json" } })
+  }
+
   try {
-    const payload_raw = await req.json()
+    // 3. Securely handle empty body
+    const bodyText = await req.text()
+    if (!bodyText) {
+      throw new Error("Request body is empty")
+    }
+    
+    const payload_raw = JSON.parse(bodyText)
     console.log("Push trigger received:", JSON.stringify(payload_raw, null, 2))
     
     if (payload_raw.check_config) {
