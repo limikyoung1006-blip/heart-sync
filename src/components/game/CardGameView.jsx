@@ -323,31 +323,6 @@ const CardGameView = ({ onBack, coupleCode, userRole, husbandInfo, wifeInfo, mai
         </button>
       </div>
 
-{/* topic selection UI removed */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', padding: '5px' }}>
-          {['일상', '상상', '추억', '관계', '신앙', '시크릿'].map(cat => (
-            <button 
-              key={cat} 
-              onClick={() => { if(!isMyTurn) return; setCategory(cat); drawNewCard(cat); }}
-              className="game-btn-press"
-              style={{ 
-                padding: '12px 10px', 
-                borderRadius: '16px', 
-                border: category === cat ? 'none' : '1.5px solid rgba(138, 96, 255, 0.2)', 
-                background: category === cat ? '#8A60FF' : 'white', 
-                color: category === cat ? 'white' : '#8A60FF', 
-                fontWeight: 900, 
-                fontSize: '13px', 
-                textAlign: 'center',
-                opacity: isMyTurn ? 1 : 0.6 
-              }}
-            >
-              {cat}
-            </button>
-          ))}
-        </div>
-      </div>
-
       <div className="flex flex-col items-center" style={{ marginBottom: '20px' }}>
         <p style={{ letterSpacing: '5px', color: '#8B6500', fontWeight: '900', fontSize: '13px', opacity: 0.8, marginBottom: '5px' }}>SELECT YOUR TOPIC</p>
         <p style={{ fontSize: '11px', color: '#8B7355', fontWeight: 700, letterSpacing: '-0.2px' }}>질문 주제를 먼저 고르세요</p>
