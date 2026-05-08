@@ -350,31 +350,29 @@ const OnboardingView = ({ user, userRole, setUserRole, onFinish }) => {
 
                       setIsConnecting(true);
                       
-                      // 🛡️ HARD SANITIZE: Force pure JSON-serializable object
-                      const cleanInfo = JSON.parse(JSON.stringify({
-                        nickname: nickname || "",
-                        marriageDate: mDate || new Date().toISOString().split('T')[0],
-                        mbti: insightResult || "",
-                        blood: blood || "A",
-                        deepAnalysis: deepAnalysis || null,
+                      // 🛡️ MOST CONSERVATIVE APPROACH: Explicitly cast all fields
+                      const finalPayload = {
+                        id: String(user.id),
+                        couple_id: String(newCode),
+                        user_role: String(userRole),
+                        info: JSON.parse(JSON.stringify({
+                          nickname: String(nickname || ""),
+                          marriageDate: String(mDate || ""),
+                          mbti: String(insightResult || ""),
+                          blood: String(blood || "A"),
+                          deepAnalysis: deepAnalysis || null
+                        })),
                         updated_at: new Date().toISOString()
-                      }));
+                      };
 
-                      const { error } = await supabase.from('profiles').upsert({
-                        id: user.id,
-                        couple_id: newCode,
-                        user_role: userRole,
-                        info: cleanInfo,
-                        updated_at: new Date().toISOString()
-                      }, { onConflict: 'id' });
+                      const { error } = await supabase.from('profiles').upsert(finalPayload, { onConflict: 'id' });
                       
                       if (error) throw error;
                       setStep(5);
                     } catch (err) {
-                      console.error("Onboarding upsert failed:", err);
-                      // Show more detailed error info if available
+                      console.error("Critical onboarding error:", err);
                       const errorMsg = err.message || JSON.stringify(err);
-                      alert(`코드 생성 중 오류가 발생했습니다.\n상세내역: ${errorMsg}`);
+                      alert(`코드 생성 중 오류가 발생했습니다.\n상세내역: ${errorMsg}\n\n(문제가 지속되면 새로고침 후 다시 시도해주세요)`);
                     } finally {
                       setIsConnecting(false);
                     }
