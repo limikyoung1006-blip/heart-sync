@@ -350,39 +350,31 @@ const OnboardingView = ({ user, userRole, setUserRole, onFinish }) => {
 
                       setIsConnecting(true);
                       
-                      // 🛡️ STEP-BY-STEP ROBUST STRATEGY
-                      // Step 1: Create/Update the row with MINIMAL data to avoid JSON syntax issues
-                      const minimalPayload = {
-                        id: String(user.id),
-                        couple_id: String(newCode),
-                        user_role: String(userRole),
-                        info: {}, // Start with a safe empty object
-                        updated_at: new Date().toISOString()
-                      };
-
-                      const { error: initialError } = await supabase.from('profiles').upsert(minimalPayload, { onConflict: 'id' });
-                      
-                      if (initialError) throw initialError;
-
-                      // Step 2: If minimal upsert worked, now try to fill in the details
-                      const detailedInfo = JSON.parse(JSON.stringify({
+                      // 🛡️ REFINED ROBUST STRATEGY: Explicit casting + Full Sanitization
+                      const sanitizedInfo = JSON.parse(JSON.stringify({
                         nickname: String(nickname || "사용자"),
                         marriageDate: String(mDate || ""),
                         mbti: String(insightResult || ""),
                         blood: String(blood || "A"),
-                        deepAnalysis: deepAnalysis || null
+                        deepAnalysis: deepAnalysis || null,
+                        updated_at: new Date().toISOString()
                       }));
 
-                      const { error: updateError } = await supabase.from('profiles')
-                        .update({ info: detailedInfo })
-                        .eq('id', user.id);
+                      const finalPayload = {
+                        id: String(user.id),
+                        couple_id: String(newCode),
+                        user_role: String(userRole),
+                        info: sanitizedInfo,
+                        updated_at: new Date().toISOString()
+                      };
 
-                      // We don't throw for Step 2 as Step 1 already established the connection
-                      if (updateError) console.warn("Detailed info update failed, but connection established:", updateError);
+                      const { error } = await supabase.from('profiles').upsert(finalPayload, { onConflict: 'id' });
+                      
+                      if (error) throw error;
                       
                       setStep(5);
                     } catch (err) {
-                      console.error("Step-by-step onboarding error:", err);
+                      console.error("Robust onboarding error:", err);
                       const errorMsg = err.message || JSON.stringify(err);
                       alert(`코드 생성 중 오류가 발생했습니다.\n상세내역: ${errorMsg}\n\n(문제가 지속되면 새로고침 후 다시 시도해주세요)`);
                     } finally {
