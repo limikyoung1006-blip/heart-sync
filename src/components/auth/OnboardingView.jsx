@@ -207,20 +207,46 @@ const OnboardingView = ({ user, userRole, setUserRole, onFinish }) => {
               
               <div style={{ display: 'flex', gap: '15px' }}>
                 <div style={{ flex: 1 }}>
-                  <label style={{ fontSize: '12px', fontWeight: 800, color: '#B08D3E', display: 'block', marginBottom: '8px' }}>결혼기념일 선택</label>
-                  <input 
-                    type="date" 
-                    value={mDate} 
-                    onChange={(e) => setMDate(e.target.value)}
-                    style={{ width: '100%', padding: '16px 18px', borderRadius: '18px', border: '1.5px solid #EEE', background: '#F9FAFB', fontSize: '15px', color: '#2D1F08', fontWeight: 800, appearance: 'none' }}
-                  />
+                  <label style={{ fontSize: '12px', fontWeight: 800, color: '#B08D3E', display: 'block', marginBottom: '8px' }}>결혼기념일 (년-월-일)</label>
+                  <div style={{ display: 'flex', gap: '5px' }}>
+                    <select 
+                      value={mDate.split('-')[0]} 
+                      onChange={(e) => {
+                        const parts = mDate.split('-');
+                        setMDate(`${e.target.value}-${parts[1]}-${parts[2]}`);
+                      }}
+                      style={{ flex: 1.5, padding: '16px 8px', borderRadius: '18px', border: '1.5px solid #EEE', background: '#F9FAFB', fontSize: '14px', fontWeight: 800, appearance: 'none', textAlign: 'center' }}
+                    >
+                      {Array.from({ length: 61 }, (_, i) => 1970 + i).map(y => <option key={y} value={y}>{y}년</option>)}
+                    </select>
+                    <select 
+                      value={parseInt(mDate.split('-')[1])} 
+                      onChange={(e) => {
+                        const parts = mDate.split('-');
+                        setMDate(`${parts[0]}-${e.target.value.padStart(2, '0')}-${parts[2]}`);
+                      }}
+                      style={{ flex: 1, padding: '16px 8px', borderRadius: '18px', border: '1.5px solid #EEE', background: '#F9FAFB', fontSize: '14px', fontWeight: 800, appearance: 'none', textAlign: 'center' }}
+                    >
+                      {Array.from({ length: 12 }, (_, i) => i + 1).map(m => <option key={m} value={m}>{m}월</option>)}
+                    </select>
+                    <select 
+                      value={parseInt(mDate.split('-')[2])} 
+                      onChange={(e) => {
+                        const parts = mDate.split('-');
+                        setMDate(`${parts[0]}-${parts[1]}-${e.target.value.padStart(2, '0')}`);
+                      }}
+                      style={{ flex: 1, padding: '16px 8px', borderRadius: '18px', border: '1.5px solid #EEE', background: '#F9FAFB', fontSize: '14px', fontWeight: 800, appearance: 'none', textAlign: 'center' }}
+                    >
+                      {Array.from({ length: 31 }, (_, i) => i + 1).map(d => <option key={d} value={d}>{d}일</option>)}
+                    </select>
+                  </div>
                 </div>
-                <div style={{ width: '100px' }}>
+                <div style={{ width: '90px' }}>
                   <label style={{ fontSize: '12px', fontWeight: 800, color: '#B08D3E', display: 'block', marginBottom: '8px' }}>혈액형</label>
                   <select 
                     value={blood} 
                     onChange={(e) => setBlood(e.target.value)} 
-                    style={{ width: '100%', padding: '16px 12px', borderRadius: '18px', border: '1.5px solid #EEE', background: '#F9FAFB', fontSize: '15px', fontWeight: 800, appearance: 'none' }}
+                    style={{ width: '100%', padding: '16px 12px', borderRadius: '18px', border: '1.5px solid #EEE', background: '#F9FAFB', fontSize: '14px', fontWeight: 800, appearance: 'none' }}
                   >
                     <option value="A">A형</option>
                     <option value="B">B형</option>
@@ -323,11 +349,22 @@ const OnboardingView = ({ user, userRole, setUserRole, onFinish }) => {
                       }
 
                       setIsConnecting(true);
+                      
+                      // 🛡️ SANITIZE DATA: Ensure no 'undefined' values reach the JSON column
+                      const cleanInfo = {
+                        nickname: nickname || "",
+                        marriageDate: mDate || new Date().toISOString().split('T')[0],
+                        mbti: insightResult || "",
+                        blood: blood || "A",
+                        deepAnalysis: deepAnalysis || null, // Explicitly set to null if undefined
+                        updated_at: new Date().toISOString()
+                      };
+
                       const { error } = await supabase.from('profiles').upsert({
                         id: user.id,
                         couple_id: newCode,
                         user_role: userRole,
-                        info: { nickname, marriageDate: mDate || new Date().toISOString().split('T')[0], mbti: insightResult, blood, deepAnalysis },
+                        info: cleanInfo,
                         updated_at: new Date().toISOString()
                       }, { onConflict: 'id' });
                       
