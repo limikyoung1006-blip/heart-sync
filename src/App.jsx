@@ -709,17 +709,15 @@ const App = () => {
       }
       
       const targetCode = (overrideCode || coupleCode || latestProfile?.couple_id || "").toLowerCase().trim();
-
-      // 🛡️ SANITIZE: Remove any undefined values that break Postgres JSON syntax
-      Object.keys(updatedInfo).forEach(key => {
-        if (updatedInfo[key] === undefined) delete updatedInfo[key];
-      });
+      
+      // 🛡️ HARD SANITIZE: Force pure JSON-serializable object to prevent Postgres syntax errors
+      const sanitizedInfo = JSON.parse(JSON.stringify(updatedInfo));
 
       const { error: upsertError } = await supabase.from('profiles').upsert({
         id: user.id,
         couple_id: targetCode,
         user_role: userRole,
-        info: updatedInfo,
+        info: sanitizedInfo,
         updated_at: new Date().toISOString()
       }, { onConflict: 'id' });
 

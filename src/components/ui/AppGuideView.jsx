@@ -57,8 +57,8 @@ const AppGuideView = ({ onBack }) => {
       animate={{ opacity: 1 }} 
       className="guide-page h-full bg-[#FAFAFA] overflow-y-auto"
     >
-      <div className="max-w-md mx-auto min-h-full flex flex-col p-6 pb-32">
-        <header className="flex items-center gap-4 mb-10 pt-4">
+      <div className="max-w-md mx-auto min-h-full flex flex-col p-4 sm:p-6 pb-32">
+        <header className="flex items-center gap-4 mb-8 pt-4">
           <motion.button 
             whileTap={{ scale: 0.9 }}
             onClick={onBack} 
@@ -75,7 +75,7 @@ const AppGuideView = ({ onBack }) => {
           </div>
         </header>
 
-        <div className="space-y-8">
+        <div className="space-y-6">
           {features.map((f, i) => (
             <motion.div 
               key={i}
@@ -84,31 +84,31 @@ const AppGuideView = ({ onBack }) => {
               transition={{ delay: i * 0.1 }}
               className="relative"
             >
-              <div className={`bg-white rounded-[40px] p-8 shadow-sm border border-gray-100 overflow-hidden`}>
+              <div className="bg-white rounded-[32px] p-6 sm:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-50 overflow-hidden">
                 {/* Decorative Background */}
-                <div className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-br ${f.color} rounded-bl-full opacity-50 -mr-8 -mt-8`} />
+                <div className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-br ${f.color} rounded-bl-full opacity-40 -mr-8 -mt-8`} />
                 
                 <div className="relative z-10">
-                  <div className="flex items-start justify-between mb-6">
+                  <div className="flex items-center justify-between mb-5">
                     <div className="flex flex-col">
                       <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">{f.subtitle}</span>
-                      <h3 className="text-xl font-black text-[#2D1F08]">{f.title}</h3>
+                      <h3 className="text-xl font-black text-[#2D1F08] leading-tight">{f.title}</h3>
                     </div>
-                    <div className="w-12 h-12 rounded-2xl bg-white shadow-md flex items-center justify-center border border-gray-50">
+                    <div className="w-11 h-11 rounded-xl bg-white shadow-sm flex items-center justify-center border border-gray-50">
                       {f.icon}
                     </div>
                   </div>
 
-                  <p className="text-[15px] font-bold text-[#5D4037] leading-relaxed mb-8 break-keep opacity-90">
+                  <p className="text-[14.5px] font-medium text-[#5D4037] leading-[1.7] mb-6 break-keep text-justify">
                     {f.desc}
                   </p>
 
-                  <div className="bg-[#FDFCF0] p-5 rounded-3xl border border-[#F5E6CC]/50">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Info size={14} className="text-[#B08D3E]" />
-                      <span className="text-xs font-black text-[#B08D3E]">활용 꿀팁</span>
+                  <div className="bg-[#FDFCF0] p-4 rounded-2xl border border-[#F5E6CC]/40">
+                    <div className="flex items-center gap-1.5 mb-2">
+                      <Sparkles size={12} className="text-[#B08D3E]" />
+                      <span className="text-[11px] font-black text-[#B08D3E]">하티의 활용 꿀팁</span>
                     </div>
-                    <p className="text-xs font-bold text-[#8B7355] leading-relaxed break-keep">
+                    <p className="text-[12px] font-bold text-[#8B7355] leading-relaxed break-keep">
                       {f.tip}
                     </p>
                   </div>

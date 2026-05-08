@@ -350,15 +350,15 @@ const OnboardingView = ({ user, userRole, setUserRole, onFinish }) => {
 
                       setIsConnecting(true);
                       
-                      // 🛡️ SANITIZE DATA: Ensure no 'undefined' values reach the JSON column
-                      const cleanInfo = {
+                      // 🛡️ HARD SANITIZE: Force pure JSON-serializable object
+                      const cleanInfo = JSON.parse(JSON.stringify({
                         nickname: nickname || "",
                         marriageDate: mDate || new Date().toISOString().split('T')[0],
                         mbti: insightResult || "",
                         blood: blood || "A",
-                        deepAnalysis: deepAnalysis || null, // Explicitly set to null if undefined
+                        deepAnalysis: deepAnalysis || null,
                         updated_at: new Date().toISOString()
-                      };
+                      }));
 
                       const { error } = await supabase.from('profiles').upsert({
                         id: user.id,
@@ -372,7 +372,9 @@ const OnboardingView = ({ user, userRole, setUserRole, onFinish }) => {
                       setStep(5);
                     } catch (err) {
                       console.error("Onboarding upsert failed:", err);
-                      alert(`코드 생성 중 오류가 발생했습니다.\n상세내역: ${err.message || "알 수 없는 오류"}`);
+                      // Show more detailed error info if available
+                      const errorMsg = err.message || JSON.stringify(err);
+                      alert(`코드 생성 중 오류가 발생했습니다.\n상세내역: ${errorMsg}`);
                     } finally {
                       setIsConnecting(false);
                     }
