@@ -602,6 +602,41 @@ const App = () => {
     setIsSetupDone(true);
   };
 
+  const handleResetCouple = async () => {
+    if (!window.confirm("정말로 배우자와의 연결을 해제하시겠습니까?\n연결이 해제되면 모든 공유 데이터가 초기화되며 온보딩 화면으로 돌아갑니다.")) return;
+    
+    try {
+      setLoading(true);
+      // 1. Update DB: set couple_id to 'none'
+      const { error } = await supabase.from('profiles').update({ 
+        couple_id: 'none',
+        updated_at: new Date().toISOString() 
+      }).eq('id', user.id);
+      
+      if (error) throw error;
+      
+      // 2. Clear local storage for setup
+      localStorage.removeItem('coupleCode');
+      localStorage.removeItem('isSetupDone');
+      localStorage.removeItem('husbandInfo');
+      localStorage.removeItem('wifeInfo');
+      
+      // 3. Reset state
+      setCoupleCode(null);
+      setIsSetupDone(false);
+      setHusbandInfo(defaultHusband);
+      setWifeInfo(defaultWife);
+      
+      alert("✅ 연결 해제 및 초기화가 완료되었습니다.");
+      window.location.href = '/'; // Hard redirect to start fresh
+    } catch (err) {
+      console.error("Reset failed:", err);
+      alert("❌ 초기화 중 오류가 발생했습니다: " + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const fetchGlobalPrayers = async () => {
     if (!coupleCode) return;
     const { data } = await supabase.from('prayers').select('*').eq('couple_id', coupleCode).order('created_at', { ascending: false });
@@ -1392,8 +1427,9 @@ const App = () => {
                 onGuideClick={() => setShowGuidePage(true)}
                 isAdmin={isAdmin}
                 onNav={setActiveTab}
-                onUpdateProfile={updateProfileInfo}
+                onUpdateMemo={updateProfileInfo}
                 subscribeToPushNotifications={subscribeToPushNotifications}
+                onResetCouple={handleResetCouple}
               />
             )}
             {activeTab === 'admin' && isAdmin && (

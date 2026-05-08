@@ -110,7 +110,8 @@ const SettingsView = ({
   onUpdateMemo,
   coupleCode,
   setCoupleCode,
-  subscribeToPushNotifications // Pass this as prop from App!
+  subscribeToPushNotifications, // Pass this as prop from App!
+  onResetCouple
 }) => {
   const [showDeepAnalysis, setShowDeepAnalysis] = useState(false);
   const [showNotifIntegration, setShowNotifIntegration] = useState(false);
@@ -278,7 +279,7 @@ const SettingsView = ({
           <SettingsSection title="🛡️ 보안 및 지원">
             <SettingsItem icon={<Lock size={20} color="#0369A1" />} label="데이터 보안 및 암호화" onClick={() => setShowDataSecurity(true)} />
             <SettingsItem icon={<Info size={20} color="#475569" />} label="기능 가이드 다시보기" onClick={onGuideClick} />
-            <SettingsItem icon={<Users size={20} color="#475569" />} label="커플 연결 해제 및 초기화" onClick={() => { if(window.confirm("배우자와의 연결을 해제하시겠습니까? 모든 공유 데이터가 초기화됩니다.")) alert("연결 해제 프로세스 시작..."); }} />
+            <SettingsItem icon={<Users size={20} color="#475569" />} label="커플 연결 해제 및 초기화" onClick={onResetCouple} />
           </SettingsSection>
           
           <div style={{ paddingTop: '20px', borderTop: '1px solid rgba(0,0,0,0.05)', marginTop: '20px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
