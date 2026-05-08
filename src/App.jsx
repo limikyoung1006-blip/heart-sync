@@ -630,39 +630,62 @@ const App = () => {
     if (!user?.id) { console.warn("Update attempt without valid session - skipping sync."); return; }
     
     try {
-      // 🕵️ Get latest data from DB first to prevent clobbering other settings
-      const { data: latestProfile } = await supabase.from('profiles').select('info, couple_id').eq('id', user.id).single();
+      // 🕵️ Get latest data from DB to merge with local state
+      const { data: latestProfile, error: fetchError } = await supabase.from('profiles').select('info, couple_id').eq('id', user.id).single();
+      if (fetchError) console.warn("Could not fetch latest profile for merge:", fetchError);
+      
       const currentRemoteInfo = latestProfile?.info || {};
+      const localBaseInfo = userRole === 'husband' ? husbandInfo : wifeInfo;
       
-      // 🚀 ATOMIC UPDATE: Only merge specific extraInfo into remote data.
-      // We DO NOT use 'baseInfo' (local state) here because it might be stale 
-      // and overwrite latest DB updates (like prayers or schedules from partner).
-      const updatedInfo = { ...currentRemoteInfo, ...extraInfo };
+      // 🚀 ATOMIC MERGE STRATEGY:
+      // 1. Start with CURRENT local state (most up-to-date user intent)
+      // 2. Merge latest remote data (pick up updates from partner like prayers/schedules)
+      // 3. Apply the NEW changes (extraInfo)
+      // 4. Specifically ensure 'signal' and 'todayMemo' use the latest available source
+      const updatedInfo = { 
+        ...localBaseInfo,
+        ...currentRemoteInfo, 
+        ...extraInfo 
+      };
       
-      // Handle persistent fields that might be updated via Refs
-      if (extraInfo.signal === undefined && mySignalRef.current) {
+      // Handle persistent fields that might be updated via Refs or explicit args
+      if (extraInfo.signal !== undefined) {
+        updatedInfo.signal = extraInfo.signal;
+      } else if (mySignalRef.current) {
         updatedInfo.signal = mySignalRef.current;
       }
-      if (extraInfo.todayMemo === undefined && text === undefined && myMemoRef.current) {
-        updatedInfo.todayMemo = myMemoRef.current;
-      } else if (text !== undefined) {
+
+      if (text !== undefined) {
         updatedInfo.todayMemo = text;
+      } else if (extraInfo.todayMemo !== undefined) {
+        updatedInfo.todayMemo = extraInfo.todayMemo;
+      } else if (myMemoRef.current) {
+        // Fallback to ref only if not explicitly cleared
+        updatedInfo.todayMemo = myMemoRef.current;
       }
 
-      // Update local state immediately for responsiveness
-      if (userRole === 'husband') setHusbandInfo(updatedInfo); else setWifeInfo(updatedInfo);
+      // Update local state immediately for snappy UI
+      if (userRole === 'husband') setHusbandInfo(updatedInfo); 
+      else setWifeInfo(updatedInfo);
       
-      if (mainChannel) mainChannel.send({ type: 'broadcast', event: 'memo-updated', payload: { sender: userRole, text, extraInfo } });
+      if (mainChannel) {
+        mainChannel.send({ 
+          type: 'broadcast', 
+          event: 'memo-updated', 
+          payload: { sender: userRole, text: updatedInfo.todayMemo, extraInfo } 
+        });
+      }
       
       const targetCode = (overrideCode || coupleCode || latestProfile?.couple_id || "").toLowerCase().trim();
-      const finalCode = targetCode;
-      await supabase.from('profiles').upsert({
+      const { error: upsertError } = await supabase.from('profiles').upsert({
         id: user.id,
-        couple_id: finalCode,
+        couple_id: targetCode,
         user_role: userRole,
         info: updatedInfo,
         updated_at: new Date().toISOString()
       }, { onConflict: 'id' });
+
+      if (upsertError) throw upsertError;
 
       // 📬 [Push Notification] Trigger for Signal Change or Garden Update
       if (extraInfo.signal && extraInfo.signal !== (mySignalRef.current || mySignal)) {
@@ -670,9 +693,9 @@ const App = () => {
           supabase.functions.invoke('send-push', {
             body: {
               type: 'SIGNAL',
-              record: { info: { signal: extraInfo.signal }, couple_id: finalCode, user_role: userRole },
+              record: { info: { signal: extraInfo.signal }, couple_id: targetCode, user_role: userRole },
               sender_role: userRole,
-              couple_id: finalCode
+              couple_id: targetCode
             }
           });
         } catch (pushErr) { console.warn("Signal Push trigger failed:", pushErr); }
@@ -683,7 +706,7 @@ const App = () => {
               type: 'GARDEN',
               custom_body: extraInfo.gardenMsg,
               sender_role: userRole,
-              couple_id: finalCode
+              couple_id: targetCode
             }
           });
         } catch (pushErr) { console.warn("Garden Push trigger failed:", pushErr); }
@@ -692,9 +715,10 @@ const App = () => {
       return updatedInfo;
     } catch (err) {
       console.error("Profile sync error details:", err);
-      throw err;
+      return null;
     }
   };
+
 
   useEffect(() => {
     const mainArea = document.querySelector('.main-content');
