@@ -106,7 +106,8 @@ const OnboardingView = ({ user, userRole, setUserRole, onFinish }) => {
               />
               <p style={{ fontSize: '13px', color: '#B08D3E', fontWeight: 900, letterSpacing: '2px', marginBottom: '4px' }}>부부의 마음을 이어드립니다</p>
               <h1 className="brand-text" style={{ fontSize: '32px', letterSpacing: '6px', color: '#D4AF37', fontWeight: 900, marginBottom: '2px' }}>HEART SYNC</h1>
-              <p style={{ fontSize: '11px', color: '#D4AF37', fontWeight: 800, letterSpacing: '3px', marginBottom: '30px', opacity: 0.8 }}>MORE DEEP, MORE CLOSE</p>
+              <p style={{ fontSize: '11px', color: '#D4AF37', fontWeight: 800, letterSpacing: '3px', marginBottom: '10px', opacity: 0.8 }}>MORE DEEP, MORE CLOSE</p>
+              <div style={{ padding: '4px 8px', borderRadius: '6px', background: 'rgba(138, 96, 255, 0.1)', color: '#8A60FF', fontSize: '9px', fontWeight: 900, display: 'inline-block', marginBottom: '20px' }}>v1.2.1 - JSON FIX APPLIED</div>
               
               <h2 style={{ fontSize: '22px', fontWeight: 900, color: '#2D1F08', marginBottom: '12px', lineHeight: 1.4, wordBreak: 'keep-all' }}>
                 Heart Sync에 오신 여러분을<br/>
@@ -349,6 +350,7 @@ const OnboardingView = ({ user, userRole, setUserRole, onFinish }) => {
                       }
 
                       setIsConnecting(true);
+                      console.log("HEART SYNC: Starting profile upsert...");
                       
                       // 🛡️ REFINED ROBUST STRATEGY: Explicit casting + Full Sanitization
                       const sanitizedInfo = JSON.parse(JSON.stringify({
@@ -367,11 +369,17 @@ const OnboardingView = ({ user, userRole, setUserRole, onFinish }) => {
                         info: sanitizedInfo,
                         updated_at: new Date().toISOString()
                       };
+                      
+                      console.log("HEART SYNC: Payload prepared:", finalPayload);
 
                       const { error } = await supabase.from('profiles').upsert(finalPayload, { onConflict: 'id' });
                       
-                      if (error) throw error;
+                      if (error) {
+                        console.error("HEART SYNC: Upsert error details:", error);
+                        throw error;
+                      }
                       
+                      console.log("HEART SYNC: Upsert success!");
                       setStep(5);
                     } catch (err) {
                       console.error("Robust onboarding error:", err);
