@@ -607,11 +607,8 @@ const App = () => {
     
     try {
       setLoading(true);
-      // 1. Update DB: set couple_id to 'none'
-      const { error } = await supabase.from('profiles').update({ 
-        couple_id: 'none',
-        updated_at: new Date().toISOString() 
-      }).eq('id', user.id);
+      // 1. Delete profile from DB for a clean start
+      const { error } = await supabase.from('profiles').delete().eq('id', user.id);
       
       if (error) throw error;
       

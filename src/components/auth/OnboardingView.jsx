@@ -316,6 +316,12 @@ const OnboardingView = ({ user, userRole, setUserRole, onFinish }) => {
                     setCoupleCode(newCode); // UI will show uppercase via display logic if needed
                     
                     try {
+                      if (!user || !user.id) {
+                        alert("로그인 세션이 만료되었습니다. 다시 로그인해주세요.");
+                        window.location.reload();
+                        return;
+                      }
+
                       setIsConnecting(true);
                       const { error } = await supabase.from('profiles').upsert({
                         id: user.id,
@@ -328,8 +334,8 @@ const OnboardingView = ({ user, userRole, setUserRole, onFinish }) => {
                       if (error) throw error;
                       setStep(5);
                     } catch (err) {
-                      console.error("Early upsert failed:", err);
-                      alert("코드 생성 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
+                      console.error("Onboarding upsert failed:", err);
+                      alert(`코드 생성 중 오류가 발생했습니다.\n상세내역: ${err.message || "알 수 없는 오류"}`);
                     } finally {
                       setIsConnecting(false);
                     }
